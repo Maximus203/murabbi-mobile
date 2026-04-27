@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Murabbi — Wireframes Hi-Fi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Noto+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  body { background: #efebe2; }
+  /* Make videos in the canvas not block scrolling/panning */
+  video { pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="screens-onboarding.jsx"></script>
+<script type="text/babel" src="screens-core.jsx"></script>
+<script type="text/babel" src="screens-detail.jsx"></script>
+<script type="text/babel" src="design-system-sheet.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+function App() {
+  return (
+    <DesignCanvas title="Murabbi · Wireframes Hi-Fi" subtitle="28 écrans + Design System · Sobre. Aéré. Ancré.">
+      <DCSection id="ds" title="Design System">
+        <DCArtboard id="ds-sheet" label="Tokens & Composants" width={1080} height={2680}>
+          <DSPanel/>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="onboarding" title="A · Onboarding (4)">
+        <DCArtboard id="ob-01" label="OB-01 · Splash" width={390} height={844}><ScreenOB01/></DCArtboard>
+        <DCArtboard id="ob-02" label="OB-02 · Cinq prières" width={390} height={844}><ScreenOB02/></DCArtboard>
+        <DCArtboard id="ob-03" label="OB-03 · Habitudes" width={390} height={844}><ScreenOB03/></DCArtboard>
+        <DCArtboard id="ob-04" label="OB-04 · Horizon 10 ans" width={390} height={844}><ScreenOB04/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="auth" title="B · Authentification (3)">
+        <DCArtboard id="au-01" label="AU-01 · Connexion" width={390} height={844}><ScreenAU01/></DCArtboard>
+        <DCArtboard id="au-02" label="AU-02 · Inscription" width={390} height={844}><ScreenAU02/></DCArtboard>
+        <DCArtboard id="au-03" label="AU-03 · Mot de passe oublié" width={390} height={844}><ScreenAU03/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="setup" title="C · Setup post-inscription (2)">
+        <DCArtboard id="setup-01" label="SETUP-01 · Prières" width={390} height={844}><ScreenSETUP01/></DCArtboard>
+        <DCArtboard id="setup-02" label="SETUP-02 · Notifications" width={390} height={844}><ScreenSETUP02/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="core" title="D · Core App (9)">
+        <DCArtboard id="hm-01" label="HM-01 · Accueil" width={390} height={844}><ScreenHM01/></DCArtboard>
+        <DCArtboard id="sl-01" label="SL-01 · Salat" width={390} height={844}><ScreenSL01/></DCArtboard>
+        <DCArtboard id="hb-01" label="HB-01 · Habitudes" width={390} height={844}><ScreenHB01/></DCArtboard>
+        <DCArtboard id="hb-02" label="HB-02 · Créer habitude" width={390} height={844}><ScreenHB02/></DCArtboard>
+        <DCArtboard id="hb-03" label="HB-03 · Catégories" width={390} height={844}><ScreenHB03/></DCArtboard>
+        <DCArtboard id="hb-04" label="HB-04 · Créer catégorie" width={390} height={844}><ScreenHB04/></DCArtboard>
+        <DCArtboard id="co-01" label="CO-01 · Collections" width={390} height={844}><ScreenCO01/></DCArtboard>
+        <DCArtboard id="co-02" label="CO-02 · Créer collection" width={390} height={844}><ScreenCO02/></DCArtboard>
+        <DCArtboard id="lb-01" label="LB-01 · Classement" width={390} height={844}><ScreenLB01/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="detail" title="E · Détails (4)">
+        <DCArtboard id="hb-detail" label="HB-DETAIL · Habitude" width={390} height={844}><ScreenHBDetail/></DCArtboard>
+        <DCArtboard id="co-detail" label="CO-DETAIL · Collection" width={390} height={844}><ScreenCODetail/></DCArtboard>
+        <DCArtboard id="sl-detail" label="SL-DETAIL · Prière" width={390} height={844}><ScreenSLDetail/></DCArtboard>
+        <DCArtboard id="niyyah-edit" label="NIYYAH-EDIT" width={390} height={844}><ScreenNiyyahEdit/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="settings" title="F · Settings (3)">
+        <DCArtboard id="st-01" label="ST-01 · Paramètres" width={390} height={844}><ScreenST01/></DCArtboard>
+        <DCArtboard id="st-02" label="ST-02 · Modifier profil" width={390} height={844}><ScreenST02/></DCArtboard>
+        <DCArtboard id="st-03" label="ST-03 · Supprimer compte" width={390} height={844}><ScreenST03/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="special" title="G · Spéciaux (3)">
+        <DCArtboard id="level-up" label="LEVEL-UP" width={390} height={844}><ScreenLevelUp/></DCArtboard>
+        <DCArtboard id="cal-01" label="CAL-01 · Calendrier" width={390} height={844}><ScreenCAL01/></DCArtboard>
+        <DCArtboard id="empty-habits" label="EMPTY · Habitudes" width={390} height={844}><EmptyHabits/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="empty" title="G · Empty states (suite)">
+        <DCArtboard id="empty-collections" label="EMPTY · Collections" width={390} height={844}><EmptyCollections/></DCArtboard>
+        <DCArtboard id="empty-leaderboard" label="EMPTY · Classement" width={390} height={844}><EmptyLeaderboard/></DCArtboard>
+        <DCArtboard id="empty-calendar" label="EMPTY · Calendrier" width={390} height={844}><EmptyCalendar/></DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

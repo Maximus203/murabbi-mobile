@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=1280"/>
+<title>Murabbi — Logo & Identité v3 (M custom sculpté)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-page:    #EFEBE2;
+    --bg-primary: #F5F2ED;
+    --bg-surface: #FDFBF8;
+    --ink:        #1C1A16;
+    --text-sec:   #6B6155;
+    --text-ter:   #A89880;
+    --accent:     #8B6F47;
+    --border:     rgba(28, 26, 22, 0.08);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg-page);
+    color: var(--ink);
+    font-family: 'Geist', 'Inter', -apple-system, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .container { max-width: 1280px; margin: 0 auto; padding: 64px 48px 120px; }
+  @keyframes breathe {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.55; transform: scale(0.97); }
+  }
+
+  .topnav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(239, 235, 226, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 0.5px solid var(--border);
+    padding: 14px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .topnav .links { display: flex; gap: 24px; font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-sec); }
+  .topnav .links a { color: var(--text-sec); text-decoration: none; transition: color 0.15s; }
+  .topnav .links a:hover { color: var(--ink); }
+  .topnav .brand { display: flex; align-items: center; gap: 10px; font-family: 'Geist'; font-size: 14px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+
+  .markdown-spec { font-family: 'Geist'; color: var(--ink); line-height: 1.7; font-size: 14px; }
+  .markdown-spec h1 { font-size: 28px; font-weight: 500; letter-spacing: -0.02em; margin: 0 0 8px 0; }
+  .markdown-spec h2 { font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-ter); font-weight: 500; margin: 32px 0 12px 0; }
+  .markdown-spec h3 { font-size: 16px; font-weight: 500; margin: 24px 0 8px 0; }
+  .markdown-spec p { margin: 8px 0; color: var(--text-sec); }
+  .markdown-spec strong { color: var(--ink); font-weight: 600; }
+  .markdown-spec code { font-family: 'Geist Mono', monospace; font-size: 12px; padding: 2px 6px; background: var(--bg-primary); border-radius: 4px; color: var(--ink); }
+  .markdown-spec pre { background: var(--bg-primary); padding: 16px; border-radius: 10px; overflow-x: auto; border: 0.5px solid var(--border); }
+  .markdown-spec pre code { background: transparent; padding: 0; font-size: 11.5px; line-height: 1.6; }
+  .markdown-spec table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  .markdown-spec td { padding: 8px 12px; border-bottom: 0.5px solid var(--border); }
+  .markdown-spec td:first-child { font-weight: 500; color: var(--ink); width: 32%; }
+  .markdown-spec td:not(:first-child) { color: var(--text-sec); }
+  .markdown-spec ul { margin: 8px 0; padding-left: 22px; color: var(--text-sec); }
+  .markdown-spec li { margin-bottom: 4px; }
+  .markdown-spec hr { border: none; border-top: 0.5px solid var(--border); margin: 32px 0; }
+  .markdown-spec em { color: var(--text-ter); font-style: italic; font-size: 12px; }
+
+  .hero { padding: 80px 0 32px; border-bottom: 0.5px solid var(--border); margin-bottom: 24px; }
+  .hero .kicker { font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-ter); font-weight: 500; margin-bottom: 16px; }
+  .hero h1 { font-family: 'Geist'; font-size: 56px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.05; margin: 0 0 16px 0; max-width: 820px; }
+  .hero p.lead { font-family: 'Geist'; font-size: 17px; line-height: 1.6; color: var(--text-sec); margin: 0; max-width: 680px; }
+
+  .hero-glyph-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 64px; padding: 56px 0;
+    border-top: 0.5px solid var(--border);
+    border-bottom: 0.5px solid var(--border);
+  }
+  /* Tiny inline M for the topnav */
+  .nav-m { width: 26px; height: 22px; }
+</style>
+</head>
+<body>
+
+<nav class="topnav" data-screen-label="Top nav">
+  <div class="brand">
+    <svg class="nav-m" viewBox="0 0 120 100" fill="#1C1A16">
+      <path id="navMpath"/>
+    </svg>
+    <span>Murabbi · Logo & Identité v3</span>
+  </div>
+  <div class="links">
+    <a href="#iterations">Itérations</a>
+    <a href="#construction">Construction</a>
+    <a href="#differentiation">Différenciation</a>
+    <a href="#lockups">Lockups</a>
+    <a href="#variations">Variations</a>
+    <a href="#brand-guide">Brand Guide</a>
+    <a href="#exports">Exports</a>
+    <a href="#spec">Spec</a>
+  </div>
+</nav>
+
+<div class="container">
+  <header class="hero" data-screen-label="Hero">
+    <div class="kicker">Brief Logo & Identité v3 · Avril 2026 · Murabbi مربي</div>
+    <h1>Un M sculpté en bloc, posé en élévation.</h1>
+    <p class="lead">Trois itérations d'un seul M custom — V1 brouillon, V2 raffiné, V3 finalisé. La V3 incorpore une signature géométrique : un pied droit relevé de 6u qui dit l'<strong style="color: var(--ink);">إرتقاء</strong> (l'élévation), sens premier de Murabbi. Toutes les variations en découlent.</p>
+    <div class="hero-glyph-row">
+      <div style="display: flex; align-items: center; gap: 40px;">
+        <svg width="160" height="134" viewBox="0 0 120 100">
+          <path id="heroMpath" fill="#1C1A16"/>
+        </svg>
+        <div>
+          <div style="font-family: 'Geist'; font-size: 56px; font-weight: 600; letter-spacing: -0.04em; color: var(--ink); line-height: 1;">Murabbi</div>
+          <div style="font-family: 'Noto Sans Arabic'; font-size: 36px; font-weight: 500; color: var(--ink); margin-top: 8px; direction: rtl;">مربي</div>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-ter); margin-bottom: 6px;">Tagline</div>
+        <div style="font-family: 'Geist Mono', monospace; font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); font-weight: 500;">Formateur de soi</div>
+      </div>
+    </div>
+  </header>
+
+  <div id="root"></div>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="logo-m-glyph.jsx"></script>
+<script type="text/babel" src="logo-m-shared.jsx"></script>
+<script type="text/babel" src="logo-m-iterations.jsx"></script>
+<script type="text/babel" src="logo-m-app.jsx"></script>
+
+<script type="text/babel">
+// Wire up the inline SVG in the topnav + hero with the V3 path
+const _mPath = symbolPathM(3);
+document.getElementById('navMpath').setAttribute('d', _mPath);
+document.getElementById('heroMpath').setAttribute('d', _mPath);
+
+function App() {
+  return (
+    <>
+      <Section id="iterations" kicker="Étape 1 · Processus"
+        title="Trois itérations du même M"
+        sub="Pas trois directions différentes — trois étapes de raffinement du même objet typographique. V1 pose la structure. V2 cherche l'équilibre. V3 grave la signature.">
+        <IterationsPanel/>
+      </Section>
+
+      <Section id="construction" kicker="Étape 2 · Géométrie"
+        title="Construction du M finalisé (V3)"
+        sub="Tout est sur une grille 120 × 100u. Chaque chiffre est un choix. La signature — le pied droit relevé de 6u — n'est pas un accident, c'est l'expression géométrique du sens du nom Murabbi.">
+        <ConstructionPanel/>
+      </Section>
+
+      <Section id="differentiation" kicker="Étape 3 · Test"
+        title="Différenciation des M existants"
+        sub="Notre M posé à côté de six familles de M typographiques courantes (formes abstraites, pas de marques précises). Aucune confusion possible.">
+        <DifferentiationPanel/>
+      </Section>
+
+      <Section id="lockups" kicker="Étape 4 · Système"
+        title="Lockups · Sept combinaisons officielles"
+        sub="Symbole seul, lockups horizontal et vertical, versions bilingues, wordmarks isolés. Chacun a un contexte d'utilisation précis.">
+        <LockupsPanel/>
+      </Section>
+
+      <Section id="variations" kicker="Étape 5 · Variations"
+        title="29 variations · couleurs et formats"
+        sub="La V3 déclinée. Couleurs, app icons, favicons, headers, splash, loading, watermarks, documents, social.">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 56 }}>
+          {[
+            { k: 'A · Couleurs (5)', C: ColorVariants },
+            { k: 'B · App icons (4)', C: AppIcons },
+            { k: 'C · Favicons (3)', C: Favicons },
+            { k: 'D · Headers (4)', C: Headers },
+            { k: 'E · Splash & Loading (2)', C: SplashAndLoading },
+            { k: 'F · Watermark & badges (3)', C: Watermarks },
+            { k: 'G · Documents (2)', C: DocumentsBlock },
+            { k: 'H · Social (3)', C: SocialBlock },
+          ].map(({ k, C }) => (
+            <div key={k}>
+              <div style={{ fontFamily: T.fontMono, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: T.textTer, marginBottom: 14, fontWeight: 500 }}>{k}</div>
+              <C/>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section id="brand-guide" kicker="Étape 6 · Garde-fous"
+        title="Mini guide de marque"
+        sub="Espacement, tailles minimum, do/don't qui valent pour tous les usages futurs.">
+        <BrandGuidePanel/>
+      </Section>
+
+      <Section id="exports" kicker="Étape 7 · Livrables"
+        title="Exports SVG"
+        sub="Code SVG copiable pour chaque variante de couleur principale.">
+        <ExportPanel/>
+      </Section>
+
+      <Section id="spec" kicker="Étape 8 · Documentation"
+        title="Spec sheet · Markdown"
+        sub="La référence technique complète, prête à être versionnée avec le code.">
+        <SpecSheet/>
+      </Section>
+
+      <footer style={{ marginTop: 96, paddingTop: 32, borderTop: `0.5px solid ${T.border}`, fontFamily: T.fontMono, fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: T.textTer, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>Murabbi · Logo v3</span>
+        <span>M custom sculpté — pied relevé · إرتقاء</span>
+        <span>Avril 2026</span>
+      </footer>
+    </>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
