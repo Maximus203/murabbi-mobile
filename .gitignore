@@ -1,4 +1,4 @@
-# Flutter
+# Flutter / Dart
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -6,45 +6,61 @@
 .pub-cache/
 .pub/
 build/
+*.iml
+.metadata
 **/generated_plugin_registrant.dart
 **/generated/
 *.g.dart
 *.freezed.dart
 
-# IDE
-.idea/
-.vscode/
-*.iml
-.metadata
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Env / secrets
-.env
-.env.*
-!.env.example
+# Coverage
+coverage/
+test/.test_coverage.dart
 
 # iOS
-ios/Pods/
-ios/.symlinks/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
+ios/.symlinks
+ios/Pods/
+ios/Podfile.lock
+ios/.generated/
 ios/Runner.xcworkspace/xcuserdata/
 
 # Android
+android/local.properties
 android/.gradle/
 android/captures/
-android/local.properties
+android/gradlew
+android/gradlew.bat
+android/gradle/wrapper/gradle-wrapper.jar
 android/key.properties
 android/app/release/
 *.jks
 *.keystore
 
-# Coverage
-coverage/
-test/.test_coverage.dart
+# macOS
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/ephemeral/
+
+# Web
+lib/generated_plugin_registrant.dart
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Secrets (never commit)
+.env
+.env.*
+!.env.example
+google-services.json
+GoogleService-Info.plist
 
 # Claude
 .claude/
