@@ -191,7 +191,7 @@ void main() {
 
   group('NonEmptyString', () {
     test('creates with valid string', () {
-      const s = NonEmptyString('Fajr');
+      final s = NonEmptyString('Fajr');
       expect(s.value, 'Fajr');
     });
 
@@ -204,19 +204,19 @@ void main() {
     });
 
     test('trims leading and trailing whitespace', () {
-      const s = NonEmptyString('  Fajr  ');
+      final s = NonEmptyString('  Fajr  ');
       expect(s.value, 'Fajr');
     });
 
     test('two instances with same trimmed value are equal', () {
-      const a = NonEmptyString('Fajr');
-      const b = NonEmptyString('  Fajr  ');
+      final a = NonEmptyString('Fajr');
+      final b = NonEmptyString('  Fajr  ');
       expect(a, equals(b));
     });
 
     test('two instances with different values are not equal', () {
-      const a = NonEmptyString('Fajr');
-      const b = NonEmptyString('Dhuhr');
+      final a = NonEmptyString('Fajr');
+      final b = NonEmptyString('Dhuhr');
       expect(a, isNot(equals(b)));
     });
   });
