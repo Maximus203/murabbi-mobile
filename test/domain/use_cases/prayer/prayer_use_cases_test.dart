@@ -35,8 +35,9 @@ void main() {
     setUp(() => useCase = GetTodayPrayersUseCase(mockRepo));
 
     test('calls repository.getTodayPrayers and returns PrayerDay', () async {
-      when(() => mockRepo.getTodayPrayers(userId))
-          .thenAnswer((_) async => testDay);
+      when(
+        () => mockRepo.getTodayPrayers(userId),
+      ).thenAnswer((_) async => testDay);
 
       final result = await useCase(userId);
 
@@ -87,11 +88,7 @@ void main() {
 
     test('calls repository.getPrayerHistory and returns list', () async {
       when(
-        () => mockRepo.getPrayerHistory(
-          userId: userId,
-          from: from,
-          to: to,
-        ),
+        () => mockRepo.getPrayerHistory(userId: userId, from: from, to: to),
       ).thenAnswer((_) async => [testDay]);
 
       final result = await useCase(userId: userId, from: from, to: to);

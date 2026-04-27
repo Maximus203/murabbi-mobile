@@ -56,6 +56,11 @@ void main() {
       final b = HabitId('habit-uuid-001');
       expect(a, equals(b));
     });
+
+    test('toString returns value', () {
+      final id = HabitId('habit-uuid-001');
+      expect(id.toString(), 'habit-uuid-001');
+    });
   });
 
   group('CategoryId', () {
@@ -73,6 +78,11 @@ void main() {
       final b = CategoryId('cat-uuid-001');
       expect(a, equals(b));
     });
+
+    test('toString returns value', () {
+      final id = CategoryId('cat-uuid-001');
+      expect(id.toString(), 'cat-uuid-001');
+    });
   });
 
   group('CollectionId', () {
@@ -89,6 +99,11 @@ void main() {
       final a = CollectionId('coll-uuid-001');
       final b = CollectionId('coll-uuid-001');
       expect(a, equals(b));
+    });
+
+    test('toString returns value', () {
+      final id = CollectionId('coll-uuid-001');
+      expect(id.toString(), 'coll-uuid-001');
     });
   });
 

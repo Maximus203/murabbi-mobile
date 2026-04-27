@@ -23,12 +23,15 @@ void main() {
     });
 
     test('contains onTime, late, missed, pending', () {
-      expect(PrayerStatus.values, containsAll([
-        PrayerStatus.onTime,
-        PrayerStatus.late,
-        PrayerStatus.missed,
-        PrayerStatus.pending,
-      ]));
+      expect(
+        PrayerStatus.values,
+        containsAll([
+          PrayerStatus.onTime,
+          PrayerStatus.late,
+          PrayerStatus.missed,
+          PrayerStatus.pending,
+        ]),
+      );
     });
   });
 
@@ -46,6 +49,44 @@ void main() {
         Level.wali,
         Level.murabbi,
       ]);
+    });
+
+    test('threshold returns correct point threshold', () {
+      expect(Level.aspirant.threshold, 0);
+      expect(Level.murid.threshold, 1000);
+      expect(Level.salik.threshold, 5000);
+      expect(Level.mujahid.threshold, 15000);
+      expect(Level.wali.threshold, 40000);
+      expect(Level.murabbi.threshold, 100000);
+    });
+
+    test('fromPoints returns aspirant for 0 points', () {
+      expect(Level.fromPoints(0), Level.aspirant);
+    });
+
+    test('fromPoints returns murid at threshold', () {
+      expect(Level.fromPoints(1000), Level.murid);
+    });
+
+    test('fromPoints returns salik at threshold', () {
+      expect(Level.fromPoints(5000), Level.salik);
+    });
+
+    test('fromPoints returns mujahid at threshold', () {
+      expect(Level.fromPoints(15000), Level.mujahid);
+    });
+
+    test('fromPoints returns wali at threshold', () {
+      expect(Level.fromPoints(40000), Level.wali);
+    });
+
+    test('fromPoints returns murabbi at max threshold', () {
+      expect(Level.fromPoints(100000), Level.murabbi);
+    });
+
+    test('fromPoints returns correct level for intermediate points', () {
+      expect(Level.fromPoints(3000), Level.murid);
+      expect(Level.fromPoints(999), Level.aspirant);
     });
   });
 
@@ -279,11 +320,14 @@ void main() {
 
     test('HabitLogStatus has three values', () {
       expect(HabitLogStatus.values.length, 3);
-      expect(HabitLogStatus.values, containsAll([
-        HabitLogStatus.done,
-        HabitLogStatus.late,
-        HabitLogStatus.missed,
-      ]));
+      expect(
+        HabitLogStatus.values,
+        containsAll([
+          HabitLogStatus.done,
+          HabitLogStatus.late,
+          HabitLogStatus.missed,
+        ]),
+      );
     });
   });
 
@@ -339,6 +383,24 @@ void main() {
       expect(score.currentLevel, Level.murid);
     });
 
+    test('two scores with same fields are equal', () {
+      final a = UserScore(
+        userId: userId,
+        totalPoints: 1500,
+        weeklyPoints: 120,
+        currentLevel: Level.murid,
+        weeklyRank: 3,
+      );
+      final b = UserScore(
+        userId: userId,
+        totalPoints: 1500,
+        weeklyPoints: 120,
+        currentLevel: Level.murid,
+        weeklyRank: 3,
+      );
+      expect(a, equals(b));
+    });
+
     test('totalPoints cannot be negative', () {
       expect(
         () => UserScore(
@@ -381,11 +443,30 @@ void main() {
       expect(notif.type, NotificationType.prayer);
     });
 
+    test('two notifications with same fields are equal', () {
+      final scheduledAt = DateTime(2026, 4, 27, 8, 0);
+      final a = AppNotification(
+        id: NonEmptyString('notif-uuid-001'),
+        title: NonEmptyString('Heure de Fajr'),
+        body: NonEmptyString('Il est temps de prier Fajr'),
+        scheduledAt: scheduledAt,
+        type: NotificationType.prayer,
+      );
+      final b = AppNotification(
+        id: NonEmptyString('notif-uuid-001'),
+        title: NonEmptyString('Heure de Fajr'),
+        body: NonEmptyString('Il est temps de prier Fajr'),
+        scheduledAt: scheduledAt,
+        type: NotificationType.prayer,
+      );
+      expect(a, equals(b));
+    });
+
     test('NotificationType has prayer and habit values', () {
-      expect(NotificationType.values, containsAll([
-        NotificationType.prayer,
-        NotificationType.habit,
-      ]));
+      expect(
+        NotificationType.values,
+        containsAll([NotificationType.prayer, NotificationType.habit]),
+      );
     });
   });
 }

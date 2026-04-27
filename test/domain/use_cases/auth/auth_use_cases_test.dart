@@ -34,10 +34,7 @@ void main() {
 
     test('calls repository.signIn and returns user', () async {
       when(
-        () => mockRepo.signIn(
-          email: 'cherif@example.com',
-          password: 'pass123',
-        ),
+        () => mockRepo.signIn(email: 'cherif@example.com', password: 'pass123'),
       ).thenAnswer((_) async => testUser);
 
       final result = await useCase(
@@ -47,16 +44,16 @@ void main() {
 
       expect(result, testUser);
       verify(
-        () => mockRepo.signIn(
-          email: 'cherif@example.com',
-          password: 'pass123',
-        ),
+        () => mockRepo.signIn(email: 'cherif@example.com', password: 'pass123'),
       ).called(1);
     });
 
     test('propagates repository exception', () async {
       when(
-        () => mockRepo.signIn(email: any(named: 'email'), password: any(named: 'password')),
+        () => mockRepo.signIn(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
       ).thenThrow(Exception('invalid credentials'));
 
       expect(

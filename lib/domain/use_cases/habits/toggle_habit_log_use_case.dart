@@ -10,9 +10,6 @@ class ToggleHabitLogUseCase {
     required HabitId habitId,
     required DateTime date,
     required HabitLogStatus status,
-  }) => _repository.toggleHabitLog(
-        habitId: habitId,
-        date: date,
-        status: status,
-      );
+  }) =>
+      _repository.toggleHabitLog(habitId: habitId, date: date, status: status);
 }

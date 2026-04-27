@@ -35,8 +35,9 @@ void main() {
     setUp(() => useCase = GetCategoriesUseCase(mockRepo));
 
     test('calls repository.getCategories and returns list', () async {
-      when(() => mockRepo.getCategories(userId))
-          .thenAnswer((_) async => [testCategory]);
+      when(
+        () => mockRepo.getCategories(userId),
+      ).thenAnswer((_) async => [testCategory]);
 
       final result = await useCase(userId);
 
@@ -52,10 +53,7 @@ void main() {
 
     test('calls repository.createCategory and returns category', () async {
       when(
-        () => mockRepo.createCategory(
-          userId: userId,
-          category: testCategory,
-        ),
+        () => mockRepo.createCategory(userId: userId, category: testCategory),
       ).thenAnswer((_) async => testCategory);
 
       final result = await useCase(userId: userId, category: testCategory);

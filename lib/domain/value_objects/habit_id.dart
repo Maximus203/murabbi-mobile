@@ -3,10 +3,13 @@ import 'package:equatable/equatable.dart';
 class HabitId extends Equatable {
   final String value;
 
-  HabitId(String value) : value = value {
+  const HabitId._(this.value);
+
+  factory HabitId(String value) {
     if (value.trim().isEmpty) {
       throw ArgumentError.value(value, 'value', 'HabitId cannot be empty');
     }
+    return HabitId._(value);
   }
 
   @override

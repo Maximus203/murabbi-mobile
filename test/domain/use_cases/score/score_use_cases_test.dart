@@ -31,8 +31,9 @@ void main() {
     setUp(() => useCase = GetUserScoreUseCase(mockRepo));
 
     test('calls repository.getUserScore and returns score', () async {
-      when(() => mockRepo.getUserScore(userId))
-          .thenAnswer((_) async => testScore);
+      when(
+        () => mockRepo.getUserScore(userId),
+      ).thenAnswer((_) async => testScore);
 
       final result = await useCase(userId);
 
@@ -47,8 +48,9 @@ void main() {
     setUp(() => useCase = GetLeaderboardUseCase(mockRepo));
 
     test('calls repository.getLeaderboard and returns list', () async {
-      when(() => mockRepo.getLeaderboard(limit: 20))
-          .thenAnswer((_) async => [testScore]);
+      when(
+        () => mockRepo.getLeaderboard(limit: 20),
+      ).thenAnswer((_) async => [testScore]);
 
       final result = await useCase(limit: 20);
 

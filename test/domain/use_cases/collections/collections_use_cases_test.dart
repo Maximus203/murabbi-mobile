@@ -37,8 +37,9 @@ void main() {
     setUp(() => useCase = GetCollectionsUseCase(mockRepo));
 
     test('calls repository.getCollections and returns list', () async {
-      when(() => mockRepo.getCollections(userId))
-          .thenAnswer((_) async => [testCollection]);
+      when(
+        () => mockRepo.getCollections(userId),
+      ).thenAnswer((_) async => [testCollection]);
 
       final result = await useCase(userId);
 
@@ -85,10 +86,7 @@ void main() {
         ),
       ).thenAnswer((_) async => testCollection);
 
-      final result = await useCase(
-        userId: userId,
-        collection: testCollection,
-      );
+      final result = await useCase(userId: userId, collection: testCollection);
 
       expect(result, testCollection);
       verify(

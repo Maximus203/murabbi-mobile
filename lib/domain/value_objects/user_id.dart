@@ -3,10 +3,13 @@ import 'package:equatable/equatable.dart';
 class UserId extends Equatable {
   final String value;
 
-  UserId(String value) : value = value {
+  const UserId._(this.value);
+
+  factory UserId(String value) {
     if (value.trim().isEmpty) {
       throw ArgumentError.value(value, 'value', 'UserId cannot be empty');
     }
+    return UserId._(value);
   }
 
   @override

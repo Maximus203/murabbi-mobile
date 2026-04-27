@@ -3,14 +3,13 @@ import 'package:equatable/equatable.dart';
 class CollectionId extends Equatable {
   final String value;
 
-  CollectionId(String value) : value = value {
+  const CollectionId._(this.value);
+
+  factory CollectionId(String value) {
     if (value.trim().isEmpty) {
-      throw ArgumentError.value(
-        value,
-        'value',
-        'CollectionId cannot be empty',
-      );
+      throw ArgumentError.value(value, 'value', 'CollectionId cannot be empty');
     }
+    return CollectionId._(value);
   }
 
   @override

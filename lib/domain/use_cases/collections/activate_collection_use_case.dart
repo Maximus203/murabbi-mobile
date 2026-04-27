@@ -10,7 +10,7 @@ class ActivateCollectionUseCase {
     required UserId userId,
     required CollectionId collectionId,
   }) => _repository.activateCollection(
-        userId: userId,
-        collectionId: collectionId,
-      );
+    userId: userId,
+    collectionId: collectionId,
+  );
 }

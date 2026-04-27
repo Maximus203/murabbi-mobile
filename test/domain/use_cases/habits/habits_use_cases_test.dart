@@ -43,8 +43,9 @@ void main() {
     setUp(() => useCase = GetHabitsUseCase(mockRepo));
 
     test('calls repository.getHabits and returns list', () async {
-      when(() => mockRepo.getHabits(userId))
-          .thenAnswer((_) async => [testHabit]);
+      when(
+        () => mockRepo.getHabits(userId),
+      ).thenAnswer((_) async => [testHabit]);
 
       final result = await useCase(userId);
 
@@ -59,14 +60,16 @@ void main() {
     setUp(() => useCase = CreateHabitUseCase(mockRepo));
 
     test('calls repository.createHabit and returns created habit', () async {
-      when(() => mockRepo.createHabit(userId: userId, habit: testHabit))
-          .thenAnswer((_) async => testHabit);
+      when(
+        () => mockRepo.createHabit(userId: userId, habit: testHabit),
+      ).thenAnswer((_) async => testHabit);
 
       final result = await useCase(userId: userId, habit: testHabit);
 
       expect(result, testHabit);
-      verify(() => mockRepo.createHabit(userId: userId, habit: testHabit))
-          .called(1);
+      verify(
+        () => mockRepo.createHabit(userId: userId, habit: testHabit),
+      ).called(1);
     });
   });
 
@@ -76,8 +79,9 @@ void main() {
     setUp(() => useCase = UpdateHabitUseCase(mockRepo));
 
     test('calls repository.updateHabit and returns updated habit', () async {
-      when(() => mockRepo.updateHabit(testHabit))
-          .thenAnswer((_) async => testHabit);
+      when(
+        () => mockRepo.updateHabit(testHabit),
+      ).thenAnswer((_) async => testHabit);
 
       final result = await useCase(testHabit);
 
@@ -117,11 +121,7 @@ void main() {
         ),
       ).thenAnswer((_) async {});
 
-      await useCase(
-        habitId: habitId,
-        date: date,
-        status: HabitLogStatus.done,
-      );
+      await useCase(habitId: habitId, date: date, status: HabitLogStatus.done);
 
       verify(
         () => mockRepo.toggleHabitLog(

@@ -29,5 +29,12 @@ class Collection extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, name, description, habitIds, isSystem, isActive];
+  List<Object?> get props => [
+    id,
+    name,
+    description,
+    habitIds,
+    isSystem,
+    isActive,
+  ];
 }

@@ -12,9 +12,9 @@ class MarkPrayerUseCase {
     required String prayerName,
     required PrayerStatus status,
   }) => _repository.markPrayer(
-        userId: userId,
-        date: date,
-        prayerName: prayerName,
-        status: status,
-      );
+    userId: userId,
+    date: date,
+    prayerName: prayerName,
+    status: status,
+  );
 }
