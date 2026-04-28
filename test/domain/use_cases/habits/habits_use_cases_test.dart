@@ -12,6 +12,7 @@ import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/time_of_day_value.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 class MockHabitRepository extends Mock implements HabitRepository {}
@@ -26,7 +27,8 @@ void main() {
     categoryId: CategoryId('cat-uuid-001'),
     frequencyType: HabitFrequencyType.perWeek,
     frequency: 5,
-    timeRange: HabitTimeRange.morning,
+    rangeStart: TimeOfDayValue(7, 0),
+    rangeEnd: TimeOfDayValue(9, 0),
     activeDays: {1, 2, 3, 4, 5},
     points: HabitPoints(5),
     isSystem: false,

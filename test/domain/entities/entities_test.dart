@@ -15,6 +15,7 @@ import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/time_of_day_value.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 void main() {
@@ -67,7 +68,8 @@ void main() {
         categoryId: catId,
         frequencyType: HabitFrequencyType.daily,
         frequency: 1,
-        timeRange: HabitTimeRange.morning,
+        rangeStart: TimeOfDayValue(6, 0),
+        rangeEnd: TimeOfDayValue(8, 0),
         activeDays: {1, 2, 3, 4, 5, 6, 7},
         points: HabitPoints(3),
         isSystem: false,
@@ -82,7 +84,7 @@ void main() {
         categoryId: catId,
         frequencyType: HabitFrequencyType.monthly,
         frequency: 1,
-        timeRange: HabitTimeRange.anytime,
+        monthlyDay: 1,
         activeDays: {1},
         points: HabitPoints(5),
         isSystem: false,
@@ -97,7 +99,8 @@ void main() {
         categoryId: catId,
         frequencyType: HabitFrequencyType.custom,
         frequency: 3,
-        timeRange: HabitTimeRange.evening,
+        rangeStart: TimeOfDayValue(18, 0),
+        rangeEnd: TimeOfDayValue(20, 0),
         activeDays: {1, 3, 5},
         points: HabitPoints(4),
         isSystem: false,
@@ -345,7 +348,8 @@ void main() {
         categoryId: catId,
         frequencyType: HabitFrequencyType.perWeek,
         frequency: 5,
-        timeRange: HabitTimeRange.morning,
+        rangeStart: TimeOfDayValue(7, 0),
+        rangeEnd: TimeOfDayValue(9, 0),
         activeDays: {1, 2, 3, 4, 5},
         points: HabitPoints(5),
         isSystem: false,
@@ -355,7 +359,24 @@ void main() {
       expect(habit.name.value, 'Morning run');
       expect(habit.frequencyType, HabitFrequencyType.perWeek);
       expect(habit.frequency, 5);
+      expect(habit.rangeStart?.hour, 7);
+      expect(habit.rangeEnd?.hour, 9);
       expect(habit.isSystem, isFalse);
+    });
+
+    test('creates with anytime range (both null)', () {
+      final habit = Habit(
+        id: habitId,
+        name: NonEmptyString('Anytime habit'),
+        categoryId: catId,
+        frequencyType: HabitFrequencyType.daily,
+        frequency: 1,
+        activeDays: {1, 2, 3, 4, 5, 6, 7},
+        points: HabitPoints(2),
+        isSystem: false,
+      );
+      expect(habit.rangeStart, isNull);
+      expect(habit.rangeEnd, isNull);
     });
 
     test('frequency must be positive', () {
@@ -366,7 +387,8 @@ void main() {
           categoryId: catId,
           frequencyType: HabitFrequencyType.perWeek,
           frequency: 0,
-          timeRange: HabitTimeRange.morning,
+          rangeStart: TimeOfDayValue(7, 0),
+          rangeEnd: TimeOfDayValue(9, 0),
           activeDays: {1},
           points: HabitPoints(1),
           isSystem: false,
@@ -383,13 +405,145 @@ void main() {
           categoryId: catId,
           frequencyType: HabitFrequencyType.perWeek,
           frequency: 1,
-          timeRange: HabitTimeRange.morning,
+          rangeStart: TimeOfDayValue(7, 0),
+          rangeEnd: TimeOfDayValue(9, 0),
           activeDays: {},
           points: HabitPoints(1),
           isSystem: false,
         ),
         throwsArgumentError,
       );
+    });
+  });
+
+  group('Habit monthlyDay invariant', () {
+    final habitId = HabitId('habit-uuid-001');
+    final catId = CategoryId('cat-uuid-001');
+
+    Habit buildMonthly({int? monthlyDay}) => Habit(
+      id: habitId,
+      name: NonEmptyString('Bilan mensuel'),
+      categoryId: catId,
+      frequencyType: HabitFrequencyType.monthly,
+      frequency: 1,
+      monthlyDay: monthlyDay,
+      activeDays: {1},
+      points: HabitPoints(5),
+      isSystem: false,
+    );
+
+    test('monthly without monthlyDay throws', () {
+      expect(() => buildMonthly(monthlyDay: null), throwsArgumentError);
+    });
+
+    test('monthly with monthlyDay = 0 throws', () {
+      expect(() => buildMonthly(monthlyDay: 0), throwsArgumentError);
+    });
+
+    test('monthly with monthlyDay = 32 throws', () {
+      expect(() => buildMonthly(monthlyDay: 32), throwsArgumentError);
+    });
+
+    test('monthly with monthlyDay = 15 ok', () {
+      final h = buildMonthly(monthlyDay: 15);
+      expect(h.monthlyDay, 15);
+    });
+
+    test('monthly with monthlyDay = 1 ok (boundary)', () {
+      final h = buildMonthly(monthlyDay: 1);
+      expect(h.monthlyDay, 1);
+    });
+
+    test('monthly with monthlyDay = 31 ok (boundary)', () {
+      final h = buildMonthly(monthlyDay: 31);
+      expect(h.monthlyDay, 31);
+    });
+
+    test('non-monthly with non-null monthlyDay throws', () {
+      expect(
+        () => Habit(
+          id: habitId,
+          name: NonEmptyString('Daily'),
+          categoryId: catId,
+          frequencyType: HabitFrequencyType.daily,
+          frequency: 1,
+          monthlyDay: 15,
+          activeDays: {1, 2, 3, 4, 5, 6, 7},
+          points: HabitPoints(2),
+          isSystem: false,
+        ),
+        throwsArgumentError,
+      );
+    });
+  });
+
+  group('Habit time range invariant', () {
+    final habitId = HabitId('habit-uuid-001');
+    final catId = CategoryId('cat-uuid-001');
+
+    Habit buildWithRange({
+      TimeOfDayValue? rangeStart,
+      TimeOfDayValue? rangeEnd,
+    }) => Habit(
+      id: habitId,
+      name: NonEmptyString('Run'),
+      categoryId: catId,
+      frequencyType: HabitFrequencyType.daily,
+      frequency: 1,
+      rangeStart: rangeStart,
+      rangeEnd: rangeEnd,
+      activeDays: {1, 2, 3, 4, 5, 6, 7},
+      points: HabitPoints(3),
+      isSystem: false,
+    );
+
+    test('rangeStart non-null without rangeEnd throws', () {
+      expect(
+        () => buildWithRange(rangeStart: TimeOfDayValue(8, 0)),
+        throwsArgumentError,
+      );
+    });
+
+    test('rangeEnd non-null without rangeStart throws', () {
+      expect(
+        () => buildWithRange(rangeEnd: TimeOfDayValue(8, 0)),
+        throwsArgumentError,
+      );
+    });
+
+    test('rangeEnd equal to rangeStart throws', () {
+      expect(
+        () => buildWithRange(
+          rangeStart: TimeOfDayValue(8, 0),
+          rangeEnd: TimeOfDayValue(8, 0),
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('rangeEnd before rangeStart throws (no minuit wrap V1)', () {
+      expect(
+        () => buildWithRange(
+          rangeStart: TimeOfDayValue(20, 0),
+          rangeEnd: TimeOfDayValue(8, 0),
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('rangeStart < rangeEnd ok', () {
+      final h = buildWithRange(
+        rangeStart: TimeOfDayValue(8, 0),
+        rangeEnd: TimeOfDayValue(12, 0),
+      );
+      expect(h.rangeStart, isNotNull);
+      expect(h.rangeEnd, isNotNull);
+    });
+
+    test('both null ok (anytime)', () {
+      final h = buildWithRange();
+      expect(h.rangeStart, isNull);
+      expect(h.rangeEnd, isNull);
     });
   });
 
