@@ -6,23 +6,28 @@ enum Level {
   wali,
   murabbi;
 
+  /// Seuils d'entrée par niveau — verrouillés par Q-10b
+  /// (`murabbi-admin/docs/decisions/product_decisions_v1.md`).
+  /// Calibrage : Murabbi atteignable en ≈10 ans à 60 pts/j.
   static const Map<Level, int> thresholds = {
     Level.aspirant: 0,
-    Level.murid: 1000,
-    Level.salik: 5000,
-    Level.mujahid: 15000,
-    Level.wali: 40000,
-    Level.murabbi: 100000,
+    Level.murid: 10000,
+    Level.salik: 30000,
+    Level.mujahid: 70000,
+    Level.wali: 150000,
+    Level.murabbi: 300000,
   };
 
-  /// Daily point target for this level. Increases at each palier (Q-10 B).
+  /// Objectif quotidien (points/jour) par niveau — verrouillé par Q-10c.
+  /// Croît avec le niveau : l'utilisateur engagé doit fournir plus à mesure
+  /// qu'il progresse.
   static const Map<Level, int> _dailyGoals = {
-    Level.aspirant: 60,
-    Level.murid: 80,
-    Level.salik: 100,
-    Level.mujahid: 120,
-    Level.wali: 150,
-    Level.murabbi: 200,
+    Level.aspirant: 30,
+    Level.murid: 45,
+    Level.salik: 60,
+    Level.mujahid: 75,
+    Level.wali: 90,
+    Level.murabbi: 105,
   };
 
   int get threshold => thresholds[this]!;
