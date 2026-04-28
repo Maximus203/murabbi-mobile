@@ -1,23 +1,18 @@
 # Q-01 — Audit wireframes : wireframes manquants
 
-**Date** : 2026-04-27
-**Auteur** : Agent mobile (Phase 0)
-**Statut** : Ouvert — en attente de réponse Cherif
+**Date ouverture** : 2026-04-27  
+**Date fermeture** : 2026-04-28  
+**Statut** : **FERMÉE**
 
-## Question
+## Résolution
 
-Les wireframes Hi-Fi (`docs/wireframes/bundle/Murabbi Wireframes.html`) ne sont pas
-présents dans le repo mobile. L'audit des 28 écrans ne peut pas être finalisé.
+Les wireframes ont été fournis par Cherif le 2026-04-28 :
 
-Quand seront-ils synchronisés depuis `murabbi-admin/docs/wireframes/mobile/` ?
+- `docs/wireframes/bundle/` — bundle JSX complet (screens-core, screens-detail, screens-onboarding, extras, design-system-sheet, styles.css)
+- `docs/wireframes/mobile/` — HTML standalone (Murabbi Wireframes.html + Murabbi Extras Mobile.html)
 
-## Impact
-
-- L'audit `docs/audit/wireframes_audit.md` est partiel (structure déduite de la logique produit)
-- Les questions d'incohérences UI ne peuvent pas être soulevées
-- La Phase 0 reste techniquement incomplète sur ce livrable
-
-## Bloquant pour
-
-La PR Phase 0 peut être soumise avec l'audit partiel annoté. La complétion de l'audit
-sera un ticket de suivi après réception des wireframes.
+L'audit complet est disponible dans `docs/audit/wireframes_audit.md` :
+- 32 écrans inventoriés
+- 16 incohérences détectées
+- 11 questions métier ouvertes (Q-02 à Q-12)
+- 6 use cases manquants identifiés
