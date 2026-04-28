@@ -6,10 +6,11 @@ class UserId extends Equatable {
   const UserId._(this.value);
 
   factory UserId(String value) {
-    if (value.trim().isEmpty) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
       throw ArgumentError.value(value, 'value', 'UserId cannot be empty');
     }
-    return UserId._(value);
+    return UserId._(trimmed);
   }
 
   @override

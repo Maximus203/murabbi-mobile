@@ -6,10 +6,11 @@ class CollectionId extends Equatable {
   const CollectionId._(this.value);
 
   factory CollectionId(String value) {
-    if (value.trim().isEmpty) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
       throw ArgumentError.value(value, 'value', 'CollectionId cannot be empty');
     }
-    return CollectionId._(value);
+    return CollectionId._(trimmed);
   }
 
   @override

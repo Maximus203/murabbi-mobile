@@ -6,10 +6,11 @@ class HabitId extends Equatable {
   const HabitId._(this.value);
 
   factory HabitId(String value) {
-    if (value.trim().isEmpty) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
       throw ArgumentError.value(value, 'value', 'HabitId cannot be empty');
     }
-    return HabitId._(value);
+    return HabitId._(trimmed);
   }
 
   @override

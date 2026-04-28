@@ -6,10 +6,11 @@ class CategoryId extends Equatable {
   const CategoryId._(this.value);
 
   factory CategoryId(String value) {
-    if (value.trim().isEmpty) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
       throw ArgumentError.value(value, 'value', 'CategoryId cannot be empty');
     }
-    return CategoryId._(value);
+    return CategoryId._(trimmed);
   }
 
   @override
