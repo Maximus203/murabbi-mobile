@@ -6,6 +6,7 @@ import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/percentage.dart';
 import 'package:murabbi_mobile/domain/value_objects/prayer_points.dart';
+import 'package:murabbi_mobile/domain/value_objects/time_of_day_value.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 void main() {
@@ -253,6 +254,76 @@ void main() {
       final a = NonEmptyString('Fajr');
       final b = NonEmptyString('Dhuhr');
       expect(a, isNot(equals(b)));
+    });
+  });
+
+  group('TimeOfDayValue', () {
+    test('creates with valid hour and minute', () {
+      final t = TimeOfDayValue(8, 30);
+      expect(t.hour, 8);
+      expect(t.minute, 30);
+    });
+
+    test('creates with boundary 0:0', () {
+      final t = TimeOfDayValue(0, 0);
+      expect(t.hour, 0);
+      expect(t.minute, 0);
+    });
+
+    test('creates with boundary 23:59', () {
+      final t = TimeOfDayValue(23, 59);
+      expect(t.hour, 23);
+      expect(t.minute, 59);
+    });
+
+    test('throws on hour below 0', () {
+      expect(() => TimeOfDayValue(-1, 0), throwsArgumentError);
+    });
+
+    test('throws on hour above 23', () {
+      expect(() => TimeOfDayValue(24, 0), throwsArgumentError);
+    });
+
+    test('throws on minute below 0', () {
+      expect(() => TimeOfDayValue(10, -1), throwsArgumentError);
+    });
+
+    test('throws on minute above 59', () {
+      expect(() => TimeOfDayValue(10, 60), throwsArgumentError);
+    });
+
+    test('toString pads hour and minute with zero', () {
+      expect(TimeOfDayValue(8, 5).toString(), '08:05');
+      expect(TimeOfDayValue(23, 59).toString(), '23:59');
+      expect(TimeOfDayValue(0, 0).toString(), '00:00');
+    });
+
+    test('two instances with same hour/minute are equal', () {
+      final a = TimeOfDayValue(8, 30);
+      final b = TimeOfDayValue(8, 30);
+      expect(a, equals(b));
+    });
+
+    test('two instances with different values are not equal', () {
+      final a = TimeOfDayValue(8, 30);
+      final b = TimeOfDayValue(8, 31);
+      expect(a, isNot(equals(b)));
+    });
+
+    test('isBefore returns true when earlier same hour', () {
+      expect(TimeOfDayValue(8, 0).isBefore(TimeOfDayValue(8, 30)), isTrue);
+    });
+
+    test('isBefore returns true when earlier different hour', () {
+      expect(TimeOfDayValue(7, 30).isBefore(TimeOfDayValue(8, 0)), isTrue);
+    });
+
+    test('isBefore returns false when equal', () {
+      expect(TimeOfDayValue(8, 0).isBefore(TimeOfDayValue(8, 0)), isFalse);
+    });
+
+    test('isBefore returns false when later', () {
+      expect(TimeOfDayValue(9, 0).isBefore(TimeOfDayValue(8, 30)), isFalse);
     });
   });
 }
