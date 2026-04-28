@@ -4,6 +4,7 @@ import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
+import 'package:murabbi_mobile/domain/entities/daily_niyyah.dart';
 import 'package:murabbi_mobile/domain/entities/notification.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_day.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
@@ -18,11 +19,11 @@ import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 void main() {
   group('PrayerStatus enum', () {
-    test('has four values', () {
-      expect(PrayerStatus.values.length, 4);
+    test('has five values', () {
+      expect(PrayerStatus.values.length, 5);
     });
 
-    test('contains onTime, late, missed, pending', () {
+    test('contains onTime, late, missed, pending, makeup', () {
       expect(
         PrayerStatus.values,
         containsAll([
@@ -30,8 +31,78 @@ void main() {
           PrayerStatus.late,
           PrayerStatus.missed,
           PrayerStatus.pending,
+          PrayerStatus.makeup,
         ]),
       );
+    });
+  });
+
+  group('HabitFrequencyType enum', () {
+    test('has six values', () {
+      expect(HabitFrequencyType.values.length, 6);
+    });
+
+    test('contains all frequency types', () {
+      expect(
+        HabitFrequencyType.values,
+        containsAll([
+          HabitFrequencyType.daily,
+          HabitFrequencyType.perWeek,
+          HabitFrequencyType.weekly,
+          HabitFrequencyType.monthly,
+          HabitFrequencyType.custom,
+        ]),
+      );
+    });
+  });
+
+  group('Habit with frequencyType', () {
+    final habitId = HabitId('habit-uuid-001');
+    final catId = CategoryId('cat-uuid-001');
+
+    test('creates with daily frequencyType', () {
+      final habit = Habit(
+        id: habitId,
+        name: NonEmptyString('Dhikr'),
+        categoryId: catId,
+        frequencyType: HabitFrequencyType.daily,
+        frequency: 1,
+        timeRange: HabitTimeRange.morning,
+        activeDays: {1, 2, 3, 4, 5, 6, 7},
+        points: HabitPoints(3),
+        isSystem: false,
+      );
+      expect(habit.frequencyType, HabitFrequencyType.daily);
+    });
+
+    test('creates with monthly frequencyType', () {
+      final habit = Habit(
+        id: habitId,
+        name: NonEmptyString('Bilan mensuel'),
+        categoryId: catId,
+        frequencyType: HabitFrequencyType.monthly,
+        frequency: 1,
+        timeRange: HabitTimeRange.anytime,
+        activeDays: {1},
+        points: HabitPoints(5),
+        isSystem: false,
+      );
+      expect(habit.frequencyType, HabitFrequencyType.monthly);
+    });
+
+    test('creates with custom frequencyType', () {
+      final habit = Habit(
+        id: habitId,
+        name: NonEmptyString('Custom routine'),
+        categoryId: catId,
+        frequencyType: HabitFrequencyType.custom,
+        frequency: 3,
+        timeRange: HabitTimeRange.evening,
+        activeDays: {1, 3, 5},
+        points: HabitPoints(4),
+        isSystem: false,
+      );
+      expect(habit.frequencyType, HabitFrequencyType.custom);
     });
   });
 
@@ -87,6 +158,22 @@ void main() {
     test('fromPoints returns correct level for intermediate points', () {
       expect(Level.fromPoints(3000), Level.murid);
       expect(Level.fromPoints(999), Level.aspirant);
+    });
+
+    test('dailyGoal returns correct target per level', () {
+      expect(Level.aspirant.dailyGoal, 60);
+      expect(Level.murid.dailyGoal, 80);
+      expect(Level.salik.dailyGoal, 100);
+      expect(Level.mujahid.dailyGoal, 120);
+      expect(Level.wali.dailyGoal, 150);
+      expect(Level.murabbi.dailyGoal, 200);
+    });
+
+    test('dailyGoal increases monotonically with level', () {
+      final goals = Level.values.map((l) => l.dailyGoal).toList();
+      for (var i = 0; i < goals.length - 1; i++) {
+        expect(goals[i], lessThan(goals[i + 1]));
+      }
     });
   });
 
@@ -467,6 +554,51 @@ void main() {
         NotificationType.values,
         containsAll([NotificationType.prayer, NotificationType.habit]),
       );
+    });
+  });
+
+  group('DailyNiyyah entity', () {
+    final userId = UserId('user-uuid-001');
+    final today = DateTime(2026, 4, 28);
+
+    test('creates with valid fields', () {
+      final niyyah = DailyNiyyah(
+        userId: userId,
+        date: today,
+        text: NonEmptyString("Aujourd'hui, je m'engage à prier à l'heure."),
+      );
+
+      expect(niyyah.userId, userId);
+      expect(niyyah.date, today);
+      expect(niyyah.text.value, "Aujourd'hui, je m'engage à prier à l'heure.");
+    });
+
+    test('two niyyahs with same fields are equal', () {
+      final a = DailyNiyyah(
+        userId: userId,
+        date: today,
+        text: NonEmptyString('Intention A'),
+      );
+      final b = DailyNiyyah(
+        userId: userId,
+        date: today,
+        text: NonEmptyString('Intention A'),
+      );
+      expect(a, equals(b));
+    });
+
+    test('two niyyahs with different dates are not equal', () {
+      final a = DailyNiyyah(
+        userId: userId,
+        date: DateTime(2026, 4, 28),
+        text: NonEmptyString('Intention'),
+      );
+      final b = DailyNiyyah(
+        userId: userId,
+        date: DateTime(2026, 4, 27),
+        text: NonEmptyString('Intention'),
+      );
+      expect(a, isNot(equals(b)));
     });
   });
 }
