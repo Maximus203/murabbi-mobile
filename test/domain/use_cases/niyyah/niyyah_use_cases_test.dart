@@ -41,9 +41,7 @@ void main() {
     });
 
     test('returns null when no niyyah exists for today', () async {
-      when(
-        () => mockRepo.getTodayNiyyah(userId),
-      ).thenAnswer((_) async => null);
+      when(() => mockRepo.getTodayNiyyah(userId)).thenAnswer((_) async => null);
 
       final result = await useCase(userId);
 

@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
+import 'package:murabbi_mobile/domain/entities/daily_niyyah.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
-import 'package:murabbi_mobile/domain/entities/daily_niyyah.dart';
 import 'package:murabbi_mobile/domain/entities/notification.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_day.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
@@ -343,6 +343,7 @@ void main() {
         id: habitId,
         name: NonEmptyString('Morning run'),
         categoryId: catId,
+        frequencyType: HabitFrequencyType.perWeek,
         frequency: 5,
         timeRange: HabitTimeRange.morning,
         activeDays: {1, 2, 3, 4, 5},
@@ -352,6 +353,7 @@ void main() {
 
       expect(habit.id, habitId);
       expect(habit.name.value, 'Morning run');
+      expect(habit.frequencyType, HabitFrequencyType.perWeek);
       expect(habit.frequency, 5);
       expect(habit.isSystem, isFalse);
     });
@@ -362,6 +364,7 @@ void main() {
           id: habitId,
           name: NonEmptyString('Morning run'),
           categoryId: catId,
+          frequencyType: HabitFrequencyType.perWeek,
           frequency: 0,
           timeRange: HabitTimeRange.morning,
           activeDays: {1},
@@ -378,6 +381,7 @@ void main() {
           id: habitId,
           name: NonEmptyString('Morning run'),
           categoryId: catId,
+          frequencyType: HabitFrequencyType.perWeek,
           frequency: 1,
           timeRange: HabitTimeRange.morning,
           activeDays: {},

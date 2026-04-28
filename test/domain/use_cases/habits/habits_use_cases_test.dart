@@ -24,6 +24,7 @@ void main() {
     id: HabitId('habit-uuid-001'),
     name: NonEmptyString('Morning run'),
     categoryId: CategoryId('cat-uuid-001'),
+    frequencyType: HabitFrequencyType.perWeek,
     frequency: 5,
     timeRange: HabitTimeRange.morning,
     activeDays: {1, 2, 3, 4, 5},
