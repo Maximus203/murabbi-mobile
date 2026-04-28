@@ -23,6 +23,11 @@ void main() {
       expect(() => UserId('   '), throwsArgumentError);
     });
 
+    test('trims leading and trailing whitespace', () {
+      final id = UserId('  550e8400-e29b-41d4-a716-446655440000  ');
+      expect(id.value, '550e8400-e29b-41d4-a716-446655440000');
+    });
+
     test('two instances with same value are equal', () {
       final a = UserId('550e8400-e29b-41d4-a716-446655440000');
       final b = UserId('550e8400-e29b-41d4-a716-446655440000');
@@ -51,6 +56,11 @@ void main() {
       expect(() => HabitId(''), throwsArgumentError);
     });
 
+    test('trims leading and trailing whitespace', () {
+      final id = HabitId('  habit-uuid-001  ');
+      expect(id.value, 'habit-uuid-001');
+    });
+
     test('two instances with same value are equal', () {
       final a = HabitId('habit-uuid-001');
       final b = HabitId('habit-uuid-001');
@@ -73,6 +83,11 @@ void main() {
       expect(() => CategoryId(''), throwsArgumentError);
     });
 
+    test('trims leading and trailing whitespace', () {
+      final id = CategoryId('  cat-uuid-001  ');
+      expect(id.value, 'cat-uuid-001');
+    });
+
     test('two instances with same value are equal', () {
       final a = CategoryId('cat-uuid-001');
       final b = CategoryId('cat-uuid-001');
@@ -93,6 +108,11 @@ void main() {
 
     test('throws on empty string', () {
       expect(() => CollectionId(''), throwsArgumentError);
+    });
+
+    test('trims leading and trailing whitespace', () {
+      final id = CollectionId('  coll-uuid-001  ');
+      expect(id.value, 'coll-uuid-001');
     });
 
     test('two instances with same value are equal', () {
