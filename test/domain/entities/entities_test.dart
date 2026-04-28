@@ -122,13 +122,13 @@ void main() {
       ]);
     });
 
-    test('threshold returns correct point threshold', () {
+    test('threshold returns correct point threshold (Q-10b verrouillé)', () {
       expect(Level.aspirant.threshold, 0);
-      expect(Level.murid.threshold, 1000);
-      expect(Level.salik.threshold, 5000);
-      expect(Level.mujahid.threshold, 15000);
-      expect(Level.wali.threshold, 40000);
-      expect(Level.murabbi.threshold, 100000);
+      expect(Level.murid.threshold, 10000);
+      expect(Level.salik.threshold, 30000);
+      expect(Level.mujahid.threshold, 70000);
+      expect(Level.wali.threshold, 150000);
+      expect(Level.murabbi.threshold, 300000);
     });
 
     test('fromPoints returns aspirant for 0 points', () {
@@ -136,37 +136,37 @@ void main() {
     });
 
     test('fromPoints returns murid at threshold', () {
-      expect(Level.fromPoints(1000), Level.murid);
+      expect(Level.fromPoints(10000), Level.murid);
     });
 
     test('fromPoints returns salik at threshold', () {
-      expect(Level.fromPoints(5000), Level.salik);
+      expect(Level.fromPoints(30000), Level.salik);
     });
 
     test('fromPoints returns mujahid at threshold', () {
-      expect(Level.fromPoints(15000), Level.mujahid);
+      expect(Level.fromPoints(70000), Level.mujahid);
     });
 
     test('fromPoints returns wali at threshold', () {
-      expect(Level.fromPoints(40000), Level.wali);
+      expect(Level.fromPoints(150000), Level.wali);
     });
 
     test('fromPoints returns murabbi at max threshold', () {
-      expect(Level.fromPoints(100000), Level.murabbi);
+      expect(Level.fromPoints(300000), Level.murabbi);
     });
 
     test('fromPoints returns correct level for intermediate points', () {
-      expect(Level.fromPoints(3000), Level.murid);
-      expect(Level.fromPoints(999), Level.aspirant);
+      expect(Level.fromPoints(20000), Level.murid);
+      expect(Level.fromPoints(9999), Level.aspirant);
     });
 
-    test('dailyGoal returns correct target per level', () {
-      expect(Level.aspirant.dailyGoal, 60);
-      expect(Level.murid.dailyGoal, 80);
-      expect(Level.salik.dailyGoal, 100);
-      expect(Level.mujahid.dailyGoal, 120);
-      expect(Level.wali.dailyGoal, 150);
-      expect(Level.murabbi.dailyGoal, 200);
+    test('dailyGoal returns correct target per level (Q-10c verrouillé)', () {
+      expect(Level.aspirant.dailyGoal, 30);
+      expect(Level.murid.dailyGoal, 45);
+      expect(Level.salik.dailyGoal, 60);
+      expect(Level.mujahid.dailyGoal, 75);
+      expect(Level.wali.dailyGoal, 90);
+      expect(Level.murabbi.dailyGoal, 105);
     });
 
     test('dailyGoal increases monotonically with level', () {
