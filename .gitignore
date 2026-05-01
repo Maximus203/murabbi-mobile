@@ -48,3 +48,15 @@ test/.test_coverage.dart
 
 # Claude
 .claude/
+
+# S-11 — ne jamais commiter de fichiers admin dans le repo public mobile
+# (CLAUDE.md racine §A.3.1 S-11 — cloisonnement repo public/privé)
+**/admin-*.jsx
+**/Murabbi Admin.html
+**/Murabbi Admin.html.bak
+
+# S-11 — chemins non canoniques pour les wireframes (livraisons brutes)
+# La source de vérité mobile est docs/wireframes/bundle/. Tout autre chemin
+# (notamment /wireframes/ à la racine) est ignoré pour éviter les fuites
+# accidentelles depuis des extractions Anthropic Webpage Complete.
+/wireframes/
