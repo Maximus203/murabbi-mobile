@@ -1,5 +1,6 @@
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
+import 'package:murabbi_mobile/domain/entities/habit_target.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 
 /// Calcul de score (logique pure).
@@ -19,7 +20,7 @@ class ScoreCalculatorUseCase {
   const ScoreCalculatorUseCase();
 
   int forHabit(Habit habit, HabitLog log) {
-    if (habit.target.hasValue && log.targetReached != true) {
+    if (habit.target.hasValue && !_isTargetReached(habit.target, log)) {
       return 0;
     }
     if (habit.subtasksAllRequired) {
@@ -37,6 +38,27 @@ class ScoreCalculatorUseCase {
       case HabitLogStatus.missed:
         return 0;
     }
+  }
+
+  /// Source de vérité du domaine : on **recalcule** "atteint ?" depuis
+  /// `habit.target` et `log.actualValue` plutôt que de faire confiance à
+  /// `log.targetReached` (colonne SQL `GENERATED` qui peut ne pas être
+  /// hydratée en lecture immédiate après écriture). `targetReached` reste
+  /// utilisable comme cache d'optimisation côté requêtes analytiques.
+  /// Cf. ADR-008 § "Scoring computation: domain truth, DB cache"
+  /// (Copilot review #5).
+  bool _isTargetReached(HabitTarget target, HabitLog log) {
+    final actual = log.actualValue;
+    if (actual == null) {
+      // Si une valeur explicite a été cachée par le DB trigger, l'utiliser
+      // en dernier recours (lecture batch sans fetch séparé).
+      return log.targetReached == true;
+    }
+    return switch (target) {
+      HabitTargetNone() => true,
+      HabitTargetValue(:final value) => actual >= value.value,
+      HabitTargetTimed(:final value) => actual >= value.value,
+    };
   }
 
   int forPrayer(PrayerStatus status) {
