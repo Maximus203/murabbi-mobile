@@ -112,6 +112,18 @@ void main() {
         throwsArgumentError,
       );
     });
+
+    test('throws if newOrder contains duplicate ids (Copilot review #2)', () {
+      final a = sub('a', 0);
+      final b = sub('b', 1);
+      expect(
+        () => useCase(
+          subtasks: [a, b],
+          newOrder: [HabitSubtaskId('a'), HabitSubtaskId('a')],
+        ),
+        throwsArgumentError,
+      );
+    });
   });
 
   // ---------------------------------------------------------------------------
