@@ -27,6 +27,12 @@ dependencies:
   # Utils
   equatable: ^2.0.7
 
+  # Grapheme cluster iteration (used by BuildCollectionCoverUseCase to compute
+  # the fallback cover initial — emoji + combining marks safe). Available
+  # transitively via the Flutter SDK; declared explicitly so analyzer's
+  # `depend_on_referenced_packages` is satisfied.
+  characters: ^1.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

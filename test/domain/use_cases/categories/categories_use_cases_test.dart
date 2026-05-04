@@ -6,6 +6,7 @@ import 'package:murabbi_mobile/domain/use_cases/categories/create_category_use_c
 import 'package:murabbi_mobile/domain/use_cases/categories/get_categories_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
+import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
@@ -18,7 +19,7 @@ void main() {
   final testCategory = Category(
     id: CategoryId('cat-uuid-001'),
     name: NonEmptyString('Sport'),
-    color: '#4A5568',
+    color: HexColor('#4A5568'),
     icon: 'activity',
     points: HabitPoints(3),
     isSystem: false,

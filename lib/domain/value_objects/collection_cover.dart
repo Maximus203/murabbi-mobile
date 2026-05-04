@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 
 /// Visual cover of a collection — either a hosted image or a deterministic
 /// fallback (gradient + initial), per `product_decisions_v1.md § Q-13-cover`.
@@ -33,44 +34,29 @@ final class CollectionCoverImage extends CollectionCover {
   List<Object?> get props => [url];
 }
 
-/// Cover synthesized from the collection's category color + the first letter
-/// of its name. Used when no image was uploaded yet (most collections at
-/// install time) and as a graceful degradation if the URL fails to load.
+/// Cover synthesized from the collection's category color + the first
+/// grapheme cluster of its name. Used when no image was uploaded yet
+/// (most collections at install time) and as a graceful degradation if the
+/// URL fails to load.
 final class CollectionCoverFallback extends CollectionCover {
   /// Category accent color in `#RRGGBB` format. Drives the gradient on screen.
-  final String categoryColorHex;
+  /// Typed as [HexColor] so the invariant lives at the source (cf. PR #12 fix).
+  final HexColor categoryColor;
 
-  /// Single uppercase character — the first letter of the collection name.
-  /// Arabic / non-cased glyphs pass through unchanged (`toUpperCase` is a no-op).
+  /// First user-perceived character (grapheme cluster) of the collection
+  /// name. Computed via `String.characters.first` to handle emoji and
+  /// combining marks correctly — never a half surrogate.
   final String initial;
 
   CollectionCoverFallback({
-    required this.categoryColorHex,
-    required String initial,
-  }) : initial = initial.toUpperCase() {
-    if (this.initial.isEmpty) {
+    required this.categoryColor,
+    required this.initial,
+  }) {
+    if (initial.isEmpty) {
       throw ArgumentError.value(initial, 'initial', 'initial cannot be empty');
     }
-    if (this.initial.length != 1) {
-      throw ArgumentError.value(
-        initial,
-        'initial',
-        'initial must be a single character',
-      );
-    }
-    if (!_isHexColor(categoryColorHex)) {
-      throw ArgumentError.value(
-        categoryColorHex,
-        'categoryColorHex',
-        'expected #RRGGBB',
-      );
-    }
-  }
-
-  static bool _isHexColor(String s) {
-    return RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(s);
   }
 
   @override
-  List<Object?> get props => [categoryColorHex, initial];
+  List<Object?> get props => [categoryColor, initial];
 }
