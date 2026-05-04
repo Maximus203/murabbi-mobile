@@ -44,22 +44,28 @@ class HabitTimer extends Equatable {
   bool get isPaused => pausedAt != null;
   bool get isRunning => !isPaused;
 
-  /// Temps effectif déjà écoulé (hors pauses).
-  Duration get elapsed {
-    final ref = pausedAt ?? DateTime.now();
-    return _elapsedAt(ref);
-  }
-
-  Duration _elapsedAt(DateTime now) {
+  /// Temps effectif déjà écoulé (hors pauses) à l'instant [at].
+  ///
+  /// **Pure** : aucun appel à `DateTime.now()`. Le caller passe l'instant
+  /// de référence — c'est cette méthode que les use cases et tests doivent
+  /// utiliser. Si le timer est en pause, [at] est ignoré et le temps est
+  /// figé à l'instant de la pause.
+  Duration elapsedAt({required DateTime at}) {
     final paused = pausedAt;
-    final pauseUntil = paused ?? now;
+    final pauseUntil = paused ?? at;
     final raw = pauseUntil.difference(startedAt) - accumulatedPaused;
     return raw.isNegative ? Duration.zero : raw;
   }
 
+  /// Helper non-pur destiné à la couche présentation (rafraîchissement UI
+  /// périodique sans avoir à instancier un horloge mockable).
+  ///
+  /// **NE PAS UTILISER en domaine ni en tests** — préférer [elapsedAt].
+  Duration elapsedNow() => elapsedAt(at: DateTime.now());
+
   /// Temps restant à l'instant [at], clampé à `[0, totalDuration]`.
   Duration remaining({required DateTime at}) {
-    final el = _elapsedAt(at);
+    final el = elapsedAt(at: at);
     final remain = totalDuration - el;
     if (remain.isNegative) return Duration.zero;
     return remain;
@@ -92,7 +98,7 @@ class HabitTimer extends Equatable {
   /// Arrête le timer et retourne la durée effective écoulée à [now].
   /// Utilisée pour alimenter `HabitLog.duration`.
   Duration stop({required DateTime now}) {
-    return _elapsedAt(now);
+    return elapsedAt(at: now);
   }
 
   @override
