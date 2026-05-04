@@ -189,17 +189,39 @@ void main() {
       );
     });
 
-    test('elapsed accumulates across multiple pauses', () {
+    test(
+      'elapsedAt(at:) is pure (no system clock) — Copilot review #3',
+      () {
+        final t0 = DateTime.utc(2026, 5, 4, 9);
+        var timer = HabitTimer.start(
+          target: const Duration(minutes: 10),
+          now: t0,
+        );
+        timer = timer.pause(now: t0.add(const Duration(minutes: 2)));
+        timer = timer.resume(now: t0.add(const Duration(minutes: 5)));
+        timer = timer.pause(now: t0.add(const Duration(minutes: 6)));
+        // Elapsed effective = 2 + 1 = 3 minutes (3 paused minutes 2..5 don't count).
+        // The reference instant is provided explicitly — no DateTime.now() call.
+        expect(
+          timer.elapsedAt(at: t0.add(const Duration(minutes: 6))),
+          const Duration(minutes: 3),
+        );
+      },
+    );
+
+    test('elapsedAt while paused freezes at pausedAt regardless of "at"', () {
       final t0 = DateTime.utc(2026, 5, 4, 9);
       var timer = HabitTimer.start(
         target: const Duration(minutes: 10),
         now: t0,
       );
-      timer = timer.pause(now: t0.add(const Duration(minutes: 2)));
-      timer = timer.resume(now: t0.add(const Duration(minutes: 5)));
-      timer = timer.pause(now: t0.add(const Duration(minutes: 6)));
-      // Elapsed effective = 2 + 1 = 3 minutes (3 paused minutes 2..5 don't count).
-      expect(timer.elapsed, const Duration(minutes: 3));
+      timer = timer.pause(now: t0.add(const Duration(minutes: 3)));
+      // Even if caller passes a much later instant, elapsed stays 3 minutes
+      // (the timer is paused).
+      expect(
+        timer.elapsedAt(at: t0.add(const Duration(hours: 1))),
+        const Duration(minutes: 3),
+      );
     });
 
     test('stop returns final elapsed at the stop instant', () {
