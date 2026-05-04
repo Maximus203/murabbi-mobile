@@ -18,7 +18,8 @@ enum TargetUnit {
 
   /// Vrai uniquement pour `minutes` et `hours` — seules unités compatibles
   /// avec le timer in-app (cf. spec v1.5 § 3.5).
-  bool get isTimeBased => this == TargetUnit.minutes || this == TargetUnit.hours;
+  bool get isTimeBased =>
+      this == TargetUnit.minutes || this == TargetUnit.hours;
 
   static TargetUnit parse(String raw) {
     for (final unit in TargetUnit.values) {

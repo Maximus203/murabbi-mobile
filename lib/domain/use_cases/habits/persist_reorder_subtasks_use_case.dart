@@ -12,6 +12,5 @@ class PersistReorderSubtasksUseCase {
   Future<void> call({
     required HabitId habitId,
     required List<HabitSubtaskId> orderedIds,
-  }) =>
-      _repository.reorderSubtasks(habitId: habitId, orderedIds: orderedIds);
+  }) => _repository.reorderSubtasks(habitId: habitId, orderedIds: orderedIds);
 }

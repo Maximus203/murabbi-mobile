@@ -25,8 +25,15 @@ abstract interface class CollectionRepository {
   Future<List<Collection>> getCollections(UserId userId);
 
   /// Marks an existing system collection as activated for [userId].
-  /// Implementations MUST refuse activation when the collection is
-  /// soft-deleted (`deleted_at IS NOT NULL`) and surface a domain error.
+  ///
+  /// Implementations MUST :
+  /// - refuse activation when the collection is soft-deleted
+  ///   (`deleted_at IS NOT NULL`) and surface a domain error ;
+  /// - duplicate the system habits into the user's space
+  ///   (their own `habits` rows with `user_id = userId`) ;
+  /// - duplicate the associated `habit_subtasks` rows so the user owns a
+  ///   modifiable copy (spec v1.5 § 3.3 — "activation d'une collection
+  ///   système").
   Future<void> activateCollection({
     required UserId userId,
     required CollectionId collectionId,

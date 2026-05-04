@@ -29,10 +29,7 @@ class HabitTimer extends Equatable {
     required this.pausedAt,
   });
 
-  factory HabitTimer.start({
-    required Duration target,
-    required DateTime now,
-  }) {
+  factory HabitTimer.start({required Duration target, required DateTime now}) {
     if (target <= Duration.zero) {
       throw ArgumentError.value(target, 'target', 'must be > 0');
     }

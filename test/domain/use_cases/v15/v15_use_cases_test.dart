@@ -56,7 +56,7 @@ void main() {
   // ---------------------------------------------------------------------------
 
   group('ToggleSubtaskUseCase', () {
-    final useCase = const ToggleSubtaskUseCase();
+    const useCase = ToggleSubtaskUseCase();
     final id1 = HabitSubtaskId('s-1');
     final id2 = HabitSubtaskId('s-2');
 
@@ -78,7 +78,7 @@ void main() {
   });
 
   group('ReorderSubtasksUseCase', () {
-    final useCase = const ReorderSubtasksUseCase();
+    const useCase = ReorderSubtasksUseCase();
 
     test('reassigns orderIndex according to new order', () {
       final a = sub('a', 0);
@@ -86,7 +86,11 @@ void main() {
       final c = sub('c', 2);
       final reordered = useCase(
         subtasks: [a, b, c],
-        newOrder: [HabitSubtaskId('c'), HabitSubtaskId('a'), HabitSubtaskId('b')],
+        newOrder: [
+          HabitSubtaskId('c'),
+          HabitSubtaskId('a'),
+          HabitSubtaskId('b'),
+        ],
       );
       expect(reordered.map((s) => s.id.value).toList(), ['c', 'a', 'b']);
       expect(reordered.map((s) => s.orderIndex).toList(), [0, 1, 2]);
@@ -96,10 +100,7 @@ void main() {
       final a = sub('a', 0);
       final b = sub('b', 1);
       expect(
-        () => useCase(
-          subtasks: [a, b],
-          newOrder: [HabitSubtaskId('a')],
-        ),
+        () => useCase(subtasks: [a, b], newOrder: [HabitSubtaskId('a')]),
         throwsArgumentError,
       );
     });
@@ -107,10 +108,7 @@ void main() {
     test('throws if newOrder contains unknown id', () {
       final a = sub('a', 0);
       expect(
-        () => useCase(
-          subtasks: [a],
-          newOrder: [HabitSubtaskId('zzz')],
-        ),
+        () => useCase(subtasks: [a], newOrder: [HabitSubtaskId('zzz')]),
         throwsArgumentError,
       );
     });
@@ -123,7 +121,10 @@ void main() {
   group('HabitTimer', () {
     test('start initialises with full target duration remaining', () {
       final t0 = DateTime.utc(2026, 5, 4, 9);
-      final timer = HabitTimer.start(target: const Duration(minutes: 20), now: t0);
+      final timer = HabitTimer.start(
+        target: const Duration(minutes: 20),
+        now: t0,
+      );
       expect(timer.totalDuration, const Duration(minutes: 20));
       expect(timer.remaining(at: t0), const Duration(minutes: 20));
       expect(timer.isRunning, isTrue);
@@ -132,7 +133,10 @@ void main() {
 
     test('remaining decreases linearly while running', () {
       final t0 = DateTime.utc(2026, 5, 4, 9);
-      final timer = HabitTimer.start(target: const Duration(minutes: 5), now: t0);
+      final timer = HabitTimer.start(
+        target: const Duration(minutes: 5),
+        now: t0,
+      );
       expect(
         timer.remaining(at: t0.add(const Duration(minutes: 2))),
         const Duration(minutes: 3),
@@ -141,7 +145,10 @@ void main() {
 
     test('remaining clamps to zero when target elapsed', () {
       final t0 = DateTime.utc(2026, 5, 4, 9);
-      final timer = HabitTimer.start(target: const Duration(minutes: 5), now: t0);
+      final timer = HabitTimer.start(
+        target: const Duration(minutes: 5),
+        now: t0,
+      );
       expect(
         timer.remaining(at: t0.add(const Duration(minutes: 10))),
         Duration.zero,
@@ -172,7 +179,10 @@ void main() {
 
     test('elapsed accumulates across multiple pauses', () {
       final t0 = DateTime.utc(2026, 5, 4, 9);
-      var timer = HabitTimer.start(target: const Duration(minutes: 10), now: t0);
+      var timer = HabitTimer.start(
+        target: const Duration(minutes: 10),
+        now: t0,
+      );
       timer = timer.pause(now: t0.add(const Duration(minutes: 2)));
       timer = timer.resume(now: t0.add(const Duration(minutes: 5)));
       timer = timer.pause(now: t0.add(const Duration(minutes: 6)));
@@ -213,7 +223,7 @@ void main() {
   // ---------------------------------------------------------------------------
 
   group('ScoreCalculatorUseCase — habit (matrix v1.5 § 3.2/4)', () {
-    final useCase = const ScoreCalculatorUseCase();
+    const useCase = ScoreCalculatorUseCase();
 
     HabitLog log({
       HabitLogStatus status = HabitLogStatus.done,
@@ -254,13 +264,7 @@ void main() {
           unit: TargetUnit.pages,
         ),
       );
-      expect(
-        useCase.forHabit(
-          h,
-          log(actualValue: 5, targetReached: true),
-        ),
-        3,
-      );
+      expect(useCase.forHabit(h, log(actualValue: 5, targetReached: true)), 3);
     });
 
     test('habit with target — target missed returns 0 even if status=done', () {
@@ -270,13 +274,7 @@ void main() {
           unit: TargetUnit.pages,
         ),
       );
-      expect(
-        useCase.forHabit(
-          h,
-          log(actualValue: 3, targetReached: false),
-        ),
-        0,
-      );
+      expect(useCase.forHabit(h, log(actualValue: 3, targetReached: false)), 0);
     });
 
     test('habit with target — target reached but late returns +1', () {
@@ -289,37 +287,27 @@ void main() {
       expect(
         useCase.forHabit(
           h,
-          log(
-            status: HabitLogStatus.late,
-            actualValue: 5,
-            targetReached: true,
-          ),
+          log(status: HabitLogStatus.late, actualValue: 5, targetReached: true),
         ),
         1,
       );
     });
 
-    test('habit with subtasksAllRequired — all checked returns full points', () {
-      final s1 = sub('s-1', 0);
-      final s2 = sub('s-2', 1);
-      final h = makeHabit(subtasks: [s1, s2], subtasksAllRequired: true);
-      expect(
-        useCase.forHabit(
-          h,
-          log(subtasksCompleted: [s1.id, s2.id]),
-        ),
-        3,
-      );
-    });
+    test(
+      'habit with subtasksAllRequired — all checked returns full points',
+      () {
+        final s1 = sub('s-1', 0);
+        final s2 = sub('s-2', 1);
+        final h = makeHabit(subtasks: [s1, s2], subtasksAllRequired: true);
+        expect(useCase.forHabit(h, log(subtasksCompleted: [s1.id, s2.id])), 3);
+      },
+    );
 
     test('habit with subtasksAllRequired — partial returns 0', () {
       final s1 = sub('s-1', 0);
       final s2 = sub('s-2', 1);
       final h = makeHabit(subtasks: [s1, s2], subtasksAllRequired: true);
-      expect(
-        useCase.forHabit(h, log(subtasksCompleted: [s1.id])),
-        0,
-      );
+      expect(useCase.forHabit(h, log(subtasksCompleted: [s1.id])), 0);
     });
 
     test('combo target + subtasks — both must be satisfied', () {
@@ -335,11 +323,7 @@ void main() {
       expect(
         useCase.forHabit(
           h,
-          log(
-            actualValue: 20,
-            targetReached: true,
-            subtasksCompleted: [s1.id],
-          ),
+          log(actualValue: 20, targetReached: true, subtasksCompleted: [s1.id]),
         ),
         3,
       );
@@ -358,7 +342,7 @@ void main() {
   });
 
   group('ScoreCalculatorUseCase — prayer (Q-02 + Q-07 makeup)', () {
-    final useCase = const ScoreCalculatorUseCase();
+    const useCase = ScoreCalculatorUseCase();
 
     test('onTime returns +3', () {
       expect(useCase.forPrayer(PrayerStatus.onTime), 3);
@@ -382,7 +366,7 @@ void main() {
   // ---------------------------------------------------------------------------
 
   group('ComputeDayColorUseCase (Q-08-cal)', () {
-    final useCase = const ComputeDayColorUseCase();
+    const useCase = ComputeDayColorUseCase();
 
     test('all events ontime → bestSeverity, fillPercent=1.0', () {
       final result = useCase(
@@ -399,21 +383,24 @@ void main() {
       expect(result.fillPercent, closeTo(1.0, 1e-9));
     });
 
-    test('one missed prayer → worst=missed, fillPercent reflects done ratio', () {
-      final result = useCase(
-        prayerStatuses: const [
-          PrayerStatus.onTime,
-          PrayerStatus.onTime,
-          PrayerStatus.onTime,
-          PrayerStatus.onTime,
-          PrayerStatus.missed,
-        ],
-        habitStatuses: const [HabitLogStatus.done, HabitLogStatus.done],
-      );
-      expect(result.worst, DayStatusSeverity.missed);
-      // 6 done out of 7 → ~0.857
-      expect(result.fillPercent, closeTo(6 / 7, 1e-9));
-    });
+    test(
+      'one missed prayer → worst=missed, fillPercent reflects done ratio',
+      () {
+        final result = useCase(
+          prayerStatuses: const [
+            PrayerStatus.onTime,
+            PrayerStatus.onTime,
+            PrayerStatus.onTime,
+            PrayerStatus.onTime,
+            PrayerStatus.missed,
+          ],
+          habitStatuses: const [HabitLogStatus.done, HabitLogStatus.done],
+        );
+        expect(result.worst, DayStatusSeverity.missed);
+        // 6 done out of 7 → ~0.857
+        expect(result.fillPercent, closeTo(6 / 7, 1e-9));
+      },
+    );
 
     test('mixed late + makeup → worst=late (makeup is OK)', () {
       final result = useCase(
@@ -429,20 +416,14 @@ void main() {
     });
 
     test('no events → empty severity, fill=0', () {
-      final result = useCase(
-        prayerStatuses: const [],
-        habitStatuses: const [],
-      );
+      final result = useCase(prayerStatuses: const [], habitStatuses: const []);
       expect(result.worst, DayStatusSeverity.empty);
       expect(result.fillPercent, 0.0);
     });
 
     test('pending counts as not done (lowers fillPercent) but not worst', () {
       final result = useCase(
-        prayerStatuses: const [
-          PrayerStatus.onTime,
-          PrayerStatus.pending,
-        ],
+        prayerStatuses: const [PrayerStatus.onTime, PrayerStatus.pending],
         habitStatuses: const [],
       );
       expect(result.worst, DayStatusSeverity.success);
@@ -455,7 +436,7 @@ void main() {
   // ---------------------------------------------------------------------------
 
   group('ComputeGlobalStreakUseCase (Q-17 option C)', () {
-    final useCase = const ComputeGlobalStreakUseCase();
+    const useCase = ComputeGlobalStreakUseCase();
     final ref = DateTime(2026, 5, 4);
 
     DailyScore d(int daysAgo, int points) => DailyScore(

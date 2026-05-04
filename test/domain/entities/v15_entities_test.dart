@@ -16,36 +16,39 @@ void main() {
       expect(target.hasTimer, isFalse);
     });
 
-    test('HabitTarget.value creates with unit non-custom and no customLabel', () {
-      final target = HabitTarget.value(
-        value: TargetValue(5),
-        unit: TargetUnit.pages,
-      );
-      expect(target, isA<HabitTargetValue>());
-      expect(target.hasValue, isTrue);
-      expect(target.hasTimer, isFalse);
-      final v = target as HabitTargetValue;
-      expect(v.value.value, 5);
-      expect(v.unit, TargetUnit.pages);
-      expect(v.customLabel, isNull);
-    });
+    test(
+      'HabitTarget.value creates with unit non-custom and no customLabel',
+      () {
+        final target = HabitTarget.value(
+          value: TargetValue(5),
+          unit: TargetUnit.pages,
+        );
+        expect(target, isA<HabitTargetValue>());
+        expect(target.hasValue, isTrue);
+        expect(target.hasTimer, isFalse);
+        final v = target as HabitTargetValue;
+        expect(v.value.value, 5);
+        expect(v.unit, TargetUnit.pages);
+        expect(v.customLabel, isNull);
+      },
+    );
 
-    test('HabitTarget.value with unit=custom requires non-empty customLabel', () {
-      final target = HabitTarget.value(
-        value: TargetValue(33),
-        unit: TargetUnit.custom,
-        customLabel: 'salutations',
-      );
-      final v = target as HabitTargetValue;
-      expect(v.customLabel, 'salutations');
-    });
+    test(
+      'HabitTarget.value with unit=custom requires non-empty customLabel',
+      () {
+        final target = HabitTarget.value(
+          value: TargetValue(33),
+          unit: TargetUnit.custom,
+          customLabel: 'salutations',
+        );
+        final v = target as HabitTargetValue;
+        expect(v.customLabel, 'salutations');
+      },
+    );
 
     test('HabitTarget.value with unit=custom and null customLabel throws', () {
       expect(
-        () => HabitTarget.value(
-          value: TargetValue(1),
-          unit: TargetUnit.custom,
-        ),
+        () => HabitTarget.value(value: TargetValue(1), unit: TargetUnit.custom),
         throwsArgumentError,
       );
     });
@@ -99,10 +102,7 @@ void main() {
 
     test('HabitTarget.timed with non-time unit throws (chk_timer_unit)', () {
       expect(
-        () => HabitTarget.timed(
-          value: TargetValue(5),
-          unit: TargetUnit.pages,
-        ),
+        () => HabitTarget.timed(value: TargetValue(5), unit: TargetUnit.pages),
         throwsArgumentError,
       );
     });

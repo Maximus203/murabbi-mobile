@@ -40,21 +40,27 @@ void main() {
 
   group('Subtasks CRUD use cases', () {
     test('GetSubtasksUseCase delegates to repository', () async {
-      when(() => habitRepo.getSubtasks(habitId)).thenAnswer((_) async => [subtask]);
+      when(
+        () => habitRepo.getSubtasks(habitId),
+      ).thenAnswer((_) async => [subtask]);
       final result = await GetSubtasksUseCase(habitRepo)(habitId);
       expect(result, [subtask]);
       verify(() => habitRepo.getSubtasks(habitId)).called(1);
     });
 
     test('AddSubtaskUseCase delegates to repository', () async {
-      when(() => habitRepo.addSubtask(subtask)).thenAnswer((_) async => subtask);
+      when(
+        () => habitRepo.addSubtask(subtask),
+      ).thenAnswer((_) async => subtask);
       final result = await AddSubtaskUseCase(habitRepo)(subtask);
       expect(result, subtask);
       verify(() => habitRepo.addSubtask(subtask)).called(1);
     });
 
     test('UpdateSubtaskUseCase delegates to repository', () async {
-      when(() => habitRepo.updateSubtask(subtask)).thenAnswer((_) async => subtask);
+      when(
+        () => habitRepo.updateSubtask(subtask),
+      ).thenAnswer((_) async => subtask);
       final result = await UpdateSubtaskUseCase(habitRepo)(subtask);
       expect(result, subtask);
       verify(() => habitRepo.updateSubtask(subtask)).called(1);

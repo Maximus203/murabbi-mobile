@@ -83,10 +83,7 @@ void main() {
     });
 
     test('subtasksAllRequired=true requires at least one subtask', () {
-      expect(
-        () => baseHabit(subtasksAllRequired: true),
-        throwsArgumentError,
-      );
+      expect(() => baseHabit(subtasksAllRequired: true), throwsArgumentError);
     });
 
     test('subtasksAllRequired=true with subtasks is accepted', () {

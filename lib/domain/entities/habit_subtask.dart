@@ -41,7 +41,11 @@ class HabitSubtask extends Equatable {
     }
   }
 
-  HabitSubtask copyWith({HabitSubtaskId? id, NonEmptyString? title, int? orderIndex}) {
+  HabitSubtask copyWith({
+    HabitSubtaskId? id,
+    NonEmptyString? title,
+    int? orderIndex,
+  }) {
     return HabitSubtask(
       id: id ?? this.id,
       habitId: habitId,
