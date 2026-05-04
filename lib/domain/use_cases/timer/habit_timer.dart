@@ -72,8 +72,16 @@ class HabitTimer extends Equatable {
   }
 
   /// Met en pause. Idempotent si déjà en pause.
+  /// Fail-fast si [now] est antérieur à [startedAt] (temps non-monotone).
   HabitTimer pause({required DateTime now}) {
     if (isPaused) return this;
+    if (now.isBefore(startedAt)) {
+      throw ArgumentError.value(
+        now,
+        'now',
+        'HabitTimer.pause requires monotonic time (now must be >= startedAt)',
+      );
+    }
     return HabitTimer._(
       totalDuration: totalDuration,
       startedAt: startedAt,
@@ -83,9 +91,17 @@ class HabitTimer extends Equatable {
   }
 
   /// Reprend après une pause. No-op si déjà en cours.
+  /// Fail-fast si [now] est antérieur à `pausedAt` (temps non-monotone).
   HabitTimer resume({required DateTime now}) {
     final paused = pausedAt;
     if (paused == null) return this;
+    if (now.isBefore(paused)) {
+      throw ArgumentError.value(
+        now,
+        'now',
+        'HabitTimer.resume requires monotonic time (now must be >= pausedAt)',
+      );
+    }
     final pauseDuration = now.difference(paused);
     return HabitTimer._(
       totalDuration: totalDuration,
@@ -96,8 +112,16 @@ class HabitTimer extends Equatable {
   }
 
   /// Arrête le timer et retourne la durée effective écoulée à [now].
-  /// Utilisée pour alimenter `HabitLog.duration`.
+  /// Utilisée pour alimenter `HabitLog.duration`. Fail-fast si [now] est
+  /// antérieur à [startedAt].
   Duration stop({required DateTime now}) {
+    if (now.isBefore(startedAt)) {
+      throw ArgumentError.value(
+        now,
+        'now',
+        'HabitTimer.stop requires monotonic time (now must be >= startedAt)',
+      );
+    }
     return elapsedAt(at: now);
   }
 
