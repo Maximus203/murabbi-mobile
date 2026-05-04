@@ -243,6 +243,43 @@ void main() {
       expect(timer, equals(paused1));
     });
 
+    test('pause(now) before startedAt throws (Copilot review #4)', () {
+      final t0 = DateTime.utc(2026, 5, 4, 9);
+      final timer = HabitTimer.start(
+        target: const Duration(minutes: 5),
+        now: t0,
+      );
+      expect(
+        () => timer.pause(now: t0.subtract(const Duration(seconds: 1))),
+        throwsArgumentError,
+      );
+    });
+
+    test('resume(now) before pausedAt throws (Copilot review #4)', () {
+      final t0 = DateTime.utc(2026, 5, 4, 9);
+      var timer = HabitTimer.start(
+        target: const Duration(minutes: 5),
+        now: t0,
+      );
+      timer = timer.pause(now: t0.add(const Duration(minutes: 2)));
+      expect(
+        () => timer.resume(now: t0.add(const Duration(minutes: 1))),
+        throwsArgumentError,
+      );
+    });
+
+    test('stop(now) before startedAt throws (Copilot review #4)', () {
+      final t0 = DateTime.utc(2026, 5, 4, 9);
+      final timer = HabitTimer.start(
+        target: const Duration(minutes: 5),
+        now: t0,
+      );
+      expect(
+        () => timer.stop(now: t0.subtract(const Duration(seconds: 1))),
+        throwsArgumentError,
+      );
+    });
+
     test('resume on a running timer is a no-op', () {
       final t0 = DateTime.utc(2026, 5, 4, 9);
       var timer = HabitTimer.start(target: const Duration(minutes: 5), now: t0);
