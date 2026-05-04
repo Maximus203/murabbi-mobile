@@ -16,6 +16,13 @@ class ReorderSubtasksUseCase {
         'ReorderSubtasksUseCase: newOrder length must match subtasks length',
       );
     }
+    if (newOrder.toSet().length != newOrder.length) {
+      throw ArgumentError.value(
+        newOrder,
+        'newOrder',
+        'ReorderSubtasksUseCase: newOrder must contain unique ids',
+      );
+    }
     final byId = {for (final s in subtasks) s.id: s};
     final reordered = <HabitSubtask>[];
     for (var i = 0; i < newOrder.length; i++) {
