@@ -24,6 +24,9 @@ dependencies:
   # Secure storage
   flutter_secure_storage: ^9.2.4
 
+  # Local notifications (timer v1.5 — Q-15a, spec v1.5 § 3.5/§ 7)
+  flutter_local_notifications: ^17.2.3
+
   # Utils
   equatable: ^2.0.7
 
