@@ -348,6 +348,50 @@ void main() {
       expect(useCase.forHabit(h, log(actualValue: 3, targetReached: false)), 0);
     });
 
+    test(
+      'habit with target — actualValue >= target but targetReached null '
+      'still scores full points (Copilot review #5 — domain truth)',
+      () {
+        final h = makeHabit(
+          points: 3,
+          target: HabitTarget.value(
+            value: TargetValue(5),
+            unit: TargetUnit.pages,
+          ),
+        );
+        // log.targetReached is null (DB GENERATED column not yet hydrated),
+        // but actualValue=5 >= target=5 → domaine considère atteint.
+        expect(useCase.forHabit(h, log(actualValue: 5)), 3);
+      },
+    );
+
+    test(
+      'habit with target — actualValue < target scores 0 even if '
+      'targetReached null (Copilot review #5)',
+      () {
+        final h = makeHabit(
+          target: HabitTarget.value(
+            value: TargetValue(5),
+            unit: TargetUnit.pages,
+          ),
+        );
+        expect(useCase.forHabit(h, log(actualValue: 3)), 0);
+      },
+    );
+
+    test(
+      'habit with target — actualValue null scores 0 (no progress recorded)',
+      () {
+        final h = makeHabit(
+          target: HabitTarget.value(
+            value: TargetValue(5),
+            unit: TargetUnit.pages,
+          ),
+        );
+        expect(useCase.forHabit(h, log()), 0);
+      },
+    );
+
     test('habit with target — target reached but late returns +1', () {
       final h = makeHabit(
         target: HabitTarget.value(
