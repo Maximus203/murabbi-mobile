@@ -7,7 +7,6 @@ import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_cover.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
-import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 
@@ -37,7 +36,6 @@ void main() {
       name: NonEmptyString('Salat'),
       color: HexColor(color),
       icon: 'pray',
-      points: HabitPoints(3),
       isSystem: true,
     );
   }

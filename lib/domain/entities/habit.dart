@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:murabbi_mobile/domain/entities/habit_subtask.dart';
+import 'package:murabbi_mobile/domain/entities/habit_target.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
@@ -39,6 +41,20 @@ class Habit extends Equatable {
   final HabitPoints points;
   final bool isSystem;
 
+  /// Objectif chiffré et/ou timer (composition v1.5, ADR-008).
+  final HabitTarget target;
+
+  /// Sous-tâches associées (max 15, spec v1.5 § 2.4).
+  /// L'unicité `(habitId, orderIndex)` est vérifiée à la construction.
+  final List<HabitSubtask> subtasks;
+
+  /// Si vrai, la validation de l'habitude requiert que **toutes** les
+  /// sous-tâches soient cochées (cf. spec v1.5 § 3.1, scoring § 3.2).
+  /// Implique `subtasks.isNotEmpty`.
+  final bool subtasksAllRequired;
+
+  static const int subtasksMaxCount = 15;
+
   Habit({
     required this.id,
     required this.name,
@@ -51,6 +67,9 @@ class Habit extends Equatable {
     this.monthlyDay,
     this.rangeStart,
     this.rangeEnd,
+    this.target = const HabitTarget.none(),
+    this.subtasks = const [],
+    this.subtasksAllRequired = false,
   }) {
     if (frequency <= 0) {
       throw ArgumentError.value(
@@ -93,6 +112,36 @@ class Habit extends Equatable {
         'Habit rangeEnd must be strictly after rangeStart (no minuit wrap, ADR-007)',
       );
     }
+
+    if (subtasks.length > subtasksMaxCount) {
+      throw ArgumentError.value(
+        subtasks.length,
+        'subtasks.length',
+        'Habit allows at most $subtasksMaxCount subtasks (spec v1.5 § 2.4)',
+      );
+    }
+    final seenOrder = <int>{};
+    for (final s in subtasks) {
+      if (s.habitId != id) {
+        throw ArgumentError.value(
+          s.habitId,
+          'subtask.habitId',
+          'HabitSubtask.habitId must match the parent Habit.id',
+        );
+      }
+      if (!seenOrder.add(s.orderIndex)) {
+        throw ArgumentError.value(
+          s.orderIndex,
+          'subtask.orderIndex',
+          'Habit.subtasks orderIndex must be unique',
+        );
+      }
+    }
+    if (subtasksAllRequired && subtasks.isEmpty) {
+      throw ArgumentError(
+        'Habit.subtasksAllRequired=true requires at least one subtask',
+      );
+    }
   }
 
   @override
@@ -108,5 +157,8 @@ class Habit extends Equatable {
     activeDays,
     points,
     isSystem,
+    target,
+    subtasks,
+    subtasksAllRequired,
   ];
 }
