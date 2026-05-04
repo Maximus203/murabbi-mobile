@@ -609,6 +609,79 @@ void main() {
         throwsArgumentError,
       );
     });
+
+    test('coverImageUrl defaults to null (no cover)', () {
+      final coll = Collection(
+        id: collId,
+        name: NonEmptyString('Morning routine'),
+        description: NonEmptyString('Start the day right'),
+        habitIds: habitIds,
+        isSystem: true,
+        isActive: false,
+      );
+      expect(coll.coverImageUrl, isNull);
+    });
+
+    test('accepts a non-null coverImageUrl', () {
+      final coll = Collection(
+        id: collId,
+        name: NonEmptyString('Morning routine'),
+        description: NonEmptyString('Start the day right'),
+        habitIds: habitIds,
+        isSystem: true,
+        isActive: false,
+        coverImageUrl:
+            'https://x.supabase.co/storage/v1/object/public/collection-covers/coll-uuid-001/123-morning.jpg',
+      );
+      expect(coll.coverImageUrl, contains('collection-covers/coll-uuid-001/'));
+    });
+
+    test('two Collections with the same fields are equal (Equatable)', () {
+      final a = Collection(
+        id: collId,
+        name: NonEmptyString('Morning routine'),
+        description: NonEmptyString('Start the day right'),
+        habitIds: habitIds,
+        isSystem: true,
+        isActive: false,
+        coverImageUrl: 'https://x.example/cover.jpg',
+      );
+      final b = Collection(
+        id: collId,
+        name: NonEmptyString('Morning routine'),
+        description: NonEmptyString('Start the day right'),
+        habitIds: habitIds,
+        isSystem: true,
+        isActive: false,
+        coverImageUrl: 'https://x.example/cover.jpg',
+      );
+      expect(a, equals(b));
+    });
+
+    test(
+      'coverImageUrl participates in equality (different URL → not equal)',
+      () {
+        final a = Collection(
+          id: collId,
+          name: NonEmptyString('Morning routine'),
+          description: NonEmptyString('Start the day right'),
+          habitIds: habitIds,
+          isSystem: true,
+          isActive: false,
+          coverImageUrl: 'https://x.example/a.jpg',
+        );
+        final b = Collection(
+          id: collId,
+          name: NonEmptyString('Morning routine'),
+          description: NonEmptyString('Start the day right'),
+          habitIds: habitIds,
+          isSystem: true,
+          isActive: false,
+          coverImageUrl: 'https://x.example/b.jpg',
+        );
+        expect(a, isNot(equals(b)));
+      },
+    );
   });
 
   group('UserScore entity', () {

@@ -2,12 +2,37 @@ import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
+/// Domain contract for reading and mutating collections.
+///
+/// ## Soft-delete contract (admin Phase 3.A — migration `20260504100000`)
+///
+/// The admin back-office switched [Collection] deletion from a hard `DELETE`
+/// to a `deleted_at TIMESTAMPTZ` stamp. The domain layer must NEVER see
+/// soft-deleted collections — every read method below MUST be implemented
+/// with a `WHERE deleted_at IS NULL` filter at the data layer (Supabase
+/// query, REST view, or RPC).
+///
+/// This is enforced **by contract**, not by the type system: a [Collection]
+/// has no `deletedAt` field on purpose. If you ever need to surface tombstones
+/// (admin UI?), introduce a separate read method (e.g. `getDeletedCollections`)
+/// rather than leaking `deletedAt` into the domain entity.
+///
+/// Source: `product_decisions_v1.md` (admin) — soft-delete decision.
 abstract interface class CollectionRepository {
+  /// Returns the collections visible to [userId].
+  ///
+  /// Implementations MUST filter `deleted_at IS NULL` upstream.
   Future<List<Collection>> getCollections(UserId userId);
+
+  /// Marks an existing system collection as activated for [userId].
+  /// Implementations MUST refuse activation when the collection is
+  /// soft-deleted (`deleted_at IS NOT NULL`) and surface a domain error.
   Future<void> activateCollection({
     required UserId userId,
     required CollectionId collectionId,
   });
+
+  /// Persists a new user collection.
   Future<Collection> createCollection({
     required UserId userId,
     required Collection collection,

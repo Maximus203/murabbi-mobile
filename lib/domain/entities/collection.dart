@@ -11,6 +11,13 @@ class Collection extends Equatable {
   final bool isSystem;
   final bool isActive;
 
+  /// Public Supabase Storage URL of the collection cover.
+  ///
+  /// Source: `product_decisions_v1.md § Q-13-cover` (verrouillé 2026-05-03).
+  /// `null` ⇔ no cover uploaded — UI must render the
+  /// [CollectionCoverFallback] gradient (see [BuildCollectionCoverUseCase]).
+  final String? coverImageUrl;
+
   Collection({
     required this.id,
     required this.name,
@@ -18,6 +25,7 @@ class Collection extends Equatable {
     required this.habitIds,
     required this.isSystem,
     required this.isActive,
+    this.coverImageUrl,
   }) {
     if (habitIds.isEmpty) {
       throw ArgumentError.value(
@@ -36,5 +44,6 @@ class Collection extends Equatable {
     habitIds,
     isSystem,
     isActive,
+    coverImageUrl,
   ];
 }

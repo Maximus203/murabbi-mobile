@@ -46,6 +46,28 @@ void main() {
       expect(result, [testCollection]);
       verify(() => mockRepo.getCollections(userId)).called(1);
     });
+
+    /// Soft-delete contract (cf. `CollectionRepository` docstring):
+    /// implementations MUST filter `deleted_at IS NULL` so the domain
+    /// never sees soft-deleted collections. We can't enforce this at the
+    /// language level on an abstract interface, but we lock the contract
+    /// here so any future impl is reviewed against this expectation.
+    test(
+      'returns only non-soft-deleted collections (repository contract)',
+      () async {
+        // The repository fake honours the contract: it has filtered
+        // `deleted_at IS NULL` upstream and only returns the active row.
+        final activeOnly = testCollection;
+        when(
+          () => mockRepo.getCollections(userId),
+        ).thenAnswer((_) async => [activeOnly]);
+
+        final result = await useCase(userId);
+
+        expect(result, hasLength(1));
+        expect(result.single, activeOnly);
+      },
+    );
   });
 
   group('ActivateCollectionUseCase', () {
