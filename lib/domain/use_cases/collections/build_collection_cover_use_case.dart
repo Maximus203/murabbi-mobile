@@ -1,6 +1,8 @@
+import 'package:characters/characters.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_cover.dart';
+import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 
 /// Resolves a [Collection] to a [CollectionCover] suitable for display.
 ///
@@ -8,11 +10,15 @@ import 'package:murabbi_mobile/domain/value_objects/collection_cover.dart';
 ///
 /// Decision tree:
 ///
-/// 1. `collection.coverImageUrl` is non-null and non-empty → [CollectionCoverImage].
+/// 1. `collection.coverImageUrl` is non-null and non-empty (after trim) →
+///    [CollectionCoverImage].
 /// 2. Otherwise → [CollectionCoverFallback] with:
-///    - `categoryColorHex` = `category.color` if a [Category] is provided,
+///    - `categoryColor` = `category.color` if a [Category] is provided,
 ///      else `#A19D93` (sandstone neutral, CDC §P-3).
-///    - `initial` = first character of `collection.name.value`, uppercased.
+///    - `initial` = first **grapheme cluster** of `collection.name.value`,
+///      uppercased. Uses `String.characters.first` (not `substring(0, 1)`)
+///      so emoji / Arabic / combining marks render as a single user-perceived
+///      character — fix #2 of issue #12.
 ///
 /// Pure logic: no I/O, no async, no platform dependency. The presentation
 /// layer is responsible for actually rendering the gradient + initial.
@@ -20,7 +26,7 @@ class BuildCollectionCoverUseCase {
   /// CDC §P-3 fallback color when the collection's category is unknown.
   /// Mobile default for the "no category context" case (e.g. collection
   /// listing without joined category data).
-  static const String _sandstoneNeutral = '#A19D93';
+  static final HexColor _sandstoneNeutral = HexColor('#A19D93');
 
   CollectionCover call({required Collection collection, Category? category}) {
     final url = collection.coverImageUrl?.trim() ?? '';
@@ -30,8 +36,8 @@ class BuildCollectionCoverUseCase {
 
     final color = category?.color ?? _sandstoneNeutral;
     final name = collection.name.value;
-    final initial = name.isEmpty ? '?' : name.substring(0, 1);
+    final initial = name.isEmpty ? '?' : name.characters.first.toUpperCase();
 
-    return CollectionCoverFallback(categoryColorHex: color, initial: initial);
+    return CollectionCoverFallback(categoryColor: color, initial: initial);
   }
 }

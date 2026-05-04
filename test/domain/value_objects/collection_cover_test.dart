@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_cover.dart';
+import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 
 void main() {
   group('CollectionCoverImage', () {
@@ -30,62 +31,63 @@ void main() {
   });
 
   group('CollectionCoverFallback', () {
-    test('builds from category color hex + initial', () {
+    test('builds from category color (HexColor) + initial', () {
       final cover = CollectionCoverFallback(
-        categoryColorHex: '#3A6B8C',
+        categoryColor: HexColor('#3A6B8C'),
         initial: 'M',
       );
-      expect(cover.categoryColorHex, '#3A6B8C');
+      expect(cover.categoryColor, HexColor('#3A6B8C'));
       expect(cover.initial, 'M');
-    });
-
-    test('uppercases the initial', () {
-      final cover = CollectionCoverFallback(
-        categoryColorHex: '#3A6B8C',
-        initial: 'm',
-      );
-      expect(cover.initial, 'M');
-    });
-
-    test('rejects multi-char initial', () {
-      expect(
-        () =>
-            CollectionCoverFallback(categoryColorHex: '#3A6B8C', initial: 'Mo'),
-        throwsArgumentError,
-      );
     });
 
     test('rejects empty initial', () {
       expect(
-        () => CollectionCoverFallback(categoryColorHex: '#3A6B8C', initial: ''),
+        () => CollectionCoverFallback(
+          categoryColor: HexColor('#3A6B8C'),
+          initial: '',
+        ),
         throwsArgumentError,
       );
     });
 
-    test('rejects malformed color hex (no leading #)', () {
-      expect(
-        () => CollectionCoverFallback(categoryColorHex: '3A6B8C', initial: 'M'),
-        throwsArgumentError,
+    test('accepts a multi-codepoint initial (emoji grapheme cluster)', () {
+      // The use case computes initial via `characters.first`, which can return
+      // multiple UTF-16 code units for a single user-perceived character
+      // (emoji, ZWJ sequences, …). The value object MUST accept this.
+      final cover = CollectionCoverFallback(
+        categoryColor: HexColor('#3A6B8C'),
+        initial: '🚀',
       );
-    });
-
-    test('rejects color hex with bad length', () {
-      expect(
-        () => CollectionCoverFallback(categoryColorHex: '#3A6', initial: 'M'),
-        throwsArgumentError,
-      );
+      expect(cover.initial, '🚀');
     });
 
     test('two fallbacks with the same fields are equal', () {
       final a = CollectionCoverFallback(
-        categoryColorHex: '#3A6B8C',
+        categoryColor: HexColor('#3A6B8C'),
         initial: 'M',
       );
       final b = CollectionCoverFallback(
-        categoryColorHex: '#3A6B8C',
+        categoryColor: HexColor('#3A6B8C'),
         initial: 'M',
       );
       expect(a, equals(b));
+    });
+
+    test('different categoryColor or initial → not equal', () {
+      final a = CollectionCoverFallback(
+        categoryColor: HexColor('#3A6B8C'),
+        initial: 'M',
+      );
+      final b = CollectionCoverFallback(
+        categoryColor: HexColor('#FF00FF'),
+        initial: 'M',
+      );
+      final c = CollectionCoverFallback(
+        categoryColor: HexColor('#3A6B8C'),
+        initial: 'N',
+      );
+      expect(a, isNot(equals(b)));
+      expect(a, isNot(equals(c)));
     });
   });
 
@@ -93,7 +95,7 @@ void main() {
     test('Image and Fallback are not equal even with related data', () {
       final image = CollectionCoverImage('https://x.example/c.jpg');
       final fallback = CollectionCoverFallback(
-        categoryColorHex: '#3A6B8C',
+        categoryColor: HexColor('#3A6B8C'),
         initial: 'M',
       );
       expect(image, isNot(equals(fallback)));
