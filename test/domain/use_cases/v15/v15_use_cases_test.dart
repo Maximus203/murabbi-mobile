@@ -189,25 +189,22 @@ void main() {
       );
     });
 
-    test(
-      'elapsedAt(at:) is pure (no system clock) — Copilot review #3',
-      () {
-        final t0 = DateTime.utc(2026, 5, 4, 9);
-        var timer = HabitTimer.start(
-          target: const Duration(minutes: 10),
-          now: t0,
-        );
-        timer = timer.pause(now: t0.add(const Duration(minutes: 2)));
-        timer = timer.resume(now: t0.add(const Duration(minutes: 5)));
-        timer = timer.pause(now: t0.add(const Duration(minutes: 6)));
-        // Elapsed effective = 2 + 1 = 3 minutes (3 paused minutes 2..5 don't count).
-        // The reference instant is provided explicitly — no DateTime.now() call.
-        expect(
-          timer.elapsedAt(at: t0.add(const Duration(minutes: 6))),
-          const Duration(minutes: 3),
-        );
-      },
-    );
+    test('elapsedAt(at:) is pure (no system clock) — Copilot review #3', () {
+      final t0 = DateTime.utc(2026, 5, 4, 9);
+      var timer = HabitTimer.start(
+        target: const Duration(minutes: 10),
+        now: t0,
+      );
+      timer = timer.pause(now: t0.add(const Duration(minutes: 2)));
+      timer = timer.resume(now: t0.add(const Duration(minutes: 5)));
+      timer = timer.pause(now: t0.add(const Duration(minutes: 6)));
+      // Elapsed effective = 2 + 1 = 3 minutes (3 paused minutes 2..5 don't count).
+      // The reference instant is provided explicitly — no DateTime.now() call.
+      expect(
+        timer.elapsedAt(at: t0.add(const Duration(minutes: 6))),
+        const Duration(minutes: 3),
+      );
+    });
 
     test('elapsedAt while paused freezes at pausedAt regardless of "at"', () {
       final t0 = DateTime.utc(2026, 5, 4, 9);
@@ -257,10 +254,7 @@ void main() {
 
     test('resume(now) before pausedAt throws (Copilot review #4)', () {
       final t0 = DateTime.utc(2026, 5, 4, 9);
-      var timer = HabitTimer.start(
-        target: const Duration(minutes: 5),
-        now: t0,
-      );
+      var timer = HabitTimer.start(target: const Duration(minutes: 5), now: t0);
       timer = timer.pause(now: t0.add(const Duration(minutes: 2)));
       expect(
         () => timer.resume(now: t0.add(const Duration(minutes: 1))),
@@ -348,36 +342,30 @@ void main() {
       expect(useCase.forHabit(h, log(actualValue: 3, targetReached: false)), 0);
     });
 
-    test(
-      'habit with target — actualValue >= target but targetReached null '
-      'still scores full points (Copilot review #5 — domain truth)',
-      () {
-        final h = makeHabit(
-          points: 3,
-          target: HabitTarget.value(
-            value: TargetValue(5),
-            unit: TargetUnit.pages,
-          ),
-        );
-        // log.targetReached is null (DB GENERATED column not yet hydrated),
-        // but actualValue=5 >= target=5 → domaine considère atteint.
-        expect(useCase.forHabit(h, log(actualValue: 5)), 3);
-      },
-    );
+    test('habit with target — actualValue >= target but targetReached null '
+        'still scores full points (Copilot review #5 — domain truth)', () {
+      final h = makeHabit(
+        points: 3,
+        target: HabitTarget.value(
+          value: TargetValue(5),
+          unit: TargetUnit.pages,
+        ),
+      );
+      // log.targetReached is null (DB GENERATED column not yet hydrated),
+      // but actualValue=5 >= target=5 → domaine considère atteint.
+      expect(useCase.forHabit(h, log(actualValue: 5)), 3);
+    });
 
-    test(
-      'habit with target — actualValue < target scores 0 even if '
-      'targetReached null (Copilot review #5)',
-      () {
-        final h = makeHabit(
-          target: HabitTarget.value(
-            value: TargetValue(5),
-            unit: TargetUnit.pages,
-          ),
-        );
-        expect(useCase.forHabit(h, log(actualValue: 3)), 0);
-      },
-    );
+    test('habit with target — actualValue < target scores 0 even if '
+        'targetReached null (Copilot review #5)', () {
+      final h = makeHabit(
+        target: HabitTarget.value(
+          value: TargetValue(5),
+          unit: TargetUnit.pages,
+        ),
+      );
+      expect(useCase.forHabit(h, log(actualValue: 3)), 0);
+    });
 
     test(
       'habit with target — actualValue null scores 0 (no progress recorded)',
