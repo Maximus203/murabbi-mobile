@@ -1,3 +1,4 @@
+import 'package:characters/characters.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
@@ -7,6 +8,7 @@ import 'package:murabbi_mobile/domain/value_objects/collection_cover.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
+import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 
 /// Source: product_decisions_v1.md § Q-13-cover.
@@ -33,7 +35,7 @@ void main() {
     return Category(
       id: CategoryId('cat-uuid-001'),
       name: NonEmptyString('Salat'),
-      color: color,
+      color: HexColor(color),
       icon: 'pray',
       points: HabitPoints(3),
       isSystem: true,
@@ -71,7 +73,7 @@ void main() {
       );
       expect(cover, isA<CollectionCoverFallback>());
       final fb = cover as CollectionCoverFallback;
-      expect(fb.categoryColorHex, '#3A6B8C');
+      expect(fb.categoryColor, HexColor('#3A6B8C'));
       expect(fb.initial, 'R');
     });
 
@@ -81,7 +83,7 @@ void main() {
         category: null,
       );
       final fb = cover as CollectionCoverFallback;
-      expect(fb.categoryColorHex, '#A19D93'); // CDC §P-3 sandstone neutral
+      expect(fb.categoryColor, HexColor('#A19D93')); // CDC §P-3 sandstone
       expect(fb.initial, 'R');
     });
 
@@ -93,15 +95,54 @@ void main() {
       final fb = cover as CollectionCoverFallback;
       expect(fb.initial, 'S');
     });
+  });
 
-    test('handles non-ASCII initial (Arabic letter passes through)', () {
+  group('grapheme cluster initial (Copilot fix #2)', () {
+    test('emoji-prefixed name keeps the full glyph as initial', () {
+      // `'🚀 Routine'.substring(0, 1)` returns the high surrogate alone,
+      // which is a malformed UTF-16 code unit. `characters.first` returns
+      // the full emoji as a single user-perceived character.
       final cover = useCase(
-        collection: makeCollection(coverImageUrl: null, name: 'صلاة'),
+        collection: makeCollection(coverImageUrl: null, name: '🚀 Routine'),
         category: makeCategory(),
       );
       final fb = cover as CollectionCoverFallback;
-      // toUpperCase is a no-op on Arabic glyphs — first char preserved.
-      expect(fb.initial, 'ص');
+      expect(fb.initial, '🚀');
+      // Must not be the high-surrogate-only artefact:
+      expect(fb.initial.length, greaterThan(1)); // emoji = 2 UTF-16 code units
+    });
+
+    test('Arabic name returns the first Arabic glyph', () {
+      final cover = useCase(
+        collection: makeCollection(coverImageUrl: null, name: 'بسم الله'),
+        category: makeCategory(),
+      );
+      final fb = cover as CollectionCoverFallback;
+      expect(fb.initial, 'ب');
+    });
+
+    test('combining mark / accented latin keeps the cluster intact', () {
+      // 'É' as base + combining acute → counted as ONE grapheme.
+      final cover = useCase(
+        collection: makeCollection(coverImageUrl: null, name: 'Étoile'),
+        category: makeCategory(),
+      );
+      final fb = cover as CollectionCoverFallback;
+      // 'É' may live in source as NFC (U+00C9) or NFD (E + U+0301). Both
+      // forms must produce a single grapheme cluster, never a bare ASCII
+      // 'E' with the combining mark stripped off (which is what
+      // `substring(0, 1)` would do on NFD input — the bug we fix).
+      expect(fb.initial.characters.length, 1);
+      expect(fb.initial, isNot('E'));
+    });
+
+    test('simple ASCII name returns first char uppercased', () {
+      final cover = useCase(
+        collection: makeCollection(coverImageUrl: null, name: 'lecture'),
+        category: makeCategory(),
+      );
+      final fb = cover as CollectionCoverFallback;
+      expect(fb.initial, 'L');
     });
   });
 
