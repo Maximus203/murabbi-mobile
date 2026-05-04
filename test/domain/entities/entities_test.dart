@@ -308,7 +308,6 @@ void main() {
         name: NonEmptyString('Sport'),
         color: HexColor('#4A5568'),
         icon: 'activity',
-        points: HabitPoints(3),
         isSystem: true,
       );
 
@@ -323,7 +322,6 @@ void main() {
         name: NonEmptyString('Sport'),
         color: HexColor('#4A5568'),
         icon: 'activity',
-        points: HabitPoints(3),
         isSystem: true,
       );
       final b = Category(
@@ -331,7 +329,6 @@ void main() {
         name: NonEmptyString('Sport'),
         color: HexColor('#4A5568'),
         icon: 'activity',
-        points: HabitPoints(3),
         isSystem: true,
       );
       expect(a, equals(b));
