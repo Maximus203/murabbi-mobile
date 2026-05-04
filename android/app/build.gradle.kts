@@ -24,7 +24,10 @@ android {
         applicationId = "com.murabbi.murabbi"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // Android 5.0 (API 21) — required by flutter_local_notifications ^17.x.
+        // Bump from `flutter.minSdkVersion` (resolves to 19) to satisfy
+        // CheckAarMetadata. Cf. ADR-008 (Q-15a, timer notifications v1.5).
+        minSdk = 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
