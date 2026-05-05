@@ -25,10 +25,13 @@ void main() {
       expect(config.isConfigured, isFalse);
     });
 
-    test('isConfigured = false when both are empty (fromEnvironment default)', () {
-      const config = SupabaseConfig(url: '', anonKey: '');
-      expect(config.isConfigured, isFalse);
-    });
+    test(
+      'isConfigured = false when both are empty (fromEnvironment default)',
+      () {
+        const config = SupabaseConfig(url: '', anonKey: '');
+        expect(config.isConfigured, isFalse);
+      },
+    );
 
     test('fromEnvironment defaults to empty values when no --dart-define', () {
       // Sans --dart-define, String.fromEnvironment retourne ''.

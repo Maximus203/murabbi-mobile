@@ -6,6 +6,12 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 
 /// Input texte Murabbi — DS sheet § Inputs.
 /// 3 modes : texte simple, avec icône leading, password (eye toggle).
+///
+/// Accessibilité (Copilot review #5 + #6) :
+/// - Le bouton eye/eye-off du mode password porte un `tooltip` ("Afficher/
+///   Masquer le mot de passe") — VoiceOver/TalkBack annoncent l'action.
+/// - Au focus clavier, la bordure passe à `accent` 1.5px (`focusRing` token)
+///   pour donner aux utilisateurs clavier une indication visuelle claire.
 class AppInput extends StatefulWidget {
   /// Label affiché au-dessus du champ (style label uppercase).
   final String? label;
@@ -35,11 +41,38 @@ class AppInput extends StatefulWidget {
 
 class _AppInputState extends State<AppInput> {
   bool _obscured = true;
+  late final FocusNode _focusNode;
+  bool _focused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode()..addListener(_onFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _focusNode
+      ..removeListener(_onFocusChange)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (_focused != _focusNode.hasFocus) {
+      setState(() => _focused = _focusNode.hasFocus);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final hasLeading = widget.leadingIcon != null;
     final hasTrailing = widget.isPassword;
+
+    final borderColor = _focused ? AppColors.accent : AppColors.borderEmphasis;
+    final borderWidth = _focused
+        ? AppBorderWidth.focusRing
+        : AppBorderWidth.hairline;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,14 +82,12 @@ class _AppInputState extends State<AppInput> {
           Text(widget.label!.toUpperCase(), style: AppTypography.label),
           const SizedBox(height: AppSpacing.s2),
         ],
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
           decoration: BoxDecoration(
             color: AppColors.bgInput,
             borderRadius: BorderRadius.circular(AppRadius.button),
-            border: Border.all(
-              color: AppColors.borderEmphasis,
-              width: AppBorderWidth.hairline,
-            ),
+            border: Border.all(color: borderColor, width: borderWidth),
           ),
           child: Row(
             children: [
@@ -77,6 +108,7 @@ class _AppInputState extends State<AppInput> {
                   ),
                   child: TextField(
                     controller: widget.controller,
+                    focusNode: _focusNode,
                     obscureText: widget.isPassword && _obscured,
                     keyboardType: widget.keyboardType,
                     onChanged: widget.onChanged,
@@ -96,6 +128,9 @@ class _AppInputState extends State<AppInput> {
               if (hasTrailing)
                 IconButton(
                   splashRadius: 16,
+                  tooltip: _obscured
+                      ? 'Afficher le mot de passe'
+                      : 'Masquer le mot de passe',
                   onPressed: () => setState(() => _obscured = !_obscured),
                   icon: Icon(
                     _obscured ? LucideIcons.eye : LucideIcons.eyeOff,

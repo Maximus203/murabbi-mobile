@@ -9,8 +9,17 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 /// - [AppHeader.back]  : bouton retour à gauche + titre centré.
 ///
 /// Bordure inférieure hairline 0.5px (P-5), pas d'ombre portée.
+///
+/// Layout (Copilot review #7) : en mode `back`, si `trailing` est `null`,
+/// un placeholder de la largeur du back button (`_backButtonSlotWidth`) est
+/// inséré à droite pour que le titre soit centré dans la largeur **totale**
+/// du header — pas dans l'espace restant après le bouton retour.
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   static const double height = 56;
+
+  /// Largeur réservée pour le bouton retour (et son symétrique côté droit
+  /// quand `trailing` est null).
+  static const double _backButtonSlotWidth = 48;
 
   final String title;
   final VoidCallback? onBack;
@@ -45,13 +54,16 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       child: Row(
         children: [
           if (_isBackVariant)
-            IconButton(
-              onPressed: onBack,
-              splashRadius: 18,
-              icon: const Icon(
-                LucideIcons.chevronLeft,
-                size: 20,
-                color: AppColors.textPrimary,
+            SizedBox(
+              width: _backButtonSlotWidth,
+              child: IconButton(
+                onPressed: onBack,
+                splashRadius: 18,
+                icon: const Icon(
+                  LucideIcons.chevronLeft,
+                  size: 20,
+                  color: AppColors.textPrimary,
+                ),
               ),
             )
           else
@@ -64,7 +76,14 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (trailing != null) trailing! else const SizedBox(width: 0),
+          if (trailing != null)
+            trailing!
+          else if (_isBackVariant)
+            // Placeholder symétrique au back button → garantit que le titre
+            // soit centré dans la largeur totale du header (Copilot #7).
+            const SizedBox(width: _backButtonSlotWidth)
+          else
+            const SizedBox(width: 0),
         ],
       ),
     );

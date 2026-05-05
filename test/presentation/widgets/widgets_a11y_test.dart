@@ -13,10 +13,7 @@ void main() {
     return MaterialApp(
       home: MediaQuery(
         data: MediaQueryData(viewPadding: viewPadding, padding: viewPadding),
-        child: Scaffold(
-          backgroundColor: AppColors.bgPrimary,
-          body: child,
-        ),
+        child: Scaffold(backgroundColor: AppColors.bgPrimary, body: child),
       ),
     );
   }
@@ -31,10 +28,7 @@ void main() {
       (tester) async {
         await tester.pumpWidget(
           wrap(
-            AppBottomNav(
-              active: AppBottomNavTab.home,
-              onTabSelected: (_) {},
-            ),
+            AppBottomNav(active: AppBottomNavTab.home, onTabSelected: (_) {}),
             viewPadding: const EdgeInsets.only(bottom: 34),
           ),
         );
@@ -45,7 +39,11 @@ void main() {
         expect(safeAreas, findsAtLeastNWidgets(1));
 
         final safeArea = tester.widget<SafeArea>(safeAreas.first);
-        expect(safeArea.top, isFalse, reason: 'top safe-area handled by AppBar');
+        expect(
+          safeArea.top,
+          isFalse,
+          reason: 'top safe-area handled by AppBar',
+        );
         expect(safeArea.bottom, isTrue);
       },
     );
@@ -60,16 +58,10 @@ void main() {
     ) async {
       await tester.pumpWidget(
         wrap(
-          AppBottomNav(
-            active: AppBottomNavTab.salat,
-            onTabSelected: (_) {},
-          ),
+          AppBottomNav(active: AppBottomNavTab.salat, onTabSelected: (_) {}),
         ),
       );
-      expect(
-        find.bySemanticsLabel('Salat'),
-        findsAtLeastNWidgets(1),
-      );
+      expect(find.bySemanticsLabel('Salat'), findsAtLeastNWidgets(1));
 
       // Trouve un Semantics(selected: true) parmi les ancêtres du label "Salat".
       final selectedSemantics = find.byWidgetPredicate(
@@ -91,12 +83,7 @@ void main() {
 
     testWidgets('each tab is a button (semantic)', (tester) async {
       await tester.pumpWidget(
-        wrap(
-          AppBottomNav(
-            active: AppBottomNavTab.home,
-            onTabSelected: (_) {},
-          ),
-        ),
+        wrap(AppBottomNav(active: AppBottomNavTab.home, onTabSelected: (_) {})),
       );
       // Au moins 5 Semantics(button: true) — 1 par tab.
       final buttons = find.byWidgetPredicate(
@@ -111,9 +98,7 @@ void main() {
   // ---------------------------------------------------------------------------
   group('AppToggle — Semantics (Copilot review #4)', () {
     testWidgets('exposes toggled=true when value=true', (tester) async {
-      await tester.pumpWidget(
-        wrap(AppToggle(value: true, onChanged: (_) {})),
-      );
+      await tester.pumpWidget(wrap(AppToggle(value: true, onChanged: (_) {})));
       final s = find.byWidgetPredicate(
         (w) =>
             w is Semantics &&
@@ -124,9 +109,7 @@ void main() {
     });
 
     testWidgets('exposes toggled=false when value=false', (tester) async {
-      await tester.pumpWidget(
-        wrap(AppToggle(value: false, onChanged: (_) {})),
-      );
+      await tester.pumpWidget(wrap(AppToggle(value: false, onChanged: (_) {})));
       final s = find.byWidgetPredicate(
         (w) =>
             w is Semantics &&
@@ -151,42 +134,38 @@ void main() {
       },
     );
 
-    testWidgets(
-      'tooltip flips to "Masquer" once visibility is toggled on',
-      (tester) async {
-        await tester.pumpWidget(
-          wrap(const AppInput(label: 'Password', isPassword: true)),
-        );
-        await tester.tap(find.byTooltip('Afficher le mot de passe'));
-        await tester.pumpAndSettle();
-        expect(find.byTooltip('Masquer le mot de passe'), findsOneWidget);
-      },
-    );
+    testWidgets('tooltip flips to "Masquer" once visibility is toggled on', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(const AppInput(label: 'Password', isPassword: true)),
+      );
+      await tester.tap(find.byTooltip('Afficher le mot de passe'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Masquer le mot de passe'), findsOneWidget);
+    });
 
-    testWidgets(
-      'shows accent focus border (1.5px) when the field is focused',
-      (tester) async {
-        await tester.pumpWidget(
-          wrap(const AppInput(label: 'Email', placeholder: 'vous@x.com')),
-        );
-        await tester.tap(find.byType(TextField));
-        await tester.pumpAndSettle();
-        // Cherche un AnimatedContainer avec border accent (focus state).
-        final container = find.descendant(
-          of: find.byType(AppInput),
-          matching: find.byWidgetPredicate(
-            (w) =>
-                w is AnimatedContainer &&
-                w.decoration is BoxDecoration &&
-                ((w.decoration! as BoxDecoration).border as Border?)
-                        ?.top
-                        .color ==
-                    AppColors.accent,
-          ),
-        );
-        expect(container, findsOneWidget);
-      },
-    );
+    testWidgets('shows accent focus border (1.5px) when the field is focused', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(const AppInput(label: 'Email', placeholder: 'vous@x.com')),
+      );
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      // Cherche un AnimatedContainer avec border accent (focus state).
+      final container = find.descendant(
+        of: find.byType(AppInput),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is AnimatedContainer &&
+              w.decoration is BoxDecoration &&
+              ((w.decoration! as BoxDecoration).border as Border?)?.top.color ==
+                  AppColors.accent,
+        ),
+      );
+      expect(container, findsOneWidget);
+    });
   });
 
   // ---------------------------------------------------------------------------

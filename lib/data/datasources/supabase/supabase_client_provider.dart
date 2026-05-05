@@ -11,8 +11,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// ```
 ///
 /// Aucune valeur n'est commitée — `String.fromEnvironment` retourne une
-/// chaîne vide à défaut, ce qui fait échouer `Supabase.initialize` côté
-/// `main()` avec un message clair.
+/// chaîne vide à défaut. Si une seule des deux variables est manquante,
+/// [isConfigured] retourne `false` et `main()` **skippe silencieusement**
+/// `Supabase.initialize` (mode design pour les builds locaux sans accès
+/// au backend). Toute requête Supabase échouera ensuite à l'usage avec
+/// l'erreur native du SDK ("not initialized") — c'est le comportement
+/// recherché en V1, à durcir en Phase 2 (faire crasher au démarrage si
+/// l'env est attendu).
 class SupabaseConfig {
   final String url;
   final String anonKey;

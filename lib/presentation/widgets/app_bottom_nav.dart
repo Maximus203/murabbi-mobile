@@ -11,6 +11,12 @@ enum AppBottomNavTab { home, salat, habits, collections, leaderboard }
 
 /// Barre de navigation Murabbi — bordure top hairline 0.5px, fond `bgPrimary`,
 /// label 11px sous l'icône Lucide 22px.
+///
+/// Accessibilité (Copilot review #2 + #3) :
+/// - Wrappée dans `SafeArea(top: false, bottom: true)` — le home indicator
+///   iOS et la nav-gesture-bar Android ne masquent plus les labels.
+/// - Chaque onglet est exposé via `Semantics(button, selected, label)` —
+///   VoiceOver / TalkBack annoncent l'état actif et le rôle bouton.
 class AppBottomNav extends StatelessWidget {
   static const double height = 72;
 
@@ -25,46 +31,49 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      decoration: const BoxDecoration(
-        color: AppColors.bgPrimary,
-        border: Border(
-          top: BorderSide(
-            color: AppColors.borderDefault,
-            width: AppBorderWidth.hairline,
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: height,
+        decoration: const BoxDecoration(
+          color: AppColors.bgPrimary,
+          border: Border(
+            top: BorderSide(
+              color: AppColors.borderDefault,
+              width: AppBorderWidth.hairline,
+            ),
           ),
         ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
-      child: Row(
-        children: const [
-          _NavItem(
-            tab: AppBottomNavTab.home,
-            label: 'Accueil',
-            icon: LucideIcons.house,
-          ),
-          _NavItem(
-            tab: AppBottomNavTab.salat,
-            label: 'Salat',
-            icon: LucideIcons.compass,
-          ),
-          _NavItem(
-            tab: AppBottomNavTab.habits,
-            label: 'Habitudes',
-            icon: LucideIcons.activity,
-          ),
-          _NavItem(
-            tab: AppBottomNavTab.collections,
-            label: 'Collections',
-            icon: LucideIcons.layers,
-          ),
-          _NavItem(
-            tab: AppBottomNavTab.leaderboard,
-            label: 'Classement',
-            icon: LucideIcons.trophy,
-          ),
-        ].map((e) => Expanded(child: e._withParent(this))).toList(),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
+        child: Row(
+          children: const [
+            _NavItem(
+              tab: AppBottomNavTab.home,
+              label: 'Accueil',
+              icon: LucideIcons.house,
+            ),
+            _NavItem(
+              tab: AppBottomNavTab.salat,
+              label: 'Salat',
+              icon: LucideIcons.compass,
+            ),
+            _NavItem(
+              tab: AppBottomNavTab.habits,
+              label: 'Habitudes',
+              icon: LucideIcons.activity,
+            ),
+            _NavItem(
+              tab: AppBottomNavTab.collections,
+              label: 'Collections',
+              icon: LucideIcons.layers,
+            ),
+            _NavItem(
+              tab: AppBottomNavTab.leaderboard,
+              label: 'Classement',
+              icon: LucideIcons.trophy,
+            ),
+          ].map((e) => Expanded(child: e._withParent(this))).toList(),
+        ),
       ),
     );
   }
@@ -92,21 +101,27 @@ class _NavItem extends StatelessWidget {
     final isActive = parent.active == tab;
     final color = isActive ? AppColors.accent : AppColors.textTertiary;
 
-    return InkWell(
-      onTap: () => parent.onTabSelected(tab),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 22, color: color),
-          const SizedBox(height: AppSpacing.s1),
-          Text(
-            label,
-            style: AppTypography.caption.copyWith(
-              color: color,
-              fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
+    return Semantics(
+      button: true,
+      selected: isActive,
+      label: label,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: () => parent.onTabSelected(tab),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 22, color: color),
+            const SizedBox(height: AppSpacing.s1),
+            Text(
+              label,
+              style: AppTypography.caption.copyWith(
+                color: color,
+                fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
