@@ -7,14 +7,14 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 void main() {
   group('AppTypography — sizes (DS sheet)', () {
     test('display = 42 / Geist Mono Medium / -1px tracking', () {
-      final s = AppTypography.display;
+      const s = AppTypography.display;
       expect(s.fontSize, 42);
       expect(s.fontWeight, FontWeight.w500);
       expect(s.letterSpacing, -1);
     });
 
     test('h1 = 26 / SemiBold / -0.3px', () {
-      final s = AppTypography.h1;
+      const s = AppTypography.h1;
       expect(s.fontSize, 26);
       expect(s.fontWeight, FontWeight.w600);
       expect(s.letterSpacing, -0.3);
@@ -28,7 +28,7 @@ void main() {
     });
     test('caption = 11', () => expect(AppTypography.caption.fontSize, 11));
     test('arabic = 22 / Noto Sans Arabic Medium', () {
-      final s = AppTypography.arabic;
+      const s = AppTypography.arabic;
       expect(s.fontSize, 22);
       expect(s.fontWeight, FontWeight.w500);
     });
