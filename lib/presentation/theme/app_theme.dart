@@ -11,7 +11,7 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData light() {
-    final colorScheme = ColorScheme(
+    const colorScheme = ColorScheme(
       brightness: Brightness.light,
       primary: AppColors.accent,
       onPrimary: AppColors.bgSurface,
@@ -27,7 +27,7 @@ class AppTheme {
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.bgPrimary,
-      textTheme: TextTheme(
+      textTheme: const TextTheme(
         displayMedium: AppTypography.display,
         headlineLarge: AppTypography.h1,
         headlineMedium: AppTypography.h2,
