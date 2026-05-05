@@ -33,4 +33,30 @@ void main() {
       expect(s.fontWeight, FontWeight.w500);
     });
   });
+
+  // Copilot review #9 — verrouille les fontFamily pour qu'une régression
+  // vers Roboto/system font ne passe pas silencieusement.
+  group('AppTypography — fontFamily lock (Copilot #9)', () {
+    test('display uses Geist Mono', () {
+      expect(AppTypography.display.fontFamily, 'Geist Mono');
+    });
+    test('h1 / h2 / h3 / body / label / caption use Geist', () {
+      for (final s in [
+        AppTypography.h1,
+        AppTypography.h2,
+        AppTypography.h3,
+        AppTypography.body,
+        AppTypography.label,
+        AppTypography.caption,
+      ]) {
+        expect(s.fontFamily, 'Geist');
+      }
+    });
+    test('arabic uses Noto Sans Arabic', () {
+      expect(AppTypography.arabic.fontFamily, 'Noto Sans Arabic');
+    });
+    test('mono uses Geist Mono', () {
+      expect(AppTypography.mono.fontFamily, 'Geist Mono');
+    });
+  });
 }

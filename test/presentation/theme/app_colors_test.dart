@@ -47,6 +47,10 @@ void main() {
       // 0.16 × 255 ≈ 41 (0x29)
       expect(AppColors.borderEmphasis, const Color(0x291C1A16));
     });
+    test('borderDefault = rgba(28,26,22,~0.08) (Copilot #8)', () {
+      // 0.08 × 255 ≈ 20 (0x14) — bordure hairline plus douce que emphasis.
+      expect(AppColors.borderDefault, const Color(0x141C1A16));
+    });
   });
 
   group('AppColors — catégories (DS sheet § Catégories)', () {
