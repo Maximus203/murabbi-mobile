@@ -27,6 +27,12 @@ dependencies:
   # Local notifications (timer v1.5 — Q-15a, spec v1.5 § 3.5/§ 7)
   flutter_local_notifications: ^17.2.3
 
+  # Typography (Phase 1 — Geist + Geist Mono + Noto Sans Arabic, P-3)
+  google_fonts: ^6.2.1
+
+  # Iconographie (Phase 1 — Lucide, stroke 1.5px, cf. DS sheet)
+  lucide_icons_flutter: ^3.1.13
+
   # Utils
   equatable: ^2.0.7
 
@@ -48,6 +54,9 @@ dev_dependencies:
 
   # Tests
   mocktail: ^1.0.4
+
+  # Golden tests (Phase 1 — widgets atomiques)
+  golden_toolkit: ^0.15.0
 
 flutter:
   uses-material-design: true
