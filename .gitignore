@@ -64,12 +64,19 @@ GoogleService-Info.plist
 
 # Claude
 .claude/
+.claude-worktrees/
 
 # S-11 — ne jamais commiter de fichiers admin dans le repo public mobile
 # (CLAUDE.md racine §A.3.1 S-11 — cloisonnement repo public/privé)
 **/admin-*.jsx
 **/Murabbi Admin.html
 **/Murabbi Admin.html.bak
+
+# S-11 — sous-dossiers physiques de checkout du repo admin et de la "legacy
+# mobile/" leftover. Le repo public mobile vit au top-level — ces dossiers
+# sont des outils de navigation locale et ne doivent JAMAIS être commités.
+/murabbi-admin/
+/murabbi-mobile/
 
 # S-11 — chemins non canoniques pour les wireframes (livraisons brutes)
 # La source de vérité mobile est docs/wireframes/bundle/. Tout autre chemin
