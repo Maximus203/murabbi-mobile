@@ -17,6 +17,9 @@ build/
 coverage/
 test/.test_coverage.dart
 
+# Golden diff outputs (générés par golden_toolkit en cas de fail — pas à commiter)
+**/test/**/failures/
+
 # iOS
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
