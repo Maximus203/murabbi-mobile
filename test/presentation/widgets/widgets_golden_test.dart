@@ -139,10 +139,7 @@ void main() {
               SizedBox(height: 4),
               Text(
                 '16px radius · 0.5px border · padding 20',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -185,9 +182,7 @@ void main() {
   // ---------------------------- AppProgressRing ----------------------------
   testGoldens('AppProgressRing — 75% with center label', (tester) async {
     await tester.pumpWidgetBuilder(
-      _frame(
-        AppProgressRing(progress: 0.75, centerLabel: '75'),
-      ),
+      _frame(AppProgressRing(progress: 0.75, centerLabel: '75')),
       surfaceSize: const Size(220, 220),
     );
     await screenMatchesGolden(tester, 'app_progress_ring_75');
@@ -222,11 +217,7 @@ void main() {
               title: 'Mes Habitudes',
               trailing: IconButton(
                 onPressed: _noop,
-                icon: Icon(
-                  LucideIcons.plus,
-                  size: 18,
-                  color: AppColors.accent,
-                ),
+                icon: Icon(LucideIcons.plus, size: 18, color: AppColors.accent),
               ),
             ),
             SizedBox(height: 8),
@@ -243,7 +234,10 @@ void main() {
   testGoldens('AppBottomNav — home active', (tester) async {
     await tester.pumpWidgetBuilder(
       _frame(
-        const AppBottomNav(active: AppBottomNavTab.home, onTabSelected: _noopTab),
+        const AppBottomNav(
+          active: AppBottomNavTab.home,
+          onTabSelected: _noopTab,
+        ),
         width: 400,
       ),
       surfaceSize: const Size(420, 100),

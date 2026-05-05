@@ -9,9 +9,7 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 /// Les routes réelles (auth, onboarding, dashboard, …) arrivent en Phase 2+.
 final _router = GoRouter(
   initialLocation: '/',
-  routes: [
-    GoRoute(path: '/', builder: (_, _) => const _PlaceholderScreen()),
-  ],
+  routes: [GoRoute(path: '/', builder: (_, _) => const _PlaceholderScreen())],
 );
 
 /// Racine de l'application Murabbi.

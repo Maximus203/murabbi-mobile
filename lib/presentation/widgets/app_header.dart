@@ -17,12 +17,9 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final Widget? trailing;
   final bool _isBackVariant;
 
-  const AppHeader.title({
-    super.key,
-    required this.title,
-    this.trailing,
-  })  : onBack = null,
-        _isBackVariant = false;
+  const AppHeader.title({super.key, required this.title, this.trailing})
+    : onBack = null,
+      _isBackVariant = false;
 
   const AppHeader.back({
     super.key,

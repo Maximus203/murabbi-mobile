@@ -39,11 +39,31 @@ class AppBottomNav extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
       child: Row(
         children: const [
-          _NavItem(tab: AppBottomNavTab.home, label: 'Accueil', icon: LucideIcons.house),
-          _NavItem(tab: AppBottomNavTab.salat, label: 'Salat', icon: LucideIcons.compass),
-          _NavItem(tab: AppBottomNavTab.habits, label: 'Habitudes', icon: LucideIcons.activity),
-          _NavItem(tab: AppBottomNavTab.collections, label: 'Collections', icon: LucideIcons.layers),
-          _NavItem(tab: AppBottomNavTab.leaderboard, label: 'Classement', icon: LucideIcons.trophy),
+          _NavItem(
+            tab: AppBottomNavTab.home,
+            label: 'Accueil',
+            icon: LucideIcons.house,
+          ),
+          _NavItem(
+            tab: AppBottomNavTab.salat,
+            label: 'Salat',
+            icon: LucideIcons.compass,
+          ),
+          _NavItem(
+            tab: AppBottomNavTab.habits,
+            label: 'Habitudes',
+            icon: LucideIcons.activity,
+          ),
+          _NavItem(
+            tab: AppBottomNavTab.collections,
+            label: 'Collections',
+            icon: LucideIcons.layers,
+          ),
+          _NavItem(
+            tab: AppBottomNavTab.leaderboard,
+            label: 'Classement',
+            icon: LucideIcons.trophy,
+          ),
         ].map((e) => Expanded(child: e._withParent(this))).toList(),
       ),
     );
@@ -63,12 +83,8 @@ class _NavItem extends StatelessWidget {
     AppBottomNav? parent,
   }) : _parent = parent;
 
-  _NavItem _withParent(AppBottomNav parent) => _NavItem(
-        tab: tab,
-        label: label,
-        icon: icon,
-        parent: parent,
-      );
+  _NavItem _withParent(AppBottomNav parent) =>
+      _NavItem(tab: tab, label: label, icon: icon, parent: parent);
 
   @override
   Widget build(BuildContext context) {

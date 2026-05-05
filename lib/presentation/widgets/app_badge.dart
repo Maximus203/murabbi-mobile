@@ -45,10 +45,7 @@ class AppBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: spec.background,
         borderRadius: BorderRadius.circular(AppRadius.chip),
-        border: Border.all(
-          color: spec.border,
-          width: AppBorderWidth.hairline,
-        ),
+        border: Border.all(color: spec.border, width: AppBorderWidth.hairline),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
