@@ -1,0 +1,54 @@
+name: Update Goldens
+
+# Régénère les goldens sur Linux (source of truth — cf. ADR-010) puis
+# commit/push sur la branche cible. Déclenchement manuel uniquement.
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branche cible (ex. feat/phase-1-mobile-setup)'
+        required: true
+        type: string
+
+jobs:
+  update:
+    name: Regenerate goldens on Linux
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Regenerate goldens
+        run: flutter test --update-goldens
+
+      - name: Commit & push regenerated goldens
+        env:
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$BRANCH" =~ ^[a-zA-Z0-9._/-]+$ ]]; then
+            echo "::error::Invalid branch name: $BRANCH"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A '**/goldens/*.png'
+          if git diff --cached --quiet; then
+            echo "No golden changes — nothing to commit."
+            exit 0
+          fi
+          git commit -m "chore(test): regenerate goldens on Linux CI"
+          git push origin "HEAD:$BRANCH"
