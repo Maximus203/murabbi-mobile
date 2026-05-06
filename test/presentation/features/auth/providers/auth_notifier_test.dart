@@ -25,11 +25,16 @@ void main() {
     level: Level.aspirant,
   );
 
-  ProviderContainer makeContainer({Stream<User?>? authStream}) {
-    when(() => repo.authStateChanges).thenAnswer(
-      (_) => authStream ?? const Stream<User?>.empty(),
-    );
-    when(() => repo.getCurrentUser()).thenAnswer((_) async => null);
+  ProviderContainer makeContainer({
+    Stream<User?>? authStream,
+    bool stubGetCurrentUser = true,
+  }) {
+    when(
+      () => repo.authStateChanges,
+    ).thenAnswer((_) => authStream ?? const Stream<User?>.empty());
+    if (stubGetCurrentUser) {
+      when(() => repo.getCurrentUser()).thenAnswer((_) async => null);
+    }
     final container = ProviderContainer(
       overrides: [authRepositoryProvider.overrideWithValue(repo)],
     );
@@ -49,22 +54,20 @@ void main() {
     });
 
     test('build() returns the current user when a session exists', () async {
+      final container = makeContainer(stubGetCurrentUser: false);
       when(() => repo.getCurrentUser()).thenAnswer((_) async => testUser);
-      final container = makeContainer();
       final state = await container.read(authNotifierProvider.future);
       expect(state, testUser);
     });
 
     test('build() exposes AccountDeletedFailure as state error', () async {
-      when(() => repo.getCurrentUser()).thenThrow(
-        const AuthFailure.accountDeleted(),
-      );
-      final container = makeContainer();
-      await container.read(authNotifierProvider.future).then(
-        (_) => fail('expected error'),
-        onError: (Object e) {
-          expect(e, isA<AccountDeletedFailure>());
-        },
+      final container = makeContainer(stubGetCurrentUser: false);
+      when(
+        () => repo.getCurrentUser(),
+      ).thenThrow(const AuthFailure.accountDeleted());
+      await expectLater(
+        container.read(authNotifierProvider.future),
+        throwsA(isA<AccountDeletedFailure>()),
       );
     });
   });
@@ -162,17 +165,14 @@ void main() {
       final container = makeContainer();
       await container.read(authNotifierProvider.future);
 
-      when(() => repo.signInWithGoogle()).thenThrow(
-        const AuthFailure.network(),
-      );
+      when(
+        () => repo.signInWithGoogle(),
+      ).thenThrow(const AuthFailure.network());
 
       final notifier = container.read(authNotifierProvider.notifier);
       await notifier.signInWithGoogle();
 
-      expect(
-        container.read(authNotifierProvider).error,
-        isA<NetworkFailure>(),
-      );
+      expect(container.read(authNotifierProvider).error, isA<NetworkFailure>());
     });
   });
 
@@ -193,25 +193,28 @@ void main() {
       verify(() => repo.sendPasswordResetEmail(email: 'a@b.co')).called(1);
     });
 
-    test('returns false on network failure (UI shows generic success)', () async {
-      final container = makeContainer();
-      await container.read(authNotifierProvider.future);
+    test(
+      'returns false on network failure (UI shows generic success)',
+      () async {
+        final container = makeContainer();
+        await container.read(authNotifierProvider.future);
 
-      when(
-        () => repo.sendPasswordResetEmail(email: any(named: 'email')),
-      ).thenThrow(const AuthFailure.network());
+        when(
+          () => repo.sendPasswordResetEmail(email: any(named: 'email')),
+        ).thenThrow(const AuthFailure.network());
 
-      final notifier = container.read(authNotifierProvider.notifier);
-      final ok = await notifier.sendPasswordReset(email: 'a@b.co');
+        final notifier = container.read(authNotifierProvider.notifier);
+        final ok = await notifier.sendPasswordReset(email: 'a@b.co');
 
-      expect(ok, isFalse);
-    });
+        expect(ok, isFalse);
+      },
+    );
   });
 
   group('AuthNotifier — signOut', () {
     test('clears user state on success', () async {
+      final container = makeContainer(stubGetCurrentUser: false);
       when(() => repo.getCurrentUser()).thenAnswer((_) async => testUser);
-      final container = makeContainer();
       await container.read(authNotifierProvider.future);
 
       when(() => repo.signOut()).thenAnswer((_) async {});
