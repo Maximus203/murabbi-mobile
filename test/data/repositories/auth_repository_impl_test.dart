@@ -1,0 +1,235 @@
+import 'dart:async';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:murabbi_mobile/data/datasources/auth_data_source.dart';
+import 'package:murabbi_mobile/data/repositories/auth_repository_impl.dart';
+import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+
+class MockAuthDataSource extends Mock implements AuthDataSource {}
+
+typedef AuthMaps = ({
+  Map<String, dynamic> authUser,
+  Map<String, dynamic> profile,
+});
+
+void main() {
+  late MockAuthDataSource ds;
+  late AuthRepositoryImpl repo;
+
+  AuthMaps validMaps() => (
+    authUser: const {
+      'id': '11111111-1111-1111-1111-111111111111',
+      'email': 'cherif@example.com',
+      'created_at': '2026-01-01T00:00:00Z',
+    },
+    profile: const {'display_name': 'Cherif', 'total_points': 0},
+  );
+
+  setUp(() {
+    ds = MockAuthDataSource();
+    repo = AuthRepositoryImpl(ds);
+  });
+
+  group('signIn', () {
+    test('returns mapped User on success', () async {
+      when(
+        () => ds.signInWithPassword(
+          email: 'cherif@example.com',
+          password: 'pass1234',
+        ),
+      ).thenAnswer((_) async => validMaps());
+
+      final user = await repo.signIn(
+        email: 'cherif@example.com',
+        password: 'pass1234',
+      );
+
+      expect(user.email.value, 'cherif@example.com');
+      expect(user.displayName.value, 'Cherif');
+    });
+
+    test(
+      'translates "invalid credentials" exception to InvalidCredentialsFailure',
+      () async {
+        when(
+          () => ds.signInWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenThrow(Exception('Invalid login credentials'));
+
+        expect(
+          () => repo.signIn(email: 'a@b.co', password: 'pass1234'),
+          throwsA(isA<InvalidCredentialsFailure>()),
+        );
+      },
+    );
+
+    test(
+      'translates a network/SocketException-like error to NetworkFailure',
+      () async {
+        when(
+          () => ds.signInWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenThrow(Exception('SocketException: Failed host lookup'));
+
+        expect(
+          () => repo.signIn(email: 'a@b.co', password: 'pass1234'),
+          throwsA(isA<NetworkFailure>()),
+        );
+      },
+    );
+
+    test('falls back to UnknownAuthFailure on unrecognized error', () async {
+      when(
+        () => ds.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenThrow(StateError('something weird'));
+
+      expect(
+        () => repo.signIn(email: 'a@b.co', password: 'pass1234'),
+        throwsA(isA<UnknownAuthFailure>()),
+      );
+    });
+  });
+
+  group('signUp', () {
+    test('returns mapped User on success', () async {
+      when(
+        () => ds.signUp(
+          email: 'cherif@example.com',
+          password: 'pass1234',
+          displayName: 'Cherif',
+        ),
+      ).thenAnswer((_) async => validMaps());
+
+      final user = await repo.signUp(
+        email: 'cherif@example.com',
+        password: 'pass1234',
+        displayName: 'Cherif',
+      );
+
+      expect(user.displayName.value, 'Cherif');
+    });
+
+    test(
+      'translates "already registered" to EmailAlreadyInUseFailure',
+      () async {
+        when(
+          () => ds.signUp(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+            displayName: any(named: 'displayName'),
+          ),
+        ).thenThrow(Exception('User already registered'));
+
+        expect(
+          () => repo.signUp(
+            email: 'a@b.co',
+            password: 'pass1234',
+            displayName: 'Cherif',
+          ),
+          throwsA(isA<EmailAlreadyInUseFailure>()),
+        );
+      },
+    );
+
+    test(
+      'translates "password should be at least" to WeakPasswordFailure',
+      () async {
+        when(
+          () => ds.signUp(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+            displayName: any(named: 'displayName'),
+          ),
+        ).thenThrow(Exception('Password should be at least 6 characters'));
+
+        expect(
+          () => repo.signUp(
+            email: 'a@b.co',
+            password: 'pass1234',
+            displayName: 'Cherif',
+          ),
+          throwsA(isA<WeakPasswordFailure>()),
+        );
+      },
+    );
+  });
+
+  group(
+    'signInWithGoogle / sendPasswordResetEmail / signOut / deleteAccount',
+    () {
+      test('signInWithGoogle delegates and maps', () async {
+        when(() => ds.signInWithGoogle()).thenAnswer((_) async => validMaps());
+        final user = await repo.signInWithGoogle();
+        expect(user.email.value, 'cherif@example.com');
+      });
+
+      test('sendPasswordResetEmail forwards email', () async {
+        when(
+          () => ds.sendPasswordResetEmail(email: 'a@b.co'),
+        ).thenAnswer((_) async {});
+        await repo.sendPasswordResetEmail(email: 'a@b.co');
+        verify(() => ds.sendPasswordResetEmail(email: 'a@b.co')).called(1);
+      });
+
+      test('signOut delegates', () async {
+        when(() => ds.signOut()).thenAnswer((_) async {});
+        await repo.signOut();
+        verify(() => ds.signOut()).called(1);
+      });
+
+      test('deleteAccount forwards UUID string', () async {
+        when(() => ds.deleteAccount('uid-1')).thenAnswer((_) async {});
+        await repo.deleteAccount(UserId('uid-1'));
+        verify(() => ds.deleteAccount('uid-1')).called(1);
+      });
+    },
+  );
+
+  group('getCurrentUser / authStateChanges', () {
+    test('getCurrentUser returns null when datasource returns null', () async {
+      when(() => ds.getCurrentUser()).thenAnswer((_) async => null);
+      expect(await repo.getCurrentUser(), isNull);
+    });
+
+    test('getCurrentUser maps when datasource returns maps', () async {
+      when(() => ds.getCurrentUser()).thenAnswer((_) async => validMaps());
+      final user = await repo.getCurrentUser();
+      expect(user, isNotNull);
+      expect(user!.email.value, 'cherif@example.com');
+    });
+
+    test(
+      'authStateChanges emits null/User mirror of datasource stream',
+      () async {
+        final controller = StreamController<AuthMaps?>();
+        when(() => ds.authStateChanges).thenAnswer((_) => controller.stream);
+
+        final emitted = <Object?>[];
+        final sub = repo.authStateChanges.listen(emitted.add);
+
+        controller
+          ..add(null)
+          ..add(validMaps())
+          ..add(null);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(emitted, hasLength(3));
+        expect(emitted[0], isNull);
+        expect(emitted[1], isNotNull);
+        expect(emitted[2], isNull);
+
+        await sub.cancel();
+        await controller.close();
+      },
+    );
+  });
+}
