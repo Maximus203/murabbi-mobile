@@ -38,30 +38,23 @@ void main() {
 
     setUp(() => useCase = SignInUseCase(mockRepo));
 
-    test(
-      'normalizes email + delegates to repository on valid input',
-      () async {
-        when(
-          () => mockRepo.signIn(
-            email: 'cherif@example.com',
-            password: 'pass1234',
-          ),
-        ).thenAnswer((_) async => testUser);
+    test('normalizes email + delegates to repository on valid input', () async {
+      when(
+        () =>
+            mockRepo.signIn(email: 'cherif@example.com', password: 'pass1234'),
+      ).thenAnswer((_) async => testUser);
 
-        final result = await useCase(
-          email: 'Cherif@Example.COM',
-          password: 'pass1234',
-        );
+      final result = await useCase(
+        email: 'Cherif@Example.COM',
+        password: 'pass1234',
+      );
 
-        expect(result, testUser);
-        verify(
-          () => mockRepo.signIn(
-            email: 'cherif@example.com',
-            password: 'pass1234',
-          ),
-        ).called(1);
-      },
-    );
+      expect(result, testUser);
+      verify(
+        () =>
+            mockRepo.signIn(email: 'cherif@example.com', password: 'pass1234'),
+      ).called(1);
+    });
 
     test('rejects malformed email before hitting the repository', () async {
       expect(
@@ -109,39 +102,38 @@ void main() {
 
     setUp(() => useCase = SignUpUseCase(mockRepo));
 
-    test('normalizes email + trims displayName + delegates on valid input',
-        () async {
-      when(
-        () => mockRepo.signUp(
-          email: 'cherif@example.com',
-          password: 'pass1234',
-          displayName: 'Cherif',
-        ),
-      ).thenAnswer((_) async => testUser);
+    test(
+      'normalizes email + trims displayName + delegates on valid input',
+      () async {
+        when(
+          () => mockRepo.signUp(
+            email: 'cherif@example.com',
+            password: 'pass1234',
+            displayName: 'Cherif',
+          ),
+        ).thenAnswer((_) async => testUser);
 
-      final result = await useCase(
-        email: 'Cherif@Example.COM',
-        password: 'pass1234',
-        displayName: '  Cherif  ',
-      );
-
-      expect(result, testUser);
-      verify(
-        () => mockRepo.signUp(
-          email: 'cherif@example.com',
+        final result = await useCase(
+          email: 'Cherif@Example.COM',
           password: 'pass1234',
-          displayName: 'Cherif',
-        ),
-      ).called(1);
-    });
+          displayName: '  Cherif  ',
+        );
+
+        expect(result, testUser);
+        verify(
+          () => mockRepo.signUp(
+            email: 'cherif@example.com',
+            password: 'pass1234',
+            displayName: 'Cherif',
+          ),
+        ).called(1);
+      },
+    );
 
     test('rejects empty displayName', () async {
       expect(
-        () => useCase(
-          email: 'a@b.co',
-          password: 'pass1234',
-          displayName: '   ',
-        ),
+        () =>
+            useCase(email: 'a@b.co', password: 'pass1234', displayName: '   '),
         throwsArgumentError,
       );
     });
@@ -159,11 +151,8 @@ void main() {
 
     test('rejects too-short password', () async {
       expect(
-        () => useCase(
-          email: 'a@b.co',
-          password: 'short',
-          displayName: 'Cherif',
-        ),
+        () =>
+            useCase(email: 'a@b.co', password: 'short', displayName: 'Cherif'),
         throwsArgumentError,
       );
     });
@@ -175,8 +164,7 @@ void main() {
     setUp(() => useCase = SignInWithGoogleUseCase(mockRepo));
 
     test('delegates to repository.signInWithGoogle', () async {
-      when(() => mockRepo.signInWithGoogle())
-          .thenAnswer((_) async => testUser);
+      when(() => mockRepo.signInWithGoogle()).thenAnswer((_) async => testUser);
 
       final result = await useCase();
 
@@ -268,8 +256,9 @@ void main() {
 
     test('forwards the repository auth-state stream', () async {
       final controller = StreamController<User?>();
-      when(() => mockRepo.authStateChanges)
-          .thenAnswer((_) => controller.stream);
+      when(
+        () => mockRepo.authStateChanges,
+      ).thenAnswer((_) => controller.stream);
 
       final emissions = <User?>[];
       final sub = useCase().listen(emissions.add);

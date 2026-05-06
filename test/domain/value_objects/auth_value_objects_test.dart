@@ -4,11 +4,13 @@ import 'package:murabbi_mobile/domain/value_objects/password.dart';
 
 void main() {
   group('EmailAddress', () {
-    test('accepts a well-formed email and exposes a normalized lowercase value',
-        () {
-      final email = EmailAddress('Cherif@Example.COM');
-      expect(email.value, 'cherif@example.com');
-    });
+    test(
+      'accepts a well-formed email and exposes a normalized lowercase value',
+      () {
+        final email = EmailAddress('Cherif@Example.COM');
+        expect(email.value, 'cherif@example.com');
+      },
+    );
 
     test('trims surrounding whitespace before validating', () {
       final email = EmailAddress('  hello@world.io  ');
