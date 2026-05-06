@@ -17,6 +17,9 @@ build/
 coverage/
 test/.test_coverage.dart
 
+# Golden diff outputs (générés par golden_toolkit en cas de fail — pas à commiter)
+**/test/**/failures/
+
 # iOS
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
@@ -66,13 +69,14 @@ GoogleService-Info.plist
 .claude/
 
 # S-11 — ne jamais commiter de fichiers admin dans le repo public mobile
-# (CLAUDE.md racine §A.3.1 S-11 — cloisonnement repo public/privé)
+# (cloisonnement repo public/privé). Patterns défensifs pour toute fuite
+# d'asset admin qui viendrait par copie manuelle.
 **/admin-*.jsx
 **/Murabbi Admin.html
 **/Murabbi Admin.html.bak
 
-# S-11 — chemins non canoniques pour les wireframes (livraisons brutes)
+# S-11 — chemins non canoniques pour les wireframes (livraisons brutes).
 # La source de vérité mobile est docs/wireframes/bundle/. Tout autre chemin
-# (notamment /wireframes/ à la racine) est ignoré pour éviter les fuites
-# accidentelles depuis des extractions Anthropic Webpage Complete.
+# (notamment /wireframes/ à la racine du repo) est ignoré pour éviter les
+# fuites accidentelles depuis des extractions externes.
 /wireframes/
