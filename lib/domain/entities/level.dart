@@ -41,4 +41,13 @@ enum Level {
     }
     return Level.aspirant;
   }
+
+  /// Parse l'enum string verrouillé Q-18 (`users.level` côté admin).
+  /// Rejette toute valeur hors des 6 niveaux par `ArgumentError`.
+  static Level fromString(String value) {
+    for (final level in Level.values) {
+      if (level.name == value) return level;
+    }
+    throw ArgumentError.value(value, 'level', 'unknown level');
+  }
 }
