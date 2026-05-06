@@ -45,5 +45,5 @@ class _BypassGoldenFileComparator extends GoldenFileComparator {
   Future<bool> compare(Uint8List imageBytes, Uri golden) async => true;
 
   @override
-  Future<void> update(Uint8List imageBytes, Uri golden) async {}
+  Future<void> update(Uri golden, Uint8List imageBytes) async {}
 }
