@@ -11,7 +11,15 @@ typedef AuthMaps = ({
 /// Implémentation Supabase de [AuthDataSource]. Wrapper thin : aucune
 /// logique métier, aucune traduction d'erreur — celle-ci est faite dans
 /// `AuthRepositoryImpl` (cf. ADR-004).
+///
+/// Schéma `users` consommé (Q-18, cf. murabbi-admin) :
+///   id, pseudo, email, level, total_points, current_streak,
+///   completion_rate, deletion_requested_at
 class SupabaseAuthDataSource implements AuthDataSource {
+  static const _profileColumns =
+      'pseudo, email, level, total_points, current_streak, '
+      'completion_rate, deletion_requested_at';
+
   final sb.SupabaseClient _client;
 
   const SupabaseAuthDataSource(this._client);
@@ -32,22 +40,34 @@ class SupabaseAuthDataSource implements AuthDataSource {
   Future<AuthMaps> signUp({
     required String email,
     required String password,
-    required String displayName,
   }) async {
-    final res = await _client.auth.signUp(
-      email: email,
-      password: password,
-      data: {'display_name': displayName},
-    );
+    final res = await _client.auth.signUp(email: email, password: password);
     final user = res.user!;
-    // Création explicite du row profile — la table `profiles` est dérivée
-    // de auth.users côté admin (cf. murabbi-admin migrations).
-    await _client.from('profiles').insert({
+    // Pseudo auto-généré déterministe (Q-18). Le user le change à SETUP-01.
+    final autoPseudo = _autoPseudo(user.id);
+    // Création explicite du row `users` — la table est dérivée de auth.users
+    // côté admin (cf. murabbi-admin migrations Q-18).
+    await _client.from('users').insert({
       'id': user.id,
-      'display_name': displayName,
+      'pseudo': autoPseudo,
+      'email': email,
+      'level': 'aspirant',
       'total_points': 0,
+      'current_streak': 0,
+      'completion_rate': 0,
     });
-    return _toMaps(user, displayNameOverride: displayName, totalPoints: 0);
+    return _toMaps(
+      user,
+      profileOverride: {
+        'pseudo': autoPseudo,
+        'email': email,
+        'level': 'aspirant',
+        'total_points': 0,
+        'current_streak': 0,
+        'completion_rate': 0,
+        'deletion_requested_at': null,
+      },
+    );
   }
 
   @override
@@ -70,9 +90,13 @@ class SupabaseAuthDataSource implements AuthDataSource {
 
   @override
   Future<void> deleteAccount(String userId) async {
-    // Le SDK client ne fournit pas auth.admin.deleteUser. On délègue à un
-    // RPC Supabase `delete_account` (cf. issue #7 Phase 6 — cascade RGPD).
-    await _client.rpc<void>('delete_account', params: {'user_id': userId});
+    // Soft-delete (ADR-011) : flag deletion_requested_at + signOut. Le
+    // hard-delete cascade RGPD est exécuté par un job batch admin (J+30).
+    await _client
+        .from('users')
+        .update({'deletion_requested_at': DateTime.now().toIso8601String()})
+        .eq('id', userId);
+    await _client.auth.signOut();
   }
 
   @override
@@ -92,19 +116,15 @@ class SupabaseAuthDataSource implements AuthDataSource {
 
   Future<AuthMaps> _toMaps(
     sb.User user, {
-    String? displayNameOverride,
-    int? totalPoints,
+    Map<String, dynamic>? profileOverride,
   }) async {
-    Map<String, dynamic> profile;
-    if (displayNameOverride != null && totalPoints != null) {
-      profile = {
-        'display_name': displayNameOverride,
-        'total_points': totalPoints,
-      };
+    final Map<String, dynamic> profile;
+    if (profileOverride != null) {
+      profile = profileOverride;
     } else {
       final row = await _client
-          .from('profiles')
-          .select('display_name, total_points')
+          .from('users')
+          .select(_profileColumns)
           .eq('id', user.id)
           .single();
       profile = Map<String, dynamic>.from(row);
@@ -117,5 +137,14 @@ class SupabaseAuthDataSource implements AuthDataSource {
       },
       profile: profile,
     );
+  }
+
+  /// `'Anonyme #' + 4 derniers chars de l'id`. Déterministe, garantit unicité
+  /// "raisonnable" tant que l'utilisateur n'a pas encore choisi son pseudo.
+  static String _autoPseudo(String userId) {
+    final tail = userId.length >= 4
+        ? userId.substring(userId.length - 4)
+        : userId;
+    return 'Anonyme #$tail';
   }
 }

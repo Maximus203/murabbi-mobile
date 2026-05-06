@@ -188,30 +188,47 @@ void main() {
       final now = DateTime.now();
       final user = User(
         id: userId,
-        displayName: NonEmptyString('Cherif'),
+        pseudo: NonEmptyString('Cherif'),
         email: NonEmptyString('cherif@example.com'),
         createdAt: now,
         level: Level.aspirant,
       );
 
       expect(user.id, userId);
-      expect(user.displayName.value, 'Cherif');
+      expect(user.pseudo.value, 'Cherif');
       expect(user.email.value, 'cherif@example.com');
       expect(user.level, Level.aspirant);
+      expect(user.currentStreak, 0);
+      expect(user.completionRate, 0);
+    });
+
+    test('Level.fromString parses the 6 enum values (Q-18)', () {
+      expect(Level.fromString('aspirant'), Level.aspirant);
+      expect(Level.fromString('murid'), Level.murid);
+      expect(Level.fromString('salik'), Level.salik);
+      expect(Level.fromString('mujahid'), Level.mujahid);
+      expect(Level.fromString('wali'), Level.wali);
+      expect(Level.fromString('murabbi'), Level.murabbi);
+    });
+
+    test('Level.fromString rejects unknown values', () {
+      expect(() => Level.fromString('unknown'), throwsArgumentError);
+      expect(() => Level.fromString(''), throwsArgumentError);
+      expect(() => Level.fromString('Aspirant'), throwsArgumentError);
     });
 
     test('two users with same id are equal', () {
       final now = DateTime.now();
       final a = User(
         id: userId,
-        displayName: NonEmptyString('Cherif'),
+        pseudo: NonEmptyString('Cherif'),
         email: NonEmptyString('cherif@example.com'),
         createdAt: now,
         level: Level.aspirant,
       );
       final b = User(
         id: userId,
-        displayName: NonEmptyString('Cherif'),
+        pseudo: NonEmptyString('Cherif'),
         email: NonEmptyString('cherif@example.com'),
         createdAt: now,
         level: Level.aspirant,
@@ -223,14 +240,14 @@ void main() {
       final now = DateTime.now();
       final a = User(
         id: UserId('user-uuid-001'),
-        displayName: NonEmptyString('Cherif'),
+        pseudo: NonEmptyString('Cherif'),
         email: NonEmptyString('cherif@example.com'),
         createdAt: now,
         level: Level.aspirant,
       );
       final b = User(
         id: UserId('user-uuid-002'),
-        displayName: NonEmptyString('Cherif'),
+        pseudo: NonEmptyString('Cherif'),
         email: NonEmptyString('cherif@example.com'),
         createdAt: now,
         level: Level.aspirant,

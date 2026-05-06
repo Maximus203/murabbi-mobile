@@ -4,11 +4,10 @@ import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 abstract interface class AuthRepository {
   Future<User> signIn({required String email, required String password});
 
-  Future<User> signUp({
-    required String email,
-    required String password,
-    required String displayName,
-  });
+  /// Signup minimal — email + password uniquement (Q-18). Le pseudo est
+  /// auto-généré côté data layer (`'Anonyme #' + 4 derniers chars de l'id`)
+  /// et l'utilisateur le personnalise plus tard à SETUP-01 / ST-02.
+  Future<User> signUp({required String email, required String password});
 
   /// OAuth Google. L'implémentation Supabase ouvre un navigateur externe puis
   /// retourne l'utilisateur authentifié à la fin du redirect.

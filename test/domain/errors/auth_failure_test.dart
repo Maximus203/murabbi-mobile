@@ -46,6 +46,7 @@ void main() {
         EmailAlreadyInUseFailure() => 'in-use',
         WeakPasswordFailure() => 'weak',
         NetworkFailure() => 'network',
+        AccountDeletedFailure() => 'deleted',
         UnknownAuthFailure() => 'unknown',
       };
 
@@ -53,6 +54,7 @@ void main() {
       expect(describe(const AuthFailure.emailAlreadyInUse()), 'in-use');
       expect(describe(const AuthFailure.weakPassword()), 'weak');
       expect(describe(const AuthFailure.network()), 'network');
+      expect(describe(const AuthFailure.accountDeleted()), 'deleted');
       expect(describe(const AuthFailure.unknown()), 'unknown');
     });
   });

@@ -18,13 +18,21 @@ void main() {
   late MockAuthDataSource ds;
   late AuthRepositoryImpl repo;
 
-  AuthMaps validMaps() => (
+  AuthMaps validMaps({Object? deletionRequestedAt}) => (
     authUser: const {
       'id': '11111111-1111-1111-1111-111111111111',
       'email': 'cherif@example.com',
       'created_at': '2026-01-01T00:00:00Z',
     },
-    profile: const {'display_name': 'Cherif', 'total_points': 0},
+    profile: {
+      'pseudo': 'Cherif',
+      'email': 'cherif@example.com',
+      'level': 'aspirant',
+      'total_points': 0,
+      'current_streak': 0,
+      'completion_rate': 0,
+      'deletion_requested_at': deletionRequestedAt,
+    },
   );
 
   setUp(() {
@@ -47,7 +55,23 @@ void main() {
       );
 
       expect(user.email.value, 'cherif@example.com');
-      expect(user.displayName.value, 'Cherif');
+      expect(user.pseudo.value, 'Cherif');
+    });
+
+    test('throws AccountDeletedFailure when soft-delete flag is set', () async {
+      when(
+        () => ds.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer(
+        (_) async => validMaps(deletionRequestedAt: '2026-05-01T00:00:00Z'),
+      );
+
+      expect(
+        () => repo.signIn(email: 'a@b.co', password: 'pass1234'),
+        throwsA(isA<AccountDeletedFailure>()),
+      );
     });
 
     test(
@@ -99,23 +123,18 @@ void main() {
     });
   });
 
-  group('signUp', () {
+  group('signUp (Q-18 — no displayName param)', () {
     test('returns mapped User on success', () async {
       when(
-        () => ds.signUp(
-          email: 'cherif@example.com',
-          password: 'pass1234',
-          displayName: 'Cherif',
-        ),
+        () => ds.signUp(email: 'cherif@example.com', password: 'pass1234'),
       ).thenAnswer((_) async => validMaps());
 
       final user = await repo.signUp(
         email: 'cherif@example.com',
         password: 'pass1234',
-        displayName: 'Cherif',
       );
 
-      expect(user.displayName.value, 'Cherif');
+      expect(user.pseudo.value, 'Cherif');
     });
 
     test(
@@ -125,16 +144,11 @@ void main() {
           () => ds.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
-            displayName: any(named: 'displayName'),
           ),
         ).thenThrow(Exception('User already registered'));
 
         expect(
-          () => repo.signUp(
-            email: 'a@b.co',
-            password: 'pass1234',
-            displayName: 'Cherif',
-          ),
+          () => repo.signUp(email: 'a@b.co', password: 'pass1234'),
           throwsA(isA<EmailAlreadyInUseFailure>()),
         );
       },
@@ -147,16 +161,11 @@ void main() {
           () => ds.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
-            displayName: any(named: 'displayName'),
           ),
         ).thenThrow(Exception('Password should be at least 6 characters'));
 
         expect(
-          () => repo.signUp(
-            email: 'a@b.co',
-            password: 'pass1234',
-            displayName: 'Cherif',
-          ),
+          () => repo.signUp(email: 'a@b.co', password: 'pass1234'),
           throwsA(isA<WeakPasswordFailure>()),
         );
       },
@@ -170,6 +179,16 @@ void main() {
         when(() => ds.signInWithGoogle()).thenAnswer((_) async => validMaps());
         final user = await repo.signInWithGoogle();
         expect(user.email.value, 'cherif@example.com');
+      });
+
+      test('signInWithGoogle throws AccountDeletedFailure on soft-delete', () {
+        when(() => ds.signInWithGoogle()).thenAnswer(
+          (_) async => validMaps(deletionRequestedAt: '2026-05-01T00:00:00Z'),
+        );
+        expect(
+          () => repo.signInWithGoogle(),
+          throwsA(isA<AccountDeletedFailure>()),
+        );
       });
 
       test('sendPasswordResetEmail forwards email', () async {
@@ -186,11 +205,14 @@ void main() {
         verify(() => ds.signOut()).called(1);
       });
 
-      test('deleteAccount forwards UUID string', () async {
-        when(() => ds.deleteAccount('uid-1')).thenAnswer((_) async {});
-        await repo.deleteAccount(UserId('uid-1'));
-        verify(() => ds.deleteAccount('uid-1')).called(1);
-      });
+      test(
+        'deleteAccount forwards UUID string (soft-delete in ADR-011)',
+        () async {
+          when(() => ds.deleteAccount('uid-1')).thenAnswer((_) async {});
+          await repo.deleteAccount(UserId('uid-1'));
+          verify(() => ds.deleteAccount('uid-1')).called(1);
+        },
+      );
     },
   );
 
@@ -205,6 +227,16 @@ void main() {
       final user = await repo.getCurrentUser();
       expect(user, isNotNull);
       expect(user!.email.value, 'cherif@example.com');
+    });
+
+    test('getCurrentUser throws AccountDeletedFailure on soft-delete', () {
+      when(() => ds.getCurrentUser()).thenAnswer(
+        (_) async => validMaps(deletionRequestedAt: '2026-05-01T00:00:00Z'),
+      );
+      expect(
+        () => repo.getCurrentUser(),
+        throwsA(isA<AccountDeletedFailure>()),
+      );
     });
 
     test(

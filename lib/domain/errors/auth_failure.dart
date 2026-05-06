@@ -19,6 +19,12 @@ sealed class AuthFailure extends Equatable implements Exception {
 
   const factory AuthFailure.network({String? message}) = NetworkFailure;
 
+  /// Compte en cooling period (cf. ADR-011) : l'utilisateur a demandé la
+  /// suppression et `users.deletion_requested_at IS NOT NULL`. Connexion
+  /// refusée jusqu'au hard-delete batch admin (J+30).
+  const factory AuthFailure.accountDeleted({String? message}) =
+      AccountDeletedFailure;
+
   const factory AuthFailure.unknown({String? message}) = UnknownAuthFailure;
 
   @override
@@ -42,6 +48,10 @@ class WeakPasswordFailure extends AuthFailure {
 
 class NetworkFailure extends AuthFailure {
   const NetworkFailure({super.message}) : super._();
+}
+
+class AccountDeletedFailure extends AuthFailure {
+  const AccountDeletedFailure({super.message}) : super._();
 }
 
 class UnknownAuthFailure extends AuthFailure {

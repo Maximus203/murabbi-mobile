@@ -1,12 +1,19 @@
 import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
+import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 /// Mapper pur — convertit les maps remontées par la couche data en entité
 /// `User`. Reçoit séparément :
-///   - `authUser` : extrait de `Supabase.auth.currentUser` ({id, email, created_at})
-///   - `profile`  : row de la table `profiles` ({display_name, total_points})
+///   - `authUser` : extrait de `Supabase.auth.currentUser`
+///                  ({id, email, created_at})
+///   - `profile`  : row de la table `users` Q-18 :
+///                  {pseudo, email, level, total_points, current_streak,
+///                   completion_rate, deletion_requested_at}
+///
+/// Lève [AuthFailure.accountDeleted] si `profile.deletion_requested_at` n'est
+/// pas null (cf. ADR-011 — soft-delete cooling period 30j).
 class UserMapper {
   const UserMapper._();
 
@@ -15,23 +22,31 @@ class UserMapper {
     required Map<String, dynamic> profile,
   }) {
     final id = authUser['id'];
-    final email = authUser['email'];
+    final emailAuth = authUser['email'];
     final createdAtRaw = authUser['created_at'];
-    final displayName = profile['display_name'];
+
+    final pseudo = profile['pseudo'];
+    final levelRaw = profile['level'];
     final totalPointsRaw = profile['total_points'];
+    final currentStreakRaw = profile['current_streak'];
+    final completionRateRaw = profile['completion_rate'];
+    final deletionRequestedAt = profile['deletion_requested_at'];
 
     if (id is! String || id.isEmpty) {
       throw ArgumentError.value(id, 'authUser.id', 'must be a non-empty UUID');
     }
-    if (email is! String) {
-      throw ArgumentError.value(email, 'authUser.email', 'must be a String');
-    }
-    if (displayName is! String) {
+    if (emailAuth is! String) {
       throw ArgumentError.value(
-        displayName,
-        'profile.display_name',
+        emailAuth,
+        'authUser.email',
         'must be a String',
       );
+    }
+    if (pseudo is! String) {
+      throw ArgumentError.value(pseudo, 'profile.pseudo', 'must be a String');
+    }
+    if (levelRaw is! String) {
+      throw ArgumentError.value(levelRaw, 'profile.level', 'must be a String');
     }
     if (totalPointsRaw is! int) {
       throw ArgumentError.value(
@@ -47,6 +62,26 @@ class UserMapper {
         'must be >= 0',
       );
     }
+    if (currentStreakRaw is! int || currentStreakRaw < 0) {
+      throw ArgumentError.value(
+        currentStreakRaw,
+        'profile.current_streak',
+        'must be a non-negative int',
+      );
+    }
+    if (completionRateRaw is! num || completionRateRaw < 0) {
+      throw ArgumentError.value(
+        completionRateRaw,
+        'profile.completion_rate',
+        'must be a non-negative number',
+      );
+    }
+
+    if (deletionRequestedAt != null) {
+      throw const AuthFailure.accountDeleted(
+        message: 'Account is in soft-delete cooling period (ADR-011).',
+      );
+    }
 
     final createdAt = createdAtRaw is DateTime
         ? createdAtRaw
@@ -54,10 +89,12 @@ class UserMapper {
 
     return User(
       id: UserId(id),
-      email: NonEmptyString(email),
-      displayName: NonEmptyString(displayName),
+      pseudo: NonEmptyString(pseudo),
+      email: NonEmptyString(emailAuth),
       createdAt: createdAt,
-      level: Level.fromPoints(totalPointsRaw),
+      level: Level.fromString(levelRaw),
+      currentStreak: currentStreakRaw,
+      completionRate: completionRateRaw.toDouble(),
     );
   }
 }
