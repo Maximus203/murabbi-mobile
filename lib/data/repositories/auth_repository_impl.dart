@@ -40,6 +40,10 @@ class AuthRepositoryImpl implements AuthRepository {
       _guard(() => _ds.sendPasswordResetEmail(email: email));
 
   @override
+  Future<void> resendVerificationEmail({required String email}) =>
+      _guard(() => _ds.resendVerificationEmail(email: email));
+
+  @override
   Future<void> signOut() => _guard(() => _ds.signOut());
 
   @override
@@ -87,7 +91,9 @@ class AuthRepositoryImpl implements AuthRepository {
     }
     if (msg.contains('socketexception') ||
         msg.contains('failed host lookup') ||
-        msg.contains('network is unreachable')) {
+        msg.contains('network is unreachable') ||
+        msg.contains('rate_limit') ||
+        msg.contains('rate limit')) {
       return AuthFailure.network(message: error.toString());
     }
     return AuthFailure.unknown(message: error.toString());

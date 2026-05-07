@@ -172,102 +172,99 @@ void main() {
     );
   });
 
-  group(
-    'signInWithGoogle / sendPasswordResetEmail / signOut / deleteAccount',
-    () {
-      test('signInWithGoogle delegates and maps', () async {
-        when(() => ds.signInWithGoogle()).thenAnswer((_) async => validMaps());
-        final user = await repo.signInWithGoogle();
-        expect(user.email.value, 'cherif@example.com');
-      });
+  group('signInWithGoogle / sendPasswordResetEmail / signOut / deleteAccount', () {
+    test('signInWithGoogle delegates and maps', () async {
+      when(() => ds.signInWithGoogle()).thenAnswer((_) async => validMaps());
+      final user = await repo.signInWithGoogle();
+      expect(user.email.value, 'cherif@example.com');
+    });
 
-      test('signInWithGoogle throws AccountDeletedFailure on soft-delete', () {
-        when(() => ds.signInWithGoogle()).thenAnswer(
-          (_) async => validMaps(deletionRequestedAt: '2026-05-01T00:00:00Z'),
+    test('signInWithGoogle throws AccountDeletedFailure on soft-delete', () {
+      when(() => ds.signInWithGoogle()).thenAnswer(
+        (_) async => validMaps(deletionRequestedAt: '2026-05-01T00:00:00Z'),
+      );
+      expect(
+        () => repo.signInWithGoogle(),
+        throwsA(isA<AccountDeletedFailure>()),
+      );
+    });
+
+    test('sendPasswordResetEmail forwards email', () async {
+      when(
+        () => ds.sendPasswordResetEmail(email: 'a@b.co'),
+      ).thenAnswer((_) async {});
+      await repo.sendPasswordResetEmail(email: 'a@b.co');
+      verify(() => ds.sendPasswordResetEmail(email: 'a@b.co')).called(1);
+    });
+
+    test('resendVerificationEmail forwards email', () async {
+      when(
+        () => ds.resendVerificationEmail(email: 'cherif@example.com'),
+      ).thenAnswer((_) async {});
+      await repo.resendVerificationEmail(email: 'cherif@example.com');
+      verify(
+        () => ds.resendVerificationEmail(email: 'cherif@example.com'),
+      ).called(1);
+    });
+
+    test(
+      'resendVerificationEmail translates rate-limit error to NetworkFailure',
+      () async {
+        when(
+          () => ds.resendVerificationEmail(email: any(named: 'email')),
+        ).thenThrow(
+          Exception(
+            'AuthApiException(message: For security purposes, you can only request this once every 60 seconds, code: over_email_send_rate_limit)',
+          ),
         );
         expect(
-          () => repo.signInWithGoogle(),
-          throwsA(isA<AccountDeletedFailure>()),
+          () => repo.resendVerificationEmail(email: 'a@b.co'),
+          throwsA(isA<NetworkFailure>()),
         );
-      });
+      },
+    );
 
-      test('sendPasswordResetEmail forwards email', () async {
+    test(
+      'resendVerificationEmail translates SocketException-like error to NetworkFailure',
+      () async {
         when(
-          () => ds.sendPasswordResetEmail(email: 'a@b.co'),
-        ).thenAnswer((_) async {});
-        await repo.sendPasswordResetEmail(email: 'a@b.co');
-        verify(() => ds.sendPasswordResetEmail(email: 'a@b.co')).called(1);
-      });
+          () => ds.resendVerificationEmail(email: any(named: 'email')),
+        ).thenThrow(Exception('SocketException: Failed host lookup'));
+        expect(
+          () => repo.resendVerificationEmail(email: 'a@b.co'),
+          throwsA(isA<NetworkFailure>()),
+        );
+      },
+    );
 
-      test('resendVerificationEmail forwards email', () async {
+    test(
+      'resendVerificationEmail translates unexpected error to UnknownAuthFailure',
+      () async {
         when(
-          () => ds.resendVerificationEmail(email: 'cherif@example.com'),
-        ).thenAnswer((_) async {});
-        await repo.resendVerificationEmail(email: 'cherif@example.com');
-        verify(
-          () => ds.resendVerificationEmail(email: 'cherif@example.com'),
-        ).called(1);
-      });
+          () => ds.resendVerificationEmail(email: any(named: 'email')),
+        ).thenThrow(Exception('totally unexpected'));
+        expect(
+          () => repo.resendVerificationEmail(email: 'a@b.co'),
+          throwsA(isA<UnknownAuthFailure>()),
+        );
+      },
+    );
 
-      test(
-        'resendVerificationEmail translates rate-limit error to NetworkFailure',
-        () async {
-          when(
-            () => ds.resendVerificationEmail(email: any(named: 'email')),
-          ).thenThrow(
-            Exception(
-              'AuthApiException(message: For security purposes, you can only request this once every 60 seconds, code: over_email_send_rate_limit)',
-            ),
-          );
-          expect(
-            () => repo.resendVerificationEmail(email: 'a@b.co'),
-            throwsA(isA<NetworkFailure>()),
-          );
-        },
-      );
+    test('signOut delegates', () async {
+      when(() => ds.signOut()).thenAnswer((_) async {});
+      await repo.signOut();
+      verify(() => ds.signOut()).called(1);
+    });
 
-      test(
-        'resendVerificationEmail translates SocketException-like error to NetworkFailure',
-        () async {
-          when(
-            () => ds.resendVerificationEmail(email: any(named: 'email')),
-          ).thenThrow(Exception('SocketException: Failed host lookup'));
-          expect(
-            () => repo.resendVerificationEmail(email: 'a@b.co'),
-            throwsA(isA<NetworkFailure>()),
-          );
-        },
-      );
-
-      test(
-        'resendVerificationEmail translates unexpected error to UnknownAuthFailure',
-        () async {
-          when(
-            () => ds.resendVerificationEmail(email: any(named: 'email')),
-          ).thenThrow(Exception('totally unexpected'));
-          expect(
-            () => repo.resendVerificationEmail(email: 'a@b.co'),
-            throwsA(isA<UnknownAuthFailure>()),
-          );
-        },
-      );
-
-      test('signOut delegates', () async {
-        when(() => ds.signOut()).thenAnswer((_) async {});
-        await repo.signOut();
-        verify(() => ds.signOut()).called(1);
-      });
-
-      test(
-        'deleteAccount forwards UUID string (soft-delete in ADR-011)',
-        () async {
-          when(() => ds.deleteAccount('uid-1')).thenAnswer((_) async {});
-          await repo.deleteAccount(UserId('uid-1'));
-          verify(() => ds.deleteAccount('uid-1')).called(1);
-        },
-      );
-    },
-  );
+    test(
+      'deleteAccount forwards UUID string (soft-delete in ADR-011)',
+      () async {
+        when(() => ds.deleteAccount('uid-1')).thenAnswer((_) async {});
+        await repo.deleteAccount(UserId('uid-1'));
+        verify(() => ds.deleteAccount('uid-1')).called(1);
+      },
+    );
+  });
 
   group('getCurrentUser / authStateChanges', () {
     test('getCurrentUser returns null when datasource returns null', () async {

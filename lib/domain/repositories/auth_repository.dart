@@ -17,6 +17,12 @@ abstract interface class AuthRepository {
   /// distingue pas "email inconnu" pour ne pas exposer la liste des comptes.
   Future<void> sendPasswordResetEmail({required String email});
 
+  /// Renvoie l'email de confirmation d'inscription (Supabase
+  /// `auth.resend(type: signup)`). Idempotent côté Supabase mais soumis à
+  /// rate-limit (≈ 1 envoi / 60s) — l'implémentation traduit la limite en
+  /// [AuthFailure.network] pour que l'UI puisse réessayer plus tard.
+  Future<void> resendVerificationEmail({required String email});
+
   Future<void> signOut();
 
   Future<void> deleteAccount(UserId userId);

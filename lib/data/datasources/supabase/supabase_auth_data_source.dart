@@ -86,6 +86,10 @@ class SupabaseAuthDataSource implements AuthDataSource {
       _client.auth.resetPasswordForEmail(email);
 
   @override
+  Future<void> resendVerificationEmail({required String email}) =>
+      _client.auth.resend(type: sb.OtpType.signup, email: email);
+
+  @override
   Future<void> signOut() => _client.auth.signOut();
 
   @override
