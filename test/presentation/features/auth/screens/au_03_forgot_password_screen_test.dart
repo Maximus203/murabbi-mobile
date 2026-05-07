@@ -44,26 +44,27 @@ void main() {
   });
 
   testWidgets(
-      'tapping "Envoyer le lien" calls repo.sendPasswordResetEmail with trimmed email',
-      (tester) async {
-    when(
-      () => repo.sendPasswordResetEmail(email: 'cherif@example.com'),
-    ).thenAnswer((_) async {});
+    'tapping "Envoyer le lien" calls repo.sendPasswordResetEmail with trimmed email',
+    (tester) async {
+      when(
+        () => repo.sendPasswordResetEmail(email: 'cherif@example.com'),
+      ).thenAnswer((_) async {});
 
-    await tester.pumpWidget(makeApp());
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(makeApp());
+      await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.byType(TextField).first,
-      '  cherif@example.com  ',
-    );
-    await tester.tap(find.text('Envoyer le lien'));
-    await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextField).first,
+        '  cherif@example.com  ',
+      );
+      await tester.tap(find.text('Envoyer le lien'));
+      await tester.pumpAndSettle();
 
-    verify(
-      () => repo.sendPasswordResetEmail(email: 'cherif@example.com'),
-    ).called(1);
-  });
+      verify(
+        () => repo.sendPasswordResetEmail(email: 'cherif@example.com'),
+      ).called(1);
+    },
+  );
 
   testWidgets('shows generic success state on success (Q-7 OWASP)', (
     tester,
@@ -84,22 +85,23 @@ void main() {
   });
 
   testWidgets(
-      'shows the SAME generic success state when repo throws (Q-7 anti-enumeration)',
-      (tester) async {
-    when(
-      () => repo.sendPasswordResetEmail(email: any(named: 'email')),
-    ).thenThrow(const AuthFailure.unknown());
+    'shows the SAME generic success state when repo throws (Q-7 anti-enumeration)',
+    (tester) async {
+      when(
+        () => repo.sendPasswordResetEmail(email: any(named: 'email')),
+      ).thenThrow(const AuthFailure.unknown());
 
-    await tester.pumpWidget(makeApp());
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(makeApp());
+      await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField).first, 'unknown@b.co');
-    await tester.tap(find.text('Envoyer le lien'));
-    await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'unknown@b.co');
+      await tester.tap(find.text('Envoyer le lien'));
+      await tester.pumpAndSettle();
 
-    expect(find.textContaining('Si un compte existe'), findsOneWidget);
-    expect(find.text('Retour à la connexion'), findsOneWidget);
-  });
+      expect(find.textContaining('Si un compte existe'), findsOneWidget);
+      expect(find.text('Retour à la connexion'), findsOneWidget);
+    },
+  );
 
   testWidgets('"Retour à la connexion" calls onBack callback', (tester) async {
     when(

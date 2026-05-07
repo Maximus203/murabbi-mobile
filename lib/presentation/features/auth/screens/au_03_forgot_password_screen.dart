@@ -66,8 +66,9 @@ class _Au03ForgotPasswordScreenState
             horizontal: AppSpacing.s5,
             vertical: AppSpacing.s4,
           ),
-          child:
-              _submitted ? _SuccessView(onBack: widget.onBack) : _buildForm(),
+          child: _submitted
+              ? _SuccessView(onBack: widget.onBack)
+              : _buildForm(),
         ),
       ),
     );
@@ -148,10 +149,7 @@ class _SuccessView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.s5),
-        AppButton(
-          label: 'Retour à la connexion',
-          onPressed: onBack,
-        ),
+        AppButton(label: 'Retour à la connexion', onPressed: onBack),
       ],
     );
   }

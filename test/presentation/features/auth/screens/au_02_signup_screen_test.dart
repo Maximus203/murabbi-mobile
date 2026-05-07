@@ -33,10 +33,7 @@ void main() {
     when(() => repo.getCurrentUser()).thenAnswer((_) async => null);
   });
 
-  Widget makeApp({
-    VoidCallback? onSignIn,
-    VoidCallback? onSignedUp,
-  }) {
+  Widget makeApp({VoidCallback? onSignIn, VoidCallback? onSignedUp}) {
     return ProviderScope(
       overrides: [authRepositoryProvider.overrideWithValue(repo)],
       child: MaterialApp(
@@ -64,28 +61,31 @@ void main() {
     expect(find.text('Se connecter'), findsOneWidget);
   });
 
-  testWidgets('tapping "Créer mon compte" calls repo.signUp with field values',
-      (tester) async {
-    when(
-      () => repo.signUp(email: 'new@example.com', password: 'pass1234'),
-    ).thenAnswer((_) async => testUser);
+  testWidgets(
+    'tapping "Créer mon compte" calls repo.signUp with field values',
+    (tester) async {
+      when(
+        () => repo.signUp(email: 'new@example.com', password: 'pass1234'),
+      ).thenAnswer((_) async => testUser);
 
-    await tester.pumpWidget(makeApp());
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(makeApp());
+      await tester.pumpAndSettle();
 
-    final fields = find.byType(TextField);
-    await tester.enterText(fields.first, 'new@example.com');
-    await tester.enterText(fields.last, 'pass1234');
-    await tester.tap(find.text('Créer mon compte'));
-    await tester.pumpAndSettle();
+      final fields = find.byType(TextField);
+      await tester.enterText(fields.first, 'new@example.com');
+      await tester.enterText(fields.last, 'pass1234');
+      await tester.tap(find.text('Créer mon compte'));
+      await tester.pumpAndSettle();
 
-    verify(
-      () => repo.signUp(email: 'new@example.com', password: 'pass1234'),
-    ).called(1);
-  });
+      verify(
+        () => repo.signUp(email: 'new@example.com', password: 'pass1234'),
+      ).called(1);
+    },
+  );
 
-  testWidgets('displays FR error message on EmailAlreadyInUseFailure',
-      (tester) async {
+  testWidgets('displays FR error message on EmailAlreadyInUseFailure', (
+    tester,
+  ) async {
     when(
       () => repo.signUp(
         email: any(named: 'email'),
@@ -105,8 +105,9 @@ void main() {
     expect(find.text('Cet email est déjà utilisé.'), findsOneWidget);
   });
 
-  testWidgets('displays FR error message on WeakPasswordFailure',
-      (tester) async {
+  testWidgets('displays FR error message on WeakPasswordFailure', (
+    tester,
+  ) async {
     when(
       () => repo.signUp(
         email: any(named: 'email'),
@@ -129,8 +130,9 @@ void main() {
     );
   });
 
-  testWidgets('triggers onSignedUp callback when signUp succeeds',
-      (tester) async {
+  testWidgets('triggers onSignedUp callback when signUp succeeds', (
+    tester,
+  ) async {
     when(
       () => repo.signUp(
         email: any(named: 'email'),
@@ -151,8 +153,9 @@ void main() {
     expect(called, 1);
   });
 
-  testWidgets('"Continuer avec Google" calls repo.signInWithGoogle',
-      (tester) async {
+  testWidgets('"Continuer avec Google" calls repo.signInWithGoogle', (
+    tester,
+  ) async {
     when(() => repo.signInWithGoogle()).thenAnswer((_) async => testUser);
 
     await tester.pumpWidget(makeApp());
