@@ -32,10 +32,12 @@ void main() {
     expect(await storage.isCompleted(), isFalse);
   });
 
-  test('survives a fresh storage instance (persisted to SharedPreferences)',
-      () async {
-    await OnboardingFlagStorage().markCompleted();
-    final freshStorage = OnboardingFlagStorage();
-    expect(await freshStorage.isCompleted(), isTrue);
-  });
+  test(
+    'survives a fresh storage instance (persisted to SharedPreferences)',
+    () async {
+      await OnboardingFlagStorage().markCompleted();
+      final freshStorage = OnboardingFlagStorage();
+      expect(await freshStorage.isCompleted(), isTrue);
+    },
+  );
 }
