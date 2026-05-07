@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/auth/widgets/auth_error_banner.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -102,7 +102,7 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
               ),
               if (state.hasError) ...[
                 const SizedBox(height: AppSpacing.s2),
-                _ErrorBanner(failure: state.error),
+                AuthErrorBanner(failure: state.error),
               ],
               const SizedBox(height: AppSpacing.s4),
               AppButton(
@@ -145,59 +145,3 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
   }
 }
 
-/// Bandeau d'erreur typé — switch exhaustif sealed `AuthFailure`.
-class _ErrorBanner extends StatelessWidget {
-  final Object? failure;
-  const _ErrorBanner({required this.failure});
-
-  @override
-  Widget build(BuildContext context) {
-    final message = _messageFor(failure);
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s4,
-        vertical: AppSpacing.s3,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.danger.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(AppRadius.button),
-        border: Border.all(
-          color: AppColors.danger.withValues(alpha: 0.3),
-          width: AppBorderWidth.hairline,
-        ),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            LucideIcons.circleAlert,
-            size: 18,
-            color: AppColors.danger,
-          ),
-          const SizedBox(width: AppSpacing.s2),
-          Expanded(
-            child: Text(
-              message,
-              style: AppTypography.body.copyWith(color: AppColors.danger),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static String _messageFor(Object? f) {
-    if (f is! AuthFailure) {
-      return 'Erreur inattendue. Réessaie dans un instant.';
-    }
-    return switch (f) {
-      InvalidCredentialsFailure() => 'Email ou mot de passe incorrect.',
-      EmailAlreadyInUseFailure() => 'Cet email est déjà utilisé.',
-      WeakPasswordFailure() =>
-        'Mot de passe trop faible (8 caractères minimum).',
-      NetworkFailure() => 'Connexion impossible — vérifie ta connexion.',
-      AccountDeletedFailure() =>
-        'Ce compte a été supprimé. Contacte le support pour le restaurer.',
-      UnknownAuthFailure() => 'Erreur inattendue. Réessaie dans un instant.',
-    };
-  }
-}
