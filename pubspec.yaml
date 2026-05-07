@@ -41,6 +41,7 @@ dependencies:
   # transitively via the Flutter SDK; declared explicitly so analyzer's
   # `depend_on_referenced_packages` is satisfied.
   characters: ^1.4.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
