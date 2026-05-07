@@ -1,0 +1,126 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/auth/screens/au_01_login_screen.dart';
+import 'package:murabbi_mobile/presentation/features/auth/screens/au_02_signup_screen.dart';
+import 'package:murabbi_mobile/presentation/features/auth/screens/au_03_forgot_password_screen.dart';
+import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_verification_gate.dart';
+import 'package:murabbi_mobile/presentation/features/onboarding/providers/onboarding_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01_onboarding_screen.dart';
+import 'package:murabbi_mobile/presentation/features/splash/screens/splash_screen.dart';
+import 'package:murabbi_mobile/presentation/router/auth_redirect.dart';
+import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
+
+/// Pont Riverpod → Listenable pour le `refreshListenable` de GoRouter :
+/// chaque fois que l'état d'auth ou d'onboarding change, on notifie le
+/// routeur qui ré-évalue [authRedirect].
+class _RouterRefreshNotifier extends ChangeNotifier {
+  _RouterRefreshNotifier(Ref ref) {
+    ref.listen(authNotifierProvider, (_, _) => notifyListeners());
+    ref.listen(onboardingNotifierProvider, (_, _) => notifyListeners());
+  }
+}
+
+/// Provider du GoRouter Murabbi — lifecycle aligné sur le ProviderContainer
+/// racine. Toute la logique de redirection vit dans [authRedirect] (testable
+/// hors GoRouter).
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final refresh = _RouterRefreshNotifier(ref);
+  ref.onDispose(refresh.dispose);
+
+  return GoRouter(
+    initialLocation: AppRoutes.splash,
+    refreshListenable: refresh,
+    redirect: (context, state) {
+      return authRedirect(
+        auth: ref.read(authNotifierProvider),
+        onboarded: ref.read(onboardingNotifierProvider),
+        currentPath: state.matchedLocation,
+      );
+    },
+    routes: [
+      GoRoute(path: AppRoutes.splash, builder: (_, _) => const SplashScreen()),
+      GoRoute(
+        path: AppRoutes.login,
+        builder: (context, _) => Au01LoginScreen(
+          onForgotPassword: () => context.go(AppRoutes.forgot),
+          onSignUp: () => context.go(AppRoutes.signup),
+          onAuthenticated: () {
+            // Le redirect global gère la suite (onboarding ou home).
+          },
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.signup,
+        builder: (context, _) => Au02SignupScreen(
+          onSignIn: () => context.go(AppRoutes.login),
+          onSignedUp: () => context.go(AppRoutes.verifyEmail),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.forgot,
+        builder: (context, _) =>
+            Au03ForgotPasswordScreen(onBack: () => context.go(AppRoutes.login)),
+      ),
+      GoRoute(
+        path: AppRoutes.verifyEmail,
+        builder: (context, _) => Au04EmailVerificationGate(
+          onContinue: () =>
+              ref.invalidate(authNotifierProvider), // redirect prend la suite
+          onChangeEmail: () => context.go(AppRoutes.signup),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (context, _) => Setup01OnboardingScreen(
+          onCompleted: () {
+            // Le redirect global pousse vers /home après la mise à jour
+            // de onboardingNotifierProvider — rien à faire ici.
+          },
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.home,
+        builder: (_, _) => const _HomePlaceholderScreen(),
+      ),
+    ],
+  );
+});
+
+/// Placeholder /home : la vraie HM-01 (dashboard) arrive en Phase 3.
+class _HomePlaceholderScreen extends ConsumerWidget {
+  const _HomePlaceholderScreen();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authNotifierProvider).valueOrNull;
+    return Scaffold(
+      backgroundColor: AppColors.bgPrimary,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Murabbi', style: AppTypography.h1),
+              const SizedBox(height: 8),
+              Text(
+                user == null
+                    ? 'Phase 2 — auth + routing OK'
+                    : 'Bienvenue, ${user.pseudo.value}',
+                style: AppTypography.body,
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () =>
+                    ref.read(authNotifierProvider.notifier).signOut(),
+                child: const Text('Se déconnecter'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
