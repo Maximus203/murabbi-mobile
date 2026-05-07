@@ -211,6 +211,42 @@ void main() {
     );
   });
 
+  group('AuthNotifier — resendVerificationEmail', () {
+    test('returns true on success without changing main state', () async {
+      final container = makeContainer();
+      await container.read(authNotifierProvider.future);
+
+      when(
+        () => repo.resendVerificationEmail(email: 'cherif@example.com'),
+      ).thenAnswer((_) async {});
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      final ok = await notifier.resendVerificationEmail(
+        email: 'cherif@example.com',
+      );
+
+      expect(ok, isTrue);
+      expect(container.read(authNotifierProvider).value, isNull);
+      verify(
+        () => repo.resendVerificationEmail(email: 'cherif@example.com'),
+      ).called(1);
+    });
+
+    test('returns false on AuthFailure (rate-limit / network)', () async {
+      final container = makeContainer();
+      await container.read(authNotifierProvider.future);
+
+      when(
+        () => repo.resendVerificationEmail(email: any(named: 'email')),
+      ).thenThrow(const AuthFailure.network());
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      final ok = await notifier.resendVerificationEmail(email: 'a@b.co');
+
+      expect(ok, isFalse);
+    });
+  });
+
   group('AuthNotifier — signOut', () {
     test('clears user state on success', () async {
       final container = makeContainer(stubGetCurrentUser: false);

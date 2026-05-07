@@ -199,6 +199,59 @@ void main() {
         verify(() => ds.sendPasswordResetEmail(email: 'a@b.co')).called(1);
       });
 
+      test('resendVerificationEmail forwards email', () async {
+        when(
+          () => ds.resendVerificationEmail(email: 'cherif@example.com'),
+        ).thenAnswer((_) async {});
+        await repo.resendVerificationEmail(email: 'cherif@example.com');
+        verify(
+          () => ds.resendVerificationEmail(email: 'cherif@example.com'),
+        ).called(1);
+      });
+
+      test(
+        'resendVerificationEmail translates rate-limit error to NetworkFailure',
+        () async {
+          when(
+            () => ds.resendVerificationEmail(email: any(named: 'email')),
+          ).thenThrow(
+            Exception(
+              'AuthApiException(message: For security purposes, you can only request this once every 60 seconds, code: over_email_send_rate_limit)',
+            ),
+          );
+          expect(
+            () => repo.resendVerificationEmail(email: 'a@b.co'),
+            throwsA(isA<NetworkFailure>()),
+          );
+        },
+      );
+
+      test(
+        'resendVerificationEmail translates SocketException-like error to NetworkFailure',
+        () async {
+          when(
+            () => ds.resendVerificationEmail(email: any(named: 'email')),
+          ).thenThrow(Exception('SocketException: Failed host lookup'));
+          expect(
+            () => repo.resendVerificationEmail(email: 'a@b.co'),
+            throwsA(isA<NetworkFailure>()),
+          );
+        },
+      );
+
+      test(
+        'resendVerificationEmail translates unexpected error to UnknownAuthFailure',
+        () async {
+          when(
+            () => ds.resendVerificationEmail(email: any(named: 'email')),
+          ).thenThrow(Exception('totally unexpected'));
+          expect(
+            () => repo.resendVerificationEmail(email: 'a@b.co'),
+            throwsA(isA<UnknownAuthFailure>()),
+          );
+        },
+      );
+
       test('signOut delegates', () async {
         when(() => ds.signOut()).thenAnswer((_) async {});
         await repo.signOut();
