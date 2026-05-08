@@ -67,8 +67,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.verifyEmail,
         builder: (context, _) => Au04EmailVerificationGate(
-          onContinue: () =>
-              ref.invalidate(authNotifierProvider), // redirect prend la suite
+          onContinue: () {
+            // Une fois l'email confirme cote Supabase, on rafraichit la
+            // session puis on quitte le sas verify-email (le redirect
+            // global laisse cette route toujours autorisee — sans push
+            // explicite l'utilisateur resterait bloque ici).
+            ref.invalidate(authNotifierProvider);
+            context.go(AppRoutes.home);
+          },
           onChangeEmail: () => context.go(AppRoutes.signup),
         ),
       ),
