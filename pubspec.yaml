@@ -47,6 +47,12 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # Integration testing (Phase 2 — E2E flows: onboarding-first, signup,
+  # signIn). Pas de device requis pour `flutter analyze`/`flutter test`,
+  # mais l'exécution effective des flows demande un device/émulateur.
+  integration_test:
+    sdk: flutter
+
   flutter_lints: ^6.0.0
 
   # Riverpod codegen
