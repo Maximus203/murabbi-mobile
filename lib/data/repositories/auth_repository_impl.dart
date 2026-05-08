@@ -58,6 +58,13 @@ class AuthRepositoryImpl implements AuthRepository {
   });
 
   @override
+  Future<User?> refreshSession() => _guard(() async {
+    final maps = await _ds.refreshSession();
+    if (maps == null) return null;
+    return UserMapper.fromMaps(authUser: maps.authUser, profile: maps.profile);
+  });
+
+  @override
   Stream<User?> get authStateChanges => _ds.authStateChanges.map(
     (maps) => maps == null
         ? null

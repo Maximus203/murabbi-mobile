@@ -2,16 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_verification_screen.dart';
 
 /// Wrapper "gate" — branche [Au04EmailVerificationScreen] sur le routeur :
 /// - lit l'email depuis `authNotifierProvider` (utilisateur fraîchement
 ///   signé up, session active mais email pas encore confirmé) ;
-/// - démarre un `Timer.periodic` de 5s qui invalide
-///   `authNotifierProvider` ; au prochain `getCurrentUser`, si Supabase a
-///   confirmé l'email, le state se met à jour et le routeur fait le
-///   redirect global ;
+/// - démarre un `Timer.periodic` de 5s qui appelle
+///   `AuthRepository.refreshSession()` (Q2-C). À chaque tick, si Supabase
+///   a flippé `email_confirmed_at`, l'utilisateur retourné a
+///   `isEmailVerified == true` et on déclenche `onContinue` automatiquement
+///   sans que l'utilisateur ait à appuyer sur le bouton manuel ;
 /// - les 3 callbacks (`onResend`, `onContinue`, `onChangeEmail`) sont
 ///   injectés par le routeur (slice D).
 ///
@@ -43,21 +45,38 @@ class Au04EmailVerificationGate extends ConsumerStatefulWidget {
 class _Au04EmailVerificationGateState
     extends ConsumerState<Au04EmailVerificationGate> {
   Timer? _poller;
+  bool _continueFired = false;
 
   static const _pollInterval = Duration(seconds: 5);
 
   @override
   void initState() {
     super.initState();
-    _poller = Timer.periodic(_pollInterval, (_) {
-      ref.invalidate(authNotifierProvider);
-    });
+    _poller = Timer.periodic(_pollInterval, (_) => _pollSession());
   }
 
   @override
   void dispose() {
     _poller?.cancel();
     super.dispose();
+  }
+
+  /// Appelle `refreshSession` via l'AuthRepository — si l'email vient
+  /// d'être confirmé côté Supabase (`email_confirmed_at` non null), on
+  /// quitte le gate automatiquement (Q2-C). Robuste aux échecs réseau :
+  /// on swallow l'erreur et on retentera au prochain tick.
+  Future<void> _pollSession() async {
+    if (!mounted || _continueFired) return;
+    try {
+      final user = await ref.read(authRepositoryProvider).refreshSession();
+      if (!mounted) return;
+      if (user != null && user.isEmailVerified && !_continueFired) {
+        _continueFired = true;
+        widget.onContinue();
+      }
+    } catch (_) {
+      // Le poll est best-effort — on retentera au prochain tick.
+    }
   }
 
   Future<void> _resend() async {

@@ -31,5 +31,13 @@ abstract interface class AuthRepository {
   /// Utilisé au bootstrap de l'app pour décider du splash → home / login.
   Future<User?> getCurrentUser();
 
+  /// Rafraîchit la session Supabase (réémet `access_token` + recharge le
+  /// `auth.users` pour refléter une éventuelle confirmation d'email côté
+  /// serveur). Renvoie `null` si plus de session active.
+  ///
+  /// Utilisé par AU-04 pour auto-détecter `email_confirmed_at` sans que
+  /// l'utilisateur ait à appuyer sur "J'ai vérifié mon email".
+  Future<User?> refreshSession();
+
   Stream<User?> get authStateChanges;
 }

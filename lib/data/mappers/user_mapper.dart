@@ -24,6 +24,7 @@ class UserMapper {
     final id = authUser['id'];
     final emailAuth = authUser['email'];
     final createdAtRaw = authUser['created_at'];
+    final emailConfirmedAtRaw = authUser['email_confirmed_at'];
 
     final pseudo = profile['pseudo'];
     final levelRaw = profile['level'];
@@ -87,6 +88,14 @@ class UserMapper {
         ? createdAtRaw
         : DateTime.parse(createdAtRaw as String);
 
+    DateTime? emailConfirmedAt;
+    if (emailConfirmedAtRaw is DateTime) {
+      emailConfirmedAt = emailConfirmedAtRaw;
+    } else if (emailConfirmedAtRaw is String &&
+        emailConfirmedAtRaw.isNotEmpty) {
+      emailConfirmedAt = DateTime.parse(emailConfirmedAtRaw);
+    }
+
     return User(
       id: UserId(id),
       pseudo: NonEmptyString(pseudo),
@@ -95,6 +104,7 @@ class UserMapper {
       level: Level.fromString(levelRaw),
       currentStreak: currentStreakRaw,
       completionRate: completionRateRaw.toDouble(),
+      emailConfirmedAt: emailConfirmedAt,
     );
   }
 }

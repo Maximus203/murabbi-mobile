@@ -58,6 +58,7 @@ class FakeAuthRepository implements AuthRepository {
     String id = 'user-fake-1',
     String pseudo = 'Anonyme',
     String email = 'fake@murabbi.test',
+    bool emailVerified = true,
   }) {
     return User(
       id: UserId(id),
@@ -65,6 +66,7 @@ class FakeAuthRepository implements AuthRepository {
       email: NonEmptyString(email),
       createdAt: DateTime.utc(2026, 1, 1),
       level: Level.aspirant,
+      emailConfirmedAt: emailVerified ? DateTime.utc(2026, 1, 1) : null,
     );
   }
 
@@ -82,7 +84,11 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Future<User> signUp({required String email, required String password}) async {
-    final pending = makeUser(email: email, pseudo: 'Anonyme');
+    final pending = makeUser(
+      email: email,
+      pseudo: 'Anonyme',
+      emailVerified: false,
+    );
     _pendingSignUpUser = pending;
     // Simule Supabase : signUp ouvre une session (le user est connu) mais
     // l'email n'est pas encore confirmé — l'app doit basculer sur AU-04.
@@ -124,13 +130,31 @@ class FakeAuthRepository implements AuthRepository {
         _pendingSignUpUser != null &&
         _getCurrentCalls >= triggerAt) {
       // Simule la confirmation d'email : le pending user devient
-      // l'utilisateur courant. On l'émet aussi pour rafraîchir le stream.
-      final confirmed = _pendingSignUpUser!;
+      // l'utilisateur courant avec emailConfirmedAt non null. On l'émet
+      // aussi pour rafraîchir le stream.
+      final pending = _pendingSignUpUser!;
+      final confirmed = User(
+        id: pending.id,
+        pseudo: pending.pseudo,
+        email: pending.email,
+        createdAt: pending.createdAt,
+        level: pending.level,
+        currentStreak: pending.currentStreak,
+        completionRate: pending.completionRate,
+        emailConfirmedAt: DateTime.utc(2026, 5, 8),
+      );
       _pendingSignUpUser = null;
       _emit(confirmed);
       return confirmed;
     }
     return _current;
+  }
+
+  @override
+  Future<User?> refreshSession() async {
+    // Symétrie avec getCurrentUser : permet aussi à AU-04 de "découvrir"
+    // que l'email est désormais vérifié via le polling refreshSession.
+    return getCurrentUser();
   }
 
   @override
