@@ -250,6 +250,38 @@ void main() {
       },
     );
 
+    test(
+      'refreshSession returns mapped User when datasource yields maps',
+      () async {
+        when(() => ds.refreshSession()).thenAnswer((_) async => validMaps());
+        final user = await repo.refreshSession();
+        expect(user, isNotNull);
+        expect(user!.email.value, 'cherif@example.com');
+      },
+    );
+
+    test('refreshSession returns null when datasource returns null', () async {
+      when(() => ds.refreshSession()).thenAnswer((_) async => null);
+      expect(await repo.refreshSession(), isNull);
+    });
+
+    test('refreshSession translates network error to NetworkFailure', () async {
+      when(
+        () => ds.refreshSession(),
+      ).thenThrow(Exception('SocketException: Failed host lookup'));
+      expect(() => repo.refreshSession(), throwsA(isA<NetworkFailure>()));
+    });
+
+    test('refreshSession throws AccountDeletedFailure on soft-delete', () {
+      when(() => ds.refreshSession()).thenAnswer(
+        (_) async => validMaps(deletionRequestedAt: '2026-05-01T00:00:00Z'),
+      );
+      expect(
+        () => repo.refreshSession(),
+        throwsA(isA<AccountDeletedFailure>()),
+      );
+    });
+
     test('signOut delegates', () async {
       when(() => ds.signOut()).thenAnswer((_) async {});
       await repo.signOut();
