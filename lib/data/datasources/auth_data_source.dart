@@ -39,6 +39,11 @@ abstract interface class AuthDataSource {
   Future<({Map<String, dynamic> authUser, Map<String, dynamic> profile})?>
   getCurrentUser();
 
+  /// Force un refresh de la session côté Supabase (reload du JWT et de
+  /// `auth.users`). Renvoie `null` si plus de session.
+  Future<({Map<String, dynamic> authUser, Map<String, dynamic> profile})?>
+  refreshSession();
+
   /// Stream qui émet `null` à la déconnexion et le couple `{authUser, profile}`
   /// à la connexion / refresh.
   Stream<({Map<String, dynamic> authUser, Map<String, dynamic> profile})?>

@@ -111,6 +111,14 @@ class SupabaseAuthDataSource implements AuthDataSource {
   }
 
   @override
+  Future<AuthMaps?> refreshSession() async {
+    final res = await _client.auth.refreshSession();
+    final user = res.user ?? _client.auth.currentUser;
+    if (user == null) return null;
+    return _toMaps(user);
+  }
+
+  @override
   Stream<AuthMaps?> get authStateChanges =>
       _client.auth.onAuthStateChange.asyncMap<AuthMaps?>((state) async {
         final user = state.session?.user;
@@ -138,6 +146,7 @@ class SupabaseAuthDataSource implements AuthDataSource {
         'id': user.id,
         'email': user.email,
         'created_at': user.createdAt,
+        'email_confirmed_at': user.emailConfirmedAt,
       },
       profile: profile,
     );

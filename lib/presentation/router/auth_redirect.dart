@@ -20,16 +20,17 @@ abstract class AppRoutes {
 
 /// Logique de redirection — pure fonction testable hors GoRouter.
 ///
-/// Règles :
+/// Règles (Q3-A — onboarding pédagogique pre-auth) :
 /// - L'une des sources est en `loading` → `/splash` (sauf si déjà dessus)
 /// - Pas de session :
-///   * sur `/auth/login`, `/auth/signup`, `/auth/forgot` → reste
-///   * sinon → `/auth/login`
+///   * onboarding pas encore vu → toute route hors `/onboarding` et hors
+///     routes auth pousse vers `/onboarding` ; sur les routes auth on
+///     laisse l'utilisateur (il peut sauter le walkthrough) ;
+///   * onboarding vu → routes auth (login/signup/forgot) et `/onboarding`
+///     restent autorisées, le reste pousse vers `/auth/login`.
 /// - Session active :
-///   * `/auth/verify-email` est toujours autorisé (transient post-signUp)
-///   * sinon, si non onboarded → `/onboarding`
-///   * sinon (onboarded) → toute route auth/splash/onboarding repousse vers
-///     `/home`
+///   * `/auth/verify-email` est toujours autorisé (transient post-signUp) ;
+///   * sinon, toute route auth/splash/onboarding pousse vers `/home`.
 String? authRedirect({
   required AsyncValue<User?> auth,
   required AsyncValue<bool> onboarded,
@@ -40,21 +41,31 @@ String? authRedirect({
   }
 
   final user = auth.valueOrNull;
-  final isOnboarded = onboarded.valueOrNull ?? false;
+  final onboardingSeen = onboarded.valueOrNull ?? false;
 
   if (user == null) {
-    if (AppRoutes.isAuthRoute(currentPath)) return null;
+    // Q3-A : onboarding pédagogique pre-auth.
+    if (!onboardingSeen) {
+      // L'utilisateur n'a jamais vu les slides — on les pousse, sauf s'il
+      // est déjà sur une route auth (signup direct, login, forgot) où on
+      // le laisse poursuivre.
+      if (currentPath == AppRoutes.onboarding) return null;
+      if (AppRoutes.isAuthRoute(currentPath)) return null;
+      return AppRoutes.onboarding;
+    }
+    // Onboarding deja vu : routes auth + onboarding restent libres.
+    if (AppRoutes.isAuthRoute(currentPath) ||
+        currentPath == AppRoutes.onboarding) {
+      return null;
+    }
     return AppRoutes.login;
   }
 
   // User signe in : verify-email est un sas transient toujours permis.
   if (currentPath == AppRoutes.verifyEmail) return null;
 
-  if (!isOnboarded) {
-    return currentPath == AppRoutes.onboarding ? null : AppRoutes.onboarding;
-  }
-
-  // Authenticated + onboarded — repousser depuis tout sas pre-home.
+  // Authenticated — repousser depuis tout sas pre-home (Q3-A : pas de
+  // second flag d'onboarding post-auth, on va directement /home).
   if (AppRoutes.isAuthRoute(currentPath) ||
       currentPath == AppRoutes.splash ||
       currentPath == AppRoutes.onboarding) {
