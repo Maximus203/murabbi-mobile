@@ -65,11 +65,7 @@ class _Au04EmailVerificationGateState
     if (email == null) return;
     await ref
         .read(authNotifierProvider.notifier)
-        .sendPasswordReset(email: email);
-    // NB : on réutilise sendPasswordReset comme MVP — l'API
-    // `resendVerificationEmail` n'existe pas encore côté repository et
-    // tombera dans une issue de suivi. Le bandeau "Email renvoyé" du
-    // screen reste correct visuellement.
+        .resendVerificationEmail(email: email);
   }
 
   String? get _email {

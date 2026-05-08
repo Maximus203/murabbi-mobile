@@ -64,6 +64,19 @@ class AuthNotifier extends AsyncNotifier<User?> {
     }
   }
 
+  /// Renvoie l'email de confirmation d'inscription (Supabase
+  /// `auth.resend(type: signup)`). Pattern identique à [sendPasswordReset] :
+  /// ne touche pas au state principal, retourne un `bool` (utile pour
+  /// distinguer rate-limit / network côté UI si besoin).
+  Future<bool> resendVerificationEmail({required String email}) async {
+    try {
+      await _repo.resendVerificationEmail(email: email);
+      return true;
+    } on AuthFailure {
+      return false;
+    }
+  }
+
   Future<void> signOut() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {

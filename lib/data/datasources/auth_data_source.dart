@@ -25,6 +25,9 @@ abstract interface class AuthDataSource {
 
   Future<void> sendPasswordResetEmail({required String email});
 
+  /// Resend Supabase signup confirmation email — `auth.resend(type: signup)`.
+  Future<void> resendVerificationEmail({required String email});
+
   Future<void> signOut();
 
   /// Soft-delete (cf. ADR-011) : pose `users.deletion_requested_at = now()`
