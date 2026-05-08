@@ -7,64 +7,61 @@ import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01
 
 import '../helpers/fakes.dart';
 
-/// Flow A — *Onboarding-first* :
+/// Flow A — *Onboarding-first pre-auth* (Q3-A) :
 ///
-/// Utilisateur qui n'a jamais ouvert l'app (non onboardé) **et** non
-/// authentifié. Au démarrage :
+/// Utilisateur visiteur (sans session) qui n'a jamais ouvert l'app
+/// (onboarding_seen=false). Au démarrage :
 ///   1. Le splash s'efface dès que les deux notifiers résolvent.
-///   2. Comme l'utilisateur n'est pas connecté → la redirection globale
-///      pousse vers `/auth/login`.
-///   3. Note senior : l'onboarding est **gated** par l'auth (cf.
-///      `auth_redirect.dart` — un user non connecté est toujours envoyé
-///      sur `/auth/login`, jamais sur `/onboarding`). Donc dans le flow A
-///      "fresh install", l'utilisateur passe d'abord par /login (ou
-///      /signup) puis seulement après auth, l'onboarding est proposé.
+///   2. La redirection globale pousse vers `/onboarding` (walkthrough
+///      pédagogique pre-auth).
+///   3. L'utilisateur tape "Passer" — le flag `onboarding_seen` est
+///      posé puis le routeur redirige vers `/auth/login` (visiteur sans
+///      session, onboarding désormais vu).
 ///
-/// Ce flow couvre donc le post-signup : l'utilisateur fraîchement créé
-/// (et qui aurait validé son email) est non onboardé → /onboarding s'affiche
-/// → "Passer" marque le flag → l'app redirige vers /home.
+/// Variante : si le flag est déjà posé (relance après onboarding vu),
+/// le visiteur arrive directement sur `/auth/login`.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Flow A — onboarding skip envoie sur /home', (tester) async {
-    final auth = FakeAuthRepository(
-      initialUser: FakeAuthRepository.makeUser(pseudo: 'Cherif'),
-    );
-    addTearDown(auth.dispose);
-    final onboarding = FakeOnboardingFlagStorage();
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: testOverrides(auth: auth, onboarding: onboarding),
-        child: const MurabbiApp(),
-      ),
-    );
-
-    // Laisse le router résoudre auth + onboarding et naviguer.
-    await tester.pumpAndSettle();
-
-    // L'utilisateur est connecté mais non onboardé → SETUP-01.
-    expect(find.byType(Setup01OnboardingScreen), findsOneWidget);
-
-    // Tap "Passer" — doit marquer onboarding completed et rediriger.
-    final skip = find.text('Passer');
-    expect(skip, findsOneWidget);
-    await tester.tap(skip);
-    await tester.pumpAndSettle();
-
-    // Le placeholder /home affiche le titre "Murabbi" et le pseudo.
-    expect(find.text('Murabbi'), findsOneWidget);
-    expect(find.textContaining('Cherif'), findsOneWidget);
-    expect(find.byType(Setup01OnboardingScreen), findsNothing);
-    expect(find.byType(Au01LoginScreen), findsNothing);
-  });
-
   testWidgets(
-    'Flow A bis — utilisateur déconnecté arrive directement sur /auth/login',
+    'Flow A — visiteur non onboardé voit /onboarding puis /auth/login après "Passer"',
     (tester) async {
       final auth = FakeAuthRepository();
       addTearDown(auth.dispose);
       final onboarding = FakeOnboardingFlagStorage();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: testOverrides(auth: auth, onboarding: onboarding),
+          child: const MurabbiApp(),
+        ),
+      );
+
+      // Laisse le router résoudre auth + onboarding et naviguer.
+      await tester.pumpAndSettle();
+
+      // Visiteur + onboarding pas vu → SETUP-01 (Q3-A).
+      expect(find.byType(Setup01OnboardingScreen), findsOneWidget);
+
+      // Tap "Passer" — pose le flag onboarding_seen + redirige
+      // vers /auth/login (visiteur, plus de session).
+      final skip = find.text('Passer');
+      expect(skip, findsOneWidget);
+      await tester.tap(skip);
+      await tester.pumpAndSettle();
+
+      // Visiteur + onboarding vu → /auth/login.
+      expect(find.byType(Au01LoginScreen), findsOneWidget);
+      expect(find.byType(Setup01OnboardingScreen), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'Flow A bis — visiteur déjà onboardé arrive directement sur /auth/login',
+    (tester) async {
+      final auth = FakeAuthRepository();
+      addTearDown(auth.dispose);
+      final onboarding = FakeOnboardingFlagStorage(completed: true);
 
       await tester.pumpWidget(
         ProviderScope(

@@ -82,7 +82,8 @@ void main() {
       await tester.pumpAndSettle();
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getBool('onboarding_completed_v1'), isTrue);
+      // Q3-A : nouveau flag onboarding_seen_v1 (pre-auth pédagogique).
+      expect(prefs.getBool('onboarding_seen_v1'), isTrue);
     },
   );
 }
