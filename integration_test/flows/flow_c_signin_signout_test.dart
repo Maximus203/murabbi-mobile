@@ -21,7 +21,9 @@ import '../helpers/fakes.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Flow C — signIn → /home → signOut → /auth/login', (tester) async {
+  testWidgets('Flow C — signIn → /home → signOut → /auth/login', (
+    tester,
+  ) async {
     final auth = FakeAuthRepository(
       seededEmail: 'cherif@murabbi.test',
       seededPassword: 'password123',
@@ -42,10 +44,7 @@ void main() {
     expect(find.byType(Au01LoginScreen), findsOneWidget);
 
     // Saisie credentials valides + submit.
-    await tester.enterText(
-      find.byType(TextField).at(0),
-      'cherif@murabbi.test',
-    );
+    await tester.enterText(find.byType(TextField).at(0), 'cherif@murabbi.test');
     await tester.enterText(find.byType(TextField).at(1), 'password123');
     await tester.tap(find.widgetWithText(AppButton, 'Se connecter'));
     await tester.pumpAndSettle();

@@ -51,14 +51,9 @@ void main() {
     expect(find.byType(Au02SignupScreen), findsOneWidget);
 
     // Saisie email + password puis submit.
-    await tester.enterText(
-      find.byType(TextField).at(0),
-      'cherif@murabbi.test',
-    );
+    await tester.enterText(find.byType(TextField).at(0), 'cherif@murabbi.test');
     await tester.enterText(find.byType(TextField).at(1), 'password123');
-    await tester.tap(
-      find.widgetWithText(AppButton, 'Créer mon compte'),
-    );
+    await tester.tap(find.widgetWithText(AppButton, 'Créer mon compte'));
     await tester.pumpAndSettle();
 
     // SignUp ok → AU-04 (email verification gate).
@@ -66,9 +61,7 @@ void main() {
     expect(find.text('cherif@murabbi.test'), findsOneWidget);
 
     // Tap "J'ai vérifié mon email" — déclenche le flux invalidate→home.
-    await tester.tap(
-      find.widgetWithText(AppButton, 'J\'ai vérifié mon email'),
-    );
+    await tester.tap(find.widgetWithText(AppButton, 'J\'ai vérifié mon email'));
     await tester.pumpAndSettle();
 
     // L'app arrive sur le placeholder home (titre Murabbi + pseudo
