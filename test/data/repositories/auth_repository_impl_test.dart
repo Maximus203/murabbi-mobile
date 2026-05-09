@@ -28,7 +28,6 @@ void main() {
       'pseudo': 'Cherif',
       'email': 'cherif@example.com',
       'level': 'aspirant',
-      'total_points': 0,
       'current_streak': 0,
       'completion_rate': 0,
       'deletion_requested_at': deletionRequestedAt,
