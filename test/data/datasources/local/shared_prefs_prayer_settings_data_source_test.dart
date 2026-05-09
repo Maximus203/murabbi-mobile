@@ -36,24 +36,29 @@ void main() {
     });
 
     test(
-      'returns null when the persisted blob is corrupted (non-JSON)',
+      'throws FormatException when the persisted blob is non-JSON garbage',
       () async {
         SharedPreferences.setMockInitialValues({
           SharedPrefsPrayerSettingsDataSource.storageKey: '<not-json>',
         });
         final prefs = await SharedPreferences.getInstance();
         final ds = SharedPrefsPrayerSettingsDataSource(prefs);
-        // Corrompu → on tolère et on revient à l'état "jamais configuré".
-        // L'implémentation peut soit lever soit retourner null ; on accepte
-        // null comme contrat de robustesse côté UI.
-        expect(
-          () async => await ds.read(),
-          anyOf([
-            throwsA(isA<FormatException>()),
-            // Cas tolérant : retourne null directement.
-            returnsNormally,
-          ]),
-        );
+        // Garbage non-décodable : la couche datasource ne tente pas de
+        // récupérer — c'est le repository qui transforme l'exception en
+        // null (cf. PrayerSettingsRepositoryImpl).
+        await expectLater(ds.read(), throwsA(isA<FormatException>()));
+      },
+    );
+
+    test(
+      'returns null when the blob decodes to a non-Map value (e.g. JSON list)',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          SharedPrefsPrayerSettingsDataSource.storageKey: '[1,2,3]',
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final ds = SharedPrefsPrayerSettingsDataSource(prefs);
+        expect(await ds.read(), isNull);
       },
     );
   });
