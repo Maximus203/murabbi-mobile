@@ -10,8 +10,12 @@ import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 ///   - `authUser` : extrait de `Supabase.auth.currentUser`
 ///                  ({id, email, created_at})
 ///   - `profile`  : row de la table `users` Q-18 :
-///                  {pseudo, email, level, total_points, current_streak,
-///                   completion_rate, deletion_requested_at}
+///                  {pseudo, email, level, current_streak, completion_rate,
+///                   deletion_requested_at}
+///
+/// Le score cumulé n'est PAS sur `users` — il vit sur
+/// `user_scores.total_score` et sera lu par un futur `UserScoreRepository`
+/// (slice scoring). Ce mapper ne le projette donc pas.
 ///
 /// Lève [AuthFailure.accountDeleted] si `profile.deletion_requested_at` n'est
 /// pas null (cf. ADR-011 — soft-delete cooling period 30j).
@@ -29,7 +33,6 @@ class UserMapper {
 
     final pseudo = profile['pseudo'];
     final levelRaw = profile['level'];
-    final totalPointsRaw = profile['total_points'];
     final currentStreakRaw = profile['current_streak'];
     final completionRateRaw = profile['completion_rate'];
     final deletionRequestedAt = profile['deletion_requested_at'];
@@ -49,20 +52,6 @@ class UserMapper {
     }
     if (levelRaw is! String) {
       throw ArgumentError.value(levelRaw, 'profile.level', 'must be a String');
-    }
-    if (totalPointsRaw is! int) {
-      throw ArgumentError.value(
-        totalPointsRaw,
-        'profile.total_points',
-        'must be an int',
-      );
-    }
-    if (totalPointsRaw < 0) {
-      throw ArgumentError.value(
-        totalPointsRaw,
-        'profile.total_points',
-        'must be >= 0',
-      );
     }
     if (currentStreakRaw is! int || currentStreakRaw < 0) {
       throw ArgumentError.value(

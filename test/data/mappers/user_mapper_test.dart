@@ -13,7 +13,6 @@ void main() {
   Map<String, dynamic> profileMap({
     String pseudo = 'Cherif',
     String level = 'aspirant',
-    int totalPoints = 0,
     int currentStreak = 0,
     num completionRate = 0,
     Object? deletionRequestedAt,
@@ -21,7 +20,6 @@ void main() {
     'pseudo': pseudo,
     'email': 'cherif@example.com',
     'level': level,
-    'total_points': totalPoints,
     'current_streak': currentStreak,
     'completion_rate': completionRate,
     'deletion_requested_at': deletionRequestedAt,
@@ -46,9 +44,11 @@ void main() {
     test('reads level enum string directly from DB (no derivation)', () {
       final user = UserMapper.fromMaps(
         authUser: authMap(),
-        profile: profileMap(level: 'salik', totalPoints: 50000),
+        profile: profileMap(level: 'salik'),
       );
       // Important : le niveau vient du DB (Q-18), pas de fromPoints.
+      // Le score cumulé est lu depuis `user_scores.total_score`, pas
+      // depuis la table `users` (cf. fix 2026-05-09 — drift schema).
       expect(user.level, Level.salik);
     });
 
@@ -80,16 +80,6 @@ void main() {
             'created_at': '2026-01-01T00:00:00Z',
           },
           profile: profileMap(),
-        ),
-        throwsArgumentError,
-      );
-    });
-
-    test('throws ArgumentError when total_points is negative', () {
-      expect(
-        () => UserMapper.fromMaps(
-          authUser: authMap(),
-          profile: profileMap(totalPoints: -1),
         ),
         throwsArgumentError,
       );

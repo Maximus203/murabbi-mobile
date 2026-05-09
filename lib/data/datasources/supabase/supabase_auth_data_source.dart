@@ -13,11 +13,16 @@ typedef AuthMaps = ({
 /// `AuthRepositoryImpl` (cf. ADR-004).
 ///
 /// Schéma `users` consommé (Q-18, cf. murabbi-admin) :
-///   id, pseudo, email, level, total_points, current_streak,
-///   completion_rate, deletion_requested_at
+///   id, pseudo, email, level, current_streak, completion_rate,
+///   deletion_requested_at
+///
+/// Le score cumulé (« total_points ») n'est PAS sur `users` — la SoT est
+/// `user_scores.total_score` (table séparée), lue par un futur
+/// `UserScoreRepository`. La colonne `deletion_requested_at` est ajoutée
+/// par la migration admin RGPD parallèle (ADR-011 — soft-delete 30j).
 class SupabaseAuthDataSource implements AuthDataSource {
   static const _profileColumns =
-      'pseudo, email, level, total_points, current_streak, '
+      'pseudo, email, level, current_streak, '
       'completion_rate, deletion_requested_at';
 
   final sb.SupabaseClient _client;
@@ -52,7 +57,6 @@ class SupabaseAuthDataSource implements AuthDataSource {
       'pseudo': autoPseudo,
       'email': email,
       'level': 'aspirant',
-      'total_points': 0,
       'current_streak': 0,
       'completion_rate': 0,
     });
@@ -62,7 +66,6 @@ class SupabaseAuthDataSource implements AuthDataSource {
         'pseudo': autoPseudo,
         'email': email,
         'level': 'aspirant',
-        'total_points': 0,
         'current_streak': 0,
         'completion_rate': 0,
         'deletion_requested_at': null,
