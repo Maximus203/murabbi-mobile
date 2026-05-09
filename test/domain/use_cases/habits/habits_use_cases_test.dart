@@ -120,17 +120,17 @@ void main() {
         () => mockRepo.toggleHabitLog(
           habitId: habitId,
           date: date,
-          status: HabitLogStatus.done,
+          status: HabitLogStatus.onTime,
         ),
       ).thenAnswer((_) async {});
 
-      await useCase(habitId: habitId, date: date, status: HabitLogStatus.done);
+      await useCase(habitId: habitId, date: date, status: HabitLogStatus.onTime);
 
       verify(
         () => mockRepo.toggleHabitLog(
           habitId: habitId,
           date: date,
-          status: HabitLogStatus.done,
+          status: HabitLogStatus.onTime,
         ),
       ).called(1);
     });

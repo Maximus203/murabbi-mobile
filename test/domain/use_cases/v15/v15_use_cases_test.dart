@@ -291,7 +291,7 @@ void main() {
     const useCase = ScoreCalculatorUseCase();
 
     HabitLog log({
-      HabitLogStatus status = HabitLogStatus.done,
+      HabitLogStatus status = HabitLogStatus.onTime,
       int? actualValue,
       bool? targetReached,
       List<HabitSubtaskId> subtasksCompleted = const [],
@@ -480,7 +480,7 @@ void main() {
           PrayerStatus.onTime,
           PrayerStatus.onTime,
         ],
-        habitStatuses: const [HabitLogStatus.done, HabitLogStatus.done],
+        habitStatuses: const [HabitLogStatus.onTime, HabitLogStatus.onTime],
       );
       expect(result.worst, DayStatusSeverity.success);
       expect(result.fillPercent, closeTo(1.0, 1e-9));
@@ -497,7 +497,7 @@ void main() {
             PrayerStatus.onTime,
             PrayerStatus.missed,
           ],
-          habitStatuses: const [HabitLogStatus.done, HabitLogStatus.done],
+          habitStatuses: const [HabitLogStatus.onTime, HabitLogStatus.onTime],
         );
         expect(result.worst, DayStatusSeverity.missed);
         // 6 done out of 7 → ~0.857
@@ -512,7 +512,7 @@ void main() {
           PrayerStatus.late,
           PrayerStatus.makeup,
         ],
-        habitStatuses: const [HabitLogStatus.done],
+        habitStatuses: const [HabitLogStatus.onTime],
       );
       expect(result.worst, DayStatusSeverity.late);
       expect(result.fillPercent, closeTo(1.0, 1e-9));

@@ -570,12 +570,12 @@ void main() {
       final log = HabitLog(
         habitId: habitId,
         date: date,
-        status: HabitLogStatus.done,
+        status: HabitLogStatus.onTime,
       );
 
       expect(log.habitId, habitId);
       expect(log.date, date);
-      expect(log.status, HabitLogStatus.done);
+      expect(log.status, HabitLogStatus.onTime);
     });
 
     test('HabitLogStatus has three values', () {
@@ -583,7 +583,7 @@ void main() {
       expect(
         HabitLogStatus.values,
         containsAll([
-          HabitLogStatus.done,
+          HabitLogStatus.onTime,
           HabitLogStatus.late,
           HabitLogStatus.missed,
         ]),

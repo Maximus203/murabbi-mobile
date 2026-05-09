@@ -111,7 +111,7 @@ void main() {
       final log = HabitLog(
         habitId: habitId,
         date: DateTime(2026, 5, 4),
-        status: HabitLogStatus.done,
+        status: HabitLogStatus.onTime,
       );
       expect(log.actualValue, isNull);
       expect(log.targetReached, isNull);
@@ -123,7 +123,7 @@ void main() {
       final log = HabitLog(
         habitId: habitId,
         date: DateTime(2026, 5, 4),
-        status: HabitLogStatus.done,
+        status: HabitLogStatus.onTime,
         actualValue: 7,
         targetReached: true,
         subtasksCompleted: [HabitSubtaskId('s-1'), HabitSubtaskId('s-2')],
@@ -140,7 +140,7 @@ void main() {
         () => HabitLog(
           habitId: habitId,
           date: DateTime(2026, 5, 4),
-          status: HabitLogStatus.done,
+          status: HabitLogStatus.onTime,
           actualValue: -1,
         ),
         throwsArgumentError,
@@ -152,7 +152,7 @@ void main() {
         () => HabitLog(
           habitId: habitId,
           date: DateTime(2026, 5, 4),
-          status: HabitLogStatus.done,
+          status: HabitLogStatus.onTime,
           duration: const Duration(seconds: -1),
         ),
         throwsArgumentError,
@@ -164,7 +164,7 @@ void main() {
         () => HabitLog(
           habitId: habitId,
           date: DateTime(2026, 5, 4),
-          status: HabitLogStatus.done,
+          status: HabitLogStatus.onTime,
           duration: const Duration(seconds: 86401),
         ),
         throwsArgumentError,
@@ -176,7 +176,7 @@ void main() {
         () => HabitLog(
           habitId: habitId,
           date: DateTime(2026, 5, 4),
-          status: HabitLogStatus.done,
+          status: HabitLogStatus.onTime,
           actualValue: null,
           targetReached: true,
         ),
