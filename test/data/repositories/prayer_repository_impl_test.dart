@@ -44,26 +44,23 @@ void main() {
   });
 
   group('getTodayPrayers', () {
-    test(
-      'returns a fully-pending PrayerDay when no row exists yet',
-      () async {
-        when(
-          () => ds.getPrayerDay(
-            userId: userIdValue,
-            day: any(named: 'day'),
-          ),
-        ).thenAnswer((_) async => null);
+    test('returns a fully-pending PrayerDay when no row exists yet', () async {
+      when(
+        () => ds.getPrayerDay(
+          userId: userIdValue,
+          day: any(named: 'day'),
+        ),
+      ).thenAnswer((_) async => null);
 
-        final day = await repo.getTodayPrayers(UserId(userIdValue));
+      final day = await repo.getTodayPrayers(UserId(userIdValue));
 
-        expect(day.userId, UserId(userIdValue));
-        expect(day.fajr, PrayerStatus.pending);
-        expect(day.dhuhr, PrayerStatus.pending);
-        expect(day.asr, PrayerStatus.pending);
-        expect(day.maghrib, PrayerStatus.pending);
-        expect(day.isha, PrayerStatus.pending);
-      },
-    );
+      expect(day.userId, UserId(userIdValue));
+      expect(day.fajr, PrayerStatus.pending);
+      expect(day.dhuhr, PrayerStatus.pending);
+      expect(day.asr, PrayerStatus.pending);
+      expect(day.maghrib, PrayerStatus.pending);
+      expect(day.isha, PrayerStatus.pending);
+    });
 
     test('maps the row when a partial day exists', () async {
       when(
@@ -81,30 +78,103 @@ void main() {
   });
 
   group('markPrayer', () {
-    test('upserts a row with the new fajr status, merging existing day', () async {
+    test(
+      'upserts a row with the new fajr status, merging existing day',
+      () async {
+        when(
+          () => ds.getPrayerDay(userId: userIdValue, day: '2026-05-09'),
+        ).thenAnswer((_) async => rowFor(dhuhr: 'late'));
+        when(() => ds.upsertPrayerDay(any())).thenAnswer((_) async {});
+
+        await repo.markPrayer(
+          userId: UserId(userIdValue),
+          date: today,
+          prayerName: 'fajr',
+          status: PrayerStatus.onTime,
+        );
+
+        final captured =
+            verify(() => ds.upsertPrayerDay(captureAny())).captured.single
+                as Map<String, dynamic>;
+        expect(captured['user_id'], userIdValue);
+        expect(captured['day'], '2026-05-09');
+        expect(captured['fajr'], 'ontime');
+        // pre-existing dhuhr is preserved
+        expect(captured['dhuhr'], 'late');
+      },
+    );
+
+    test('updates dhuhr while preserving other prayers', () async {
       when(
-        () => ds.getPrayerDay(
-          userId: userIdValue,
-          day: '2026-05-09',
-        ),
-      ).thenAnswer((_) async => rowFor(dhuhr: 'late'));
+        () => ds.getPrayerDay(userId: userIdValue, day: '2026-05-09'),
+      ).thenAnswer((_) async => rowFor(fajr: 'ontime'));
       when(() => ds.upsertPrayerDay(any())).thenAnswer((_) async {});
 
       await repo.markPrayer(
         userId: UserId(userIdValue),
         date: today,
-        prayerName: 'fajr',
-        status: PrayerStatus.onTime,
+        prayerName: 'dhuhr',
+        status: PrayerStatus.late,
       );
 
       final captured =
           verify(() => ds.upsertPrayerDay(captureAny())).captured.single
               as Map<String, dynamic>;
-      expect(captured['user_id'], userIdValue);
-      expect(captured['day'], '2026-05-09');
       expect(captured['fajr'], 'ontime');
-      // pre-existing dhuhr is preserved
       expect(captured['dhuhr'], 'late');
+    });
+
+    test('updates asr while preserving other prayers', () async {
+      when(
+        () => ds.getPrayerDay(userId: userIdValue, day: '2026-05-09'),
+      ).thenAnswer((_) async => null);
+      when(() => ds.upsertPrayerDay(any())).thenAnswer((_) async {});
+
+      await repo.markPrayer(
+        userId: UserId(userIdValue),
+        date: today,
+        prayerName: 'asr',
+        status: PrayerStatus.missed,
+      );
+
+      final captured =
+          verify(() => ds.upsertPrayerDay(captureAny())).captured.single
+              as Map<String, dynamic>;
+      expect(captured['asr'], 'missed');
+    });
+
+    test('updates maghrib', () async {
+      when(
+        () => ds.getPrayerDay(userId: userIdValue, day: '2026-05-09'),
+      ).thenAnswer((_) async => null);
+      when(() => ds.upsertPrayerDay(any())).thenAnswer((_) async {});
+      await repo.markPrayer(
+        userId: UserId(userIdValue),
+        date: today,
+        prayerName: 'maghrib',
+        status: PrayerStatus.onTime,
+      );
+      final captured =
+          verify(() => ds.upsertPrayerDay(captureAny())).captured.single
+              as Map<String, dynamic>;
+      expect(captured['maghrib'], 'ontime');
+    });
+
+    test('updates isha', () async {
+      when(
+        () => ds.getPrayerDay(userId: userIdValue, day: '2026-05-09'),
+      ).thenAnswer((_) async => null);
+      when(() => ds.upsertPrayerDay(any())).thenAnswer((_) async {});
+      await repo.markPrayer(
+        userId: UserId(userIdValue),
+        date: today,
+        prayerName: 'isha',
+        status: PrayerStatus.late,
+      );
+      final captured =
+          verify(() => ds.upsertPrayerDay(captureAny())).captured.single
+              as Map<String, dynamic>;
+      expect(captured['isha'], 'late');
     });
 
     test('rejects an unknown prayer name', () async {
@@ -194,10 +264,12 @@ void main() {
           from: '2026-05-01',
           to: '2026-05-09',
         ),
-      ).thenAnswer((_) async => [
-            rowFor(day: '2026-05-01', fajr: 'ontime'),
-            rowFor(day: '2026-05-02', fajr: 'late', dhuhr: 'missed'),
-          ]);
+      ).thenAnswer(
+        (_) async => [
+          rowFor(day: '2026-05-01', fajr: 'ontime'),
+          rowFor(day: '2026-05-02', fajr: 'late', dhuhr: 'missed'),
+        ],
+      );
 
       final list = await repo.getPrayerHistory(
         userId: UserId(userIdValue),

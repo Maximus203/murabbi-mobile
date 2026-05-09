@@ -115,6 +115,15 @@ void main() {
       expect(() => PrayerDayMapper.fromRow(row), throwsA(isA<ArgumentError>()));
     });
 
+    test('non-String non-null status throws malformedRow failure', () {
+      final row = validRow();
+      row['fajr'] = 42; // int — neither String nor null
+      expect(
+        () => PrayerDayMapper.fromRow(row),
+        throwsA(isA<PrayerMalformedRowFailure>()),
+      );
+    });
+
     test('day already a DateTime is accepted', () {
       final row = validRow();
       row['day'] = DateTime.utc(2026, 5, 9);
