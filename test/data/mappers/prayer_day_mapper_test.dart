@@ -80,13 +80,16 @@ void main() {
       expect(entity.isha, PrayerStatus.onTime);
     });
 
-    test('"skipped" SQL value throws unknownStatus failure (Q-19 fail-fast)', () {
-      final row = validRow(fajr: 'skipped');
-      expect(
-        () => PrayerDayMapper.fromRow(row),
-        throwsA(isA<UnknownPrayerStatusFailure>()),
-      );
-    });
+    test(
+      '"skipped" SQL value throws unknownStatus failure (Q-19 fail-fast)',
+      () {
+        final row = validRow(fajr: 'skipped');
+        expect(
+          () => PrayerDayMapper.fromRow(row),
+          throwsA(isA<UnknownPrayerStatusFailure>()),
+        );
+      },
+    );
 
     test('unrecognized SQL value throws unknownStatus failure', () {
       final row = validRow(maghrib: 'wat');
@@ -161,15 +164,12 @@ void main() {
       expect(row['asr'], 'missed');
     });
 
-    test(
-      'makeup throws unsupportedStatus failure (Q-19 — schema gap)',
-      () {
-        expect(
-          () => PrayerDayMapper.toRow(buildDay(maghrib: PrayerStatus.makeup)),
-          throwsA(isA<UnsupportedPrayerStatusFailure>()),
-        );
-      },
-    );
+    test('makeup throws unsupportedStatus failure (Q-19 — schema gap)', () {
+      expect(
+        () => PrayerDayMapper.toRow(buildDay(maghrib: PrayerStatus.makeup)),
+        throwsA(isA<UnsupportedPrayerStatusFailure>()),
+      );
+    });
 
     test('userId and date serialized correctly', () {
       final row = PrayerDayMapper.toRow(buildDay());
