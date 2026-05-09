@@ -25,14 +25,9 @@ sealed class PrayerFailure extends Equatable implements Exception {
       PrayerMalformedRowFailure;
 
   /// La row contient une valeur inconnue côté domain (ex: `'skipped'` SQL
-  /// non mappé en V1 — cf. Q-19). Fail-fast volontaire.
+  /// legacy non mappé). Fail-fast volontaire.
   const factory PrayerFailure.unknownStatus({String? message}) =
       UnknownPrayerStatusFailure;
-
-  /// Le domain demande l'écriture d'un statut non supporté par le schéma
-  /// SQL en V1 (ex: `PrayerStatus.makeup` — cf. Q-19).
-  const factory PrayerFailure.unsupportedStatus({String? message}) =
-      UnsupportedPrayerStatusFailure;
 
   /// Tout le reste — échec inattendu, le message décrit l'origine.
   const factory PrayerFailure.unknown({String? message}) = UnknownPrayerFailure;
@@ -58,10 +53,6 @@ class PrayerMalformedRowFailure extends PrayerFailure {
 
 class UnknownPrayerStatusFailure extends PrayerFailure {
   const UnknownPrayerStatusFailure({super.message}) : super._();
-}
-
-class UnsupportedPrayerStatusFailure extends PrayerFailure {
-  const UnsupportedPrayerStatusFailure({super.message}) : super._();
 }
 
 class UnknownPrayerFailure extends PrayerFailure {
