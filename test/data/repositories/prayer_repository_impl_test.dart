@@ -230,27 +230,27 @@ void main() {
       );
     });
 
-    test(
-      'lets PrayerFailure.unsupportedStatus bubble up unchanged for makeup',
-      () async {
-        when(
-          () => ds.getPrayerDay(
-            userId: any(named: 'userId'),
-            day: any(named: 'day'),
-          ),
-        ).thenAnswer((_) async => null);
+    test('persists makeup as "makeup" SQL value (Q-19 closed)', () async {
+      when(
+        () => ds.getPrayerDay(
+          userId: any(named: 'userId'),
+          day: any(named: 'day'),
+        ),
+      ).thenAnswer((_) async => null);
+      when(() => ds.upsertPrayerDay(any())).thenAnswer((_) async {});
 
-        expect(
-          () => repo.markPrayer(
-            userId: UserId(userIdValue),
-            date: today,
-            prayerName: 'fajr',
-            status: PrayerStatus.makeup,
-          ),
-          throwsA(isA<UnsupportedPrayerStatusFailure>()),
-        );
-      },
-    );
+      await repo.markPrayer(
+        userId: UserId(userIdValue),
+        date: today,
+        prayerName: 'fajr',
+        status: PrayerStatus.makeup,
+      );
+
+      final captured =
+          verify(() => ds.upsertPrayerDay(captureAny())).captured.single
+              as Map<String, dynamic>;
+      expect(captured['fajr'], 'makeup');
+    });
   });
 
   group('getPrayerHistory', () {

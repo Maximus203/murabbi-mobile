@@ -14,6 +14,7 @@ import 'package:murabbi_mobile/domain/use_cases/auth/sign_out_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/auth/sign_up_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/auth/watch_auth_state_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
@@ -23,7 +24,7 @@ void main() {
 
   final testUser = User(
     id: UserId('user-uuid-001'),
-    pseudo: NonEmptyString('Cherif'),
+    pseudo: Pseudonym('Cherif'),
     email: NonEmptyString('cherif@example.com'),
     createdAt: DateTime(2026, 1, 1),
     level: Level.aspirant,

@@ -111,7 +111,7 @@ void main() {
       final log = HabitLog(
         habitId: habitId,
         date: DateTime(2026, 5, 4),
-        status: HabitLogStatus.done,
+        status: HabitLogStatus.onTime,
       );
       expect(log.actualValue, isNull);
       expect(log.targetReached, isNull);
@@ -123,7 +123,7 @@ void main() {
       final log = HabitLog(
         habitId: habitId,
         date: DateTime(2026, 5, 4),
-        status: HabitLogStatus.done,
+        status: HabitLogStatus.onTime,
         actualValue: 7,
         targetReached: true,
         subtasksCompleted: [HabitSubtaskId('s-1'), HabitSubtaskId('s-2')],
@@ -140,7 +140,7 @@ void main() {
         () => HabitLog(
           habitId: habitId,
           date: DateTime(2026, 5, 4),
-          status: HabitLogStatus.done,
+          status: HabitLogStatus.onTime,
           actualValue: -1,
         ),
         throwsArgumentError,
@@ -152,7 +152,7 @@ void main() {
         () => HabitLog(
           habitId: habitId,
           date: DateTime(2026, 5, 4),
-          status: HabitLogStatus.done,
+          status: HabitLogStatus.onTime,
           duration: const Duration(seconds: -1),
         ),
         throwsArgumentError,
@@ -164,7 +164,7 @@ void main() {
         () => HabitLog(
           habitId: habitId,
           date: DateTime(2026, 5, 4),
-          status: HabitLogStatus.done,
+          status: HabitLogStatus.onTime,
           duration: const Duration(seconds: 86401),
         ),
         throwsArgumentError,
@@ -176,12 +176,87 @@ void main() {
         () => HabitLog(
           habitId: habitId,
           date: DateTime(2026, 5, 4),
-          status: HabitLogStatus.done,
+          status: HabitLogStatus.onTime,
           actualValue: null,
           targetReached: true,
         ),
         throwsArgumentError,
       );
+    });
+
+    test('openedAt and loggedAt default to null (legacy / 1-tap heatmap)', () {
+      final log = HabitLog(
+        habitId: habitId,
+        date: DateTime(2026, 5, 4),
+        status: HabitLogStatus.onTime,
+      );
+      expect(log.openedAt, isNull);
+      expect(log.loggedAt, isNull);
+    });
+
+    test('accepts openedAt and loggedAt session timestamps', () {
+      final opened = DateTime.utc(2026, 5, 9, 10, 30);
+      final logged = DateTime.utc(2026, 5, 9, 10, 32);
+      final log = HabitLog(
+        habitId: habitId,
+        date: DateTime(2026, 5, 9),
+        status: HabitLogStatus.onTime,
+        openedAt: opened,
+        loggedAt: logged,
+      );
+      expect(log.openedAt, opened);
+      expect(log.loggedAt, logged);
+    });
+
+    test(
+      'allows openedAt set without loggedAt (form opened, not yet validated)',
+      () {
+        final log = HabitLog(
+          habitId: habitId,
+          date: DateTime(2026, 5, 9),
+          status: HabitLogStatus.onTime,
+          openedAt: DateTime.utc(2026, 5, 9, 10, 30),
+        );
+        expect(log.openedAt, isNotNull);
+        expect(log.loggedAt, isNull);
+      },
+    );
+
+    test('allows loggedAt set without openedAt (1-tap heatmap save)', () {
+      final log = HabitLog(
+        habitId: habitId,
+        date: DateTime(2026, 5, 9),
+        status: HabitLogStatus.onTime,
+        loggedAt: DateTime.utc(2026, 5, 9, 22),
+      );
+      expect(log.openedAt, isNull);
+      expect(log.loggedAt, isNotNull);
+    });
+
+    test('throws when both timestamps set and loggedAt is before openedAt', () {
+      expect(
+        () => HabitLog(
+          habitId: habitId,
+          date: DateTime(2026, 5, 9),
+          status: HabitLogStatus.onTime,
+          openedAt: DateTime.utc(2026, 5, 9, 10, 30),
+          loggedAt: DateTime.utc(2026, 5, 9, 10, 29),
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('accepts loggedAt == openedAt (instantaneous validation)', () {
+      final t = DateTime.utc(2026, 5, 9, 10, 30);
+      final log = HabitLog(
+        habitId: habitId,
+        date: DateTime(2026, 5, 9),
+        status: HabitLogStatus.onTime,
+        openedAt: t,
+        loggedAt: t,
+      );
+      expect(log.openedAt, t);
+      expect(log.loggedAt, t);
     });
   });
 }

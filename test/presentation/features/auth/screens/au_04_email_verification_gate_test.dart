@@ -7,6 +7,7 @@ import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/repositories/auth_repository.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_verification_gate.dart';
 import 'package:murabbi_mobile/presentation/theme/app_theme.dart';
@@ -18,7 +19,7 @@ void main() {
 
   final pendingUser = User(
     id: UserId('uuid-pending'),
-    pseudo: NonEmptyString('Anonyme #ab12'),
+    pseudo: Pseudonym('Anonyme #ab12'),
     email: NonEmptyString('cherif@example.com'),
     createdAt: DateTime(2026, 5, 7),
     level: Level.aspirant,

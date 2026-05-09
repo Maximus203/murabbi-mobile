@@ -6,6 +6,7 @@ import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/auth_repository.dart';
 import 'package:murabbi_mobile/domain/use_cases/auth/refresh_session_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
@@ -16,7 +17,7 @@ void main() {
 
   final refreshedUser = User(
     id: UserId('uuid-1'),
-    pseudo: NonEmptyString('Cherif'),
+    pseudo: Pseudonym('Cherif'),
     email: NonEmptyString('cherif@example.com'),
     createdAt: DateTime(2026, 5, 7),
     level: Level.aspirant,

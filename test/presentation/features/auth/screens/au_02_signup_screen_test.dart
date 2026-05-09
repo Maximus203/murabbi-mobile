@@ -8,6 +8,7 @@ import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/auth_repository.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_02_signup_screen.dart';
 import 'package:murabbi_mobile/presentation/theme/app_theme.dart';
@@ -19,7 +20,7 @@ void main() {
 
   final testUser = User(
     id: UserId('uuid-002'),
-    pseudo: NonEmptyString('Anonyme #ab12'),
+    pseudo: Pseudonym('Anonyme #ab12'),
     email: NonEmptyString('new@example.com'),
     createdAt: DateTime(2026, 5, 7),
     level: Level.aspirant,

@@ -5,15 +5,17 @@ import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/domain/errors/prayer_failure.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
-/// Tests du mapper Supabase ↔ domain pour `prayer_days` (Q-19).
+/// Tests du mapper Supabase ↔ domain pour `prayer_days` (Q-19 — clos par
+/// migration `20260509000000_align_mobile_domain.sql` : SQL accepte
+/// désormais `makeup`).
 ///
-/// Mapping retenu (cf. `docs/questions/Q-19-salat-status-mapping-domain-vs-sql.md`) :
+/// Mapping retenu :
 ///   null      ↔ pending
 ///   'ontime'  ↔ onTime
 ///   'late'    ↔ late
 ///   'missed'  ↔ missed
+///   'makeup'  ↔ makeup
 ///   'skipped' (lecture)   → throw PrayerFailure.unknownStatus (fail-fast)
-///   makeup    (écriture)  → throw PrayerFailure.unsupportedStatus
 void main() {
   const userId = '11111111-1111-1111-1111-111111111111';
 
@@ -62,6 +64,11 @@ void main() {
     test('"missed" maps to PrayerStatus.missed', () {
       final row = validRow(asr: 'missed');
       expect(PrayerDayMapper.fromRow(row).asr, PrayerStatus.missed);
+    });
+
+    test('"makeup" maps to PrayerStatus.makeup (Q-19 closed)', () {
+      final row = validRow(maghrib: 'makeup');
+      expect(PrayerDayMapper.fromRow(row).maghrib, PrayerStatus.makeup);
     });
 
     test('all 5 prayers populated independently', () {
@@ -173,11 +180,9 @@ void main() {
       expect(row['asr'], 'missed');
     });
 
-    test('makeup throws unsupportedStatus failure (Q-19 — schema gap)', () {
-      expect(
-        () => PrayerDayMapper.toRow(buildDay(maghrib: PrayerStatus.makeup)),
-        throwsA(isA<UnsupportedPrayerStatusFailure>()),
-      );
+    test('makeup maps to "makeup" in SQL row (Q-19 closed)', () {
+      final row = PrayerDayMapper.toRow(buildDay(maghrib: PrayerStatus.makeup));
+      expect(row['maghrib'], 'makeup');
     });
 
     test('userId and date serialized correctly', () {

@@ -6,7 +6,7 @@ import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 /// Calcul de score (logique pure).
 ///
 /// **Habit** (spec v1.5 § 3.2, validation matrix § 4) :
-/// - Sans extras : `done` ⇒ habit.points, `late` ⇒ +1, sinon 0
+/// - Sans extras : `onTime` ⇒ habit.points, `late` ⇒ +1, sinon 0
 /// - Avec objectif chiffré : 0 si objectif non atteint, peu importe le statut
 /// - Avec sous-tâches obligatoires : 0 si pas toutes cochées
 /// - Combinaison : ET logique (les deux conditions doivent être satisfaites)
@@ -31,7 +31,7 @@ class ScoreCalculatorUseCase {
       }
     }
     switch (log.status) {
-      case HabitLogStatus.done:
+      case HabitLogStatus.onTime:
         return habit.points.value;
       case HabitLogStatus.late:
         return latePoints;

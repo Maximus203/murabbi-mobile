@@ -16,6 +16,7 @@ import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/time_of_day_value.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
@@ -188,7 +189,7 @@ void main() {
       final now = DateTime.now();
       final user = User(
         id: userId,
-        pseudo: NonEmptyString('Cherif'),
+        pseudo: Pseudonym('Cherif'),
         email: NonEmptyString('cherif@example.com'),
         createdAt: now,
         level: Level.aspirant,
@@ -221,14 +222,14 @@ void main() {
       final now = DateTime.now();
       final a = User(
         id: userId,
-        pseudo: NonEmptyString('Cherif'),
+        pseudo: Pseudonym('Cherif'),
         email: NonEmptyString('cherif@example.com'),
         createdAt: now,
         level: Level.aspirant,
       );
       final b = User(
         id: userId,
-        pseudo: NonEmptyString('Cherif'),
+        pseudo: Pseudonym('Cherif'),
         email: NonEmptyString('cherif@example.com'),
         createdAt: now,
         level: Level.aspirant,
@@ -240,14 +241,14 @@ void main() {
       final now = DateTime.now();
       final a = User(
         id: UserId('user-uuid-001'),
-        pseudo: NonEmptyString('Cherif'),
+        pseudo: Pseudonym('Cherif'),
         email: NonEmptyString('cherif@example.com'),
         createdAt: now,
         level: Level.aspirant,
       );
       final b = User(
         id: UserId('user-uuid-002'),
-        pseudo: NonEmptyString('Cherif'),
+        pseudo: Pseudonym('Cherif'),
         email: NonEmptyString('cherif@example.com'),
         createdAt: now,
         level: Level.aspirant,
@@ -570,12 +571,12 @@ void main() {
       final log = HabitLog(
         habitId: habitId,
         date: date,
-        status: HabitLogStatus.done,
+        status: HabitLogStatus.onTime,
       );
 
       expect(log.habitId, habitId);
       expect(log.date, date);
-      expect(log.status, HabitLogStatus.done);
+      expect(log.status, HabitLogStatus.onTime);
     });
 
     test('HabitLogStatus has three values', () {
@@ -583,7 +584,7 @@ void main() {
       expect(
         HabitLogStatus.values,
         containsAll([
-          HabitLogStatus.done,
+          HabitLogStatus.onTime,
           HabitLogStatus.late,
           HabitLogStatus.missed,
         ]),

@@ -6,21 +6,20 @@ import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 /// Mapper pur — convertit les rows `prayer_days` Supabase en `PrayerDay`
 /// domain et inversement.
 ///
-/// Mapping retenu (cf. Q-19 — désalignement domain/SQL) :
+/// Mapping retenu (Q-19 close — migration `20260509000000_align_mobile_domain.sql`
+/// a aligné l'enum SQL sur le domain) :
 ///
-/// | SQL value      | Domain `PrayerStatus` |
-/// |----------------|------------------------|
-/// | `null`         | `pending`              |
-/// | `'ontime'`     | `onTime`               |
-/// | `'late'`       | `late`                 |
-/// | `'missed'`     | `missed`               |
-/// | `'skipped'`    | (lecture) → throw `unknownStatus` |
-/// | (n/a)          | (écriture) `makeup` → throw `unsupportedStatus` |
+/// | SQL value   | Domain `PrayerStatus` |
+/// |-------------|------------------------|
+/// | `null`      | `pending`              |
+/// | `'ontime'`  | `onTime`               |
+/// | `'late'`    | `late`                 |
+/// | `'missed'`  | `missed`               |
+/// | `'makeup'`  | `makeup`               |
+/// | `'skipped'` | (lecture) → throw `unknownStatus` (legacy V1, non couvert) |
 ///
-/// Le mapping est volontairement **fail-fast** : toute valeur SQL inconnue ou
-/// tout statut domain non persistable lève une `PrayerFailure` typée plutôt
-/// que de faire un fallback silencieux. Une décision PO (Q-19) tranchera
-/// entre étendre le schéma SQL et étendre l'enum domain.
+/// Toute valeur SQL inconnue lève `PrayerFailure.unknownStatus` plutôt que
+/// de faire un fallback silencieux.
 class PrayerDayMapper {
   const PrayerDayMapper._();
 
@@ -65,9 +64,6 @@ class PrayerDayMapper {
   }
 
   /// Entité domain → SQL row (clés alignées sur le schéma `prayer_days`).
-  ///
-  /// Lève `PrayerFailure.unsupportedStatus` si l'un des 5 statuts est
-  /// `PrayerStatus.makeup` (cf. Q-19 — non supporté par le schéma SQL V1).
   static Map<String, dynamic> toRow(PrayerDay day) {
     return {
       'user_id': day.userId.value,
@@ -94,12 +90,14 @@ class PrayerDayMapper {
         return PrayerStatus.late;
       case 'missed':
         return PrayerStatus.missed;
-      // 'skipped' (et tout autre) : non couvert côté domain (Q-19).
+      case 'makeup':
+        return PrayerStatus.makeup;
+      // 'skipped' (et tout autre) : non couvert côté domain.
       default:
         throw PrayerFailure.unknownStatus(
           message:
-              'SQL prayer status "$raw" has no domain mapping (cf. Q-19). '
-              'Expected one of: ontime, late, missed, or null.',
+              'SQL prayer status "$raw" has no domain mapping. '
+              'Expected one of: ontime, late, missed, makeup, or null.',
         );
     }
   }
@@ -115,12 +113,7 @@ class PrayerDayMapper {
       case PrayerStatus.missed:
         return 'missed';
       case PrayerStatus.makeup:
-        // Schema SQL V1 ne supporte pas 'makeup'. Fail-fast tant que Q-19
-        // n'est pas tranchée par le PO.
-        throw const PrayerFailure.unsupportedStatus(
-          message:
-              'PrayerStatus.makeup is not persistable in SQL V1 (cf. Q-19).',
-        );
+        return 'makeup';
     }
   }
 
