@@ -233,21 +233,18 @@ void main() {
       expect(log.loggedAt, isNotNull);
     });
 
-    test(
-      'throws when both timestamps set and loggedAt is before openedAt',
-      () {
-        expect(
-          () => HabitLog(
-            habitId: habitId,
-            date: DateTime(2026, 5, 9),
-            status: HabitLogStatus.onTime,
-            openedAt: DateTime.utc(2026, 5, 9, 10, 30),
-            loggedAt: DateTime.utc(2026, 5, 9, 10, 29),
-          ),
-          throwsArgumentError,
-        );
-      },
-    );
+    test('throws when both timestamps set and loggedAt is before openedAt', () {
+      expect(
+        () => HabitLog(
+          habitId: habitId,
+          date: DateTime(2026, 5, 9),
+          status: HabitLogStatus.onTime,
+          openedAt: DateTime.utc(2026, 5, 9, 10, 30),
+          loggedAt: DateTime.utc(2026, 5, 9, 10, 29),
+        ),
+        throwsArgumentError,
+      );
+    });
 
     test('accepts loggedAt == openedAt (instantaneous validation)', () {
       final t = DateTime.utc(2026, 5, 9, 10, 30);

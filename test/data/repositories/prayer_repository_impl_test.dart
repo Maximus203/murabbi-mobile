@@ -246,9 +246,9 @@ void main() {
         status: PrayerStatus.makeup,
       );
 
-      final captured = verify(() => ds.upsertPrayerDay(captureAny()))
-          .captured
-          .single as Map<String, dynamic>;
+      final captured =
+          verify(() => ds.upsertPrayerDay(captureAny())).captured.single
+              as Map<String, dynamic>;
       expect(captured['fajr'], 'makeup');
     });
   });

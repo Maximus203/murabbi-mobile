@@ -75,9 +75,7 @@ class HabitLog extends Equatable {
         );
       }
     }
-    if (openedAt != null &&
-        loggedAt != null &&
-        loggedAt!.isBefore(openedAt!)) {
+    if (openedAt != null && loggedAt != null && loggedAt!.isBefore(openedAt!)) {
       throw ArgumentError(
         'HabitLog.loggedAt must be >= openedAt when both are set',
       );

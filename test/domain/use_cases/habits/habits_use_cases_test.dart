@@ -124,7 +124,11 @@ void main() {
         ),
       ).thenAnswer((_) async {});
 
-      await useCase(habitId: habitId, date: date, status: HabitLogStatus.onTime);
+      await useCase(
+        habitId: habitId,
+        date: date,
+        status: HabitLogStatus.onTime,
+      );
 
       verify(
         () => mockRepo.toggleHabitLog(
