@@ -13,7 +13,7 @@ class DayColor extends Equatable {
   final DayStatusSeverity worst;
 
   /// % d'événements considérés validés ([0..1]).
-  /// Validés = `onTime`/`late`/`makeup` côté prière, `done`/`late` côté habitude.
+  /// Validés = `onTime`/`late`/`makeup` côté prière, `onTime`/`late` côté habitude.
   /// `pending` et `missed` ne comptent pas comme validés.
   final double fillPercent;
 
@@ -62,7 +62,7 @@ class ComputeDayColorUseCase {
 
     for (final h in habitStatuses) {
       switch (h) {
-        case HabitLogStatus.done:
+        case HabitLogStatus.onTime:
           validated++;
           break;
         case HabitLogStatus.late:

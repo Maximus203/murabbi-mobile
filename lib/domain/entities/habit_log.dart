@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_subtask_id.dart';
 
-enum HabitLogStatus { done, late, missed }
+enum HabitLogStatus { onTime, late, missed }
 
 /// Log quotidien d'exécution d'une habitude.
 ///
