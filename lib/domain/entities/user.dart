@@ -1,12 +1,13 @@
 import 'package:equatable/equatable.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 /// Entité utilisateur — reflète la table `users` côté admin (Q-18).
 class User extends Equatable {
   final UserId id;
-  final NonEmptyString pseudo;
+  final Pseudonym pseudo;
   final NonEmptyString email;
   final DateTime createdAt;
   final Level level;

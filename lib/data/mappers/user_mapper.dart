@@ -2,6 +2,7 @@ import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 /// Mapper pur — convertit les maps remontées par la couche data en entité
@@ -98,7 +99,7 @@ class UserMapper {
 
     return User(
       id: UserId(id),
-      pseudo: NonEmptyString(pseudo),
+      pseudo: Pseudonym(pseudo),
       email: NonEmptyString(emailAuth),
       createdAt: createdAt,
       level: Level.fromString(levelRaw),
