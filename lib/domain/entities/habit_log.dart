@@ -12,6 +12,8 @@ enum HabitLogStatus { onTime, late, missed }
 ///   GENERATED, hydraté ici par le repository à la lecture.
 /// - [subtasksCompleted] : UUIDs des sous-tâches cochées au moment du log.
 /// - [duration] : durée mesurée par le timer (max 24h, cf. spec § 2.4).
+/// - [openedAt] / [loggedAt] : horodatages session (analytics — alimentent
+///   `vw_engagement_headline.avg_session_seconds`).
 class HabitLog extends Equatable {
   static const Duration durationMax = Duration(seconds: 86400);
 
@@ -23,6 +25,17 @@ class HabitLog extends Equatable {
   final List<HabitSubtaskId> subtasksCompleted;
   final Duration? duration;
 
+  /// Moment d'ouverture du formulaire de logging (démarrage du timer
+  /// "session"). NULL si la saisie a été faite en 1-tap depuis la heatmap
+  /// ou pour les logs antérieurs à l'introduction du timer.
+  final DateTime? openedAt;
+
+  /// Moment de la validation définitive (tap "Valider" ou "Marquer comme
+  /// fait"). NULL pour les logs migrés depuis l'ancien schéma sans cette
+  /// granularité. Quand non-null, alimente la métrique
+  /// `vw_engagement_headline.avg_session_seconds = avg(logged_at - opened_at)`.
+  final DateTime? loggedAt;
+
   HabitLog({
     required this.habitId,
     required this.date,
@@ -31,6 +44,8 @@ class HabitLog extends Equatable {
     this.targetReached,
     this.subtasksCompleted = const [],
     this.duration,
+    this.openedAt,
+    this.loggedAt,
   }) {
     if (actualValue != null && actualValue! < 0) {
       throw ArgumentError.value(
@@ -60,6 +75,13 @@ class HabitLog extends Equatable {
         );
       }
     }
+    if (openedAt != null &&
+        loggedAt != null &&
+        loggedAt!.isBefore(openedAt!)) {
+      throw ArgumentError(
+        'HabitLog.loggedAt must be >= openedAt when both are set',
+      );
+    }
   }
 
   @override
@@ -71,5 +93,7 @@ class HabitLog extends Equatable {
     targetReached,
     subtasksCompleted,
     duration,
+    openedAt,
+    loggedAt,
   ];
 }
