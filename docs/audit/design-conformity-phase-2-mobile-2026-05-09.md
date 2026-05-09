@@ -41,7 +41,9 @@ Légende sévérité : 🔴 bloquant · 🟠 majeur · 🟡 mineur · 🔵 obser
 ¹ Conforme **par construction** : 100 % des `Text` passent par `AppTypography.*` qui pointe `Geist` / `Geist Mono` / `Noto Sans Arabic`. Lock test [`app_typography_test.dart:39-61`](test/presentation/theme/app_typography_test.dart) verrouille les `fontFamily`. Dette : les TTFs ne sont **pas encore bundlés** (`pubspec.yaml > flutter.fonts` vide) — Flutter retombe sur la police système. Voir item AT-1.
 ² OB-01 (splash) n'expose aucun CTA — non concerné par P-6.
 
-**Comptage des écarts** : 0 🔴 · 0 🟠 · **3 🟡** · **2 🔵**.
+**Comptage des écarts** : 0 🔴 · 0 🟠 · **4 🟡** · **1 🔵**.
+
+> **Mise à jour 2026-05-09** : AT-5 (tap target `_TopBar.Passer`) promu de 🔵 à 🟡 sur arbitrage TL (cumul taille + position + absence d'alternative). AT-4 (strokeWidth loader) reste 🔵 mais désormais couvert par l'issue [#28](https://github.com/Maximus203/murabbi-mobile/issues/28) avec décision PO Option A (grammaire ternaire volontaire `0.5 / 1.5 / 2.0`).
 
 **Verdict global** : Phase 2 est **conforme** aux 8 règles produit. La dette principale est la non-distribution des polices Geist (P-3 partiel runtime), à régler en Phase 1.x quand les TTFs seront livrés par le PO. Aucun blocage merge.
 
@@ -197,19 +199,52 @@ Classement par priorité produit/dette technique (du plus impactant au plus cosm
 
 **Quand** : opportuniste, ~5 minutes.
 
-### 🔵 AT-4 — `strokeWidth` du loader splash via `AppBorderWidth`
+### 🟡 AT-5 — Tap target `_TopBar.Passer` sous-spec WCAG/HIG/Material
 
-**Sévérité** : observation, non régression.
-**Action** : remplacer `strokeWidth: 2` par une constante `AppBorderWidth.loaderStroke = 2.0` ou réutiliser `AppBorderWidth.focusRing = 1.5`. Cohérence DS vs lecture explicite.
+**Sévérité** : 🟡 mineur — promu de 🔵 à 🟡 le 2026-05-09 sur arbitrage TL (cumul taille + position + absence d'alternative).
 
-**Quand** : opportuniste, paire AT-3.
+**Constat** : `TextButton` "Passer" dans le SETUP-01 a une hauteur effective de **~36px** (`MaterialTextButton` default). En dessous des trois standards plateformes :
 
-### 🔵 AT-5 — Validation accessibilité tap targets sur `_TopBar.Passer`
+| Standard | Min |
+|---|---|
+| WCAG 2.5.5 (Level AAA) | 44 × 44 CSS px |
+| iOS HIG | 44 pt |
+| Android Material | 48 dp |
 
-**Sévérité** : observation hors P-1..P-8 (mais pertinent qualité produit).
-**Action** : `TextButton` "Passer" dans le SETUP-01 a une hauteur effective de ~36px (`MaterialTextButton` default). En dessous des 44px iOS / 48dp Android Material. À vérifier en widget test ou augmenter `padding` pour atteindre la cible WCAG 2.5.5.
+→ **15-25% sous-spec sur les 3 plateformes**.
 
-**Quand** : Phase 5 polish.
+**Cumul aggravant** :
+- Taille sous-dimensionnée
+- Position (top-bar coin = ergonomie réduite, mouvement ample)
+- **Absence d'alternative** — c'est le seul moyen de skipper l'onboarding (cf. ADR-012 onboarding pre-auth)
+
+L'audience Murabbi (musulmans 18-45 en mobilité — transports, mosquée, mains potentiellement chargées) rend le tap target précis critique UX, pas une simple observation qualité.
+
+**Action recommandée** : étendre `AppButton.link` (composant DS) avec un tap target conforme par défaut, plutôt que patcher l'instance. Bénéfice transverse sur les 5+ `TextButton` "lien" du codebase. Ajouter un golden test du tap target lors de la promotion.
+
+**Quand** : avant Phase 5 (avant les goldens de polish — sinon on bake la dérive dans les goldens).
+
+**Ouvert** : Phase 5 polish (issue à ouvrir au moment du chantier ou en suivi de cette PR).
+
+---
+
+### 🔵 AT-4 — `strokeWidth` du loader splash hardcodé (couvert par issue #28)
+
+**Sévérité** : 🔵 observation — couvert par décision DS dédiée.
+
+**Constat initial** : `strokeWidth: 2` hardcodé dans le loader splash, sans token DS associé.
+
+**Analyse approfondie post-audit** : la grammaire d'épaisseurs Murabbi est de facto **ternaire** sans contrat documenté (`0.5 / 1.5 / 2.0`). Mélanger ce fix avec la décision architecturale aurait déclassé la décision DS. **Issue dédiée ouverte** : [#28 — DS épaisseurs de trait : décision et tokens](https://github.com/Maximus203/murabbi-mobile/issues/28).
+
+**Décision PO 2026-05-09** : **Option A — grammaire ternaire volontaire**.
+
+| Token | Valeur | Usage |
+|---|:---:|---|
+| `AppBorderWidth.thin` | `0.5` | Bordures fines (cards, séparateurs, inputs au repos) |
+| `AppBorderWidth.focusRing` | `1.5` | Focus ring accessibilité |
+| `AppBorderWidth.indicatorStroke` | `2.0` | Indicateurs d'état (loaders, arcs progress, countdown) |
+
+**Action** : implémentation dans une PR séparée (Closes #28) **avant slice 3.C.3 Salat UI** (pour ne pas créer de précédent hardcodé sur l'arc countdown next-prayer).
 
 ---
 
