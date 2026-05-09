@@ -1,7 +1,8 @@
 # Q-19 — Désalignement de l'enum `PrayerStatus` entre domain mobile et schéma Supabase
 
 **Date ouverture** : 2026-05-09
-**Statut** : **OUVERTE** (non bloquante pour la slice 3.B data layer — mapping défensif appliqué)
+**Date clôture** : 2026-05-09
+**Statut** : **CLOS — 2026-05-09** (Option A retenue : SQL +makeup -skipped, mapping domain aligné)
 **Auteur** : Architecte mobile senior
 **Slice** : 3.B Phase 3 — Salat data layer
 
@@ -64,6 +65,51 @@ et retirer `'skipped'` du SQL si la valeur n'a pas de sémantique côté mobile
 
 À valider par le PO avant la slice 3.C.
 
-## Décision PO
+## Décision PO finale — 2026-05-09 (Option A : aligner SQL sur le domain mobile)
 
-_(à compléter)_
+**Option retenue** : étendre le check SQL pour autoriser `'makeup'` et retirer
+`'skipped'` (sémantique mobile non utilisée). Le domain mobile reste
+canonique : `{ onTime, late, missed, pending, makeup }` avec `pending`
+représenté par `null` côté SQL.
+
+**Mapping final verrouillé** :
+
+| Valeur SQL  | Valeur domain | Sémantique |
+|---|---|---|
+| `null`      | `pending`     | non encore loggée                          |
+| `'ontime'`  | `onTime`      | priée à l'heure (entre l'adhan et la suivante) |
+| `'late'`    | `late`        | priée tardivement mais avant la suivante   |
+| `'missed'`  | `missed`      | manquée (au-delà de la prière suivante)    |
+| `'makeup'`  | `makeup`      | rattrapée post-coucher (qadâ', +1 point scoring) |
+
+`'skipped'` est **retiré** du SQL (jamais émis par le client mobile, pas de
+sémantique UX prévue).
+
+**Implémentation appliquée** :
+
+1. **Côté admin / SQL** — PR [murabbi-admin#46](https://github.com/Maximus203/murabbi-admin) (mergée 2026-05-09) :
+   migration `20260509000000_align_mobile_domain.sql` qui remplace le
+   check par `fajr in ('ontime','late','missed','makeup')` (et idem
+   pour `dhuhr`, `asr`, `maghrib`, `isha`).
+
+2. **Côté mobile / mapping** — PR [murabbi-mobile#24](https://github.com/Maximus203/murabbi-mobile/pull/24)
+   (mergée 2026-05-09) : `prayer_day_mapper.dart` aligné sur la table
+   ci-dessus. `'skipped'` reste géré en lecture comme valeur legacy → throw
+   `PrayerFailure.unknownStatus` (jamais écrit par le client). Tests
+   `prayer_day_mapper_test.dart` couvrent le round-trip pour les 5
+   valeurs canoniques + le cas legacy.
+
+**Conséquences validées** :
+
+- Le scoring `+1` pour `makeup` est désormais persisté SQL → reconstructible
+  historiquement (cf. `score_calculator_use_case.dart`).
+- L'UI Salat (slice 3.C) peut exposer le statut `makeup` sans risque
+  d'écriture SQL refusée.
+- `'skipped'` legacy : si une ligne pré-migration existait avec cette
+  valeur, le mapper lève fail-fast et l'app remonte une erreur explicite
+  plutôt que de fabriquer un statut silencieux (cf. règle racine S-10
+  fail-fast > silently-correct).
+
+**Pas de régression** : aucune ligne `'skipped'` en base au moment de la
+migration (vérifié via `select count(*) from prayer_days where 'skipped'
+in (fajr, dhuhr, asr, maghrib, isha)` = 0 sur l'env staging).
