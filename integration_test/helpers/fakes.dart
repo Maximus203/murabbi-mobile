@@ -7,6 +7,7 @@ import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/auth_repository.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/services/onboarding_flag_storage.dart';
 
@@ -62,7 +63,7 @@ class FakeAuthRepository implements AuthRepository {
   }) {
     return User(
       id: UserId(id),
-      pseudo: NonEmptyString(pseudo),
+      pseudo: Pseudonym(pseudo),
       email: NonEmptyString(email),
       createdAt: DateTime.utc(2026, 1, 1),
       level: Level.aspirant,

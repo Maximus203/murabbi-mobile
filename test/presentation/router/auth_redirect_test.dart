@@ -3,13 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/router/auth_redirect.dart';
 
 void main() {
   final user = User(
     id: UserId('u-1'),
-    pseudo: NonEmptyString('Cherif'),
+    pseudo: Pseudonym('Cherif'),
     email: NonEmptyString('c@b.co'),
     createdAt: DateTime(2026),
     level: Level.aspirant,
