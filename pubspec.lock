@@ -9,6 +9,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "85.0.0"
+  adhan_dart:
+    dependency: "direct main"
+    description:
+      name: adhan_dart
+      sha256: "9ba278adf8b8106274d2bfea492878240adfd24ed93f128cd820fe526b2f4c3f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
   analyzer:
     dependency: transitive
     description:

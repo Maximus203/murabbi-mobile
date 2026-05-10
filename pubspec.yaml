@@ -43,6 +43,12 @@ dependencies:
   characters: ^1.4.0
   shared_preferences: ^2.5.5
 
+  # Calcul horaires de prière on-device (cf. ADR-013). Port MIT de adhan-js
+  # (Batoul Apps). Import isolé dans
+  # `lib/services/prayer/prayer_times_service.dart` — aucune autre couche
+  # ne doit importer cette lib (règle ADR-013 §Architecture).
+  adhan_dart: ^2.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
