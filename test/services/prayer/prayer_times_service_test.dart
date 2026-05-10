@@ -118,8 +118,11 @@ void main() {
       _expectClose(times.isha, DateTime.utc(2024, 3, 10, 16, 58), 'isha');
       // Umm al-Qura : Isha = Maghrib + 90 min.
       final ishaDelta = times.isha.difference(times.maghrib).inMinutes;
-      expect((ishaDelta - 90).abs() <= 1, isTrue,
-          reason: 'Isha doit être ~90 min après Maghrib, got ${ishaDelta}min');
+      expect(
+        (ishaDelta - 90).abs() <= 1,
+        isTrue,
+        reason: 'Isha doit être ~90 min après Maghrib, got ${ishaDelta}min',
+      );
     });
 
     test('Istanbul Diyanet Shafi — 21 septembre 2024 (équinoxe automne)', () {
@@ -154,95 +157,135 @@ void main() {
     });
   });
 
-  group('AdhanPrayerTimesService — cross-check Aladhan API (oracle externe)',
-      () {
-    test('Paris UOIF 2024-06-15 — drift Aladhan dans ±10 min', () {
-      // Valeurs Aladhan API (https://api.aladhan.com/v1/timings/15-06-2024
-      // ?latitude=48.8566&longitude=2.3522&method=12) snapshot 2026-05-10 :
-      //   Fajr 04:12 / Sunrise 05:46 / Dhuhr 13:51 / Asr 18:08
-      //   Maghrib 21:56 / Isha 23:30 (heure locale Europe/Paris UTC+2).
-      // adhan-js et Aladhan implémentent des algorithmes proches mais pas
-      // strictement identiques sur Fajr/Isha (cf. recherche §5.2).
-      final times = service.computeForDay(
-        settings: _settings(
-          method: CalculationMethod.uoif,
-          madhab: Madhab.shafi,
-          lat: 48.8566,
-          lng: 2.3522,
-        ),
-        day: DateTime.utc(2024, 6, 15),
-      );
-      _expectClose(times.fajr, DateTime.utc(2024, 6, 15, 2, 12), 'fajr',
-          tolerance: _oracleTolerance);
-      _expectClose(times.sunrise, DateTime.utc(2024, 6, 15, 3, 46), 'sunrise',
-          tolerance: _oracleTolerance);
-      _expectClose(times.dhuhr, DateTime.utc(2024, 6, 15, 11, 51), 'dhuhr',
-          tolerance: _oracleTolerance);
-      _expectClose(times.asr, DateTime.utc(2024, 6, 15, 16, 8), 'asr',
-          tolerance: _oracleTolerance);
-      _expectClose(times.maghrib, DateTime.utc(2024, 6, 15, 19, 56), 'maghrib',
-          tolerance: _oracleTolerance);
-      _expectClose(times.isha, DateTime.utc(2024, 6, 15, 21, 30), 'isha',
-          tolerance: _oracleTolerance);
-    });
-  });
-
-  group('AdhanPrayerTimesService — invariants métier', () {
-    test('Hanafi calcule Asr plus tard que Shafi (mêmes coords/date/méthode)',
-        () {
-      final day = DateTime.utc(2024, 6, 15);
-      const lat = 48.8566;
-      const lng = 2.3522;
-      final shafi = service.computeForDay(
-        settings: _settings(
-          method: CalculationMethod.uoif,
-          madhab: Madhab.shafi,
-          lat: lat,
-          lng: lng,
-        ),
-        day: day,
-      );
-      final hanafi = service.computeForDay(
-        settings: _settings(
-          method: CalculationMethod.uoif,
-          madhab: Madhab.hanafi,
-          lat: lat,
-          lng: lng,
-        ),
-        day: day,
-      );
-      expect(hanafi.asr.isAfter(shafi.asr), isTrue,
-          reason: 'Hanafi Asr doit être strictement après Shafi Asr '
-              '(ratio ombre 2× vs 1×)');
-      // Madhab n'affecte que Asr.
-      expect(hanafi.fajr, shafi.fajr);
-      expect(hanafi.dhuhr, shafi.dhuhr);
-      expect(hanafi.maghrib, shafi.maghrib);
-    });
-
-    test(
-        'Oslo en juin — les 3 high-latitude rules produisent toutes 6 horaires '
-        'finis et chronologiques', () {
-      final day = DateTime.utc(2024, 6, 21);
-      const lat = 59.9139;
-      const lng = 10.7522;
-      for (final rule in HighLatitudeRule.values) {
+  group(
+    'AdhanPrayerTimesService — cross-check Aladhan API (oracle externe)',
+    () {
+      test('Paris UOIF 2024-06-15 — drift Aladhan dans ±10 min', () {
+        // Valeurs Aladhan API (https://api.aladhan.com/v1/timings/15-06-2024
+        // ?latitude=48.8566&longitude=2.3522&method=12) snapshot 2026-05-10 :
+        //   Fajr 04:12 / Sunrise 05:46 / Dhuhr 13:51 / Asr 18:08
+        //   Maghrib 21:56 / Isha 23:30 (heure locale Europe/Paris UTC+2).
+        // adhan-js et Aladhan implémentent des algorithmes proches mais pas
+        // strictement identiques sur Fajr/Isha (cf. recherche §5.2).
         final times = service.computeForDay(
           settings: _settings(
-            method: CalculationMethod.moonsighting,
+            method: CalculationMethod.uoif,
+            madhab: Madhab.shafi,
+            lat: 48.8566,
+            lng: 2.3522,
+          ),
+          day: DateTime.utc(2024, 6, 15),
+        );
+        _expectClose(
+          times.fajr,
+          DateTime.utc(2024, 6, 15, 2, 12),
+          'fajr',
+          tolerance: _oracleTolerance,
+        );
+        _expectClose(
+          times.sunrise,
+          DateTime.utc(2024, 6, 15, 3, 46),
+          'sunrise',
+          tolerance: _oracleTolerance,
+        );
+        _expectClose(
+          times.dhuhr,
+          DateTime.utc(2024, 6, 15, 11, 51),
+          'dhuhr',
+          tolerance: _oracleTolerance,
+        );
+        _expectClose(
+          times.asr,
+          DateTime.utc(2024, 6, 15, 16, 8),
+          'asr',
+          tolerance: _oracleTolerance,
+        );
+        _expectClose(
+          times.maghrib,
+          DateTime.utc(2024, 6, 15, 19, 56),
+          'maghrib',
+          tolerance: _oracleTolerance,
+        );
+        _expectClose(
+          times.isha,
+          DateTime.utc(2024, 6, 15, 21, 30),
+          'isha',
+          tolerance: _oracleTolerance,
+        );
+      });
+    },
+  );
+
+  group('AdhanPrayerTimesService — invariants métier', () {
+    test(
+      'Hanafi calcule Asr plus tard que Shafi (mêmes coords/date/méthode)',
+      () {
+        final day = DateTime.utc(2024, 6, 15);
+        const lat = 48.8566;
+        const lng = 2.3522;
+        final shafi = service.computeForDay(
+          settings: _settings(
+            method: CalculationMethod.uoif,
             madhab: Madhab.shafi,
             lat: lat,
             lng: lng,
-            rule: rule,
           ),
           day: day,
         );
-        expect(times.fajr.millisecondsSinceEpoch.isFinite, isTrue,
-            reason: 'rule=$rule fajr non fini');
-        expect(times.isha.millisecondsSinceEpoch.isFinite, isTrue,
-            reason: 'rule=$rule isha non fini');
-      }
-    });
+        final hanafi = service.computeForDay(
+          settings: _settings(
+            method: CalculationMethod.uoif,
+            madhab: Madhab.hanafi,
+            lat: lat,
+            lng: lng,
+          ),
+          day: day,
+        );
+        expect(
+          hanafi.asr.isAfter(shafi.asr),
+          isTrue,
+          reason:
+              'Hanafi Asr doit être strictement après Shafi Asr '
+              '(ratio ombre 2× vs 1×)',
+        );
+        // Madhab n'affecte que Asr.
+        expect(hanafi.fajr, shafi.fajr);
+        expect(hanafi.dhuhr, shafi.dhuhr);
+        expect(hanafi.maghrib, shafi.maghrib);
+      },
+    );
+
+    test(
+      'Oslo en juin — les 3 high-latitude rules produisent toutes 6 horaires '
+      'finis et chronologiques',
+      () {
+        final day = DateTime.utc(2024, 6, 21);
+        const lat = 59.9139;
+        const lng = 10.7522;
+        for (final rule in HighLatitudeRule.values) {
+          final times = service.computeForDay(
+            settings: _settings(
+              method: CalculationMethod.moonsighting,
+              madhab: Madhab.shafi,
+              lat: lat,
+              lng: lng,
+              rule: rule,
+            ),
+            day: day,
+          );
+          expect(
+            times.fajr.millisecondsSinceEpoch.isFinite,
+            isTrue,
+            reason: 'rule=$rule fajr non fini',
+          );
+          expect(
+            times.isha.millisecondsSinceEpoch.isFinite,
+            isTrue,
+            reason: 'rule=$rule isha non fini',
+          );
+        }
+      },
+    );
 
     test('jour bissextile (29 février 2024) à Paris UOIF retourne 6 horaires '
         'cohérents', () {
@@ -293,28 +336,29 @@ void main() {
       );
     });
 
-    test('toutes les CalculationMethod sont mappées (pas de UnimplementedError)',
-        () {
-      final day = DateTime.utc(2024, 6, 15);
-      for (final m in CalculationMethod.values) {
-        expect(
-          () => service.computeForDay(
-            settings: _settings(
-              method: m,
-              madhab: Madhab.shafi,
-              lat: 48.8566,
-              lng: 2.3522,
-            ),
-            day: day,
-          ),
-          returnsNormally,
-          reason: 'CalculationMethod.$m doit être mappée',
-        );
-      }
-    });
-
     test(
-        '31 décembre — passage à l\'année suivante ne provoque pas de '
+      'toutes les CalculationMethod sont mappées (pas de UnimplementedError)',
+      () {
+        final day = DateTime.utc(2024, 6, 15);
+        for (final m in CalculationMethod.values) {
+          expect(
+            () => service.computeForDay(
+              settings: _settings(
+                method: m,
+                madhab: Madhab.shafi,
+                lat: 48.8566,
+                lng: 2.3522,
+              ),
+              day: day,
+            ),
+            returnsNormally,
+            reason: 'CalculationMethod.$m doit être mappée',
+          );
+        }
+      },
+    );
+
+    test('31 décembre — passage à l\'année suivante ne provoque pas de '
         'décalage', () {
       // Le 31 décembre, la lib calcule fajrAfter = Fajr du 1er janvier.
       // Vérifie que computeForDay du 31 décembre retourne bien les horaires

@@ -73,12 +73,10 @@ class AdhanPrayerTimesService implements PrayerTimesService {
         adhan.CalculationMethodParameters.northAmerica(),
       CalculationMethod.egyptian =>
         adhan.CalculationMethodParameters.egyptian(),
-      CalculationMethod.karachi =>
-        adhan.CalculationMethodParameters.karachi(),
+      CalculationMethod.karachi => adhan.CalculationMethodParameters.karachi(),
       CalculationMethod.ummAlQura =>
         adhan.CalculationMethodParameters.ummAlQura(),
-      CalculationMethod.diyanet =>
-        adhan.CalculationMethodParameters.turkiye(),
+      CalculationMethod.diyanet => adhan.CalculationMethodParameters.turkiye(),
       CalculationMethod.tehran => adhan.CalculationMethodParameters.tehran(),
       CalculationMethod.moonsighting =>
         adhan.CalculationMethodParameters.moonsightingCommittee(),
@@ -88,12 +86,9 @@ class AdhanPrayerTimesService implements PrayerTimesService {
       CalculationMethod.qatar => adhan.CalculationMethodParameters.qatar(),
       CalculationMethod.kuwait => adhan.CalculationMethodParameters.kuwait(),
       CalculationMethod.uoif => adhan.CalculationMethodParameters.france(),
-      CalculationMethod.morocco =>
-        adhan.CalculationMethodParameters.morocco(),
-      CalculationMethod.algeria =>
-        adhan.CalculationMethodParameters.algerian(),
-      CalculationMethod.tunisia =>
-        adhan.CalculationMethodParameters.tunisia(),
+      CalculationMethod.morocco => adhan.CalculationMethodParameters.morocco(),
+      CalculationMethod.algeria => adhan.CalculationMethodParameters.algerian(),
+      CalculationMethod.tunisia => adhan.CalculationMethodParameters.tunisia(),
     };
 
     params
@@ -104,15 +99,15 @@ class AdhanPrayerTimesService implements PrayerTimesService {
   }
 
   adhan.Madhab _madhab(Madhab m) => switch (m) {
-        Madhab.shafi => adhan.Madhab.shafi,
-        Madhab.hanafi => adhan.Madhab.hanafi,
-      };
+    Madhab.shafi => adhan.Madhab.shafi,
+    Madhab.hanafi => adhan.Madhab.hanafi,
+  };
 
   adhan.HighLatitudeRule _highLatRule(HighLatitudeRule r) => switch (r) {
-        HighLatitudeRule.middleOfTheNight =>
-          adhan.HighLatitudeRule.middleOfTheNight,
-        HighLatitudeRule.seventhOfTheNight =>
-          adhan.HighLatitudeRule.seventhOfTheNight,
-        HighLatitudeRule.twilightAngle => adhan.HighLatitudeRule.twilightAngle,
-      };
+    HighLatitudeRule.middleOfTheNight =>
+      adhan.HighLatitudeRule.middleOfTheNight,
+    HighLatitudeRule.seventhOfTheNight =>
+      adhan.HighLatitudeRule.seventhOfTheNight,
+    HighLatitudeRule.twilightAngle => adhan.HighLatitudeRule.twilightAngle,
+  };
 }
