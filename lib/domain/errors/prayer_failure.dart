@@ -29,6 +29,11 @@ sealed class PrayerFailure extends Equatable implements Exception {
   const factory PrayerFailure.unknownStatus({String? message}) =
       UnknownPrayerStatusFailure;
 
+  /// L'utilisateur n'a pas encore configuré ses [PrayerSettings] (slice 3.C.2).
+  /// La couche presentation doit rediriger vers l'écran de réglages.
+  const factory PrayerFailure.settingsNotConfigured({String? message}) =
+      PrayerSettingsNotConfiguredFailure;
+
   /// Tout le reste — échec inattendu, le message décrit l'origine.
   const factory PrayerFailure.unknown({String? message}) = UnknownPrayerFailure;
 
@@ -53,6 +58,10 @@ class PrayerMalformedRowFailure extends PrayerFailure {
 
 class UnknownPrayerStatusFailure extends PrayerFailure {
   const UnknownPrayerStatusFailure({super.message}) : super._();
+}
+
+class PrayerSettingsNotConfiguredFailure extends PrayerFailure {
+  const PrayerSettingsNotConfiguredFailure({super.message}) : super._();
 }
 
 class UnknownPrayerFailure extends PrayerFailure {
