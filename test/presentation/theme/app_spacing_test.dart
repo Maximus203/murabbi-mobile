@@ -21,8 +21,16 @@ void main() {
     test('pill = 100', () => expect(AppRadius.pill, 100));
   });
 
-  group('AppBorderWidth — DS sheet § Bordures', () {
-    test('hairline = 0.5 (P-5)', () => expect(AppBorderWidth.hairline, 0.5));
+  /// Grammaire ternaire volontaire (issue #28 — décision PO Option A) :
+  ///   thin (0.5)            — bordures fines, séparateurs (P-5).
+  ///   focusRing (1.5)       — focus ring accessibilité.
+  ///   indicatorStroke (2.0) — indicateurs d'état (loaders, arcs, countdown).
+  group('AppBorderWidth — grammaire ternaire (issue #28)', () {
+    test('thin = 0.5 (P-5)', () => expect(AppBorderWidth.thin, 0.5));
     test('focusRing = 1.5', () => expect(AppBorderWidth.focusRing, 1.5));
+    test(
+      'indicatorStroke = 2.0',
+      () => expect(AppBorderWidth.indicatorStroke, 2.0),
+    );
   });
 }

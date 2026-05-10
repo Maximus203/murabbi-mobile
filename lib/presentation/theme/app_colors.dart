@@ -48,7 +48,7 @@ class AppColors {
   /// Convertie en `0x29 1C1A16` côté Flutter (0.16 × 255 ≈ 41 = 0x29).
   static const Color borderEmphasis = Color(0x291C1A16);
 
-  /// Bordure par défaut hairline — 0.5px (P-5), opacité plus douce.
+  /// Bordure par défaut thin — 0.5px (P-5), opacité plus douce.
   /// Cf. DS sheet variable `--border-default`.
   static const Color borderDefault = Color(0x141C1A16); // ~0.08 alpha
 

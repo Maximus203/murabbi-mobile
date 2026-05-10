@@ -118,7 +118,7 @@ class _SuccessView extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.button),
             border: Border.all(
               color: AppColors.success.withValues(alpha: 0.3),
-              width: AppBorderWidth.hairline,
+              width: AppBorderWidth.thin,
             ),
           ),
           child: Column(

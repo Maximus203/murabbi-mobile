@@ -3,7 +3,7 @@ import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 
 /// Toggle iOS-like 44×26, accent ocre quand `value=true`.
-/// DS sheet § Toggles. Bordure 0.5px hairline (P-5).
+/// DS sheet § Toggles. Bordure 0.5px thin (P-5).
 ///
 /// Accessibilité (Copilot review #4) : `Semantics(button, toggled, label)` —
 /// VoiceOver / TalkBack annoncent l'état (on/off) et le rôle bouton.
@@ -41,7 +41,7 @@ class AppToggle extends StatelessWidget {
             decoration: BoxDecoration(
               color: track,
               borderRadius: BorderRadius.circular(13),
-              border: Border.all(color: border, width: AppBorderWidth.hairline),
+              border: Border.all(color: border, width: AppBorderWidth.thin),
             ),
             child: AnimatedAlign(
               duration: const Duration(milliseconds: 180),

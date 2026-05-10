@@ -9,7 +9,7 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 /// Collections, Classement.
 enum AppBottomNavTab { home, salat, habits, collections, leaderboard }
 
-/// Barre de navigation Murabbi — bordure top hairline 0.5px, fond `bgPrimary`,
+/// Barre de navigation Murabbi — bordure top thin 0.5px, fond `bgPrimary`,
 /// label 11px sous l'icône Lucide 22px.
 ///
 /// Accessibilité (Copilot review #2 + #3) :
@@ -40,7 +40,7 @@ class AppBottomNav extends StatelessWidget {
           border: Border(
             top: BorderSide(
               color: AppColors.borderDefault,
-              width: AppBorderWidth.hairline,
+              width: AppBorderWidth.thin,
             ),
           ),
         ),

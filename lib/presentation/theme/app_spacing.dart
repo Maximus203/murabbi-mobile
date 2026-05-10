@@ -41,13 +41,25 @@ class AppRadius {
   static const double pill = 100;
 }
 
-/// Largeurs de bordure (DS sheet — bordures fines partout).
+/// Largeurs de bordure — grammaire ternaire volontaire.
+///
+/// Décision PO Option A (issue #28) : trois épaisseurs sémantiques distinctes
+/// couvrent toutes les surfaces Murabbi. Toute autre valeur littérale dans
+/// l'UI est interdite (Q-5 / P-5).
+///
+///   * [thin]            — bordures fines, séparateurs, cards.
+///   * [focusRing]       — anneau de focus accessibilité (états focused).
+///   * [indicatorStroke] — indicateurs d'état : loaders circulaires, arcs de
+///                         progression, countdown next-prayer (slice 3.C.3).
 class AppBorderWidth {
   AppBorderWidth._();
 
-  /// 0.5px — bordure standard partout (P-5). Pas d'ombre portée.
-  static const double hairline = 0.5;
+  /// 0.5px — bordure fine standard partout (P-5). Pas d'ombre portée.
+  static const double thin = 0.5;
 
   /// 1.5px — focus ring (états input/bouton focused).
   static const double focusRing = 1.5;
+
+  /// 2.0px — indicateurs d'état (CircularProgressIndicator, arcs Salat).
+  static const double indicatorStroke = 2.0;
 }
