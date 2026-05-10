@@ -8,7 +8,7 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 /// - [AppHeader.title] : titre large + action optionnelle à droite.
 /// - [AppHeader.back]  : bouton retour à gauche + titre centré.
 ///
-/// Bordure inférieure hairline 0.5px (P-5), pas d'ombre portée.
+/// Bordure inférieure thin 0.5px (P-5), pas d'ombre portée.
 ///
 /// Layout (Copilot review #7) : en mode `back`, si `trailing` est `null`,
 /// un placeholder de la largeur du back button (`_backButtonSlotWidth`) est
@@ -48,7 +48,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       decoration: const Border(
         bottom: BorderSide(
           color: AppColors.borderDefault,
-          width: AppBorderWidth.hairline,
+          width: AppBorderWidth.thin,
         ),
       ).toBoxDecoration(),
       child: Row(

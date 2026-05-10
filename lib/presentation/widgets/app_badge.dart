@@ -15,7 +15,7 @@ enum AppBadgeVariant {
   chipActive,
 }
 
-/// Badge / chip Murabbi — surface plate, radius `chip` 6px, bordure hairline.
+/// Badge / chip Murabbi — surface plate, radius `chip` 6px, bordure thin.
 class AppBadge extends StatelessWidget {
   final String label;
   final AppBadgeVariant variant;
@@ -45,7 +45,7 @@ class AppBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: spec.background,
         borderRadius: BorderRadius.circular(AppRadius.chip),
-        border: Border.all(color: spec.border, width: AppBorderWidth.hairline),
+        border: Border.all(color: spec.border, width: AppBorderWidth.thin),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

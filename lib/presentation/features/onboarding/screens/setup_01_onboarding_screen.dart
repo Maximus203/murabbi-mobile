@@ -177,7 +177,7 @@ class _SlideView extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(
                 color: AppColors.accent.withValues(alpha: 0.25),
-                width: AppBorderWidth.hairline,
+                width: AppBorderWidth.thin,
               ),
             ),
             child: Icon(slide.icon, size: 40, color: AppColors.accent),

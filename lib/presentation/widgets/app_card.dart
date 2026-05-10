@@ -29,7 +29,7 @@ class AppCard extends StatelessWidget {
         borderRadius: radius,
         border: Border.all(
           color: AppColors.borderDefault,
-          width: AppBorderWidth.hairline,
+          width: AppBorderWidth.thin,
         ),
       ),
       padding: padding,

@@ -145,7 +145,7 @@ class _MailIllustration extends StatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(
             color: AppColors.accent.withValues(alpha: 0.25),
-            width: AppBorderWidth.hairline,
+            width: AppBorderWidth.thin,
           ),
         ),
         child: const Icon(
@@ -171,7 +171,7 @@ class _ResentBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.button),
         border: Border.all(
           color: AppColors.success.withValues(alpha: 0.3),
-          width: AppBorderWidth.hairline,
+          width: AppBorderWidth.thin,
         ),
       ),
       child: Row(

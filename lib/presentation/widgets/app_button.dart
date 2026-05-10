@@ -46,7 +46,7 @@ class AppButton extends StatelessWidget {
       shape: RoundedRectangleBorder(
         side: spec.border == null
             ? BorderSide.none
-            : BorderSide(color: spec.border!, width: AppBorderWidth.hairline),
+            : BorderSide(color: spec.border!, width: AppBorderWidth.thin),
         borderRadius: radius,
       ),
       child: InkWell(

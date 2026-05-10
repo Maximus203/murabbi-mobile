@@ -72,7 +72,7 @@ class _AppInputState extends State<AppInput> {
     final borderColor = _focused ? AppColors.accent : AppColors.borderEmphasis;
     final borderWidth = _focused
         ? AppBorderWidth.focusRing
-        : AppBorderWidth.hairline;
+        : AppBorderWidth.thin;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
