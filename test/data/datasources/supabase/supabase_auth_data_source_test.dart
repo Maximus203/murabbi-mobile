@@ -195,8 +195,8 @@ void main() {
       test(
         'buildDeleteAccountUpdatePayload sets ONLY deletion_requested_at',
         () {
-          final payload = SupabaseAuthDataSource
-              .buildDeleteAccountUpdatePayload();
+          final payload =
+              SupabaseAuthDataSource.buildDeleteAccountUpdatePayload();
 
           expect(
             payload.keys.toSet(),
@@ -211,8 +211,8 @@ void main() {
       test(
         'buildDeleteAccountUpdatePayload value is a parseable ISO-8601 timestamp',
         () {
-          final payload = SupabaseAuthDataSource
-              .buildDeleteAccountUpdatePayload();
+          final payload =
+              SupabaseAuthDataSource.buildDeleteAccountUpdatePayload();
           final raw = payload['deletion_requested_at'] as String;
 
           expect(() => DateTime.parse(raw), returnsNormally);
