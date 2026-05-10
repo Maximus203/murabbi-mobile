@@ -25,7 +25,7 @@ avant que la slice 3.C ne commence à coder.
 
 ## Décision
 
-**Calcul 100% local on-device via la lib Dart `adhan_dart` v1.2.0**
+**Calcul 100% local on-device via la lib Dart `adhan_dart` v2.0.0**
 (port MIT du repo upstream `batoulapps/adhan-js`). **Aucun appel
 réseau en runtime pour les horaires.** L'API Aladhan reste utilisée
 **uniquement** comme oracle de validation dans les tests
@@ -35,7 +35,7 @@ Quatre sous-décisions verrouillées avec le PO le 2026-05-09 :
 
 ### 1. Solution technique — `adhan_dart` local, pas d'API runtime
 
-- Lib retenue : `adhan_dart` v1.2.0 (pub.dev, MIT, port fidèle de
+- Lib retenue : `adhan_dart` v2.0.0 (pub.dev, MIT, port fidèle de
   `adhan-js` Batoul Apps qui est la référence open-source du domaine).
 - Calcul on-device basé sur les équations astronomiques de
   Jean Meeus (précision sub-minute).
