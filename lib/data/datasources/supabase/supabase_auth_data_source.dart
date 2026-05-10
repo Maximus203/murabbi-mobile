@@ -21,7 +21,15 @@ typedef AuthMaps = ({
 /// `UserScoreRepository`. La colonne `deletion_requested_at` est ajoutée
 /// par la migration admin RGPD parallèle (ADR-011 — soft-delete 30j).
 class SupabaseAuthDataSource implements AuthDataSource {
-  static const _profileColumns =
+  /// Liste des colonnes lues sur `public.users` (SELECT). Source de vérité
+  /// figée par `supabase_auth_data_source_test.dart` (contract test
+  /// anti-drift PR #29). Toute modif ici doit être accompagnée de :
+  ///   1. la migration SQL correspondante côté murabbi-admin,
+  ///   2. la mise à jour du contract test.
+  ///
+  /// `id` est volontairement absent — il vient déjà de `authUser.id`.
+  /// `total_points` est volontairement absent — SoT = `user_scores.total_score`.
+  static const String profileColumns =
       'pseudo, email, level, current_streak, '
       'completion_rate, deletion_requested_at';
 
@@ -48,29 +56,50 @@ class SupabaseAuthDataSource implements AuthDataSource {
   }) async {
     final res = await _client.auth.signUp(email: email, password: password);
     final user = res.user!;
-    // Pseudo auto-généré déterministe (Q-18). Le user le change à SETUP-01.
-    final autoPseudo = _autoPseudo(user.id);
     // Création explicite du row `users` — la table est dérivée de auth.users
-    // côté admin (cf. murabbi-admin migrations Q-18).
-    await _client.from('users').insert({
-      'id': user.id,
-      'pseudo': autoPseudo,
+    // côté admin (cf. murabbi-admin migrations Q-18). Payload extrait en
+    // pure function pour être contract-testé (PR #29 regression guard).
+    final payload = buildSignUpInsertPayload(userId: user.id, email: email);
+    await _client.from('users').insert(payload);
+    return _toMaps(
+      user,
+      profileOverride: {
+        'pseudo': payload['pseudo'],
+        'email': payload['email'],
+        'level': payload['level'],
+        'current_streak': payload['current_streak'],
+        'completion_rate': payload['completion_rate'],
+        'deletion_requested_at': null,
+      },
+    );
+  }
+
+  /// Construit le payload INSERT pour `public.users` à l'inscription.
+  /// Pure function — testable sans mock Supabase. Contrat figé par
+  /// `supabase_auth_data_source_test.dart` (anti-drift colonnes).
+  ///
+  /// Volontairement absents :
+  ///   - `total_points` (SoT = `user_scores.total_score`),
+  ///   - `deletion_requested_at` (NULL par défaut côté SQL).
+  static Map<String, dynamic> buildSignUpInsertPayload({
+    required String userId,
+    required String email,
+  }) {
+    return {
+      'id': userId,
+      'pseudo': _autoPseudo(userId),
       'email': email,
       'level': 'aspirant',
       'current_streak': 0,
       'completion_rate': 0,
-    });
-    return _toMaps(
-      user,
-      profileOverride: {
-        'pseudo': autoPseudo,
-        'email': email,
-        'level': 'aspirant',
-        'current_streak': 0,
-        'completion_rate': 0,
-        'deletion_requested_at': null,
-      },
-    );
+    };
+  }
+
+  /// Construit le payload UPDATE pour le soft-delete (ADR-011).
+  /// Touche uniquement `deletion_requested_at`. Pure function — testable
+  /// sans mock Supabase.
+  static Map<String, dynamic> buildDeleteAccountUpdatePayload() {
+    return {'deletion_requested_at': DateTime.now().toIso8601String()};
   }
 
   @override
@@ -101,7 +130,7 @@ class SupabaseAuthDataSource implements AuthDataSource {
     // hard-delete cascade RGPD est exécuté par un job batch admin (J+30).
     await _client
         .from('users')
-        .update({'deletion_requested_at': DateTime.now().toIso8601String()})
+        .update(buildDeleteAccountUpdatePayload())
         .eq('id', userId);
     await _client.auth.signOut();
   }
@@ -139,7 +168,7 @@ class SupabaseAuthDataSource implements AuthDataSource {
     } else {
       final row = await _client
           .from('users')
-          .select(_profileColumns)
+          .select(profileColumns)
           .eq('id', user.id)
           .single();
       profile = Map<String, dynamic>.from(row);
