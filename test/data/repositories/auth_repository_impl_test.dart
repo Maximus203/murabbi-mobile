@@ -6,6 +6,7 @@ import 'package:murabbi_mobile/data/datasources/auth_data_source.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_impl.dart';
 import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 class MockAuthDataSource extends Mock implements AuthDataSource {}
 
@@ -346,7 +347,7 @@ void main() {
     );
 
     test(
-      'authStateChanges ignores transient datasource errors (does not emit onError)',
+      'authStateChanges swallows PostgrestException PGRST116 (profile row not yet propagated by trigger after signup)',
       () async {
         final controller = StreamController<AuthMaps?>();
         when(() => ds.authStateChanges).thenAnswer((_) => controller.stream);
@@ -361,7 +362,12 @@ void main() {
 
         controller
           ..add(validMaps())
-          ..addError(Exception('transient'))
+          ..addError(
+            const sb.PostgrestException(
+              message: 'JSON object requested, multiple (or no) rows returned',
+              code: 'PGRST116',
+            ),
+          )
           ..add(null);
         await Future<void>.delayed(Duration.zero);
 
@@ -369,6 +375,63 @@ void main() {
         expect(emitted, hasLength(2));
         expect(emitted[0], isNotNull);
         expect(emitted[1], isNull);
+
+        await sub.cancel();
+        await controller.close();
+      },
+    );
+
+    test(
+      'authStateChanges propagates non-transient errors to onError (real failures must not be hidden)',
+      () async {
+        final controller = StreamController<AuthMaps?>();
+        when(() => ds.authStateChanges).thenAnswer((_) => controller.stream);
+
+        final emitted = <Object?>[];
+        final errors = <Object>[];
+
+        final sub = repo.authStateChanges.listen(
+          emitted.add,
+          onError: errors.add,
+        );
+
+        final boom = StateError('unexpected datasource failure');
+        controller
+          ..add(validMaps())
+          ..addError(boom)
+          ..add(null);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(errors, hasLength(1));
+        expect(errors.first, same(boom));
+        expect(emitted, hasLength(2));
+        expect(emitted[0], isNotNull);
+        expect(emitted[1], isNull);
+
+        await sub.cancel();
+        await controller.close();
+      },
+    );
+
+    test(
+      'authStateChanges propagates non-PGRST116 PostgrestException to onError',
+      () async {
+        final controller = StreamController<AuthMaps?>();
+        when(() => ds.authStateChanges).thenAnswer((_) => controller.stream);
+
+        final errors = <Object>[];
+
+        final sub = repo.authStateChanges.listen((_) {}, onError: errors.add);
+
+        const dbFailure = sb.PostgrestException(
+          message: 'permission denied',
+          code: '42501',
+        );
+        controller.addError(dbFailure);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(errors, hasLength(1));
+        expect(errors.first, isA<sb.PostgrestException>());
 
         await sub.cancel();
         await controller.close();

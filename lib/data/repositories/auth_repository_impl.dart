@@ -1,9 +1,12 @@
+import 'dart:developer' as developer;
+
 import 'package:murabbi_mobile/data/datasources/auth_data_source.dart';
 import 'package:murabbi_mobile/data/mappers/user_mapper.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/auth_repository.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthDataSource _ds;
@@ -64,12 +67,29 @@ class AuthRepositoryImpl implements AuthRepository {
     return UserMapper.fromMaps(authUser: maps.authUser, profile: maps.profile);
   });
 
+  /// Code PostgREST renvoyé par `.single()` quand 0 ligne — survient après
+  /// `signUp` tant que le trigger qui crée la ligne `public.users` n'a pas
+  /// encore inséré le profil. Erreur transitoire à ignorer silencieusement.
+  static const String _pgrstNoRowsCode = 'PGRST116';
+
   @override
   Stream<User?> get authStateChanges => _ds.authStateChanges
-      // Certaines erreurs peuvent être transitoires lors de l'inscription
-      // (ex: profil `public.users` pas encore disponible). L'UI ne doit pas
-      // basculer en état d'erreur pour un événement stream non bloquant.
-      .handleError((Object _, StackTrace stackTrace) {})
+      // Ne masquer QUE le cas transitoire connu (profil pas encore propagé
+      // après signup). Toute autre erreur doit remonter à la couche
+      // presentation (et être tracée) — sinon on rendrait l'app silencieuse
+      // sur des pannes réseau / RLS / auth qui méritent un fallback UI.
+      .handleError(
+        (Object error, StackTrace stackTrace) {
+          developer.log(
+            'authStateChanges stream error',
+            name: 'AuthRepositoryImpl',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        },
+        test: (error) =>
+            error is sb.PostgrestException && error.code == _pgrstNoRowsCode,
+      )
       .map(
         (maps) => maps == null
             ? null
