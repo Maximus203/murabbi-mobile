@@ -59,6 +59,15 @@ class SupabaseAuthDataSource implements AuthDataSource {
     // Création explicite du row `users` — la table est dérivée de auth.users
     // côté admin (cf. murabbi-admin migrations Q-18). Payload extrait en
     // pure function pour être contract-testé (PR #29 regression guard).
+    //
+    // ⚠️ TODO admin-coord (slice 3.C.3 debug) : cet INSERT explicite n'est
+    // viable qu'en local Supabase où email_confirm=OFF (signUp renvoie une
+    // session, auth.uid() est défini). En cloud (email_confirm=ON), signUp
+    // ne crée pas de session → l'INSERT tombe sur RLS "users_insert_own".
+    // Le fix canonique est un trigger `on_auth_user_created` côté admin
+    // avec SECURITY DEFINER ; une fois déployé (migration
+    // 20260512000000_users_handle_new_user_trigger.sql), ces deux lignes
+    // doivent disparaître et `_toMaps` lit la row créée par le trigger.
     final payload = buildSignUpInsertPayload(userId: user.id, email: email);
     await _client.from('users').insert(payload);
     return _toMaps(
