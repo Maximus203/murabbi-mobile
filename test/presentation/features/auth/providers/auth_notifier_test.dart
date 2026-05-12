@@ -163,7 +163,9 @@ void main() {
         notifier.signUp(email: 'a@b.co', password: 'pass1234'),
         completes,
       );
-      verify(() => repo.signUp(email: 'a@b.co', password: 'pass1234')).called(1);
+      verify(
+        () => repo.signUp(email: 'a@b.co', password: 'pass1234'),
+      ).called(1);
     });
 
     test(

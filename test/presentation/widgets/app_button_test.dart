@@ -8,10 +8,7 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: Center(
-            child: AppButton(
-              label: 'Continuer',
-              onPressed: () {},
-            ),
+            child: AppButton(label: 'Continuer', onPressed: () {}),
           ),
         ),
       ),

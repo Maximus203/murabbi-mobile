@@ -8,12 +8,7 @@ void main() {
       const MaterialApp(
         home: Scaffold(
           body: Center(
-            child: SizedBox(
-              width: 320,
-              child: AppInput(
-                placeholder: 'Email',
-              ),
-            ),
+            child: SizedBox(width: 320, child: AppInput(placeholder: 'Email')),
           ),
         ),
       ),
