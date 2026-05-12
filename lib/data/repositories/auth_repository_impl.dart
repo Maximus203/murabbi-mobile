@@ -65,11 +65,19 @@ class AuthRepositoryImpl implements AuthRepository {
   });
 
   @override
-  Stream<User?> get authStateChanges => _ds.authStateChanges.map(
-    (maps) => maps == null
-        ? null
-        : UserMapper.fromMaps(authUser: maps.authUser, profile: maps.profile),
-  );
+  Stream<User?> get authStateChanges => _ds.authStateChanges
+      // Certaines erreurs peuvent être transitoires lors de l'inscription
+      // (ex: profil `public.users` pas encore disponible). L'UI ne doit pas
+      // basculer en état d'erreur pour un événement stream non bloquant.
+      .handleError((Object _, StackTrace stackTrace) {})
+      .map(
+        (maps) => maps == null
+            ? null
+            : UserMapper.fromMaps(
+                authUser: maps.authUser,
+                profile: maps.profile,
+              ),
+      );
 
   // Traduit les exceptions natives en AuthFailure typées. Ne jamais laisser
   // remonter une exception Supabase brute jusqu'à la couche presentation.

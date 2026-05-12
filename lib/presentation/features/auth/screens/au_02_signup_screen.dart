@@ -57,7 +57,7 @@ class _Au02SignupScreenState extends ConsumerState<Au02SignupScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(authNotifierProvider, (_, next) {
-      if (next.value != null) widget.onSignedUp();
+      if (next.valueOrNull != null) widget.onSignedUp();
     });
 
     final state = ref.watch(authNotifierProvider);

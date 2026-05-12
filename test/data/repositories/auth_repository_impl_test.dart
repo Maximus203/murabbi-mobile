@@ -344,5 +344,35 @@ void main() {
         await controller.close();
       },
     );
+
+    test(
+      'authStateChanges ignores transient datasource errors (does not emit onError)',
+      () async {
+        final controller = StreamController<AuthMaps?>();
+        when(() => ds.authStateChanges).thenAnswer((_) => controller.stream);
+
+        final emitted = <Object?>[];
+        final errors = <Object>[];
+
+        final sub = repo.authStateChanges.listen(
+          emitted.add,
+          onError: errors.add,
+        );
+
+        controller
+          ..add(validMaps())
+          ..addError(Exception('transient'))
+          ..add(null);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(errors, isEmpty);
+        expect(emitted, hasLength(2));
+        expect(emitted[0], isNotNull);
+        expect(emitted[1], isNull);
+
+        await sub.cancel();
+        await controller.close();
+      },
+    );
   });
 }

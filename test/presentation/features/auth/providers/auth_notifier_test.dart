@@ -149,6 +149,64 @@ void main() {
     });
   });
 
+  group('AuthNotifier — defensive initialization', () {
+    test('signUp works even if build() has not been started yet', () async {
+      final container = makeContainer();
+
+      when(
+        () => repo.signUp(email: 'a@b.co', password: 'pass1234'),
+      ).thenAnswer((_) async => testUser);
+
+      final notifier = container.read(authNotifierProvider.notifier);
+
+      await expectLater(
+        notifier.signUp(email: 'a@b.co', password: 'pass1234'),
+        completes,
+      );
+      verify(() => repo.signUp(email: 'a@b.co', password: 'pass1234')).called(1);
+    });
+
+    test(
+      'signInWithGoogle works even if build() has not been started yet',
+      () async {
+        final container = makeContainer();
+
+        when(() => repo.signInWithGoogle()).thenAnswer((_) async => testUser);
+
+        final notifier = container.read(authNotifierProvider.notifier);
+
+        await expectLater(notifier.signInWithGoogle(), completes);
+        verify(() => repo.signInWithGoogle()).called(1);
+      },
+    );
+
+    test(
+      'does not crash with LateInitializationError if build() previously failed',
+      () async {
+        final container = ProviderContainer(
+          overrides: [
+            authRepositoryProvider.overrideWith((ref) {
+              throw StateError('repo unavailable');
+            }),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await expectLater(
+          container.read(authNotifierProvider.future),
+          throwsA(isA<StateError>()),
+        );
+
+        final notifier = container.read(authNotifierProvider.notifier);
+        await notifier.signUp(email: 'a@b.co', password: 'pass1234');
+
+        final state = container.read(authNotifierProvider);
+        expect(state.hasError, isTrue);
+        expect(state.error, isA<StateError>());
+      },
+    );
+  });
+
   group('AuthNotifier — signInWithGoogle', () {
     test('emits user on success', () async {
       final container = makeContainer();
