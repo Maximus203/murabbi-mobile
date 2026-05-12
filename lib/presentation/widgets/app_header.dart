@@ -42,54 +42,48 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-      decoration: const Border(
+    final actions = <Widget>[
+      if (trailing != null)
+        trailing!
+      else if (_isBackVariant)
+        // Placeholder symétrique au back button → garantit que le titre
+        // soit centré visuellement même sans action à droite.
+        const SizedBox(width: _backButtonSlotWidth),
+    ];
+
+    return AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: AppColors.bgPrimary,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      toolbarHeight: height,
+      titleSpacing: AppSpacing.s4,
+      shape: const Border(
         bottom: BorderSide(
           color: AppColors.borderDefault,
           width: AppBorderWidth.thin,
         ),
-      ).toBoxDecoration(),
-      child: Row(
-        children: [
-          if (_isBackVariant)
-            SizedBox(
-              width: _backButtonSlotWidth,
-              child: IconButton(
-                onPressed: onBack,
-                splashRadius: 18,
-                icon: const Icon(
-                  LucideIcons.chevronLeft,
-                  size: 20,
-                  color: AppColors.textPrimary,
-                ),
+      ),
+      leadingWidth: _isBackVariant ? _backButtonSlotWidth : 0,
+      leading: _isBackVariant
+          ? IconButton(
+              onPressed: onBack,
+              splashRadius: 18,
+              icon: const Icon(
+                LucideIcons.chevronLeft,
+                size: 20,
+                color: AppColors.textPrimary,
               ),
             )
-          else
-            const SizedBox(width: 0),
-          Expanded(
-            child: Text(
-              title,
-              textAlign: _isBackVariant ? TextAlign.center : TextAlign.start,
-              style: _isBackVariant ? AppTypography.h3 : AppTypography.h2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (trailing != null)
-            trailing!
-          else if (_isBackVariant)
-            // Placeholder symétrique au back button → garantit que le titre
-            // soit centré dans la largeur totale du header (Copilot #7).
-            const SizedBox(width: _backButtonSlotWidth)
-          else
-            const SizedBox(width: 0),
-        ],
+          : null,
+      centerTitle: _isBackVariant,
+      title: Text(
+        title,
+        style: _isBackVariant ? AppTypography.h3 : AppTypography.h2,
+        overflow: TextOverflow.ellipsis,
       ),
+      actions: actions.isEmpty ? null : actions,
     );
   }
-}
-
-extension on Border {
-  BoxDecoration toBoxDecoration() => BoxDecoration(border: this);
 }
