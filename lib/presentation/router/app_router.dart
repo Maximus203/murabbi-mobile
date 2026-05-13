@@ -6,6 +6,8 @@ import 'package:murabbi_mobile/presentation/features/auth/screens/au_01_login_sc
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_02_signup_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_03_forgot_password_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_verification_gate.dart';
+import 'package:murabbi_mobile/presentation/features/habits/screens/ha_01_habits_list_screen.dart';
+import 'package:murabbi_mobile/presentation/features/habits/screens/ha_02_create_habit_screen.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/providers/onboarding_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01_onboarding_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_01_today_screen.dart';
@@ -106,6 +108,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           onSaved: () => context.go(AppRoutes.salat),
         ),
       ),
+      GoRoute(
+        path: AppRoutes.habits,
+        builder: (context, _) => Ha01HabitsListScreen(
+          onCreate: () => context.go(AppRoutes.habitsCreate),
+          onBack: () => context.go(AppRoutes.home),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.habitsCreate,
+        builder: (context, _) => Ha02CreateHabitScreen(
+          onCreated: () => context.go(AppRoutes.habits),
+          onCancel: () => context.go(AppRoutes.habits),
+        ),
+      ),
     ],
   );
 });
@@ -136,6 +152,10 @@ class _HomePlaceholderScreen extends ConsumerWidget {
               TextButton(
                 onPressed: () => context.go(AppRoutes.salat),
                 child: const Text('Ouvrir Salat (SA-01)'),
+              ),
+              TextButton(
+                onPressed: () => context.go(AppRoutes.habits),
+                child: const Text('Mes habitudes'),
               ),
               TextButton(
                 onPressed: () =>

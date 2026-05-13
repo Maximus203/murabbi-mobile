@@ -17,6 +17,12 @@ abstract class AppRoutes {
   /// Salat — SA-02 "Réglages des prières" (slice 3.C.3).
   static const salatSettings = '/salat/settings';
 
+  /// Habitudes — HA-01 liste (slice 3.D).
+  static const habits = '/habits';
+
+  /// Habitudes — HA-02 création (slice 3.D).
+  static const habitsCreate = '/habits/create';
+
   /// `/auth/verify-email` est traité à part : il est accessible aussi bien
   /// quand l'utilisateur n'a pas de session que quand il vient de signUp et
   /// attend la confirmation par mail.
