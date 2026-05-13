@@ -84,6 +84,9 @@ class _AppInputState extends State<AppInput> {
         ],
         AnimatedContainer(
           duration: const Duration(milliseconds: 120),
+          constraints: const BoxConstraints(
+            minHeight: kMinInteractiveDimension,
+          ),
           decoration: BoxDecoration(
             color: AppColors.bgInput,
             borderRadius: BorderRadius.circular(AppRadius.button),

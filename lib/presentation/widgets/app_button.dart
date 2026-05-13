@@ -53,7 +53,7 @@ class AppButton extends StatelessWidget {
         onTap: _enabled ? onPressed : null,
         borderRadius: radius,
         child: Container(
-          height: 44,
+          height: kMinInteractiveDimension,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
           alignment: Alignment.center,
           child: content,
