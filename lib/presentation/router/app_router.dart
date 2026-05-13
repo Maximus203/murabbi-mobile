@@ -6,14 +6,14 @@ import 'package:murabbi_mobile/presentation/features/auth/screens/au_01_login_sc
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_02_signup_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_03_forgot_password_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_verification_gate.dart';
+import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/providers/onboarding_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01_onboarding_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_01_today_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_02_prayer_settings_screen.dart';
 import 'package:murabbi_mobile/presentation/features/splash/screens/splash_screen.dart';
 import 'package:murabbi_mobile/presentation/router/auth_redirect.dart';
-import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
-import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
 
 /// Pont Riverpod → Listenable pour le `refreshListenable` de GoRouter :
 /// chaque fois que l'état d'auth ou d'onboarding change, on notifie le
@@ -91,7 +91,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.home,
-        builder: (_, _) => const _HomePlaceholderScreen(),
+        builder: (context, _) => Consumer(
+          builder: (context, ref, _) => Hm01DashboardScreen(
+            onTabSelected: (tab) => _handleTabSelection(context, tab),
+            // PR #38 (slice Salat) mergée → wiring direct vers les routes.
+            onConfigurePrayers: () => context.go(AppRoutes.salatSettings),
+            onOpenSalat: () => context.go(AppRoutes.salat),
+            // Audit TL PR #42 : Consumer + ref.read plutôt que
+            // ProviderScope.containerOf (plus idiomatique).
+            onSignOut: () =>
+                ref.read(authNotifierProvider.notifier).signOut(),
+          ),
+        ),
       ),
       GoRoute(
         path: AppRoutes.salat,
@@ -110,42 +121,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// Placeholder /home : la vraie HM-01 (dashboard) arrive en Phase 3.
-class _HomePlaceholderScreen extends ConsumerWidget {
-  const _HomePlaceholderScreen();
+/// Routage des onglets de [AppBottomNav]. Salat est activé (PR #38
+/// mergée), les destinations Habitudes / Collections / Classement
+/// affichent un snackbar tant que leurs slices ne sont pas mergées.
+void _handleTabSelection(BuildContext context, AppBottomNavTab tab) {
+  switch (tab) {
+    case AppBottomNavTab.home:
+      // Déjà sur /home.
+      return;
+    case AppBottomNavTab.salat:
+      context.go(AppRoutes.salat);
+    case AppBottomNavTab.habits:
+    case AppBottomNavTab.collections:
+    case AppBottomNavTab.leaderboard:
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${_tabLabel(tab)} arrive bientôt.')),
+      );
+  }
+}
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authNotifierProvider).valueOrNull;
-    return Scaffold(
-      backgroundColor: AppColors.bgPrimary,
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Murabbi', style: AppTypography.h1),
-              const SizedBox(height: 8),
-              Text(
-                user == null
-                    ? 'Phase 2 — auth + routing OK'
-                    : 'Bienvenue, ${user.pseudo.value}',
-                style: AppTypography.body,
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => context.go(AppRoutes.salat),
-                child: const Text('Ouvrir Salat (SA-01)'),
-              ),
-              TextButton(
-                onPressed: () =>
-                    ref.read(authNotifierProvider.notifier).signOut(),
-                child: const Text('Se déconnecter'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+String _tabLabel(AppBottomNavTab tab) {
+  switch (tab) {
+    case AppBottomNavTab.home:
+      return 'Accueil';
+    case AppBottomNavTab.salat:
+      return 'Salat';
+    case AppBottomNavTab.habits:
+      return 'Habitudes';
+    case AppBottomNavTab.collections:
+      return 'Collections';
+    case AppBottomNavTab.leaderboard:
+      return 'Classement';
   }
 }
