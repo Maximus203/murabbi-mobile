@@ -18,18 +18,18 @@ import 'package:murabbi_mobile/domain/repositories/auth_repository.dart';
 /// un `bool` (anti-enumeration OWASP, cf. Q-7) — l'UI affiche le succès
 /// générique quel que soit le résultat.
 class AuthNotifier extends AsyncNotifier<User?> {
-  late AuthRepository _repo;
+  AuthRepository get _repo => ref.read(authRepositoryProvider);
   StreamSubscription<User?>? _sub;
 
   @override
   Future<User?> build() async {
-    _repo = ref.read(authRepositoryProvider);
+    final repo = _repo;
     ref.onDispose(() => _sub?.cancel());
-    _sub = _repo.authStateChanges.listen(
+    _sub = repo.authStateChanges.listen(
       (user) => state = AsyncValue.data(user),
       onError: (Object e, StackTrace st) => state = AsyncValue.error(e, st),
     );
-    return _repo.getCurrentUser();
+    return repo.getCurrentUser();
   }
 
   Future<void> signIn({required String email, required String password}) async {
@@ -49,7 +49,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
   Future<void> signInWithGoogle() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(_repo.signInWithGoogle);
+    state = await AsyncValue.guard(() => _repo.signInWithGoogle());
   }
 
   /// Renvoie `true` si l'envoi a réussi côté Supabase, `false` sinon.
