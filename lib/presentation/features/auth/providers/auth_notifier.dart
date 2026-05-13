@@ -5,6 +5,7 @@ import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/auth_repository.dart';
+import 'package:murabbi_mobile/presentation/features/auth/providers/remembered_accounts_notifier.dart';
 
 /// État global d'authentification de l'utilisateur courant.
 ///
@@ -37,6 +38,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     state = await AsyncValue.guard(
       () => _repo.signIn(email: email, password: password),
     );
+    if (state.valueOrNull != null) _rememberEmail(email);
   }
 
   /// Q-18 : pas de pseudo à l'inscription (auto-généré côté data layer).
@@ -45,6 +47,18 @@ class AuthNotifier extends AsyncNotifier<User?> {
     state = await AsyncValue.guard(
       () => _repo.signUp(email: email, password: password),
     );
+    if (state.valueOrNull != null) _rememberEmail(email);
+  }
+
+  /// Mémorise l'email après un succès — best-effort, ne propage pas
+  /// l'erreur si SharedPreferences indisponible (UX-only).
+  void _rememberEmail(String email) {
+    // Fire-and-forget : pas besoin d'attendre la persistance avant de
+    // laisser l'auth state propager vers le router.
+    ref
+        .read(rememberedAccountsNotifierProvider.notifier)
+        .remember(email)
+        .ignore();
   }
 
   Future<void> signInWithGoogle() async {
