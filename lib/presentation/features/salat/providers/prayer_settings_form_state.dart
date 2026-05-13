@@ -78,12 +78,14 @@ class PrayerSettingsFormState extends Equatable {
     bool? isSaving,
     PrayerSettingsFormError? error,
     bool clearError = false,
+    bool clearLatitude = false,
+    bool clearLongitude = false,
   }) {
     return PrayerSettingsFormState(
       method: method ?? this.method,
       madhab: madhab ?? this.madhab,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
+      latitude: clearLatitude ? null : (latitude ?? this.latitude),
+      longitude: clearLongitude ? null : (longitude ?? this.longitude),
       highLatitudeRule: highLatitudeRule ?? this.highLatitudeRule,
       isSaving: isSaving ?? this.isSaving,
       error: clearError ? null : (error ?? this.error),

@@ -179,6 +179,37 @@ void main() {
       expect(state.longitude, -74.0060);
       expect(state.highLatitudeRule, HighLatitudeRule.twilightAngle);
     });
+
+    test(
+      'setLatitude(null) efface bien la valeur (regression Copilot review)',
+      () {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+
+        container.read(prayerSettingsFormNotifierProvider.notifier)
+          ..setLatitude(48.8566)
+          ..setLatitude(null);
+
+        expect(
+          container.read(prayerSettingsFormNotifierProvider).latitude,
+          isNull,
+        );
+      },
+    );
+
+    test('setLongitude(null) efface bien la valeur', () {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+
+      container.read(prayerSettingsFormNotifierProvider.notifier)
+        ..setLongitude(2.3522)
+        ..setLongitude(null);
+
+      expect(
+        container.read(prayerSettingsFormNotifierProvider).longitude,
+        isNull,
+      );
+    });
   });
 
   group('PrayerSettingsFormNotifier — save()', () {
@@ -228,6 +259,48 @@ void main() {
       expect(captured.latitude, 48.8566);
       expect(captured.longitude, 2.3522);
     });
+
+    test(
+      'latitude hors bornes -> error.invalidLatitude (regression Copilot)',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+
+        final notifier =
+            container.read(prayerSettingsFormNotifierProvider.notifier)
+              ..setLatitude(95.0)
+              ..setLongitude(2.0);
+
+        final ok = await notifier.save();
+        expect(ok, isFalse);
+        verifyNever(() => repo.save(any()));
+        expect(
+          container.read(prayerSettingsFormNotifierProvider).error,
+          PrayerSettingsFormError.invalidLatitude,
+        );
+      },
+    );
+
+    test(
+      'longitude hors bornes -> error.invalidLongitude (regression Copilot)',
+      () async {
+        final container = makeContainer();
+        addTearDown(container.dispose);
+
+        final notifier =
+            container.read(prayerSettingsFormNotifierProvider.notifier)
+              ..setLatitude(48.0)
+              ..setLongitude(200.0);
+
+        final ok = await notifier.save();
+        expect(ok, isFalse);
+        verifyNever(() => repo.save(any()));
+        expect(
+          container.read(prayerSettingsFormNotifierProvider).error,
+          PrayerSettingsFormError.invalidLongitude,
+        );
+      },
+    );
 
     test('expose l\'erreur si le repository échoue', () async {
       when(() => repo.save(any())).thenThrow(Exception('disk full'));

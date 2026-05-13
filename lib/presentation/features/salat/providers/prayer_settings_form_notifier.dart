@@ -48,11 +48,15 @@ class PrayerSettingsFormNotifier extends Notifier<PrayerSettingsFormState> {
   }
 
   void setLatitude(double? latitude) {
-    state = state.copyWith(latitude: latitude, clearError: true);
+    state = latitude == null
+        ? state.copyWith(clearLatitude: true, clearError: true)
+        : state.copyWith(latitude: latitude, clearError: true);
   }
 
   void setLongitude(double? longitude) {
-    state = state.copyWith(longitude: longitude, clearError: true);
+    state = longitude == null
+        ? state.copyWith(clearLongitude: true, clearError: true)
+        : state.copyWith(longitude: longitude, clearError: true);
   }
 
   void setHighLatitudeRule(HighLatitudeRule rule) {
@@ -63,8 +67,18 @@ class PrayerSettingsFormNotifier extends Notifier<PrayerSettingsFormState> {
   /// `false` si la validation a échoué ou si le repository a levé une
   /// exception (cf. [PrayerSettingsFormState.error]).
   Future<bool> save() async {
-    if (!state.isValid) {
+    final lat = state.latitude;
+    final lng = state.longitude;
+    if (lat == null || lng == null) {
       state = state.copyWith(error: PrayerSettingsFormError.missingCoordinates);
+      return false;
+    }
+    if (lat < -90 || lat > 90) {
+      state = state.copyWith(error: PrayerSettingsFormError.invalidLatitude);
+      return false;
+    }
+    if (lng < -180 || lng > 180) {
+      state = state.copyWith(error: PrayerSettingsFormError.invalidLongitude);
       return false;
     }
 
@@ -73,8 +87,8 @@ class PrayerSettingsFormNotifier extends Notifier<PrayerSettingsFormState> {
       final settings = PrayerSettings(
         method: state.method,
         madhab: state.madhab,
-        latitude: state.latitude!,
-        longitude: state.longitude!,
+        latitude: lat,
+        longitude: lng,
         highLatitudeRule: state.highLatitudeRule,
       );
       final saveUseCase = await ref.read(
