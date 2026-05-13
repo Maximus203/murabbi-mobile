@@ -56,11 +56,19 @@ class SupabaseAuthDataSource implements AuthDataSource {
   }) async {
     final res = await _client.auth.signUp(email: email, password: password);
     final user = res.user!;
-    // Création explicite du row `users` — la table est dérivée de auth.users
-    // côté admin (cf. murabbi-admin migrations Q-18). Payload extrait en
-    // pure function pour être contract-testé (PR #29 regression guard).
+    // La création de la ligne `public.users` est désormais autoritairement
+    // gérée côté backend par le trigger SECURITY DEFINER
+    // `on_auth_user_created` (cf. murabbi-admin migration
+    // 20260513000000_users_rls_hardening). Indispensable dès que la
+    // confirmation email est activée : à ce moment, `auth.uid()` est null
+    // au signUp côté client, donc tout INSERT RLS serait rejeté.
+    //
+    // On conserve `buildSignUpInsertPayload` comme pure function : ses
+    // valeurs miroitent exactement celles du trigger SQL (pseudo, level,
+    // streak, completion_rate, email) — ce qui permet de fournir un
+    // `profileOverride` cohérent au mapper, et reste anti-drift via le
+    // contract test (PR #29).
     final payload = buildSignUpInsertPayload(userId: user.id, email: email);
-    await _client.from('users').insert(payload);
     return _toMaps(
       user,
       profileOverride: {
