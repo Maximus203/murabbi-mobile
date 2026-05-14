@@ -17,6 +17,11 @@ abstract class AppRoutes {
   /// Salat — SA-02 "Réglages des prières" (slice 3.C.3).
   static const salatSettings = '/salat/settings';
 
+  /// Salat — SL-DETAIL "Détail prière" (issue #50). Chemin dynamique :
+  /// `/salat/<prayerName>/detail` où prayerName ∈ fajr/dhuhr/asr/maghrib/isha.
+  static String salatDetail(String prayerName) => '/salat/$prayerName/detail';
+  static const salatDetailPattern = '/salat/:prayerName/detail';
+
   /// Habitudes — HA-01 liste (slice 3.D).
   static const habits = '/habits';
 

@@ -27,7 +27,15 @@ import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 class Sa01TodayScreen extends ConsumerWidget {
   final VoidCallback onConfigureSettings;
 
-  const Sa01TodayScreen({super.key, required this.onConfigureSettings});
+  /// Callback navigation vers SL-DETAIL (issue #50). Optionnel pour ne
+  /// pas casser les tests existants qui n'instancient pas cette dépendance.
+  final ValueChanged<String>? onOpenDetail;
+
+  const Sa01TodayScreen({
+    super.key,
+    required this.onConfigureSettings,
+    this.onOpenDetail,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -57,6 +65,7 @@ class Sa01TodayScreen extends ConsumerWidget {
           data: data,
           onPrayerTapped: (prayerName, current) =>
               _handleTap(context, ref, prayerName, current),
+          onPrayerLongPress: onOpenDetail,
         ),
       ),
     );
@@ -83,8 +92,13 @@ class Sa01TodayScreen extends ConsumerWidget {
 class _PrayersList extends StatelessWidget {
   final TodaySalatState data;
   final void Function(String prayerName, PrayerStatus current) onPrayerTapped;
+  final ValueChanged<String>? onPrayerLongPress;
 
-  const _PrayersList({required this.data, required this.onPrayerTapped});
+  const _PrayersList({
+    required this.data,
+    required this.onPrayerTapped,
+    this.onPrayerLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -103,6 +117,9 @@ class _PrayersList extends StatelessWidget {
             child: _PrayerRow(
               row: row,
               onTap: () => onPrayerTapped(row.name, row.status),
+              onLongPress: onPrayerLongPress == null
+                  ? null
+                  : () => onPrayerLongPress!(row.name),
             ),
           ),
       ],
@@ -130,35 +147,42 @@ class _RowData {
 class _PrayerRow extends StatelessWidget {
   final _RowData row;
   final VoidCallback onTap;
-  const _PrayerRow({required this.row, required this.onTap});
+  final VoidCallback? onLongPress;
+  const _PrayerRow({required this.row, required this.onTap, this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
     final local = row.utcTime.toLocal();
     final hh = local.hour.toString().padLeft(2, '0');
     final mm = local.minute.toString().padLeft(2, '0');
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSpacing.s4,
-        horizontal: AppSpacing.s4,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            PrayerStatusVisuals.icon(row.status),
-            size: 22,
-            color: PrayerStatusVisuals.color(row.status),
-          ),
-          const SizedBox(width: AppSpacing.s3),
-          Expanded(
-            child: Text(
-              PrayerNameLabels.label(row.name),
-              style: AppTypography.h3,
+    return GestureDetector(
+      // GestureDetector pour capter long-press (AppCard interne ne l'expose pas).
+      // `behavior: opaque` pour ne pas laisser passer le tap au parent ListView.
+      behavior: HitTestBehavior.opaque,
+      onLongPress: onLongPress,
+      child: AppCard(
+        onTap: onTap,
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.s4,
+          horizontal: AppSpacing.s4,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              PrayerStatusVisuals.icon(row.status),
+              size: 22,
+              color: PrayerStatusVisuals.color(row.status),
             ),
-          ),
-          Text('$hh:$mm', style: AppTypography.body),
-        ],
+            const SizedBox(width: AppSpacing.s3),
+            Expanded(
+              child: Text(
+                PrayerNameLabels.label(row.name),
+                style: AppTypography.h3,
+              ),
+            ),
+            Text('$hh:$mm', style: AppTypography.body),
+          ],
+        ),
       ),
     );
   }
