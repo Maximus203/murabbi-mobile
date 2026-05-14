@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_day.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_times.dart';
@@ -181,6 +182,19 @@ class _PrayerRow extends StatelessWidget {
               ),
             ),
             Text('$hh:$mm', style: AppTypography.body),
+            // Affordance visuelle "row cliquable → écran détail" (cf. CP audit
+            // PR #51 + décision UX 2026-05-14 option A). Affiché uniquement si
+            // le détail est navigable (onLongPress présent). Le trigger
+            // d'ouverture reste le long-press (tap court ouvre le picker).
+            if (onLongPress != null) ...[
+              const SizedBox(width: AppSpacing.s2),
+              const Icon(
+                LucideIcons.chevronRight,
+                size: 16,
+                color: AppColors.textSecondary,
+                semanticLabel: 'Voir le détail (appui long)',
+              ),
+            ],
           ],
         ),
       ),
