@@ -1,3 +1,4 @@
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_clock_provider.dart';
@@ -15,28 +16,59 @@ void main() {
     expect(first, fixedNow);
   });
 
-  test(
-    'dashboardTickerProvider re-émet quand le clock évolue (manuel)',
-    () async {
-      // On utilise un clock mutable pour simuler le passage du temps sans
-      // attendre 30 vraies secondes — le StreamProvider polle via Timer
-      // mais on peut vérifier au moins la 1re émission est correcte et
-      // que les émissions suivantes refletent le clock courant.
+  test('dashboardTickerProvider re-émet toutes les 30s via Timer.periodic '
+      '(fakeAsync — closes #47)', () {
+    fakeAsync((async) {
+      // Clock mutable simulant le passage du temps virtuel.
       var current = DateTime.utc(2026, 5, 14, 12, 0);
       final container = ProviderContainer(
         overrides: [dashboardClockProvider.overrideWithValue(() => current)],
       );
       addTearDown(container.dispose);
 
-      final first = await container.read(dashboardTickerProvider.future);
-      expect(first, DateTime.utc(2026, 5, 14, 12, 0));
+      final emissions = <DateTime>[];
+      final sub = container.listen(dashboardTickerProvider, (_, next) {
+        if (next.hasValue) emissions.add(next.requireValue);
+      }, fireImmediately: true);
+      addTearDown(sub.close);
 
-      // On ne peut pas raisonnablement attendre 30s dans un unit test ;
-      // on valide juste que le clock provider est bien overrideable et
-      // que la 1re émission le respecte. La vraie périodicité est
-      // testée manuellement sur device.
+      // 1re émission synchrone (controller.add depuis onListen).
+      async.flushMicrotasks();
+      expect(
+        emissions.length,
+        greaterThanOrEqualTo(1),
+        reason: 'Émission initiale immédiate manquante',
+      );
+      expect(emissions.first, DateTime.utc(2026, 5, 14, 12, 0));
+
+      // Avance virtuellement de 30s + flushMicrotasks pour propager.
       current = DateTime.utc(2026, 5, 14, 12, 0, 30);
-      // Pas de re-emit déclenché (Timer interne) — limitation acceptée.
-    },
-  );
+      async.elapse(const Duration(seconds: 30));
+      async.flushMicrotasks();
+
+      expect(
+        emissions.length,
+        greaterThanOrEqualTo(2),
+        reason:
+            'Le Timer.periodic devait avoir émis une 2e valeur après 30s '
+            'virtuelles',
+      );
+      expect(
+        emissions[1],
+        DateTime.utc(2026, 5, 14, 12, 0, 30),
+        reason: 'La 2e émission doit refléter le clock courant',
+      );
+
+      // Avance encore 60s : on attend +2 émissions de plus (30s + 30s).
+      current = DateTime.utc(2026, 5, 14, 12, 1, 30);
+      async.elapse(const Duration(seconds: 60));
+      async.flushMicrotasks();
+
+      expect(
+        emissions.length,
+        greaterThanOrEqualTo(4),
+        reason: 'Après 90s totales virtuelles : 4 émissions attendues',
+      );
+    });
+  });
 }
