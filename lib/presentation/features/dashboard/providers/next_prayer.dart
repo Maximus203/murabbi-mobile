@@ -36,6 +36,12 @@ class NextPrayer extends Equatable {
     }
 
     // Toutes passées — fallback Fajr+24h (approximation V1).
+    //
+    // TODO(audit TL PR #42) : recalculer le vrai Fajr J+1 via
+    // `GetPrayerTimesUseCase(day: tomorrow)`. L'écart Fajr→Fajr+24h vs
+    // Fajr réel J+1 peut atteindre ~1 min (équation du temps). À porter
+    // dans une slice scoring/leaderboard quand le besoin de précision
+    // multi-jour émergera (calendrier, historique).
     return NextPrayer(
       name: 'fajr',
       timeUtc: times.fajr.add(const Duration(days: 1)),

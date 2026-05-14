@@ -102,8 +102,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             onOpenSalat: () => context.go(AppRoutes.salat),
             // Audit TL PR #42 : Consumer + ref.read plutôt que
             // ProviderScope.containerOf (plus idiomatique).
-            onSignOut: () =>
-                ref.read(authNotifierProvider.notifier).signOut(),
+            onSignOut: () => ref.read(authNotifierProvider.notifier).signOut(),
           ),
         ),
       ),
