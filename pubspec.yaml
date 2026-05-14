@@ -49,6 +49,11 @@ dependencies:
   # ne doit importer cette lib (règle ADR-013 §Architecture).
   adhan_dart: ^2.0.0
 
+  # Geolocation pour le bouton "Utiliser ma position" de SA-02 (cf. ADR-014).
+  # Import isolé dans `lib/services/location/` — aucune autre couche ne
+  # doit importer cette lib directement (règle ADR-014 §Architecture).
+  geolocator: ^13.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,8 +1,12 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/domain/value_objects/calculation_method.dart';
 import 'package:murabbi_mobile/domain/value_objects/high_latitude_rule.dart';
 import 'package:murabbi_mobile/domain/value_objects/madhab.dart';
+import 'package:murabbi_mobile/presentation/features/salat/providers/location_service_provider.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/prayer_settings_form_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/prayer_settings_form_state.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
@@ -13,16 +17,16 @@ import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_input.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_toggle.dart';
+import 'package:murabbi_mobile/services/location/location_service.dart';
 
 /// SA-02 — Écran de réglages des prières (slice 3.C.3).
 ///
 /// Saisie manuelle des coordonnées (lat/lng), méthode de calcul, école
 /// juridique, et règle hautes latitudes (visible si |lat| > 48°).
 ///
-/// Le bouton "Ma position GPS" (geolocator + ADR-014) est livré dans une
-/// PR follow-up dédiée à la slice — non inclus dans cette PR. Tant qu'il
-/// n'est pas mergé, la saisie manuelle des coordonnées est le seul moyen
-/// d'alimenter ce formulaire.
+/// Bouton "Ma position GPS" (geolocator + ADR-014, slice 3.C.3 follow-up
+/// PR #44) : pré-remplit lat/lng via le service de localisation, avec
+/// gestion exhaustive des cas d'erreur (permission, GPS désactivé, etc.).
 class Sa02PrayerSettingsScreen extends ConsumerStatefulWidget {
   final VoidCallback onSaved;
   final VoidCallback onBack;
@@ -42,6 +46,7 @@ class _Sa02PrayerSettingsScreenState
     extends ConsumerState<Sa02PrayerSettingsScreen> {
   late final TextEditingController _latCtrl;
   late final TextEditingController _lngCtrl;
+  bool _isLocating = false;
 
   @override
   void initState() {
@@ -64,6 +69,62 @@ class _Sa02PrayerSettingsScreenState
     super.dispose();
   }
 
+  Future<void> _handleUsePosition() async {
+    setState(() => _isLocating = true);
+    final svc = ref.read(locationServiceProvider);
+    final result = await svc.getCurrentPosition();
+    if (!mounted) return;
+    setState(() => _isLocating = false);
+
+    switch (result) {
+      case LocationSuccess(:final latitude, :final longitude):
+        final notifier = ref.read(prayerSettingsFormNotifierProvider.notifier);
+        _latCtrl.text = latitude.toStringAsFixed(6);
+        _lngCtrl.text = longitude.toStringAsFixed(6);
+        notifier
+          ..setLatitude(latitude)
+          ..setLongitude(longitude);
+      case LocationPermissionDenied(:final deniedForever):
+        _showSnack(
+          deniedForever
+              ? 'Autorise la localisation dans les réglages.'
+              : 'Permission localisation refusée.',
+          actionLabel: deniedForever ? 'Réglages' : null,
+          onAction: deniedForever ? svc.openAppSettings : null,
+        );
+      case LocationServiceDisabled():
+        _showSnack(
+          'Active la localisation système.',
+          actionLabel: 'Activer',
+          onAction: svc.openLocationSettings,
+        );
+      case LocationUnknownError(:final message):
+        // Audit TL PR #44 : pas de message technique brut à l'utilisateur.
+        // Détail loggé pour debug, snackbar avec libellé canonique FR.
+        developer.log(
+          'GPS getCurrentPosition unknown error',
+          name: 'salat.gps',
+          error: message,
+        );
+        _showSnack('Erreur lors de la localisation. Réessaie dans un instant.');
+    }
+  }
+
+  void _showSnack(
+    String message, {
+    String? actionLabel,
+    Future<void> Function()? onAction,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        action: (actionLabel != null && onAction != null)
+            ? SnackBarAction(label: actionLabel, onPressed: () => onAction())
+            : null,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(prayerSettingsFormNotifierProvider);
@@ -83,6 +144,8 @@ class _Sa02PrayerSettingsScreenState
             lngCtrl: _lngCtrl,
             onLatChanged: (s) => notifier.setLatitude(double.tryParse(s)),
             onLngChanged: (s) => notifier.setLongitude(double.tryParse(s)),
+            isLocating: _isLocating,
+            onUsePosition: _handleUsePosition,
           ),
           const SizedBox(height: AppSpacing.s4),
           _MethodSection(method: state.method, onChanged: notifier.setMethod),
@@ -122,11 +185,15 @@ class _LocationSection extends StatelessWidget {
   final TextEditingController lngCtrl;
   final ValueChanged<String> onLatChanged;
   final ValueChanged<String> onLngChanged;
+  final bool isLocating;
+  final VoidCallback onUsePosition;
   const _LocationSection({
     required this.latCtrl,
     required this.lngCtrl,
     required this.onLatChanged,
     required this.onLngChanged,
+    required this.isLocating,
+    required this.onUsePosition,
   });
 
   @override
@@ -136,6 +203,14 @@ class _LocationSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Position', style: AppTypography.h3),
+          const SizedBox(height: AppSpacing.s3),
+          AppButton(
+            key: const Key('sa02-use-position-button'),
+            label: isLocating ? 'Localisation…' : 'Ma position GPS',
+            leadingIcon: LucideIcons.locateFixed,
+            variant: AppButtonVariant.ghost,
+            onPressed: isLocating ? null : onUsePosition,
+          ),
           const SizedBox(height: AppSpacing.s3),
           AppInput(
             key: const Key('sa02-latitude-input'),

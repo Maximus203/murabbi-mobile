@@ -2,6 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Géolocalisation pour le bouton "Utiliser ma position" de SA-02
+	     (cf. ADR-014). Pas de background — usage ponctuel quand l'utilisateur
+	     configure ses horaires de prière. -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Murabbi utilise ta position pour calculer les horaires de prière de ton lieu.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
