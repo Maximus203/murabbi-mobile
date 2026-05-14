@@ -11,6 +11,12 @@ abstract class AppRoutes {
   static const onboarding = '/onboarding';
   static const home = '/home';
 
+  /// Salat — SA-01 "Aujourd'hui" (slice 3.C.3).
+  static const salat = '/salat';
+
+  /// Salat — SA-02 "Réglages des prières" (slice 3.C.3).
+  static const salatSettings = '/salat/settings';
+
   /// `/auth/verify-email` est traité à part : il est accessible aussi bien
   /// quand l'utilisateur n'a pas de session que quand il vient de signUp et
   /// attend la confirmation par mail.

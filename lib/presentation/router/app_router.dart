@@ -8,6 +8,8 @@ import 'package:murabbi_mobile/presentation/features/auth/screens/au_03_forgot_p
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_verification_gate.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/providers/onboarding_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01_onboarding_screen.dart';
+import 'package:murabbi_mobile/presentation/features/salat/screens/sa_01_today_screen.dart';
+import 'package:murabbi_mobile/presentation/features/salat/screens/sa_02_prayer_settings_screen.dart';
 import 'package:murabbi_mobile/presentation/features/splash/screens/splash_screen.dart';
 import 'package:murabbi_mobile/presentation/router/auth_redirect.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
@@ -91,6 +93,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.home,
         builder: (_, _) => const _HomePlaceholderScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.salat,
+        builder: (context, _) => Sa01TodayScreen(
+          onConfigureSettings: () => context.go(AppRoutes.salatSettings),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.salatSettings,
+        builder: (context, _) => Sa02PrayerSettingsScreen(
+          onBack: () => context.go(AppRoutes.salat),
+          onSaved: () => context.go(AppRoutes.salat),
+        ),
+      ),
     ],
   );
 });
@@ -118,6 +133,10 @@ class _HomePlaceholderScreen extends ConsumerWidget {
                 style: AppTypography.body,
               ),
               const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => context.go(AppRoutes.salat),
+                child: const Text('Ouvrir Salat (SA-01)'),
+              ),
               TextButton(
                 onPressed: () =>
                     ref.read(authNotifierProvider.notifier).signOut(),
