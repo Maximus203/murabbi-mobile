@@ -20,6 +20,22 @@ class StatusPickerBottomSheet extends StatelessWidget {
     required this.current,
   });
 
+  /// Ordre d'affichage explicite des statuts dans le bottom sheet —
+  /// **ne pas** s'appuyer sur `PrayerStatus.values` (l'ordre de
+  /// déclaration de l'enum changerait silencieusement l'UI). Cf. review
+  /// Copilot PR #38.
+  ///
+  /// Ordre choisi pour l'UX : statuts positifs en premier (onTime → late
+  /// → makeup → missed) puis "non priée" comme reset. La sélection
+  /// courante est mise en évidence via la coche.
+  static const List<PrayerStatus> displayOrder = [
+    PrayerStatus.onTime,
+    PrayerStatus.late,
+    PrayerStatus.makeup,
+    PrayerStatus.missed,
+    PrayerStatus.pending,
+  ];
+
   /// Ouvre le sheet. Le résultat est le statut tapé (ou `null` si fermé sans
   /// sélection).
   static Future<PrayerStatus?> show(
@@ -54,7 +70,7 @@ class StatusPickerBottomSheet extends StatelessWidget {
           children: [
             Text(prayerLabel, style: AppTypography.h2),
             const SizedBox(height: AppSpacing.s4),
-            for (final status in PrayerStatus.values)
+            for (final status in displayOrder)
               _StatusTile(
                 status: status,
                 selected: status == current,

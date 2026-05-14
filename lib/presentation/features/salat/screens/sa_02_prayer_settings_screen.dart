@@ -17,8 +17,12 @@ import 'package:murabbi_mobile/presentation/widgets/app_toggle.dart';
 /// SA-02 — Écran de réglages des prières (slice 3.C.3).
 ///
 /// Saisie manuelle des coordonnées (lat/lng), méthode de calcul, école
-/// juridique, et règle hautes latitudes (visible si |lat| > 48°). Le bouton
-/// GPS arrive en slice 3.C.3c avec `geolocator` + ADR-014.
+/// juridique, et règle hautes latitudes (visible si |lat| > 48°).
+///
+/// Le bouton "Ma position GPS" (geolocator + ADR-014) est livré dans une
+/// PR follow-up dédiée à la slice — non inclus dans cette PR. Tant qu'il
+/// n'est pas mergé, la saisie manuelle des coordonnées est le seul moyen
+/// d'alimenter ce formulaire.
 class Sa02PrayerSettingsScreen extends ConsumerStatefulWidget {
   final VoidCallback onSaved;
   final VoidCallback onBack;
