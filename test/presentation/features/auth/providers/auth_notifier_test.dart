@@ -12,6 +12,8 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/auth/providers/remembered_accounts_notifier.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -320,6 +322,76 @@ void main() {
       await notifier.signOut();
 
       expect(container.read(authNotifierProvider).value, isNull);
+    });
+  });
+
+  group('AuthNotifier — _rememberEmail hook (PR #41 regression)', () {
+    test('signIn success → email mémorisé (lowercase + trim)', () async {
+      SharedPreferences.setMockInitialValues({});
+      when(
+        () => repo.signIn(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) async => testUser);
+      final container = makeContainer();
+      await container.read(authNotifierProvider.future);
+
+      await container
+          .read(authNotifierProvider.notifier)
+          .signIn(email: '  CHERIF@Example.COM  ', password: 'pass1234');
+      // Laisse le fire-and-forget propager (multi-microtâches : guard
+      // catch → remember() async → setStringList → state update).
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final remembered = await container.read(
+        rememberedAccountsNotifierProvider.future,
+      );
+      expect(remembered, contains('cherif@example.com'));
+    });
+
+    test('signIn failure → email PAS mémorisé', () async {
+      SharedPreferences.setMockInitialValues({});
+      when(
+        () => repo.signIn(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenThrow(const AuthFailure.invalidCredentials());
+      final container = makeContainer();
+      await container.read(authNotifierProvider.future);
+
+      await container
+          .read(authNotifierProvider.notifier)
+          .signIn(email: 'wrong@example.com', password: 'badpass');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final remembered = await container.read(
+        rememberedAccountsNotifierProvider.future,
+      );
+      expect(remembered, isEmpty);
+    });
+
+    test('signUp success → email mémorisé', () async {
+      SharedPreferences.setMockInitialValues({});
+      when(
+        () => repo.signUp(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) async => testUser);
+      final container = makeContainer();
+      await container.read(authNotifierProvider.future);
+
+      await container
+          .read(authNotifierProvider.notifier)
+          .signUp(email: 'new@example.com', password: 'pass1234');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      final remembered = await container.read(
+        rememberedAccountsNotifierProvider.future,
+      );
+      expect(remembered, contains('new@example.com'));
     });
   });
 

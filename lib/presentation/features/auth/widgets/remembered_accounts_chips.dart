@@ -63,45 +63,98 @@ class _AccountChip extends StatelessWidget {
     required this.onForget,
   });
 
-  String get _display {
-    // "abc@example.com" → "abc" pour économiser de l'espace dans le chip.
-    final atIndex = email.indexOf('@');
-    if (atIndex <= 0) return email;
-    return email.substring(0, atIndex);
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Audit TL PR #41 : afficher l'email complet (pas la troncature au
+    // local-part), ellipsis si trop long. Évite la collision visuelle
+    // entre deux providers partageant le même local-part (ex:
+    // cherif@gmail.com vs cherif@outlook.com).
     return Semantics(
       button: true,
-      label: 'Pré-remplir avec $email — appui long pour oublier',
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: () => _showForgetSheet(context),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s3,
-            vertical: AppSpacing.s2,
+      label: 'Pré-remplir avec $email — tap sur la croix pour oublier',
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.bgSurface,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: AppColors.borderEmphasis,
+            width: AppBorderWidth.thin,
           ),
-          decoration: BoxDecoration(
-            color: AppColors.bgSurface,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(
-              color: AppColors.borderEmphasis,
-              width: AppBorderWidth.thin,
-            ),
-          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                LucideIcons.userRound,
-                size: 14,
-                color: AppColors.textSecondary,
+              InkWell(
+                onTap: onTap,
+                onLongPress: () => _showForgetSheet(context),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(AppRadius.pill),
+                  bottomLeft: Radius.circular(AppRadius.pill),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s3,
+                    AppSpacing.s2,
+                    AppSpacing.s2,
+                    AppSpacing.s2,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        LucideIcons.userRound,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: AppSpacing.s2),
+                      // ConstrainedBox + ellipsis : email complet visible
+                      // mais bornée à ~180px pour rester compact dans le
+                      // Wrap. Pas de troncature au local-part (collision
+                      // visuelle, cf. audit TL).
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 180),
+                        child: Text(
+                          email,
+                          style: AppTypography.body,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(width: AppSpacing.s2),
-              Text(_display, style: AppTypography.body),
+              // Bouton "x" explicite — affordance visible pour l'action
+              // "oublier" (audit TL PR #41 : long-press seul = non
+              // discoverable). Hit area 32x32 pour atteindre la cible
+              // a11y minimale (~44px en comptant le padding du chip).
+              Semantics(
+                button: true,
+                label: 'Oublier $email',
+                child: InkWell(
+                  onTap: () => _showForgetSheet(context),
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(AppRadius.pill),
+                    bottomRight: Radius.circular(AppRadius.pill),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.s1,
+                      AppSpacing.s2,
+                      AppSpacing.s3,
+                      AppSpacing.s2,
+                    ),
+                    child: Icon(
+                      LucideIcons.x,
+                      size: 14,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
