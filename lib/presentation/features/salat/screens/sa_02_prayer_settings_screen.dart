@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -20,8 +22,11 @@ import 'package:murabbi_mobile/services/location/location_service.dart';
 /// SA-02 — Écran de réglages des prières (slice 3.C.3).
 ///
 /// Saisie manuelle des coordonnées (lat/lng), méthode de calcul, école
-/// juridique, et règle hautes latitudes (visible si |lat| > 48°). Le bouton
-/// GPS arrive en slice 3.C.3c avec `geolocator` + ADR-014.
+/// juridique, et règle hautes latitudes (visible si |lat| > 48°).
+///
+/// Bouton "Ma position GPS" (geolocator + ADR-014, slice 3.C.3 follow-up
+/// PR #44) : pré-remplit lat/lng via le service de localisation, avec
+/// gestion exhaustive des cas d'erreur (permission, GPS désactivé, etc.).
 class Sa02PrayerSettingsScreen extends ConsumerStatefulWidget {
   final VoidCallback onSaved;
   final VoidCallback onBack;
@@ -94,7 +99,14 @@ class _Sa02PrayerSettingsScreenState
           onAction: svc.openLocationSettings,
         );
       case LocationUnknownError(:final message):
-        _showSnack('Erreur GPS : $message');
+        // Audit TL PR #44 : pas de message technique brut à l'utilisateur.
+        // Détail loggé pour debug, snackbar avec libellé canonique FR.
+        developer.log(
+          'GPS getCurrentPosition unknown error',
+          name: 'salat.gps',
+          error: message,
+        );
+        _showSnack('Erreur lors de la localisation. Réessaie dans un instant.');
     }
   }
 

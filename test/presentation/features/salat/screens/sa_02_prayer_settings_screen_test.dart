@@ -48,20 +48,20 @@ void main() {
   testWidgets('rend les champs latitude / longitude et le bouton Enregistrer', (
     tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    await tester.binding.setSurfaceSize(const Size(400, 1800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(pumpableScreen());
     await tester.pumpAndSettle();
 
     expect(find.text('LATITUDE'), findsOneWidget);
     expect(find.text('LONGITUDE'), findsOneWidget);
-    expect(find.text('Enregistrer'), findsOneWidget);
+    expect(find.byKey(const Key('sa02-save-button')), findsOneWidget);
   });
 
   testWidgets(
     'Enregistrer sans coordonnées affiche un message d\'erreur explicite',
     (tester) async {
-      await tester.binding.setSurfaceSize(const Size(400, 1400));
+      await tester.binding.setSurfaceSize(const Size(400, 1800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(pumpableScreen());
       await tester.pumpAndSettle();
@@ -86,7 +86,7 @@ void main() {
   ) async {
     when(() => repo.save(any())).thenAnswer((_) async {});
 
-    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    await tester.binding.setSurfaceSize(const Size(400, 1800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     var savedCalled = false;
@@ -111,7 +111,7 @@ void main() {
   testWidgets('la section hautes latitudes apparaît quand latitude > 48', (
     tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    await tester.binding.setSurfaceSize(const Size(400, 1800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(pumpableScreen());
     await tester.pumpAndSettle();
