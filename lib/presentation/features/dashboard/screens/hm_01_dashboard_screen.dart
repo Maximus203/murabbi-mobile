@@ -1,9 +1,12 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
+import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_ticker_provider.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -47,7 +50,17 @@ class Hm01DashboardScreen extends ConsumerWidget {
         child: dashboard.when(
           loading: () =>
               const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          error: (e, _) => _GenericError(message: e.toString()),
+          error: (e, stackTrace) {
+            // Audit TL §B.2 PR #42 : pas de `e.toString()` brut exposé.
+            // Détail loggé via dart:developer, libellé canonique FR.
+            developer.log(
+              'Hm01DashboardScreen render error',
+              name: 'dashboard.home',
+              error: e,
+              stackTrace: stackTrace,
+            );
+            return const _GenericError();
+          },
           data: (data) => _DashboardBody(
             data: data,
             pseudo: pseudo,
@@ -227,7 +240,6 @@ class _NextPrayerCard extends StatelessWidget {
     final hh = local.hour.toString().padLeft(2, '0');
     final mm = local.minute.toString().padLeft(2, '0');
     final label = _names[next.name] ?? next.name;
-    final remaining = _formatRemaining(next.timeUtc, state.nowUtc);
 
     return AppCard(
       onTap: onOpenSalat,
@@ -268,12 +280,33 @@ class _NextPrayerCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.s2),
-          Text(
-            'Dans $remaining',
-            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-          ),
+          // Audit TL §B.2 PR #42 : countdown live via dashboardTickerProvider
+          // (StreamProvider 30s), scoped sur ce sous-widget pour éviter le
+          // rebuild storm sur le DashboardNotifier (qui re-fetcherait les
+          // horaires à chaque tick).
+          _RemainingLabel(initialNow: state.nowUtc, nextUtc: next.timeUtc),
         ],
       ),
+    );
+  }
+}
+
+/// Sous-widget Consumer qui watch [dashboardTickerProvider] — seul lui
+/// rebuild toutes les 30s. Le reste de la card / ListView reste statique
+/// entre les ticks. Cf. audit TL §B.2 PR #42.
+class _RemainingLabel extends ConsumerWidget {
+  final DateTime initialNow;
+  final DateTime nextUtc;
+
+  const _RemainingLabel({required this.initialNow, required this.nextUtc});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ticker = ref.watch(dashboardTickerProvider);
+    final now = ticker.valueOrNull ?? initialNow;
+    return Text(
+      'Dans ${_formatRemaining(nextUtc, now)}',
+      style: AppTypography.body.copyWith(color: AppColors.textSecondary),
     );
   }
 
@@ -326,16 +359,17 @@ class _PlaceholderCard extends StatelessWidget {
 }
 
 class _GenericError extends StatelessWidget {
-  final String message;
-  const _GenericError({required this.message});
+  const _GenericError();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.s6),
+    // Message FR neutre, sans détail technique (audit TL §B.2 PR #42).
+    // L'erreur précise est loggée via `developer.log` côté caller.
+    return const Padding(
+      padding: EdgeInsets.all(AppSpacing.s6),
       child: Center(
         child: Text(
-          'Une erreur est survenue.\n$message',
+          'Une erreur est survenue.\nMerci de réessayer plus tard.',
           style: AppTypography.body,
           textAlign: TextAlign.center,
         ),
