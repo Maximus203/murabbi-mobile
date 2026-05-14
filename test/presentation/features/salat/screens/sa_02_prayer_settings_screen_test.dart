@@ -48,6 +48,8 @@ void main() {
   testWidgets('rend les champs latitude / longitude et le bouton Enregistrer', (
     tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(pumpableScreen());
     await tester.pumpAndSettle();
 
@@ -59,10 +61,12 @@ void main() {
   testWidgets(
     'Enregistrer sans coordonnées affiche un message d\'erreur explicite',
     (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(pumpableScreen());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Enregistrer'));
+      await tester.tap(find.byKey(const Key('sa02-save-button')));
       await tester.pumpAndSettle();
 
       expect(
@@ -107,6 +111,8 @@ void main() {
   testWidgets('la section hautes latitudes apparaît quand latitude > 48', (
     tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(pumpableScreen());
     await tester.pumpAndSettle();
 
