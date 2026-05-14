@@ -163,6 +163,8 @@
 | AU-01 | Tap "Mot de passe oublié ?" | nav | AU-03 |
 | AU-01 | Tap "Créer" | nav | AU-02 |
 | AU-01 | Tap eye icon | ui | Toggle password visibility |
+| AU-01 | Tap chip "Comptes récents" | ui | Autofill du champ email (cf. ADR-015 — feature ajoutée post-wireframes, PR #41) |
+| AU-01 | Long-press chip OU tap icône `x` | ui | Bottom-sheet "Oublier ce compte" → retire de la liste LRU (cf. ADR-015) |
 | AU-02 | Tap "Créer mon compte" | form | Signup + nav SETUP-01 (supposé) |
 | AU-02 | Tap CGU/Privacy | nav-ext | Lien externe |
 | AU-03 | Tap "Envoyer le lien" | form | Email reset envoyé (15 min) |
@@ -293,7 +295,7 @@
 |---|---|---|
 | OB-01 | logo, tagline | — |
 | OB-02/03/04 | titre, body, illustration | — |
-| AU-01 | logo, wordmark | email, password |
+| AU-01 | logo, wordmark, **chips "Comptes récents"** (liste plafonnée à 5 emails normalisés LRU, `SharedPreferences` clé `remembered_emails_v1` — ADR-015) | email, password |
 | AU-02 | — | nom complet, email, password, password confirm |
 | AU-03 | — | email |
 | SETUP-01 | — | ville, méthode calcul, DST |
