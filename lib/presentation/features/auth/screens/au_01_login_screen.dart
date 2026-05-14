@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/auth/widgets/auth_error_banner.dart';
+import 'package:murabbi_mobile/presentation/features/auth/widgets/remembered_accounts_chips.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -74,6 +75,11 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: AppSpacing.s4),
+              RememberedAccountsChips(
+                onTap: (email) {
+                  _emailCtrl.text = email;
+                },
+              ),
               AppInput(
                 label: 'Email',
                 placeholder: 'vous@exemple.com',

@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/auth_repository.dart';
+import 'package:murabbi_mobile/presentation/features/auth/providers/remembered_accounts_notifier.dart';
 
 /// État global d'authentification de l'utilisateur courant.
 ///
@@ -37,6 +39,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     state = await AsyncValue.guard(
       () => _repo.signIn(email: email, password: password),
     );
+    if (state.valueOrNull != null) _rememberEmail(email);
   }
 
   /// Q-18 : pas de pseudo à l'inscription (auto-généré côté data layer).
@@ -45,6 +48,28 @@ class AuthNotifier extends AsyncNotifier<User?> {
     state = await AsyncValue.guard(
       () => _repo.signUp(email: email, password: password),
     );
+    if (state.valueOrNull != null) _rememberEmail(email);
+  }
+
+  /// Mémorise l'email après un succès — best-effort, ne propage pas
+  /// l'erreur si SharedPreferences indisponible (UX-only).
+  ///
+  /// Fire-and-forget : ne pas attendre la persistance pour laisser
+  /// l'auth state propager vers le router. Toute erreur est loggée via
+  /// `dart:developer` (audit TL PR #41 : ne pas swallow muettement —
+  /// pattern aligné sur `auth_repository_impl.dart`).
+  void _rememberEmail(String email) {
+    ref
+        .read(rememberedAccountsNotifierProvider.notifier)
+        .remember(email)
+        .catchError((Object e, StackTrace st) {
+          developer.log(
+            'RememberedAccounts.remember failed (non-fatal)',
+            name: 'auth.remembered_accounts',
+            error: e,
+            stackTrace: st,
+          );
+        });
   }
 
   Future<void> signInWithGoogle() async {
