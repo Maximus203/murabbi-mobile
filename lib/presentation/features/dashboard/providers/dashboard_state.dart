@@ -21,11 +21,10 @@ class DashboardState extends Equatable {
     DateTime? nowUtc,
     NextPrayer? nextPrayer,
     bool? settingsNotConfigured,
-    bool clearNextPrayer = false,
   }) {
     return DashboardState(
       nowUtc: nowUtc ?? this.nowUtc,
-      nextPrayer: clearNextPrayer ? null : (nextPrayer ?? this.nextPrayer),
+      nextPrayer: nextPrayer ?? this.nextPrayer,
       settingsNotConfigured:
           settingsNotConfigured ?? this.settingsNotConfigured,
     );
