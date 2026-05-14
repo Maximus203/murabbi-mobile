@@ -302,10 +302,8 @@ dependencies:
   intl: ^0.19.0
 
 dev_dependencies:
-  build_runner: ^2.4.0
-  freezed: ^2.5.0
-  json_serializable: ^6.8.0
-  riverpod_generator: ^2.3.0
+  # build_runner / freezed / json_serializable / riverpod_generator retirés
+  # — cf. ADR-016. Providers legacy manuels, pas de codegen.
   mocktail: ^1.0.0
   golden_toolkit: ^0.15.0
   very_good_analysis: ^5.1.0
@@ -313,20 +311,26 @@ dev_dependencies:
     sdk: flutter
 ```
 
-### Patterns Riverpod (code generation)
+### Patterns Riverpod (providers legacy manuels — cf. ADR-016)
 
-**Toujours utiliser `@riverpod` avec génération de code.**
+**Utiliser les providers Riverpod legacy manuels** (`Provider`, `NotifierProvider`,
+`AsyncNotifierProvider`, `StreamProvider`, `FutureProvider`). Pas de codegen
+`@riverpod`, pas de `build_runner` pour les providers. Voir
+[`docs/adr/ADR-016-riverpod-legacy-providers.md`](docs/adr/ADR-016-riverpod-legacy-providers.md)
+pour la justification (Option B retenue : 100% du repo en legacy, boucle dev
+rapide, typage `Ref` déjà obtenu via `AsyncNotifier<T>`).
 
 ```dart
 // Provider de lecture simple
-@riverpod
-Future<List<Habit>> userHabits(UserHabitsRef ref) async {
+final userHabitsProvider = FutureProvider<List<Habit>>((ref) async {
   return ref.watch(habitRepositoryProvider).getHabitsForToday();
-}
+});
 
 // Provider mutable avec AsyncNotifier
-@riverpod
-class HabitNotifier extends _$HabitNotifier {
+final habitNotifierProvider =
+    AsyncNotifierProvider<HabitNotifier, List<Habit>>(HabitNotifier.new);
+
+class HabitNotifier extends AsyncNotifier<List<Habit>> {
   @override
   Future<List<Habit>> build() async {
     return ref.watch(habitRepositoryProvider).getHabitsForToday();
