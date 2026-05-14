@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_day.dart';
@@ -36,11 +38,20 @@ class Sa01TodayScreen extends ConsumerWidget {
       body: state.when(
         loading: () =>
             const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        error: (e, _) {
+        error: (e, stackTrace) {
           if (e is PrayerSettingsNotConfiguredFailure) {
             return _NotConfiguredView(onConfigure: onConfigureSettings);
           }
-          return _GenericErrorView(message: e.toString());
+          // Audit TL §B.2 (PR #38) : ne pas exposer `e.toString()` brut
+          // (risque de leak Postgrest/UX dégradée). Message FR neutre côté
+          // UI, détail technique loggé pour debug.
+          developer.log(
+            'Sa01TodayScreen render error',
+            name: 'salat.today_screen',
+            error: e,
+            stackTrace: stackTrace,
+          );
+          return const _GenericErrorView();
         },
         data: (data) => _PrayersList(
           data: data,
@@ -186,16 +197,17 @@ class _NotConfiguredView extends StatelessWidget {
 }
 
 class _GenericErrorView extends StatelessWidget {
-  final String message;
-  const _GenericErrorView({required this.message});
+  const _GenericErrorView();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.s6),
+    // Message FR neutre, sans détail technique (cf. audit TL §B.2 PR #38).
+    // L'erreur précise est loggée via `developer.log` côté caller.
+    return const Padding(
+      padding: EdgeInsets.all(AppSpacing.s6),
       child: Center(
         child: Text(
-          'Une erreur est survenue.\n$message',
+          'Une erreur est survenue.\nMerci de réessayer plus tard.',
           style: AppTypography.body,
           textAlign: TextAlign.center,
         ),
