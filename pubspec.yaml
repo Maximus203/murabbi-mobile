@@ -68,6 +68,12 @@ dev_dependencies:
   # Tests
   mocktail: ^1.0.4
 
+  # Fast-forward virtuel des Timer.periodic dans les tests
+  # (cf. test/presentation/features/dashboard/providers/dashboard_ticker_provider_test.dart
+  # — issue #47). Déjà transitif via test_api, déclaré explicite pour
+  # satisfaire `depend_on_referenced_packages`.
+  fake_async: ^1.3.1
+
   # Golden tests (Phase 1 — widgets atomiques)
   golden_toolkit: ^0.15.0
 
