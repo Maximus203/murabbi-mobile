@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
@@ -92,10 +94,17 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
           .call(userId: user.id, habit: habit);
       await ref.read(habitsNotifierProvider.notifier).refresh();
       if (mounted) widget.onCreated();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      // Audit TL §B.2 PR #43 : log technique + libellé canonique FR.
+      developer.log(
+        'Ha02CreateHabitScreen submit failed',
+        name: 'habits.create',
+        error: e,
+        stackTrace: stackTrace,
+      );
       setState(() {
         _saving = false;
-        _error = 'Erreur : $e';
+        _error = 'Impossible de créer l\'habitude. Réessaie dans un instant.';
       });
     }
   }
@@ -112,7 +121,20 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
       body: categoriesAsync.when(
         loading: () =>
             const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        error: (e, _) => Center(child: Text('Erreur : $e')),
+        error: (e, stackTrace) {
+          developer.log(
+            'Ha02 categories load failed',
+            name: 'habits.create',
+            error: e,
+            stackTrace: stackTrace,
+          );
+          return const Center(
+            child: Text(
+              'Impossible de charger les catégories.',
+              style: AppTypography.body,
+            ),
+          );
+        },
         data: (categories) {
           _categoryId ??= categories.firstOrNull?.id;
           return _buildForm(categories);

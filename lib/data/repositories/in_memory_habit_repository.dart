@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' hide Category;
+import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
@@ -11,6 +13,7 @@ import 'package:murabbi_mobile/domain/value_objects/habit_subtask_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 
 /// Implémentation **in-memory** des repositories Habits et Categories.
 ///
@@ -25,6 +28,18 @@ import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 ///   2. HabitRepositoryImpl déléguant au datasource
 ///   3. Override le provider ci-dessous via `habitRepositoryProvider.overrideWithValue(...)`
 class InMemoryHabitRepository implements HabitRepository {
+  InMemoryHabitRepository() {
+    // Audit TL PR #43 : guard runtime — ce repo dev scaffold ne doit
+    // jamais s'instancier en release build. Si ça arrive, on échoue tôt
+    // plutôt que de livrer un storage volatile en production.
+    assert(
+      kDebugMode || kProfileMode,
+      'InMemoryHabitRepository est un dev scaffold (slice 3.D). '
+      'Il ne doit pas être actif en release build — '
+      'override habitRepositoryProvider avec SupabaseHabitsDataSource.',
+    );
+  }
+
   final List<Habit> _habits = [];
 
   @override
@@ -97,40 +112,57 @@ class InMemoryHabitRepository implements HabitRepository {
 /// catégories système (cf. AppColors.category*) — l'utilisateur peut en
 /// créer d'autres au runtime (perdues au redémarrage).
 class InMemoryCategoryRepository implements CategoryRepository {
+  InMemoryCategoryRepository() {
+    assert(
+      kDebugMode || kProfileMode,
+      'InMemoryCategoryRepository est un dev scaffold (slice 3.D/3.E). '
+      'Il ne doit pas être actif en release build.',
+    );
+  }
+
+  /// Audit TL PR #43 §3 : pas de hex hardcodé hors `AppColors`. On
+  /// dérive le hex depuis le token DS via [_colorToHex] — single source
+  /// of truth garantie.
+  static String _colorToHex(Color c) {
+    final argb = c.toARGB32();
+    final rgb = argb & 0x00FFFFFF;
+    return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
+  }
+
   static List<Category> _seed() {
     return [
       Category(
         id: CategoryId('cat-religion'),
         name: NonEmptyString('Religion'),
-        color: HexColor('#8B6F47'),
+        color: HexColor(_colorToHex(AppColors.categoryReligion)),
         icon: 'moon-star',
         isSystem: true,
       ),
       Category(
         id: CategoryId('cat-sport'),
         name: NonEmptyString('Sport'),
-        color: HexColor('#6B8C6B'),
+        color: HexColor(_colorToHex(AppColors.categorySport)),
         icon: 'dumbbell',
         isSystem: true,
       ),
       Category(
         id: CategoryId('cat-sante'),
         name: NonEmptyString('Santé'),
-        color: HexColor('#5C7A8C'),
+        color: HexColor(_colorToHex(AppColors.categorySante)),
         icon: 'heart-pulse',
         isSystem: true,
       ),
       Category(
         id: CategoryId('cat-mental'),
         name: NonEmptyString('Mental'),
-        color: HexColor('#7A6B8C'),
+        color: HexColor(_colorToHex(AppColors.categoryMental)),
         icon: 'brain',
         isSystem: true,
       ),
       Category(
         id: CategoryId('cat-social'),
         name: NonEmptyString('Social'),
-        color: HexColor('#9B7A4A'),
+        color: HexColor(_colorToHex(AppColors.categorySocial)),
         icon: 'users',
         isSystem: true,
       ),

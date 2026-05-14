@@ -79,10 +79,13 @@ void main() {
       final repo = InMemoryCategoryRepository();
       final list = await repo.getCategories(userId);
       expect(list, hasLength(5));
-      expect(
-        list.map((c) => c.name.value).toSet(),
-        {'Religion', 'Sport', 'Santé', 'Mental', 'Social'},
-      );
+      expect(list.map((c) => c.name.value).toSet(), {
+        'Religion',
+        'Sport',
+        'Santé',
+        'Mental',
+        'Social',
+      });
       expect(list.every((c) => c.isSystem), isTrue);
     });
   });

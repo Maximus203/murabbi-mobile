@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -41,7 +43,17 @@ class Ha01HabitsListScreen extends ConsumerWidget {
       body: habits.when(
         loading: () =>
             const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        error: (e, _) => _ErrorView(message: e.toString()),
+        error: (e, stackTrace) {
+          // Audit TL §B.2 PR #43 : pas de `e.toString()` brut en UI.
+          // Détail loggé via dart:developer, libellé canonique FR.
+          developer.log(
+            'Ha01HabitsListScreen render error',
+            name: 'habits.list',
+            error: e,
+            stackTrace: stackTrace,
+          );
+          return const _ErrorView();
+        },
         data: (list) {
           if (list.isEmpty) return _EmptyView(onCreate: onCreate);
           return ListView.separated(
@@ -169,16 +181,16 @@ class _EmptyView extends StatelessWidget {
 }
 
 class _ErrorView extends StatelessWidget {
-  final String message;
-  const _ErrorView({required this.message});
+  const _ErrorView();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.s6),
+    // Message FR neutre (audit TL §B.2 PR #43). Détail loggé caller-side.
+    return const Padding(
+      padding: EdgeInsets.all(AppSpacing.s6),
       child: Center(
         child: Text(
-          'Une erreur est survenue.\n$message',
+          'Une erreur est survenue.\nMerci de réessayer plus tard.',
           style: AppTypography.body,
           textAlign: TextAlign.center,
         ),
