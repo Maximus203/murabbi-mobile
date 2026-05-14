@@ -12,6 +12,7 @@ import 'package:murabbi_mobile/presentation/features/onboarding/providers/onboar
 import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01_onboarding_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_01_today_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_02_prayer_settings_screen.dart';
+import 'package:murabbi_mobile/presentation/features/salat/screens/sa_03_prayer_detail_screen.dart';
 import 'package:murabbi_mobile/presentation/features/splash/screens/splash_screen.dart';
 import 'package:murabbi_mobile/presentation/router/auth_redirect.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
@@ -99,6 +100,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.salat,
         builder: (context, _) => Sa01TodayScreen(
           onConfigureSettings: () => context.go(AppRoutes.salatSettings),
+          onOpenDetail: (prayerName) =>
+              context.go(AppRoutes.salatDetail(prayerName)),
         ),
       ),
       GoRoute(
@@ -107,6 +110,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           onBack: () => context.go(AppRoutes.salat),
           onSaved: () => context.go(AppRoutes.salat),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.salatDetailPattern,
+        builder: (context, state) {
+          final prayerName = state.pathParameters['prayerName'] ?? 'fajr';
+          return Sa03PrayerDetailScreen(
+            prayerName: prayerName,
+            onBack: () => context.go(AppRoutes.salat),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.habits,
