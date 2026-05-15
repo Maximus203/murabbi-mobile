@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 
-/// Toggle iOS-like 44×26, accent ocre quand `value=true`.
+/// Toggle iOS-like 44×26, accent ocre quand `value=true`, borderDefault quand `false`.
 /// DS sheet § Toggles. Bordure 0.5px thin (P-5).
 ///
 /// Accessibilité (Copilot review #4) : `Semantics(button, toggled, label)` —
@@ -23,7 +23,7 @@ class AppToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onChanged != null;
-    final track = value ? AppColors.accent : AppColors.bgInput;
+    final track = value ? AppColors.accent : AppColors.borderDefault;
     final border = value ? AppColors.accentHover : AppColors.borderEmphasis;
     return Semantics(
       button: true,
@@ -35,7 +35,7 @@ class AppToggle extends StatelessWidget {
         child: GestureDetector(
           onTap: enabled ? () => onChanged!(!value) : null,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
+            duration: const Duration(milliseconds: 200),
             width: 44,
             height: 26,
             decoration: BoxDecoration(
@@ -44,7 +44,7 @@ class AppToggle extends StatelessWidget {
               border: Border.all(color: border, width: AppBorderWidth.thin),
             ),
             child: AnimatedAlign(
-              duration: const Duration(milliseconds: 180),
+              duration: const Duration(milliseconds: 200),
               alignment: value ? Alignment.centerRight : Alignment.centerLeft,
               child: Container(
                 margin: const EdgeInsets.all(2),
