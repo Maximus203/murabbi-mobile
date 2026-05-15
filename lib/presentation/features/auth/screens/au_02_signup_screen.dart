@@ -65,7 +65,10 @@ class _Au02SignupScreenState extends ConsumerState<Au02SignupScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
-      appBar: const AppHeader.title(title: 'Créer un compte'),
+      appBar: AppHeader.back(
+        title: 'Créer un compte',
+        onBack: () => Navigator.of(context).pop(),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
@@ -176,5 +177,13 @@ void main() {
     await tester.tap(find.text('Se connecter'));
     await tester.pump();
     expect(called, 1);
+  });
+
+  testWidgets('AU-02 affiche un bouton retour (ChevronLeft)', (tester) async {
+    await tester.pumpWidget(makeApp());
+    await tester.pumpAndSettle();
+
+    // AppHeader.back utilise LucideIcons.chevronLeft
+    expect(find.byIcon(LucideIcons.chevronLeft), findsOneWidget);
   });
 }
