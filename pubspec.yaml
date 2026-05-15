@@ -33,6 +33,12 @@ dependencies:
   # Iconographie (Phase 1 — Lucide, stroke 1.5px, cf. DS sheet)
   lucide_icons_flutter: ^3.1.13
 
+  # Logging (règle §6 CLAUDE.md — interdit print() / dart:developer)
+  logger: ^2.3.0
+
+  # Date hijri (HM-01 §15 / issue #66)
+  hijri: ^3.0.0
+
   # Utils
   equatable: ^2.0.7
 

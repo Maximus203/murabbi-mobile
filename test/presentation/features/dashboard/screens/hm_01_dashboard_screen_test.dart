@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/prayer_times_provider.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_settings.dart';
@@ -130,5 +131,36 @@ void main() {
       const PrayerFailure.settingsNotConfigured(),
       isA<PrayerSettingsNotConfiguredFailure>(),
     );
+  });
+
+  // ── Nouveaux tests — issues #57 #62 #59 #66 ───────────────────────────────
+
+  testWidgets('placeholders ne contiennent pas de jargon interne (#57)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
+    expect(find.textContaining('slice 3.D'), findsNothing);
+    expect(find.textContaining('(slice'), findsNothing);
+    expect(find.textContaining('quand les habitudes'), findsNothing);
+  });
+
+  testWidgets('_dualDate retourne le jour capitalisé (#62)', (tester) async {
+    // day = DateTime.utc(2026, 5, 12) → mardi 12 mai → doit afficher 'Mardi'
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Mardi'), findsOneWidget);
+  });
+
+  testWidgets('affiche la date avec séparateur Hijri (#66)', (tester) async {
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
+    expect(find.textContaining('·'), findsOneWidget);
+  });
+
+  testWidgets('_NextPrayerCard affiche un ChevronRight (#59)', (tester) async {
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
+    expect(find.byIcon(LucideIcons.chevronRight), findsOneWidget);
   });
 }
