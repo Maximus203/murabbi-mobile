@@ -60,6 +60,12 @@ dependencies:
   # doit importer cette lib directement (règle ADR-014 §Architecture).
   geolocator: ^13.0.0
 
+  # Affichage des assets SVG (logo, illustrations) — issue #68.
+  flutter_svg: ^2.0.10
+
+  # Lecture vidéo en boucle muette (fonds d'écran décoratifs) — issues #69 #71 #72 #79.
+  video_player: ^2.9.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -81,8 +87,17 @@ dev_dependencies:
   # satisfaire `depend_on_referenced_packages`.
   fake_async: ^1.3.1
 
+  # Fake VideoPlayerPlatform pour les widget tests (issues #69 #71 #72 #79).
+  # Transitif via video_player, déclaré explicite pour satisfaire
+  # `depend_on_referenced_packages` dans flutter_test_config.dart.
+  video_player_platform_interface: ^6.7.0
+
   # Golden tests (Phase 1 — widgets atomiques)
   golden_toolkit: ^0.15.0
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/media/

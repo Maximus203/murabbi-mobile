@@ -10,6 +10,7 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_input.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_logo.dart';
 
 /// AU-01 — Connexion email + password + Google OAuth.
 ///
@@ -75,6 +76,9 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: AppSpacing.s4),
+              // Logo + Wordmark centré
+              const Center(child: AppWordmark(width: 140)),
+              const SizedBox(height: AppSpacing.s6),
               RememberedAccountsChips(
                 onTap: (email) {
                   _emailCtrl.text = email;

@@ -12,6 +12,7 @@ import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_01_login_screen.dart';
 import 'package:murabbi_mobile/presentation/theme/app_theme.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_logo.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -179,6 +180,13 @@ void main() {
     verify(() => repo.signInWithGoogle()).called(1);
   });
 
+  testWidgets('AU-01 affiche le Logo Wordmark', (tester) async {
+    await tester.pumpWidget(makeApp());
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppWordmark), findsOneWidget);
+  });
+
   testWidgets('forgot/signup links call their callbacks', (tester) async {
     var forgotCalled = 0;
     var signUpCalled = 0;
@@ -191,6 +199,9 @@ void main() {
     await tester.pump();
     expect(forgotCalled, 1);
 
+    // Le bouton peut être hors écran (le logo wordmark ajoute de la hauteur).
+    await tester.ensureVisible(find.text('Créer un compte'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Créer un compte'));
     await tester.pump();
     expect(signUpCalled, 1);
