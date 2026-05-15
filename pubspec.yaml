@@ -60,6 +60,12 @@ dependencies:
   # doit importer cette lib directement (règle ADR-014 §Architecture).
   geolocator: ^13.0.0
 
+  # Affichage des assets SVG (logo, illustrations) — issue #68.
+  flutter_svg: ^2.0.10
+
+  # Lecture vidéo en boucle muette (fonds d'écran décoratifs) — issues #69 #71 #72 #79.
+  video_player: ^2.9.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -86,3 +92,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/media/
