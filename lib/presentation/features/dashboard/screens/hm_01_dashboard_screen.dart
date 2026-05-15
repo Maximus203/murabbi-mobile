@@ -1,7 +1,7 @@
-import 'dart:developer' as developer;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hijri/hijri_calendar.dart';
+import 'package:logger/logger.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
@@ -14,11 +14,14 @@ import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 
+// ignore: prefer_final_fields
+Logger _logger = Logger();
+
 /// HM-01 — Écran d'accueil Murabbi (slice 3.A).
 ///
-/// Agrège : salutation, date du jour, prochaine prière, placeholders
-/// habitudes / niyyah / streak (slices à venir 3.D/3.E/scoring), et
-/// barre de navigation principale.
+/// Agrège : salutation, date du jour (grégorienne + hijri), prochaine prière,
+/// placeholders habitudes / niyyah / streak (slices à venir 3.D/3.E/scoring),
+/// et barre de navigation principale.
 class Hm01DashboardScreen extends ConsumerWidget {
   final ValueChanged<AppBottomNavTab> onTabSelected;
   final VoidCallback onConfigurePrayers;
@@ -48,14 +51,16 @@ class Hm01DashboardScreen extends ConsumerWidget {
       body: SafeArea(
         bottom: false,
         child: dashboard.when(
-          loading: () =>
-              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          loading: () => const Center(
+            child: CircularProgressIndicator(
+              strokeWidth: AppBorderWidth.indicatorStroke,
+            ),
+          ),
           error: (e, stackTrace) {
             // Audit TL §B.2 PR #42 : pas de `e.toString()` brut exposé.
-            // Détail loggé via dart:developer, libellé canonique FR.
-            developer.log(
+            // Détail loggé via logger.e, libellé canonique FR.
+            _logger.e(
               'Hm01DashboardScreen render error',
-              name: 'dashboard.home',
               error: e,
               stackTrace: stackTrace,
             );
@@ -74,7 +79,7 @@ class Hm01DashboardScreen extends ConsumerWidget {
   }
 }
 
-class _DashboardBody extends StatelessWidget {
+class _DashboardBody extends ConsumerWidget {
   final DashboardState data;
   final String pseudo;
   final VoidCallback onConfigurePrayers;
@@ -90,66 +95,74 @@ class _DashboardBody extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final local = data.nowUtc.toLocal();
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s5,
-        AppSpacing.s6,
-        AppSpacing.s5,
-        AppSpacing.s5,
-      ),
-      children: [
-        // ── En-tête ────────────────────────────────────────────────
-        Text(
-          'AS-SALĀMU ʿALAYKUM',
-          style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+    return RefreshIndicator(
+      color: AppColors.accent,
+      onRefresh: () async {
+        ref.invalidate(dashboardNotifierProvider);
+        await ref.read(dashboardNotifierProvider.future);
+      },
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s5,
+          AppSpacing.s6,
+          AppSpacing.s5,
+          AppSpacing.s5,
         ),
-        const SizedBox(height: AppSpacing.s1),
-        Text(pseudo, style: AppTypography.h1),
-        const SizedBox(height: AppSpacing.s1),
-        Text(
-          _frenchDate(local),
-          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-        ),
-        const SizedBox(height: AppSpacing.s6),
-
-        // ── Prochaine prière ───────────────────────────────────────
-        _NextPrayerCard(
-          state: data,
-          onConfigurePrayers: onConfigurePrayers,
-          onOpenSalat: onOpenSalat,
-        ),
-        const SizedBox(height: AppSpacing.s4),
-
-        // ── Placeholders à venir ───────────────────────────────────
-        const _PlaceholderCard(
-          icon: LucideIcons.listChecks,
-          title: 'Habitudes du jour',
-          subtitle: 'Disponible bientôt (slice 3.D).',
-        ),
-        const SizedBox(height: AppSpacing.s3),
-        const _PlaceholderCard(
-          icon: LucideIcons.heartPulse,
-          title: 'Niyyah du jour',
-          subtitle: 'Disponible bientôt.',
-        ),
-        const SizedBox(height: AppSpacing.s3),
-        const _PlaceholderCard(
-          icon: LucideIcons.flame,
-          title: 'Série globale',
-          subtitle: 'Disponible quand les habitudes seront activées.',
-        ),
-
-        if (onSignOut != null) ...[
-          const SizedBox(height: AppSpacing.s6),
-          AppButton(
-            label: 'Se déconnecter',
-            onPressed: onSignOut,
-            variant: AppButtonVariant.ghost,
+        children: [
+          // ── En-tête ────────────────────────────────────────────────
+          Text(
+            'AS-SALĀMU ʿALAYKUM',
+            style: AppTypography.label.copyWith(color: AppColors.textSecondary),
           ),
+          const SizedBox(height: AppSpacing.s1),
+          Text(pseudo, style: AppTypography.h1),
+          const SizedBox(height: AppSpacing.s1),
+          Text(
+            _dualDate(local),
+            style:
+                AppTypography.body.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.s6),
+
+          // ── Prochaine prière ───────────────────────────────────────
+          _NextPrayerCard(
+            state: data,
+            onConfigurePrayers: onConfigurePrayers,
+            onOpenSalat: onOpenSalat,
+          ),
+          const SizedBox(height: AppSpacing.s4),
+
+          // ── Placeholders à venir ───────────────────────────────────
+          const _PlaceholderCard(
+            icon: LucideIcons.listChecks,
+            title: 'Habitudes du jour',
+            subtitle: 'Bientôt disponible.',
+          ),
+          const SizedBox(height: AppSpacing.s3),
+          const _PlaceholderCard(
+            icon: LucideIcons.heartPulse,
+            title: 'Niyyah du jour',
+            subtitle: 'Bientôt disponible.',
+          ),
+          const SizedBox(height: AppSpacing.s3),
+          const _PlaceholderCard(
+            icon: LucideIcons.flame,
+            title: 'Série globale',
+            subtitle: 'Bientôt disponible.',
+          ),
+
+          if (onSignOut != null) ...[
+            const SizedBox(height: AppSpacing.s6),
+            AppButton(
+              label: 'Se déconnecter',
+              onPressed: onSignOut,
+              variant: AppButtonVariant.ghost,
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -176,11 +189,33 @@ class _DashboardBody extends StatelessWidget {
     'samedi',
     'dimanche',
   ];
+  static const _hijriMonths = [
+    'Muharram',
+    'Safar',
+    'Rabīʿ al-Awwal',
+    'Rabīʿ al-Thānī',
+    'Jumādā al-Ūlā',
+    'Jumādā al-Ākhira',
+    'Rajab',
+    'Shaʿbān',
+    'Ramadan',
+    'Shawwāl',
+    'Dhul-Qaʿdah',
+    'Dhul-Ḥijjah',
+  ];
 
-  static String _frenchDate(DateTime local) {
+  /// Retourne la date duale : "Mardi 12 mai 2026 · 14 Dhul-Qaʿdah 1447".
+  static String _dualDate(DateTime local) {
     final wd = _weekdays[local.weekday - 1];
     final m = _months[local.month - 1];
-    return '$wd ${local.day} $m';
+    final capitalized = wd[0].toUpperCase() + wd.substring(1);
+    final gregorian = '$capitalized ${local.day} $m ${local.year}';
+
+    final hijri = HijriCalendar.fromDate(local);
+    final hijriStr =
+        '${hijri.hDay} ${_hijriMonths[hijri.hMonth - 1]} ${hijri.hYear}';
+
+    return '$gregorian · $hijriStr';
   }
 }
 
@@ -241,51 +276,72 @@ class _NextPrayerCard extends StatelessWidget {
     final mm = local.minute.toString().padLeft(2, '0');
     final label = _names[next.name] ?? next.name;
 
-    return AppCard(
-      onTap: onOpenSalat,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                LucideIcons.moonStar,
-                size: 18,
-                color: AppColors.accent,
-              ),
-              const SizedBox(width: AppSpacing.s2),
-              Text(
-                next.isTomorrow
-                    ? 'PROCHAINE PRIÈRE (DEMAIN)'
-                    : 'PROCHAINE PRIÈRE',
-                style: AppTypography.label.copyWith(color: AppColors.accent),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s3),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(label, style: AppTypography.h1),
-              const SizedBox(width: AppSpacing.s3),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  '$hh:$mm',
-                  style: AppTypography.h3.copyWith(
-                    color: AppColors.textSecondary,
+    return Semantics(
+      button: true,
+      label: 'Prochaine prière : $label à $hh:$mm. Ouvrir le détail des prières.',
+      excludeSemantics: true,
+      child: AppCard(
+        onTap: onOpenSalat,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        LucideIcons.moonStar,
+                        size: 18,
+                        color: AppColors.accent,
+                      ),
+                      const SizedBox(width: AppSpacing.s2),
+                      Text(
+                        next.isTomorrow
+                            ? 'PROCHAINE PRIÈRE (DEMAIN)'
+                            : 'PROCHAINE PRIÈRE',
+                        style:
+                            AppTypography.label.copyWith(color: AppColors.accent),
+                      ),
+                    ],
                   ),
-                ),
+                  const SizedBox(height: AppSpacing.s3),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(label, style: AppTypography.h1),
+                      const SizedBox(width: AppSpacing.s3),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          '$hh:$mm',
+                          style: AppTypography.h3.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.s2),
+                  // Audit TL §B.2 PR #42 : countdown live via dashboardTickerProvider
+                  // (StreamProvider 30s), scoped sur ce sous-widget pour éviter le
+                  // rebuild storm sur le DashboardNotifier (qui re-fetcherait les
+                  // horaires à chaque tick).
+                  _RemainingLabel(
+                    initialNow: state.nowUtc,
+                    nextUtc: next.timeUtc,
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s2),
-          // Audit TL §B.2 PR #42 : countdown live via dashboardTickerProvider
-          // (StreamProvider 30s), scoped sur ce sous-widget pour éviter le
-          // rebuild storm sur le DashboardNotifier (qui re-fetcherait les
-          // horaires à chaque tick).
-          _RemainingLabel(initialNow: state.nowUtc, nextUtc: next.timeUtc),
-        ],
+            ),
+            const Icon(
+              LucideIcons.chevronRight,
+              size: 18,
+              color: AppColors.textTertiary,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -335,7 +391,9 @@ class _PlaceholderCard extends StatelessWidget {
     return AppCard(
       child: Row(
         children: [
-          Icon(icon, size: 22, color: AppColors.textTertiary),
+          ExcludeSemantics(
+            child: Icon(icon, size: 22, color: AppColors.textTertiary),
+          ),
           const SizedBox(width: AppSpacing.s3),
           Expanded(
             child: Column(
@@ -364,7 +422,7 @@ class _GenericError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Message FR neutre, sans détail technique (audit TL §B.2 PR #42).
-    // L'erreur précise est loggée via `developer.log` côté caller.
+    // L'erreur précise est loggée via `logger.e` côté caller.
     return const Padding(
       padding: EdgeInsets.all(AppSpacing.s6),
       child: Center(

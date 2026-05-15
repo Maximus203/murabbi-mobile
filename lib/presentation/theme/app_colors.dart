@@ -59,4 +59,10 @@ class AppColors {
   static const Color categorySante = Color(0xFF5C7A8C);
   static const Color categoryMental = Color(0xFF7A6B8C);
   static const Color categorySocial = Color(0xFF9B7A4A);
+
+  // -- Utilitaires -----------------------------------------------------------
+  /// Transparent pur — utilisé pour les variantes ghost/link de AppButton (P-2).
+  /// Centralise l'usage de `Colors.transparent` pour respecter la règle P-2 :
+  /// aucune valeur couleur hors de AppColors.
+  static const Color transparent = Colors.transparent;
 }
