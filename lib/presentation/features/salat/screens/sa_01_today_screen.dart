@@ -16,6 +16,7 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 
 final _logger = Logger();
 
@@ -110,6 +111,13 @@ class _PrayersList extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s4),
       children: [
+        // Bandeau vidéo décoratif 130px (maquette ScreenSL01 — issue #71).
+        AppVideoBackground(
+          assetPath: 'assets/media/09.mp4',
+          height: 130,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
+        const SizedBox(height: AppSpacing.s3),
         Text('$completed / 5 prières', style: AppTypography.label),
         const SizedBox(height: AppSpacing.s3),
         for (final row in rows)
