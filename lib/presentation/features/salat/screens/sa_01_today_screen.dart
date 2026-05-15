@@ -1,7 +1,6 @@
-import 'dart:developer' as developer;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_day.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
@@ -17,6 +16,8 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
+
+final _logger = Logger();
 
 /// SA-01 — Écran "Aujourd'hui" Salat (slice 3.C.3).
 ///
@@ -54,9 +55,8 @@ class Sa01TodayScreen extends ConsumerWidget {
           // Audit TL §B.2 (PR #38) : ne pas exposer `e.toString()` brut
           // (risque de leak Postgrest/UX dégradée). Message FR neutre côté
           // UI, détail technique loggé pour debug.
-          developer.log(
+          _logger.e(
             'Sa01TodayScreen render error',
-            name: 'salat.today_screen',
             error: e,
             stackTrace: stackTrace,
           );
@@ -240,7 +240,7 @@ class _GenericErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Message FR neutre, sans détail technique (cf. audit TL §B.2 PR #38).
-    // L'erreur précise est loggée via `developer.log` côté caller.
+    // L'erreur précise est loggée via `_logger.e` côté caller.
     return const Padding(
       padding: EdgeInsets.all(AppSpacing.s6),
       child: Center(
