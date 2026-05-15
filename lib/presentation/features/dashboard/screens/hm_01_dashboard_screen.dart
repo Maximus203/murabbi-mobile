@@ -13,6 +13,7 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 
 // ignore: prefer_final_fields
 Logger _logger = Logger();
@@ -141,11 +142,7 @@ class _DashboardBody extends ConsumerWidget {
             subtitle: 'Bientôt disponible.',
           ),
           const SizedBox(height: AppSpacing.s3),
-          const _PlaceholderCard(
-            icon: LucideIcons.heartPulse,
-            title: 'Niyyah du jour',
-            subtitle: 'Bientôt disponible.',
-          ),
+          const _NiyyahCard(),
           const SizedBox(height: AppSpacing.s3),
           const _PlaceholderCard(
             icon: LucideIcons.flame,
@@ -373,6 +370,57 @@ class _RemainingLabel extends ConsumerWidget {
     final minutes = diff.inMinutes.remainder(60);
     if (hours == 0) return '$minutes min';
     return '${hours}h ${minutes.toString().padLeft(2, '0')}';
+  }
+}
+
+/// Card "Niyyah du jour" avec fond vidéo + overlay dégradé (issue #79).
+///
+/// La vidéo `01.mp4` tourne en boucle muette. Le texte est superposé
+/// en bas-gauche via un dégradé noir semi-transparent.
+class _NiyyahCard extends StatelessWidget {
+  const _NiyyahCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      child: AppVideoBackground(
+        assetPath: 'assets/media/01.mp4',
+        height: 120,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        overlay: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.transparent,
+                Colors.black.withValues(alpha: 0.55),
+              ],
+            ),
+          ),
+          padding: const EdgeInsets.all(AppSpacing.s4),
+          alignment: Alignment.bottomLeft,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Niyyah du jour',
+                style: AppTypography.h3.copyWith(color: AppColors.bgSurface),
+              ),
+              const SizedBox(height: AppSpacing.s1),
+              Text(
+                'Je fais cela pour plaire à Allah.',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.bgSurface.withValues(alpha: 0.85),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
