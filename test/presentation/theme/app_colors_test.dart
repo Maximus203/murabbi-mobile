@@ -53,6 +53,12 @@ void main() {
     });
   });
 
+  group('AppColors — utilitaires', () {
+    test('transparent = Colors.transparent', () {
+      expect(AppColors.transparent, Colors.transparent);
+    });
+  });
+
   group('AppColors — catégories (DS sheet § Catégories)', () {
     test('religion = #8B6F47 (= accent)', () {
       expect(AppColors.categoryReligion, const Color(0xFF8B6F47));

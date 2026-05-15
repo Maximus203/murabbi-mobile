@@ -78,7 +78,7 @@ class AppButton extends StatelessWidget {
         );
       case AppButtonVariant.ghost:
         return const _ButtonSpec(
-          background: Colors.transparent,
+          background: AppColors.transparent,
           foreground: AppColors.textPrimary,
           border: AppColors.borderEmphasis,
         );
@@ -90,7 +90,7 @@ class AppButton extends StatelessWidget {
         );
       case AppButtonVariant.link:
         return const _ButtonSpec(
-          background: Colors.transparent,
+          background: AppColors.transparent,
           foreground: AppColors.accent,
           border: null,
         );
