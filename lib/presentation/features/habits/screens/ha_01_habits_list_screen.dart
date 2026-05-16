@@ -19,20 +19,15 @@ import 'package:murabbi_mobile/presentation/widgets/app_logo.dart';
 /// habitude.
 class Ha01HabitsListScreen extends ConsumerWidget {
   final VoidCallback onCreate;
-  final VoidCallback onBack;
 
-  const Ha01HabitsListScreen({
-    super.key,
-    required this.onCreate,
-    required this.onBack,
-  });
+  const Ha01HabitsListScreen({super.key, required this.onCreate});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final habits = ref.watch(habitsNotifierProvider);
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
-      appBar: AppHeader.back(title: 'Habitudes', onBack: onBack),
+      appBar: const AppHeader.title(title: 'Habitudes'),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -95,6 +90,10 @@ class _HabitTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s4,
+        vertical: AppSpacing.s3,
+      ),
       child: Row(
         children: [
           Container(
@@ -115,13 +114,20 @@ class _HabitTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(habit.name.value, style: AppTypography.h3),
+                Text(
+                  habit.name.value,
+                  style: AppTypography.h3,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: AppSpacing.s1),
                 Text(
                   _frequencyLabel(),
                   style: AppTypography.body.copyWith(
                     color: AppColors.textSecondary,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
