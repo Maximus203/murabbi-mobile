@@ -113,17 +113,44 @@ class _DashboardBody extends ConsumerWidget {
         ),
         children: [
           // ── En-tête ────────────────────────────────────────────────
-          Text(
-            'AS-SALĀMU ʿALAYKUM',
-            style: AppTypography.label.copyWith(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: AppSpacing.s1),
-          Text(pseudo, style: AppTypography.h1),
-          const SizedBox(height: AppSpacing.s1),
-          Text(
-            _dualDate(local),
-            style:
-                AppTypography.body.copyWith(color: AppColors.textSecondary),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AS-SALĀMU ʿALAYKUM',
+                      style: AppTypography.label.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.s1),
+                    Text(pseudo, style: AppTypography.h1),
+                    const SizedBox(height: AppSpacing.s1),
+                    Text(
+                      _dualDate(local),
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Semantics(
+                label: 'Notifications',
+                button: true,
+                child: const IconButton(
+                  onPressed: null, // stub — navigation Notifications à venir (Phase 5)
+                  icon: Icon(
+                    LucideIcons.bell,
+                    size: 22,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.s6),
 

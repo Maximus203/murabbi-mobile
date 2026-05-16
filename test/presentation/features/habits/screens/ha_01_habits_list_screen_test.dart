@@ -15,6 +15,7 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_01_habits_list_screen.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_logo.dart';
 
 class _MockAuthRepo extends Mock implements AuthRepository {}
 
@@ -81,6 +82,12 @@ void main() {
 
     expect(find.text('Lecture Coran'), findsOneWidget);
     expect(find.text('+5 pts'), findsOneWidget);
+  });
+
+  testWidgets('empty state affiche AppLogo (SVG)', (tester) async {
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
+    expect(find.byType(AppLogo), findsOneWidget);
   });
 
   testWidgets('FAB tap déclenche onCreate', (tester) async {

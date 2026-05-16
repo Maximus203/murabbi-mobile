@@ -52,6 +52,51 @@ class AppProgressRing extends StatelessWidget {
   }
 }
 
+/// Variante animée de [AppProgressRing].
+///
+/// Tweens [from] → [progress] sur [duration] à chaque rebuild où `progress`
+/// change. Utilisée sur HM-01 (score quotidien) et HB-EXECUTE (timer countdown).
+class AnimatedProgressRing extends StatelessWidget {
+  final double progress;
+  final double from;
+  final Duration duration;
+  final double size;
+  final double strokeWidth;
+  final Color trackColor;
+  final Color progressColor;
+  final String? centerLabel;
+
+  AnimatedProgressRing({
+    super.key,
+    required double progress,
+    double from = 0.0,
+    this.duration = const Duration(milliseconds: 600),
+    this.size = 120,
+    this.strokeWidth = 6,
+    this.trackColor = AppColors.borderDefault,
+    this.progressColor = AppColors.accent,
+    this.centerLabel,
+  }) : progress = progress.clamp(0.0, 1.0),
+       from = from.clamp(0.0, 1.0);
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: from, end: progress),
+      duration: duration,
+      curve: Curves.easeOut,
+      builder: (_, value, _) => AppProgressRing(
+        progress: value,
+        size: size,
+        strokeWidth: strokeWidth,
+        trackColor: trackColor,
+        progressColor: progressColor,
+        centerLabel: centerLabel,
+      ),
+    );
+  }
+}
+
 class _RingPainter extends CustomPainter {
   final double progress;
   final double strokeWidth;

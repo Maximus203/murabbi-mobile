@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01_onboarding_screen.dart';
 import 'package:murabbi_mobile/presentation/theme/app_theme.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -86,4 +87,11 @@ void main() {
       expect(prefs.getBool('onboarding_seen_v1'), isTrue);
     },
   );
+
+  testWidgets('slide 1 affiche AppVideoBackground (#70)', (tester) async {
+    await tester.pumpWidget(makeApp());
+    // pump() sans pumpAndSettle : la vidéo ne se "stabilise" jamais.
+    await tester.pump();
+    expect(find.byType(AppVideoBackground), findsOneWidget);
+  });
 }

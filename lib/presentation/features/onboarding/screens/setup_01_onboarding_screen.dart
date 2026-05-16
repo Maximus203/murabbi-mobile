@@ -6,6 +6,7 @@ import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 
 /// Modèle léger d'un slide d'onboarding. Volontairement statelessful — la
 /// configuration réelle (lieu, méthode de calcul, DST) est pilotée plus tard
@@ -14,10 +15,17 @@ class _OnboardingSlide {
   final IconData icon;
   final String title;
   final String body;
+
+  /// Chemin asset vidéo décoratif optionnel (ex. 'assets/media/03.mp4').
+  /// Lorsque non null, un bandeau [AppVideoBackground] est affiché au-dessus
+  /// du cercle d'icône.
+  final String? videoAsset;
+
   const _OnboardingSlide({
     required this.icon,
     required this.title,
     required this.body,
+    this.videoAsset,
   });
 }
 
@@ -27,18 +35,21 @@ const List<_OnboardingSlide> _slides = [
     title: 'Localisation',
     body:
         'Murabbi détecte ta ville pour calculer les horaires de prière au plus juste. Tu pourras affiner manuellement dans Réglages.',
+    videoAsset: 'assets/media/03.mp4',
   ),
   _OnboardingSlide(
     icon: LucideIcons.calculator,
     title: 'Méthode de calcul',
     body:
         'Choisis la méthode (MWL, ISNA, UmmAlQura, …) qui correspond à ton école. La valeur par défaut convient à 80 % des utilisateurs.',
+    videoAsset: 'assets/media/04.mp4',
   ),
   _OnboardingSlide(
     icon: LucideIcons.clock,
     title: 'Heure d\'été automatique',
     body:
         'Les horaires s\'ajustent automatiquement avec le passage à l\'heure d\'été / d\'hiver, selon ton fuseau (Africa/Dakar par défaut).',
+    videoAsset: 'assets/media/06.mp4',
   ),
   _OnboardingSlide(
     icon: LucideIcons.circleCheck,
@@ -169,6 +180,14 @@ class _SlideView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          if (slide.videoAsset != null) ...[
+            AppVideoBackground(
+              assetPath: slide.videoAsset!,
+              height: 160,
+              borderRadius: BorderRadius.circular(AppRadius.card),
+            ),
+            const SizedBox(height: AppSpacing.s4),
+          ],
           Container(
             width: 96,
             height: 96,
