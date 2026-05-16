@@ -8,7 +8,6 @@ import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_input.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_logo.dart';
 
@@ -67,7 +66,6 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
-      appBar: const AppHeader.title(title: 'Connexion'),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
