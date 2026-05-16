@@ -39,6 +39,9 @@ class AppRadius {
 
   /// 100px — pills (avatars, badges arrondis).
   static const double pill = 100;
+
+  /// 20px — bottom sheets (coins supérieurs).
+  static const double bottomSheet = 20.0;
 }
 
 /// Largeurs de bordure — grammaire ternaire volontaire.

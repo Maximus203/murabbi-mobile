@@ -35,12 +35,16 @@ class Ha01HabitsListScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       appBar: AppHeader.back(title: 'Habitudes', onBack: onBack),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: onCreate,
-        backgroundColor: AppColors.accent,
-        foregroundColor: AppColors.bgSurface,
-        icon: const Icon(LucideIcons.plus, size: 18),
-        label: const Text('Nouvelle habitude'),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s4,
+            AppSpacing.s3,
+            AppSpacing.s4,
+            AppSpacing.s4,
+          ),
+          child: AppButton(label: 'Nouvelle habitude', onPressed: onCreate),
+        ),
       ),
       body: habits.when(
         loading: () =>

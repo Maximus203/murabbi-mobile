@@ -184,7 +184,7 @@ class _DayPastille extends StatelessWidget {
       label: 'Statut $wd ${local.day} : ${PrayerStatusVisuals.label(status)}',
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.bottomSheet),
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s2,
