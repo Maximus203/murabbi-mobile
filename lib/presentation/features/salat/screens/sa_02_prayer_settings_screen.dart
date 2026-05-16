@@ -254,17 +254,26 @@ class _MethodSection extends StatelessWidget {
         children: [
           const Text('Méthode de calcul', style: AppTypography.h3),
           const SizedBox(height: AppSpacing.s3),
-          DropdownButton<CalculationMethod>(
-            isExpanded: true,
-            value: method,
-            onChanged: (v) {
-              if (v != null) onChanged(v);
-            },
-            items: [
-              for (final m in CalculationMethod.values)
-                DropdownMenuItem(value: m, child: Text(_methodLabel(m))),
-            ],
-          ),
+          for (final m in CalculationMethod.values)
+            InkWell(
+              onTap: () => onChanged(m),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(_methodLabel(m), style: AppTypography.body),
+                    ),
+                    if (method == m)
+                      const Icon(
+                        LucideIcons.check,
+                        size: 16,
+                        color: AppColors.accent,
+                      ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -366,8 +375,8 @@ class _HighLatitudeSection extends StatelessWidget {
                   children: [
                     Icon(
                       value == rule
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_unchecked,
+                          ? LucideIcons.circleCheck
+                          : LucideIcons.circle,
                       size: 20,
                       color: value == rule
                           ? AppColors.accent

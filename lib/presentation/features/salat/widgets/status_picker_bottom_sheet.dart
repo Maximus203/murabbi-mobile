@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/presentation/features/salat/widgets/prayer_status_visuals.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
@@ -47,7 +48,9 @@ class StatusPickerBottomSheet extends StatelessWidget {
       context: context,
       backgroundColor: AppColors.bgSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.bottomSheet),
+        ),
       ),
       builder: (ctx) =>
           StatusPickerBottomSheet(prayerLabel: prayerLabel, current: current),
@@ -121,7 +124,7 @@ class _StatusTile extends StatelessWidget {
               ),
               if (selected)
                 const Icon(
-                  Icons.check,
+                  LucideIcons.check,
                   size: 18,
                   color: AppColors.textSecondary,
                 ),

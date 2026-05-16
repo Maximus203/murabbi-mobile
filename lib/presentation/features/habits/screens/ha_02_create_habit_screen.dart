@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
@@ -13,6 +14,7 @@ import 'package:murabbi_mobile/presentation/features/habits/providers/habits_not
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_badge.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
@@ -161,14 +163,22 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
             children: [
               const Text('Catégorie', style: AppTypography.h3),
               const SizedBox(height: AppSpacing.s3),
-              DropdownButton<CategoryId>(
-                isExpanded: true,
-                value: _categoryId,
-                items: [
+              Wrap(
+                spacing: AppSpacing.s2,
+                runSpacing: AppSpacing.s2,
+                children: [
                   for (final c in categories)
-                    DropdownMenuItem(value: c.id, child: Text(c.name.value)),
+                    GestureDetector(
+                      onTap: () => setState(() => _categoryId = c.id),
+                      child: AppBadge(
+                        label: c.name.value,
+                        variant: _categoryId == c.id
+                            ? AppBadgeVariant.chipActive
+                            : AppBadgeVariant.chip,
+                        dotColor: _hexToColor(c.color.value),
+                      ),
+                    ),
                 ],
-                onChanged: (v) => setState(() => _categoryId = v),
               ),
             ],
           ),
@@ -197,8 +207,8 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                       children: [
                         Icon(
                           _frequencyType == t
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_unchecked,
+                              ? LucideIcons.circleCheck
+                              : LucideIcons.circle,
                           size: 20,
                           color: _frequencyType == t
                               ? AppColors.accent
@@ -225,14 +235,14 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                       onPressed: _perDayFrequency > 1
                           ? () => setState(() => _perDayFrequency--)
                           : null,
-                      icon: const Icon(Icons.remove),
+                      icon: const Icon(LucideIcons.minus, size: 16),
                     ),
                     Text('$_perDayFrequency', style: AppTypography.h3),
                     IconButton(
                       onPressed: _perDayFrequency < 10
                           ? () => setState(() => _perDayFrequency++)
                           : null,
-                      icon: const Icon(Icons.add),
+                      icon: const Icon(LucideIcons.plus, size: 16),
                     ),
                   ],
                 ),
@@ -264,29 +274,28 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
 
         // ── Points ─────────────────────────────────────────────────
         AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Row(
-                children: [
-                  const Text('Difficulté', style: AppTypography.h3),
-                  const Spacer(),
-                  Text(
-                    '$_points pt${_points > 1 ? 's' : ''}',
-                    style: AppTypography.body.copyWith(
-                      color: AppColors.accent,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+              const Text('Difficulté', style: AppTypography.h3),
+              const Spacer(),
+              IconButton(
+                onPressed: _points > HabitPoints.min
+                    ? () => setState(() => _points--)
+                    : null,
+                icon: const Icon(LucideIcons.minus, size: 16),
               ),
-              Slider(
-                value: _points.toDouble(),
-                min: HabitPoints.min.toDouble(),
-                max: HabitPoints.max.toDouble(),
-                divisions: HabitPoints.max - HabitPoints.min,
-                activeColor: AppColors.accent,
-                onChanged: (v) => setState(() => _points = v.round()),
+              Text(
+                '$_points pt${_points > 1 ? 's' : ''}',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              IconButton(
+                onPressed: _points < HabitPoints.max
+                    ? () => setState(() => _points++)
+                    : null,
+                icon: const Icon(LucideIcons.plus, size: 16),
               ),
             ],
           ),
@@ -331,6 +340,12 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
         return t.name;
     }
   }
+}
+
+/// Convertit un token couleur au format `#RRGGBB` (DS — HexColor) en [Color].
+Color _hexToColor(String hex) {
+  final cleaned = hex.replaceFirst('#', '');
+  return Color(int.parse('FF$cleaned', radix: 16));
 }
 
 class _DayChip extends StatelessWidget {
