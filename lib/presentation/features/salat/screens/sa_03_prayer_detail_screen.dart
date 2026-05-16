@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/prayer_detail_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/salat/widgets/prayer_status_visuals.dart';
@@ -7,6 +8,7 @@ import 'package:murabbi_mobile/presentation/features/salat/widgets/status_picker
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
@@ -15,8 +17,11 @@ import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 ///
 /// Vue centrée sur **une prière** (Fajr/Dhuhr/Asr/Maghrib/Isha) avec :
 /// - statut courant + libellé,
+/// - bouton "Modifier" DS-compliant (D-04 / D-20 — issue #99),
 /// - heatmap 7 jours (lundi → dimanche local) avec pastilles colorées,
 /// - tap sur une pastille → bottom sheet pour re-éditer le statut.
+/// - légende supprimée (D-26 — issue #99) : les pastilles colorées + Semantics
+///   suffisent ; un tooltip info est disponible dans le header si besoin.
 class Sa03PrayerDetailScreen extends ConsumerWidget {
   final String prayerName;
   final VoidCallback onBack;
@@ -41,6 +46,7 @@ class Sa03PrayerDetailScreen extends ConsumerWidget {
         error: (_, _) => const _ErrorView(),
         data: (state) => _DetailBody(
           state: state,
+          prayerLabel: label,
           onDayTapped: (day, currentStatus) async {
             final picked = await StatusPickerBottomSheet.show(
               context,
@@ -60,9 +66,14 @@ class Sa03PrayerDetailScreen extends ConsumerWidget {
 
 class _DetailBody extends StatelessWidget {
   final PrayerDetailState state;
+  final String prayerLabel;
   final void Function(DateTime dayUtc, PrayerStatus current) onDayTapped;
 
-  const _DetailBody({required this.state, required this.onDayTapped});
+  const _DetailBody({
+    required this.state,
+    required this.prayerLabel,
+    required this.onDayTapped,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -108,9 +119,15 @@ class _DetailBody extends StatelessWidget {
                   ],
                 ),
               ),
-              TextButton(
-                onPressed: () => onDayTapped(today.date, todayStatus),
-                child: const Text('Modifier'),
+              // D-04 / D-20 (issue #99) : TextButton Material remplacé par
+              // AppButton.link dans un Flexible pour éviter tout overflow.
+              Flexible(
+                fit: FlexFit.loose,
+                child: AppButton(
+                  label: 'Modifier',
+                  variant: AppButtonVariant.link,
+                  onPressed: () => onDayTapped(today.date, todayStatus),
+                ),
               ),
             ],
           ),
@@ -118,9 +135,27 @@ class _DetailBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.s5),
 
         // ── Heatmap 7 jours ────────────────────────────────────────
-        Text(
-          '7 DERNIERS JOURS',
-          style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+        Row(
+          children: [
+            Text(
+              '7 DERNIERS JOURS',
+              style: AppTypography.label.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const Spacer(),
+            // D-26 (issue #99) : légende supprimée (doublon avec pastilles
+            // colorées + Semantics). Tooltip info pour accessibilité.
+            const Tooltip(
+              triggerMode: TooltipTriggerMode.tap,
+              message: _legendTooltip,
+              child: Icon(
+                LucideIcons.info,
+                size: 16,
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: AppSpacing.s3),
         AppCard(
@@ -136,28 +171,14 @@ class _DetailBody extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.s5),
-
-        // ── Légende ────────────────────────────────────────────────
-        AppCard(
-          child: Wrap(
-            spacing: AppSpacing.s3,
-            runSpacing: AppSpacing.s2,
-            children: [
-              for (final s in [
-                PrayerStatus.onTime,
-                PrayerStatus.late,
-                PrayerStatus.makeup,
-                PrayerStatus.missed,
-                PrayerStatus.pending,
-              ])
-                _LegendChip(status: s, label: PrayerStatusVisuals.label(s)),
-            ],
-          ),
-        ),
+        // D-26 : _LegendChip supprimé — cf. décision ci-dessus.
       ],
     );
   }
+
+  /// Texte de la légende accessible via le tooltip (D-26).
+  static const String _legendTooltip =
+      'À l\'heure · En retard · Rattrapée · Manquée · Non priée';
 }
 
 class _DayPastille extends StatelessWidget {
@@ -225,30 +246,6 @@ class _DayPastille extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _LegendChip extends StatelessWidget {
-  final PrayerStatus status;
-  final String label;
-
-  const _LegendChip({required this.status, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = PrayerStatusVisuals.color(status);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: AppSpacing.s2),
-        Text(label, style: AppTypography.body),
-      ],
     );
   }
 }
