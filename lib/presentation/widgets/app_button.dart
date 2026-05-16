@@ -71,16 +71,18 @@ class AppButton extends StatelessWidget {
           border: null,
         );
       case AppButtonVariant.secondary:
+        // D-12: fond légèrement teinté + bordure visible — lisible au-dessus du bgPrimary.
         return const _ButtonSpec(
-          background: AppColors.bgSurface,
+          background: AppColors.bgInput,
           foreground: AppColors.textPrimary,
           border: AppColors.borderEmphasis,
         );
       case AppButtonVariant.ghost:
+        // D-12: texte seul — ni fond ni bordure, pour les actions secondaires discrètes.
         return const _ButtonSpec(
           background: AppColors.transparent,
           foreground: AppColors.textPrimary,
-          border: AppColors.borderEmphasis,
+          border: null,
         );
       case AppButtonVariant.destructive:
         return const _ButtonSpec(
