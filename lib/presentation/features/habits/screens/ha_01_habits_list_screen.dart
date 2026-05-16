@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logger/logger.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
@@ -11,8 +11,6 @@ import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_logo.dart';
-
-final _logger = Logger();
 
 /// HA-01 — Liste des habitudes de l'utilisateur (slice 3.D).
 ///
@@ -51,8 +49,8 @@ class Ha01HabitsListScreen extends ConsumerWidget {
             const Center(child: CircularProgressIndicator(strokeWidth: 2)),
         error: (e, stackTrace) {
           // Audit TL §B.2 PR #43 : pas de `e.toString()` brut en UI.
-          // Détail loggé via logger.e, libellé canonique FR.
-          _logger.e(
+          // Détail loggé via appLog, libellé canonique FR.
+          appLog.e(
             'Ha01HabitsListScreen render error',
             error: e,
             stackTrace: stackTrace,
