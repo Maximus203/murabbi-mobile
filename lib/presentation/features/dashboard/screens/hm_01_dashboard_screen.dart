@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hijri/hijri_calendar.dart';
-import 'package:logger/logger.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
@@ -16,7 +16,6 @@ import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 
 // ignore: prefer_final_fields
-Logger _logger = Logger();
 
 /// HM-01 — Écran d'accueil Murabbi (slice 3.A).
 ///
@@ -59,8 +58,8 @@ class Hm01DashboardScreen extends ConsumerWidget {
           ),
           error: (e, stackTrace) {
             // Audit TL §B.2 PR #42 : pas de `e.toString()` brut exposé.
-            // Détail loggé via logger.e, libellé canonique FR.
-            _logger.e(
+            // Détail loggé via appLog, libellé canonique FR.
+            appLog.e(
               'Hm01DashboardScreen render error',
               error: e,
               stackTrace: stackTrace,
@@ -120,10 +119,11 @@ class _DashboardBody extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // D-30 : salutation en body/accent — plus visible
                     Text(
-                      'AS-SALĀMU ʿALAYKUM',
-                      style: AppTypography.label.copyWith(
-                        color: AppColors.textSecondary,
+                      'As-salāmu ʿalaykum',
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.accent,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.s1),
@@ -163,10 +163,11 @@ class _DashboardBody extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s4),
 
           // ── Placeholders à venir ───────────────────────────────────
+          // D-23 : subtitles neutres sans mention "slice X.Y"
           const _PlaceholderCard(
             icon: LucideIcons.listChecks,
             title: 'Habitudes du jour',
-            subtitle: 'Bientôt disponible.',
+            subtitle: "Aucune habitude pour aujourd'hui.",
           ),
           const SizedBox(height: AppSpacing.s3),
           const _NiyyahCard(),
@@ -174,15 +175,40 @@ class _DashboardBody extends ConsumerWidget {
           const _PlaceholderCard(
             icon: LucideIcons.flame,
             title: 'Série globale',
-            subtitle: 'Bientôt disponible.',
+            subtitle: 'Ta progression apparaîtra ici dès que tu auras commencé.',
           ),
 
+          // D-25 : confirmation avant déconnexion
           if (onSignOut != null) ...[
             const SizedBox(height: AppSpacing.s6),
             AppButton(
               label: 'Se déconnecter',
-              onPressed: onSignOut,
               variant: AppButtonVariant.ghost,
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Se déconnecter ?'),
+                    content: const Text(
+                      "Vous devrez vous reconnecter pour accéder à l'application.",
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Annuler'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.danger,
+                        ),
+                        child: const Text('Se déconnecter'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true) onSignOut!();
+              },
             ),
           ],
         ],
@@ -497,7 +523,7 @@ class _GenericError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Message FR neutre, sans détail technique (audit TL §B.2 PR #42).
-    // L'erreur précise est loggée via `logger.e` côté caller.
+    // L'erreur précise est loggée via appLog côté caller.
     return const Padding(
       padding: EdgeInsets.all(AppSpacing.s6),
       child: Center(
