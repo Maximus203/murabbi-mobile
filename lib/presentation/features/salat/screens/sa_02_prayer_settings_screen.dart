@@ -1,8 +1,7 @@
-import 'dart:developer' as developer;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/value_objects/calculation_method.dart';
 import 'package:murabbi_mobile/domain/value_objects/high_latitude_rule.dart';
 import 'package:murabbi_mobile/domain/value_objects/madhab.dart';
@@ -101,9 +100,8 @@ class _Sa02PrayerSettingsScreenState
       case LocationUnknownError(:final message):
         // Audit TL PR #44 : pas de message technique brut à l'utilisateur.
         // Détail loggé pour debug, snackbar avec libellé canonique FR.
-        developer.log(
+        appLog.e(
           'GPS getCurrentPosition unknown error',
-          name: 'salat.gps',
           error: message,
         );
         _showSnack('Erreur lors de la localisation. Réessaie dans un instant.');

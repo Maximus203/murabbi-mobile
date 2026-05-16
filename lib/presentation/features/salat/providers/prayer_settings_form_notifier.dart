@@ -1,6 +1,5 @@
-import 'dart:developer' as developer;
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_settings.dart';
 import 'package:murabbi_mobile/domain/value_objects/calculation_method.dart';
 import 'package:murabbi_mobile/domain/value_objects/high_latitude_rule.dart';
@@ -101,12 +100,10 @@ class PrayerSettingsFormNotifier extends Notifier<PrayerSettingsFormState> {
       return true;
     } catch (e, stackTrace) {
       // Capture l'exception pour debug. Audit TL §B.2 (PR #38) : ne pas
-      // swallow muettement. `dart:developer` est le pattern logging du
-      // projet (cf. auth_repository_impl.dart) — `package:logger` pas
-      // intégré pour le moment.
-      developer.log(
+      // swallow muettement. appLog (package:logger) est le pattern logging
+      // du projet (cf. ADR-016, règle §6 CLAUDE.md).
+      appLog.e(
         'PrayerSettingsFormNotifier.save failed',
-        name: 'salat.settings_form',
         error: e,
         stackTrace: stackTrace,
       );

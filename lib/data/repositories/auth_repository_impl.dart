@@ -1,5 +1,4 @@
-import 'dart:developer' as developer;
-
+import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/data/datasources/auth_data_source.dart';
 import 'package:murabbi_mobile/data/mappers/user_mapper.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
@@ -80,9 +79,8 @@ class AuthRepositoryImpl implements AuthRepository {
       // sur des pannes réseau / RLS / auth qui méritent un fallback UI.
       .handleError(
         (Object error, StackTrace stackTrace) {
-          developer.log(
+          appLog.e(
             'authStateChanges stream error',
-            name: 'AuthRepositoryImpl',
             error: error,
             stackTrace: stackTrace,
           );

@@ -1,8 +1,7 @@
-import 'dart:developer' as developer;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
@@ -98,9 +97,8 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
       if (mounted) widget.onCreated();
     } catch (e, stackTrace) {
       // Audit TL §B.2 PR #43 : log technique + libellé canonique FR.
-      developer.log(
+      appLog.e(
         'Ha02CreateHabitScreen submit failed',
-        name: 'habits.create',
         error: e,
         stackTrace: stackTrace,
       );
@@ -124,9 +122,8 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
         loading: () =>
             const Center(child: CircularProgressIndicator(strokeWidth: 2)),
         error: (e, stackTrace) {
-          developer.log(
+          appLog.e(
             'Ha02 categories load failed',
-            name: 'habits.create',
             error: e,
             stackTrace: stackTrace,
           );
