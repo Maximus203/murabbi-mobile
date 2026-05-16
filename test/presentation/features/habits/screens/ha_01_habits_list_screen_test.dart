@@ -46,7 +46,7 @@ void main() {
           habitRepositoryProvider.overrideWithValue(customRepo),
       ],
       child: MaterialApp(
-        home: Ha01HabitsListScreen(onCreate: () {}, onBack: () {}),
+        home: Ha01HabitsListScreen(onCreate: () {}),
       ),
     );
   }
@@ -96,10 +96,7 @@ void main() {
       ProviderScope(
         overrides: [authRepositoryProvider.overrideWithValue(authRepo)],
         child: MaterialApp(
-          home: Ha01HabitsListScreen(
-            onCreate: () => created = true,
-            onBack: () {},
-          ),
+          home: Ha01HabitsListScreen(onCreate: () => created = true),
         ),
       ),
     );

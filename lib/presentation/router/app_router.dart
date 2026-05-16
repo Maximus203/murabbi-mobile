@@ -50,7 +50,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.login,
         builder: (context, _) => Au01LoginScreen(
-          onForgotPassword: () => context.go(AppRoutes.forgot),
+          onForgotPassword: (email) =>
+              context.go(AppRoutes.forgot, extra: email),
           onSignUp: () => context.go(AppRoutes.signup),
           onAuthenticated: () {
             // Le redirect global gère la suite (onboarding ou home).
@@ -66,8 +67,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.forgot,
-        builder: (context, _) =>
-            Au03ForgotPasswordScreen(onBack: () => context.go(AppRoutes.login)),
+        builder: (context, state) => Au03ForgotPasswordScreen(
+          onBack: () => context.go(AppRoutes.login),
+          initialEmail: state.extra is String ? state.extra as String : null,
+        ),
       ),
       GoRoute(
         path: AppRoutes.verifyEmail,
@@ -135,7 +138,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.habits,
         builder: (context, _) => Ha01HabitsListScreen(
           onCreate: () => context.go(AppRoutes.habitsCreate),
-          onBack: () => context.go(AppRoutes.home),
         ),
       ),
       GoRoute(

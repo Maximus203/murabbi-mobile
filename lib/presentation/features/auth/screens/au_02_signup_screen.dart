@@ -43,6 +43,7 @@ class _Au02SignupScreenState extends ConsumerState<Au02SignupScreen> {
   }
 
   Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text;
     await ref
@@ -67,71 +68,80 @@ class _Au02SignupScreenState extends ConsumerState<Au02SignupScreen> {
       backgroundColor: AppColors.bgPrimary,
       appBar: AppHeader.back(
         title: 'Créer un compte',
-        onBack: () => Navigator.of(context).pop(),
+        onBack: widget.onSignIn,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s5,
-            vertical: AppSpacing.s4,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: AppSpacing.s4),
-              AppInput(
-                label: 'Email',
-                placeholder: 'vous@exemple.com',
-                controller: _emailCtrl,
-                leadingIcon: LucideIcons.mail,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: AppSpacing.s4),
-              AppInput(
-                label: 'Mot de passe',
-                placeholder: '8 caractères minimum',
-                controller: _passwordCtrl,
-                leadingIcon: LucideIcons.lock,
-                isPassword: true,
-              ),
-              if (state.hasError) ...[
-                const SizedBox(height: AppSpacing.s3),
-                AuthErrorBanner(failure: state.error),
-              ],
-              const SizedBox(height: AppSpacing.s4),
-              AppButton(
-                label: isLoading ? 'Création…' : 'Créer mon compte',
-                onPressed: isLoading ? null : _submit,
-              ),
-              const SizedBox(height: AppSpacing.s3),
-              AppButton(
-                label: 'Continuer avec Google',
-                onPressed: isLoading ? null : _signInWithGoogle,
-                variant: AppButtonVariant.ghost,
-              ),
-              const SizedBox(height: AppSpacing.s5),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Déjà un compte ? ',
-                    style: AppTypography.body.copyWith(
-                      color: AppColors.textSecondary,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s5,
+              vertical: AppSpacing.s4,
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: AppSpacing.s4),
+                    AppInput(
+                      label: 'Email',
+                      placeholder: 'vous@exemple.com',
+                      controller: _emailCtrl,
+                      leadingIcon: LucideIcons.mail,
+                      keyboardType: TextInputType.emailAddress,
                     ),
-                  ),
-                  TextButton(
-                    onPressed: isLoading ? null : widget.onSignIn,
-                    child: Text(
-                      'Se connecter',
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    const SizedBox(height: AppSpacing.s4),
+                    AppInput(
+                      label: 'Mot de passe',
+                      placeholder: '8 caractères minimum',
+                      controller: _passwordCtrl,
+                      leadingIcon: LucideIcons.lock,
+                      isPassword: true,
                     ),
-                  ),
-                ],
+                    if (state.hasError) ...[
+                      const SizedBox(height: AppSpacing.s3),
+                      AuthErrorBanner(failure: state.error),
+                    ],
+                    const Spacer(),
+                    const SizedBox(height: AppSpacing.s4),
+                    AppButton(
+                      label: isLoading ? 'Création…' : 'Créer mon compte',
+                      onPressed: isLoading ? null : _submit,
+                    ),
+                    const SizedBox(height: AppSpacing.s3),
+                    AppButton(
+                      label: 'Continuer avec Google',
+                      onPressed: isLoading ? null : _signInWithGoogle,
+                      variant: AppButtonVariant.ghost,
+                    ),
+                    const SizedBox(height: AppSpacing.s5),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Déjà un compte ? ',
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: isLoading ? null : widget.onSignIn,
+                          child: Text(
+                            'Se connecter',
+                            style: AppTypography.body.copyWith(
+                              color: AppColors.accent,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.s5),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
         ),
       ),

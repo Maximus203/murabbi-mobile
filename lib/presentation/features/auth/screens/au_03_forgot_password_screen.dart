@@ -19,7 +19,14 @@ import 'package:murabbi_mobile/presentation/widgets/app_input.dart';
 class Au03ForgotPasswordScreen extends ConsumerStatefulWidget {
   final VoidCallback onBack;
 
-  const Au03ForgotPasswordScreen({super.key, required this.onBack});
+  /// Email pré-rempli transmis depuis AU-01 (AU-03 UX).
+  final String? initialEmail;
+
+  const Au03ForgotPasswordScreen({
+    super.key,
+    required this.onBack,
+    this.initialEmail,
+  });
 
   @override
   ConsumerState<Au03ForgotPasswordScreen> createState() =>
@@ -31,6 +38,14 @@ class _Au03ForgotPasswordScreenState
   final _emailCtrl = TextEditingController();
   bool _submitted = false;
   bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialEmail?.isNotEmpty == true) {
+      _emailCtrl.text = widget.initialEmail!;
+    }
+  }
 
   @override
   void dispose() {
