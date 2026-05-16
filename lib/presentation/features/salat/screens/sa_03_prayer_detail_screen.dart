@@ -160,13 +160,15 @@ class _DetailBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.s3),
         AppCard(
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               for (var i = 0; i < 7; i++)
-                _DayPastille(
-                  date: state.weekDays[i].date,
-                  status: statuses[i],
-                  onTap: () => onDayTapped(state.weekDays[i].date, statuses[i]),
+                Expanded(
+                  child: _DayPastille(
+                    date: state.weekDays[i].date,
+                    status: statuses[i],
+                    onTap: () =>
+                        onDayTapped(state.weekDays[i].date, statuses[i]),
+                  ),
                 ),
             ],
           ),

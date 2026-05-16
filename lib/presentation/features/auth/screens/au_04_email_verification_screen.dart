@@ -66,64 +66,78 @@ class _Au04EmailVerificationScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
-      appBar: const AppHeader.title(title: 'Vérifie ton email'),
+      appBar: AppHeader.back(
+        title: 'Vérifie ton email',
+        onBack: widget.onChangeEmail,
+      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s5,
-            vertical: AppSpacing.s4,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: AppSpacing.s5),
-              const _MailIllustration(),
-              const SizedBox(height: AppSpacing.s5),
-              Text(
-                'Nous t\'avons envoyé un lien de vérification à :',
-                style: AppTypography.body.copyWith(
-                  color: AppColors.textSecondary,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s5,
+              vertical: AppSpacing.s4,
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: AppSpacing.s5),
+                    const _MailIllustration(),
+                    const SizedBox(height: AppSpacing.s5),
+                    Text(
+                      'Nous t\'avons envoyé un lien de vérification à :',
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      widget.email,
+                      style: AppTypography.h3
+                          .copyWith(color: AppColors.textPrimary),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.s4),
+                    Text(
+                      'Ouvre l\'email et clique sur le lien pour activer ton compte. Pense à vérifier les spams.',
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (_resentOnce) ...[
+                      const SizedBox(height: AppSpacing.s4),
+                      _ResentBanner(),
+                    ],
+                    const Spacer(),
+                    const SizedBox(height: AppSpacing.s5),
+                    AppButton(
+                      label: 'J\'ai vérifié mon email',
+                      onPressed: _resending ? null : widget.onContinue,
+                    ),
+                    const SizedBox(height: AppSpacing.s3),
+                    AppButton(
+                      label: _resending ? 'Envoi…' : 'Renvoyer l\'email',
+                      onPressed: _resending ? null : _resend,
+                      variant: AppButtonVariant.ghost,
+                    ),
+                    const SizedBox(height: AppSpacing.s3),
+                    TextButton(
+                      onPressed: _resending ? null : widget.onChangeEmail,
+                      child: Text(
+                        'Changer d\'adresse',
+                        style: AppTypography.body
+                            .copyWith(color: AppColors.accent),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.s5),
+                  ],
                 ),
-                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: AppSpacing.s2),
-              Text(
-                widget.email,
-                style: AppTypography.h3.copyWith(color: AppColors.textPrimary),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.s4),
-              Text(
-                'Ouvre l\'email et clique sur le lien pour activer ton compte. Pense à vérifier les spams.',
-                style: AppTypography.body.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              if (_resentOnce) ...[
-                const SizedBox(height: AppSpacing.s4),
-                _ResentBanner(),
-              ],
-              const SizedBox(height: AppSpacing.s5),
-              AppButton(
-                label: 'J\'ai vérifié mon email',
-                onPressed: _resending ? null : widget.onContinue,
-              ),
-              const SizedBox(height: AppSpacing.s3),
-              AppButton(
-                label: _resending ? 'Envoi…' : 'Renvoyer l\'email',
-                onPressed: _resending ? null : _resend,
-                variant: AppButtonVariant.ghost,
-              ),
-              const SizedBox(height: AppSpacing.s3),
-              TextButton(
-                onPressed: _resending ? null : widget.onChangeEmail,
-                child: Text(
-                  'Changer d\'adresse',
-                  style: AppTypography.body.copyWith(color: AppColors.accent),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
