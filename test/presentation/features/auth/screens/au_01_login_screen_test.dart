@@ -36,7 +36,7 @@ void main() {
   });
 
   Widget makeApp({
-    VoidCallback? onForgot,
+    ValueChanged<String>? onForgot,
     VoidCallback? onSignUp,
     VoidCallback? onAuth,
   }) {
@@ -45,7 +45,7 @@ void main() {
       child: MaterialApp(
         theme: AppTheme.light(),
         home: Au01LoginScreen(
-          onForgotPassword: onForgot ?? () {},
+          onForgotPassword: onForgot ?? (_) {},
           onSignUp: onSignUp ?? () {},
           onAuthenticated: onAuth ?? () {},
         ),
@@ -191,7 +191,10 @@ void main() {
     var forgotCalled = 0;
     var signUpCalled = 0;
     await tester.pumpWidget(
-      makeApp(onForgot: () => forgotCalled++, onSignUp: () => signUpCalled++),
+      makeApp(
+        onForgot: (_) => forgotCalled++,
+        onSignUp: () => signUpCalled++,
+      ),
     );
     await tester.pumpAndSettle();
 

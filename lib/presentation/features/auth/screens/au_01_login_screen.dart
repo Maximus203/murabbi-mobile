@@ -16,7 +16,8 @@ import 'package:murabbi_mobile/presentation/widgets/app_logo.dart';
 ///
 /// Navigation déléguée via callbacks (slice D les branche sur go_router).
 class Au01LoginScreen extends ConsumerStatefulWidget {
-  final VoidCallback onForgotPassword;
+  /// Appelé avec l'email saisi quand l'utilisateur tape "Mot de passe oublié".
+  final ValueChanged<String> onForgotPassword;
   final VoidCallback onSignUp;
   final VoidCallback onAuthenticated;
 
@@ -43,6 +44,7 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
   }
 
   Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text;
     await ref
@@ -67,87 +69,101 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
       backgroundColor: AppColors.bgPrimary,
       appBar: const AppHeader.title(title: 'Connexion'),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s5,
-            vertical: AppSpacing.s4,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: AppSpacing.s4),
-              // Logo + Wordmark centré
-              const Center(child: AppWordmark(width: 140)),
-              const SizedBox(height: AppSpacing.s6),
-              RememberedAccountsChips(
-                onTap: (email) {
-                  _emailCtrl.text = email;
-                },
-              ),
-              AppInput(
-                label: 'Email',
-                placeholder: 'vous@exemple.com',
-                controller: _emailCtrl,
-                leadingIcon: LucideIcons.mail,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: AppSpacing.s4),
-              AppInput(
-                label: 'Mot de passe',
-                placeholder: '••••••••',
-                controller: _passwordCtrl,
-                leadingIcon: LucideIcons.lock,
-                isPassword: true,
-              ),
-              const SizedBox(height: AppSpacing.s2),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: isLoading ? null : widget.onForgotPassword,
-                  child: Text(
-                    'Mot de passe oublié ?',
-                    style: AppTypography.body.copyWith(color: AppColors.accent),
-                  ),
-                ),
-              ),
-              if (state.hasError) ...[
-                const SizedBox(height: AppSpacing.s2),
-                AuthErrorBanner(failure: state.error),
-              ],
-              const SizedBox(height: AppSpacing.s4),
-              AppButton(
-                label: isLoading ? 'Connexion…' : 'Se connecter',
-                onPressed: isLoading ? null : _submit,
-              ),
-              const SizedBox(height: AppSpacing.s3),
-              AppButton(
-                label: 'Continuer avec Google',
-                onPressed: isLoading ? null : _signInWithGoogle,
-                variant: AppButtonVariant.ghost,
-              ),
-              const SizedBox(height: AppSpacing.s5),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Pas encore de compte ? ',
-                    style: AppTypography.body.copyWith(
-                      color: AppColors.textSecondary,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s5,
+              vertical: AppSpacing.s4,
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: AppSpacing.s4),
+                    // Logo + Wordmark centré
+                    const Center(child: AppWordmark(width: 140)),
+                    const SizedBox(height: AppSpacing.s6),
+                    RememberedAccountsChips(
+                      onTap: (email) {
+                        _emailCtrl.text = email;
+                      },
                     ),
-                  ),
-                  TextButton(
-                    onPressed: isLoading ? null : widget.onSignUp,
-                    child: Text(
-                      'Créer un compte',
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w500,
+                    AppInput(
+                      label: 'Email',
+                      placeholder: 'vous@exemple.com',
+                      controller: _emailCtrl,
+                      leadingIcon: LucideIcons.mail,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: AppSpacing.s4),
+                    AppInput(
+                      label: 'Mot de passe',
+                      placeholder: '••••••••',
+                      controller: _passwordCtrl,
+                      leadingIcon: LucideIcons.lock,
+                      isPassword: true,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: isLoading
+                            ? null
+                            : () => widget.onForgotPassword(
+                                  _emailCtrl.text.trim(),
+                                ),
+                        child: Text(
+                          'Mot de passe oublié ?',
+                          style: AppTypography.body
+                              .copyWith(color: AppColors.accent),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    if (state.hasError) ...[
+                      const SizedBox(height: AppSpacing.s2),
+                      AuthErrorBanner(failure: state.error),
+                    ],
+                    const Spacer(),
+                    const SizedBox(height: AppSpacing.s4),
+                    AppButton(
+                      label: isLoading ? 'Connexion…' : 'Se connecter',
+                      onPressed: isLoading ? null : _submit,
+                    ),
+                    const SizedBox(height: AppSpacing.s3),
+                    AppButton(
+                      label: 'Continuer avec Google',
+                      onPressed: isLoading ? null : _signInWithGoogle,
+                      variant: AppButtonVariant.ghost,
+                    ),
+                    const SizedBox(height: AppSpacing.s5),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Pas encore de compte ? ',
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: isLoading ? null : widget.onSignUp,
+                          child: Text(
+                            'Créer un compte',
+                            style: AppTypography.body.copyWith(
+                              color: AppColors.accent,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.s5),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
         ),
       ),

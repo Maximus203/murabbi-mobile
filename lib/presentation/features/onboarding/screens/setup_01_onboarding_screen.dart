@@ -129,11 +129,32 @@ class _Setup01OnboardingScreenState
             const SizedBox(height: AppSpacing.s4),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-              child: AppButton(
-                label: _saving
-                    ? 'Enregistrement…'
-                    : (_isLast ? 'Commencer' : 'Suivant'),
-                onPressed: _saving ? null : _next,
+              child: Row(
+                children: [
+                  if (_index > 0) ...[
+                    Expanded(
+                      child: AppButton(
+                        label: 'Précédent',
+                        variant: AppButtonVariant.ghost,
+                        onPressed: _saving
+                            ? null
+                            : () => _pageCtrl.previousPage(
+                                  duration: const Duration(milliseconds: 250),
+                                  curve: Curves.easeOut,
+                                ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.s3),
+                  ],
+                  Expanded(
+                    child: AppButton(
+                      label: _saving
+                          ? 'Enregistrement…'
+                          : (_isLast ? 'Commencer' : 'Suivant'),
+                      onPressed: _saving ? null : _next,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: AppSpacing.s5),
@@ -175,8 +196,11 @@ class _SlideView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s5,
+        vertical: AppSpacing.s4,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
