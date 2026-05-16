@@ -163,4 +163,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byIcon(LucideIcons.chevronRight), findsOneWidget);
   });
+
+  testWidgets('affiche l\'icône Bell dans le header (#58)', (tester) async {
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
+    expect(find.byIcon(LucideIcons.bell), findsOneWidget);
+  });
 }
