@@ -88,7 +88,10 @@ void main() {
     settingsRepo = _MockPrayerSettingsRepository();
   });
 
-  Widget pumpableScreen({VoidCallback? onConfigureSettings}) {
+  Widget pumpableScreen({
+    VoidCallback? onConfigureSettings,
+    ValueChanged<String>? onOpenDetail,
+  }) {
     return ProviderScope(
       overrides: [
         currentUserProvider.overrideWithValue(testUser),
@@ -109,6 +112,7 @@ void main() {
       child: MaterialApp(
         home: Sa01TodayScreen(
           onConfigureSettings: onConfigureSettings ?? () {},
+          onOpenDetail: onOpenDetail,
         ),
       ),
     );
@@ -152,40 +156,87 @@ void main() {
     expect(configureCalled, isTrue);
   });
 
-  testWidgets('tap sur une row ouvre le bottom sheet et déclenche markPrayer', (
-    tester,
-  ) async {
-    when(
-      () => prayerRepo.getTodayPrayers(testUser.id),
-    ).thenAnswer((_) async => emptyDay);
-    when(() => settingsRepo.get()).thenAnswer((_) async => settings);
-    when(
-      () => prayerRepo.markPrayer(
-        userId: any(named: 'userId'),
-        date: any(named: 'date'),
-        prayerName: any(named: 'prayerName'),
-        status: any(named: 'status'),
-      ),
-    ).thenAnswer((_) async {});
+  // D-22 (issue #98) — Option A : tap → navigation SA-03, plus de StatusPicker
+  testWidgets(
+    'D-22 : tap sur une row déclenche onOpenDetail (navigation SA-03)',
+    (tester) async {
+      when(
+        () => prayerRepo.getTodayPrayers(testUser.id),
+      ).thenAnswer((_) async => emptyDay);
+      when(() => settingsRepo.get()).thenAnswer((_) async => settings);
 
-    await tester.pumpWidget(pumpableScreen());
-    await tester.pumpAndSettle();
+      String? openedPrayer;
+      await tester.pumpWidget(
+        pumpableScreen(onOpenDetail: (name) => openedPrayer = name),
+      );
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Fajr'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Fajr'));
+      await tester.pumpAndSettle();
 
-    // bottom sheet ouvert : on tape "À l'heure"
-    expect(find.text("À l'heure"), findsOneWidget);
-    await tester.tap(find.text("À l'heure"));
-    await tester.pumpAndSettle();
+      expect(openedPrayer, equals('fajr'));
+      // Pas de bottom sheet ouvert (D-22 Option A — status picker retiré de SA-01).
+      expect(find.text("À l'heure"), findsNothing);
+    },
+  );
 
-    verify(
-      () => prayerRepo.markPrayer(
-        userId: testUser.id,
-        date: civilDay,
-        prayerName: 'fajr',
-        status: PrayerStatus.onTime,
-      ),
-    ).called(1);
-  });
+  // D-22 : sans onOpenDetail, le tap ne provoque pas d'erreur
+  testWidgets(
+    'D-22 : tap sans onOpenDetail ne provoque pas d\'erreur',
+    (tester) async {
+      when(
+        () => prayerRepo.getTodayPrayers(testUser.id),
+      ).thenAnswer((_) async => emptyDay);
+      when(() => settingsRepo.get()).thenAnswer((_) async => settings);
+
+      await tester.pumpWidget(pumpableScreen());
+      await tester.pumpAndSettle();
+
+      // Aucun onTap → tap silencieux, pas d'exception.
+      await tester.tap(find.text('Fajr'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+    },
+  );
+
+  // D-34 (issue #98) : noms arabes affichés sous les noms latins
+  testWidgets(
+    'D-34 : noms arabes affichés sous chaque nom latin',
+    (tester) async {
+      when(
+        () => prayerRepo.getTodayPrayers(testUser.id),
+      ).thenAnswer((_) async => emptyDay);
+      when(() => settingsRepo.get()).thenAnswer((_) async => settings);
+
+      await tester.pumpWidget(pumpableScreen());
+      await tester.pumpAndSettle();
+
+      expect(find.text('فَجْر'), findsOneWidget);
+      expect(find.text('ظُهْر'), findsOneWidget);
+      expect(find.text('عَصْر'), findsOneWidget);
+      expect(find.text('مَغْرِب'), findsOneWidget);
+      expect(find.text('عِشَاء'), findsOneWidget);
+    },
+  );
+
+  // D-19 (issue #98) : prières passées non priées à opacité réduite
+  testWidgets(
+    'D-19 : prières passées non priées rendues avec Opacity réduite',
+    (tester) async {
+      // clockNow = 14h30 UTC → fajr (04h12) et dhuhr (13h51) sont passées.
+      when(
+        () => prayerRepo.getTodayPrayers(testUser.id),
+      ).thenAnswer((_) async => emptyDay);
+      when(() => settingsRepo.get()).thenAnswer((_) async => settings);
+
+      await tester.pumpWidget(pumpableScreen());
+      await tester.pumpAndSettle();
+
+      // Au moins une Opacity à 0.55 doit être présente (prières passées pending).
+      final opacities = tester
+          .widgetList<Opacity>(find.byType(Opacity))
+          .where((o) => o.opacity < 1.0)
+          .toList();
+      expect(opacities, isNotEmpty);
+    },
+  );
 }

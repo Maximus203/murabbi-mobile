@@ -9,7 +9,6 @@ import 'package:murabbi_mobile/domain/errors/prayer_failure.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/today_salat_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/today_salat_state.dart';
 import 'package:murabbi_mobile/presentation/features/salat/widgets/prayer_status_visuals.dart';
-import 'package:murabbi_mobile/presentation/features/salat/widgets/status_picker_bottom_sheet.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -23,14 +22,15 @@ final _logger = Logger();
 /// SA-01 — Écran "Aujourd'hui" Salat (slice 3.C.3).
 ///
 /// Affiche les 5 prières du jour avec leur horaire local et leur statut.
-/// Tap sur une row → `StatusPickerBottomSheet` (Q-21 A2).
+/// D-22 (issue #98) : tap court → navigation SA-03 (Option A retenue — décision UX
+/// à valider avec Cherif). Le changement de statut se fait depuis SA-03.
 /// Si l'utilisateur n'a pas configuré ses settings (`PrayerFailure
 /// .settingsNotConfigured`), propose un CTA qui invoque [onConfigureSettings]
 /// — le routing concret est délégué au caller (slice 3.C.3c).
 class Sa01TodayScreen extends ConsumerWidget {
   final VoidCallback onConfigureSettings;
 
-  /// Callback navigation vers SL-DETAIL (issue #50). Optionnel pour ne
+  /// Callback navigation vers SA-03 (D-22 — Option A). Optionnel pour ne
   /// pas casser les tests existants qui n'instancient pas cette dépendance.
   final ValueChanged<String>? onOpenDetail;
 
@@ -65,41 +65,25 @@ class Sa01TodayScreen extends ConsumerWidget {
         },
         data: (data) => _PrayersList(
           data: data,
-          onPrayerTapped: (prayerName, current) =>
-              _handleTap(context, ref, prayerName, current),
-          onPrayerLongPress: onOpenDetail,
+          // D-22 (issue #98) — Option A : tap → navigation SA-03.
+          // Décision UX à valider avec Cherif (cf. rapport audit D-22).
+          onPrayerTapped: onOpenDetail,
         ),
       ),
     );
-  }
-
-  Future<void> _handleTap(
-    BuildContext context,
-    WidgetRef ref,
-    String prayerName,
-    PrayerStatus current,
-  ) async {
-    final picked = await StatusPickerBottomSheet.show(
-      context,
-      prayerLabel: PrayerNameLabels.label(prayerName),
-      current: current,
-    );
-    if (picked == null || picked == current) return;
-    await ref
-        .read(todaySalatNotifierProvider.notifier)
-        .markPrayer(prayerName: prayerName, status: picked);
   }
 }
 
 class _PrayersList extends StatelessWidget {
   final TodaySalatState data;
-  final void Function(String prayerName, PrayerStatus current) onPrayerTapped;
-  final ValueChanged<String>? onPrayerLongPress;
+
+  /// Callback de navigation SA-03 (D-22 Option A). Null si le caller ne
+  /// fournit pas de navigation (rétrocompatibilité tests).
+  final ValueChanged<String>? onPrayerTapped;
 
   const _PrayersList({
     required this.data,
-    required this.onPrayerTapped,
-    this.onPrayerLongPress,
+    this.onPrayerTapped,
   });
 
   @override
@@ -108,6 +92,11 @@ class _PrayersList extends StatelessWidget {
     final completed = rows
         .where((r) => r.status != PrayerStatus.pending)
         .length;
+
+    // D-19 (issue #98) : identifie la prochaine prière non priée.
+    final now = DateTime.now().toUtc();
+    final nextIndex = _nextPrayerIndex(rows, now);
+
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s4),
       children: [
@@ -120,15 +109,16 @@ class _PrayersList extends StatelessWidget {
         const SizedBox(height: AppSpacing.s3),
         Text('$completed / 5 prières', style: AppTypography.label),
         const SizedBox(height: AppSpacing.s3),
-        for (final row in rows)
+        for (var i = 0; i < rows.length; i++)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.s3),
             child: _PrayerRow(
-              row: row,
-              onTap: () => onPrayerTapped(row.name, row.status),
-              onLongPress: onPrayerLongPress == null
+              row: rows[i],
+              isPast: rows[i].utcTime.isBefore(now),
+              isNext: i == nextIndex,
+              onTap: onPrayerTapped == null
                   ? null
-                  : () => onPrayerLongPress!(row.name),
+                  : () => onPrayerTapped!(rows[i].name),
             ),
           ),
       ],
@@ -144,6 +134,18 @@ class _PrayersList extends StatelessWidget {
       _RowData('isha', times.isha, day.isha),
     ];
   }
+
+  /// Retourne l'index de la prochaine prière (première prière future encore
+  /// pending). Retourne -1 si toutes les prières sont passées ou priées.
+  static int _nextPrayerIndex(List<_RowData> rows, DateTime now) {
+    for (var i = 0; i < rows.length; i++) {
+      if (!rows[i].utcTime.isBefore(now) &&
+          rows[i].status == PrayerStatus.pending) {
+        return i;
+      }
+    }
+    return -1;
+  }
 }
 
 class _RowData {
@@ -153,57 +155,108 @@ class _RowData {
   const _RowData(this.name, this.utcTime, this.status);
 }
 
+/// Noms arabes des prières (D-34 — issue #98).
+///
+/// Affichés sous les noms latins dans chaque ligne de prière.
+const Map<String, String> _arabicPrayerNames = {
+  'fajr': 'فَجْر',
+  'dhuhr': 'ظُهْر',
+  'asr': 'عَصْر',
+  'maghrib': 'مَغْرِب',
+  'isha': 'عِشَاء',
+};
+
 class _PrayerRow extends StatelessWidget {
   final _RowData row;
-  final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-  const _PrayerRow({required this.row, required this.onTap, this.onLongPress});
+
+  /// D-22 — null si la navigation SA-03 n'est pas disponible.
+  final VoidCallback? onTap;
+
+  /// D-19 — prière passée (temps UTC antérieur à maintenant).
+  final bool isPast;
+
+  /// D-19 — prière suivante à effectuer (highlight accent).
+  final bool isNext;
+
+  const _PrayerRow({
+    required this.row,
+    required this.isPast,
+    required this.isNext,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final local = row.utcTime.toLocal();
     final hh = local.hour.toString().padLeft(2, '0');
     final mm = local.minute.toString().padLeft(2, '0');
-    return GestureDetector(
-      // GestureDetector pour capter long-press (AppCard interne ne l'expose pas).
-      // `behavior: opaque` pour ne pas laisser passer le tap au parent ListView.
-      behavior: HitTestBehavior.opaque,
-      onLongPress: onLongPress,
-      child: AppCard(
-        onTap: onTap,
-        padding: const EdgeInsets.symmetric(
-          vertical: AppSpacing.s4,
-          horizontal: AppSpacing.s4,
-        ),
-        child: Row(
-          children: [
-            Icon(
-              PrayerStatusVisuals.icon(row.status),
-              size: 22,
-              color: PrayerStatusVisuals.color(row.status),
-            ),
-            const SizedBox(width: AppSpacing.s3),
-            Expanded(
-              child: Text(
-                PrayerNameLabels.label(row.name),
-                style: AppTypography.h3,
+
+    // D-19 (issue #98) : opacité réduite pour les prières passées non priées.
+    final opacity = isPast && row.status == PrayerStatus.pending ? 0.55 : 1.0;
+
+    // D-19 : bordure accent sur la prochaine prière.
+    final cardDecoration = isNext
+        ? BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.accent, width: 1.5),
+          )
+        : null;
+
+    return Opacity(
+      opacity: opacity,
+      child: DecoratedBox(
+        decoration: cardDecoration ?? const BoxDecoration(),
+        child: AppCard(
+          // D-22 (issue #98) — Option A : tap → navigation SA-03.
+          // Décision UX à valider avec Cherif.
+          onTap: onTap,
+          padding: const EdgeInsets.symmetric(
+            vertical: AppSpacing.s4,
+            horizontal: AppSpacing.s4,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                PrayerStatusVisuals.icon(row.status),
+                size: 22,
+                color: PrayerStatusVisuals.color(row.status),
               ),
-            ),
-            Text('$hh:$mm', style: AppTypography.body),
-            // Affordance visuelle "row cliquable → écran détail" (cf. CP audit
-            // PR #51 + décision UX 2026-05-14 option A). Affiché uniquement si
-            // le détail est navigable (onLongPress présent). Le trigger
-            // d'ouverture reste le long-press (tap court ouvre le picker).
-            if (onLongPress != null) ...[
-              const SizedBox(width: AppSpacing.s2),
-              const Icon(
-                LucideIcons.chevronRight,
-                size: 16,
-                color: AppColors.textSecondary,
-                semanticLabel: 'Voir le détail (appui long)',
+              const SizedBox(width: AppSpacing.s3),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      PrayerNameLabels.label(row.name),
+                      style: AppTypography.h3,
+                    ),
+                    // D-34 (issue #98) : nom arabe sous le nom latin.
+                    if (_arabicPrayerNames[row.name] case final arabic?
+                        when arabic.isNotEmpty)
+                      Text(
+                        arabic,
+                        style: AppTypography.caption.copyWith(
+                          fontFamily: 'Noto Sans Arabic',
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                  ],
+                ),
               ),
+              Text('$hh:$mm', style: AppTypography.body),
+              // Chevron toujours visible quand la navigation SA-03 est
+              // disponible — indique un tap de navigation (D-22 Option A).
+              if (onTap != null) ...[
+                const SizedBox(width: AppSpacing.s2),
+                const Icon(
+                  LucideIcons.chevronRight,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                  semanticLabel: 'Voir le détail',
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
