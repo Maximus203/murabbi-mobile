@@ -5,13 +5,11 @@ import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 ///
 /// Source de vérité : DS sheet § Typographie.
 ///
-/// **Note implémentation** : Geist et Geist Mono ne sont actuellement pas
-/// disponibles dans `google_fonts` 6.3.x. Cette classe expose les `TextStyle`
-/// avec leurs `fontFamily` Murabbi ; la résolution effective des polices se
-/// fait via `pubspec.yaml > flutter.fonts` une fois les fichiers TTF bundlés
-/// (Phase 2 — actifs Geist + Noto Sans Arabic à fournir par le PO). Tant que
-/// les TTFs ne sont pas en place, Flutter retombe sur la police système — les
-/// tailles, poids, et tracking restent honorés.
+/// Les fichiers TTF sont bundlés dans `assets/fonts/` et déclarés dans
+/// `pubspec.yaml > flutter.fonts` (closes #97). Familles disponibles :
+/// - `Geist` (Regular 400, Medium 500, SemiBold 600)
+/// - `Geist Mono` (Regular 400, Medium 500)
+/// - `Noto Sans Arabic` (Regular 400, Medium 500)
 class AppTypography {
   AppTypography._();
 

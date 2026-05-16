@@ -94,10 +94,11 @@ class AppBadge extends StatelessWidget {
           fontWeight: FontWeight.w400,
         );
       case AppBadgeVariant.chipActive:
+        // D-10: chip sélectionné — fond accent ocre, texte blanc surface.
         return const _BadgeSpec(
-          background: AppColors.bgInput,
-          foreground: AppColors.textPrimary,
-          border: AppColors.borderEmphasis,
+          background: AppColors.accent,
+          foreground: AppColors.bgSurface,
+          border: AppColors.accent,
           fontWeight: FontWeight.w500,
         );
     }
