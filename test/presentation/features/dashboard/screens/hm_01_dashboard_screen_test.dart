@@ -22,8 +22,17 @@ import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_das
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_progress_ring.dart';
 import 'package:murabbi_mobile/services/prayer/prayer_times_service.dart';
+import 'package:murabbi_mobile/services/video_service.dart';
 
 class _MockSettingsRepo extends Mock implements PrayerSettingsRepository {}
+
+/// Stub [VideoService] sans Supabase — retourne une URL vide en test.
+/// ADR-017 : nécessaire car Supabase n'est pas initialisé dans les widget tests.
+class _StubVideoService implements VideoService {
+  const _StubVideoService();
+  @override
+  String getRemoteVideoUrl(String key) => '';
+}
 
 /// Notifier de test retournant une liste statique d'habitudes.
 class _FakeHabitsNotifier extends HabitsNotifier {
@@ -85,6 +94,9 @@ void main() {
             repository: settingsRepo,
           ),
         ),
+        // ADR-017 : Supabase non initialisé en test — on court-circuite le
+        // provider pour éviter l'assertion '_instance._isInitialized'.
+        videoServiceProvider.overrideWithValue(const _StubVideoService()),
       ],
       child: MaterialApp(
         home: Hm01DashboardScreen(
@@ -250,6 +262,8 @@ void main() {
             habitsNotifierProvider.overrideWith(
               () => _FakeHabitsNotifier([habit]),
             ),
+            // ADR-017 : Supabase non initialisé en test.
+            videoServiceProvider.overrideWithValue(const _StubVideoService()),
           ],
           child: MaterialApp(
             home: Hm01DashboardScreen(
@@ -299,6 +313,8 @@ void main() {
             habitsNotifierProvider.overrideWith(
               () => _FakeHabitsNotifier(habits),
             ),
+            // ADR-017 : Supabase non initialisé en test.
+            videoServiceProvider.overrideWithValue(const _StubVideoService()),
           ],
           child: MaterialApp(
             home: Hm01DashboardScreen(

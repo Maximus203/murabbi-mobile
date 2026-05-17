@@ -5,12 +5,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_target.dart';
+import 'package:murabbi_mobile/presentation/common/app_video_player.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_ticker_provider.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_media.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
@@ -18,7 +20,7 @@ import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_dialog.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_progress_ring.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
+import 'package:murabbi_mobile/services/video_service.dart';
 
 // ignore: prefer_final_fields
 
@@ -428,49 +430,52 @@ class _RemainingLabel extends ConsumerWidget {
 
 /// Card "Niyyah du jour" avec fond vidéo + overlay dégradé (issue #79).
 ///
-/// La vidéo `01.mp4` tourne en boucle muette. Le texte est superposé
-/// en bas-gauche via un dégradé noir semi-transparent.
-class _NiyyahCard extends StatelessWidget {
+/// La vidéo [AppMedia.niyyahVideoKey] est servie depuis Supabase Storage
+/// (ADR-017 : vidéo in-app, disponible après authentification).
+/// Elle tourne en boucle muette. Le texte est superposé en bas-gauche
+/// via un dégradé noir semi-transparent.
+class _NiyyahCard extends ConsumerWidget {
   const _NiyyahCard();
 
   @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final videoUrl = ref
+        .read(videoServiceProvider)
+        .getRemoteVideoUrl(AppMedia.niyyahVideoKey);
+
+    return AppVideoPlayer(
+      url: videoUrl,
+      height: 120,
       borderRadius: BorderRadius.circular(AppRadius.card),
-      child: AppVideoBackground(
-        assetPath: 'assets/media/01.mp4',
-        height: 120,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        overlay: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.transparent,
-                Colors.black.withValues(alpha: 0.55),
-              ],
-            ),
-          ),
-          padding: const EdgeInsets.all(AppSpacing.s4),
-          alignment: Alignment.bottomLeft,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Niyyah du jour',
-                style: AppTypography.h3.copyWith(color: AppColors.bgSurface),
-              ),
-              const SizedBox(height: AppSpacing.s1),
-              Text(
-                'Je fais cela pour plaire à Allah.',
-                style: AppTypography.body.copyWith(
-                  color: AppColors.bgSurface.withValues(alpha: 0.85),
-                ),
-              ),
+      overlay: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.transparent,
+              Colors.black.withValues(alpha: 0.55),
             ],
           ),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.s4),
+        alignment: Alignment.bottomLeft,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Niyyah du jour',
+              style: AppTypography.h3.copyWith(color: AppColors.bgSurface),
+            ),
+            const SizedBox(height: AppSpacing.s1),
+            Text(
+              'Je fais cela pour plaire à Allah.',
+              style: AppTypography.body.copyWith(
+                color: AppColors.bgSurface.withValues(alpha: 0.85),
+              ),
+            ),
+          ],
         ),
       ),
     );
