@@ -42,13 +42,33 @@ class AuthNotifier extends AsyncNotifier<User?> {
     if (state.valueOrNull != null) _rememberEmail(email);
   }
 
-  /// Q-18 : pas de pseudo à l'inscription (auto-généré côté data layer).
-  Future<void> signUp({required String email, required String password}) async {
+  /// #131 : le nom choisi à l'inscription devient le `pseudo` du profil.
+  Future<void> signUp({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
-      () => _repo.signUp(email: email, password: password),
+      () => _repo.signUp(
+        email: email,
+        password: password,
+        displayName: displayName,
+      ),
     );
     if (state.valueOrNull != null) _rememberEmail(email);
+  }
+
+  /// #116 : réinitialise un éventuel état d'erreur sans toucher à la session.
+  ///
+  /// Appelé à l'entrée/sortie des écrans Auth (login ↔ signup ↔ forgot) pour
+  /// qu'une erreur affichée sur un écran ne « fuite » pas sur le suivant.
+  /// No-op si l'état courant n'est pas une erreur — on ne perturbe ni le
+  /// loading en cours ni une session authentifiée.
+  void clearError() {
+    if (state.hasError) {
+      state = AsyncValue.data(state.valueOrNull);
+    }
   }
 
   /// Mémorise l'email après un succès — best-effort, ne propage pas

@@ -5,9 +5,7 @@ import 'package:murabbi_mobile/presentation/widgets/app_logo.dart';
 
 void main() {
   testWidgets('AppLogo affiche un SvgPicture', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: AppLogo())),
-    );
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: AppLogo())));
     expect(find.byType(SvgPicture), findsOneWidget);
   });
 

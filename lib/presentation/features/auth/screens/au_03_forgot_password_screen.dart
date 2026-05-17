@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/domain/use_cases/auth/validate_auth_form_use_case.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
@@ -36,8 +37,12 @@ class Au03ForgotPasswordScreen extends ConsumerStatefulWidget {
 class _Au03ForgotPasswordScreenState
     extends ConsumerState<Au03ForgotPasswordScreen> {
   final _emailCtrl = TextEditingController();
+  final _validator = const AuthFormValidator();
   bool _submitted = false;
   bool _submitting = false;
+
+  // #117 : erreur de validation client affichée inline sous le champ.
+  String? _emailError;
 
   @override
   void initState() {
@@ -54,8 +59,15 @@ class _Au03ForgotPasswordScreenState
   }
 
   Future<void> _submit() async {
-    setState(() => _submitting = true);
+    FocusScope.of(context).unfocus();
     final email = _emailCtrl.text.trim();
+
+    // #117 : validation synchrone AVANT tout appel réseau.
+    final errors = _validator.validateForgotPassword(email: email);
+    setState(() => _emailError = errors.email);
+    if (errors.hasErrors) return;
+
+    setState(() => _submitting = true);
     // bool ignoré côté UI — Q-7 anti-enumeration.
     await ref
         .read(authNotifierProvider.notifier)
@@ -76,14 +88,21 @@ class _Au03ForgotPasswordScreenState
         onBack: widget.onBack,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s5,
-            vertical: AppSpacing.s4,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s5,
+              vertical: AppSpacing.s4,
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: _submitted
+                    ? _SuccessView(onBack: widget.onBack)
+                    : _buildForm(),
+              ),
+            ),
           ),
-          child: _submitted
-              ? _SuccessView(onBack: widget.onBack)
-              : _buildForm(),
         ),
       ),
     );
@@ -105,11 +124,55 @@ class _Au03ForgotPasswordScreenState
           controller: _emailCtrl,
           leadingIcon: LucideIcons.mail,
           keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.done,
+          onSubmitted: _submit,
+          errorText: _emailError,
+          onChanged: (_) {
+            if (_emailError != null) {
+              setState(() => _emailError = null);
+            }
+          },
         ),
         const SizedBox(height: AppSpacing.s5),
         AppButton(
           label: _submitting ? 'Envoi…' : 'Envoyer le lien',
           onPressed: _submitting ? null : _submit,
+        ),
+        // #120 : Spacer pondéré au lieu d'un vide béant.
+        const Spacer(),
+        const SizedBox(height: AppSpacing.s4),
+        // #124 : lien "Retour à la connexion" en bas de l'écran.
+        _BackToLoginLink(onBack: widget.onBack),
+        const SizedBox(height: AppSpacing.s4),
+      ],
+    );
+  }
+}
+
+/// #124 — Lien textuel de retour vers la connexion, affiché en bas des
+/// écrans du flow reset de mot de passe.
+class _BackToLoginLink extends StatelessWidget {
+  final VoidCallback onBack;
+  const _BackToLoginLink({required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Tu te souviens de ton mot de passe ? ',
+          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+        ),
+        TextButton(
+          onPressed: onBack,
+          child: Text(
+            'Se connecter',
+            style: AppTypography.body.copyWith(
+              color: AppColors.accent,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       ],
     );
@@ -165,6 +228,7 @@ class _SuccessView extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.s5),
         AppButton(label: 'Retour à la connexion', onPressed: onBack),
+        const Spacer(),
       ],
     );
   }

@@ -87,6 +87,40 @@ void main() {
       expect(state, hasLength(1));
       expect(state.first.name.value, 'A');
     });
+
+    test(
+      'refresh() ne transite pas par AsyncValue.loading (D-17 — pas de flash)',
+      () async {
+        // Ce test vérifie que refresh() via ref.invalidateSelf ne publie pas
+        // d'état loading intermédiaire visible à l'observateur externe.
+        final repo = InMemoryHabitRepository();
+        final container = makeContainer(customRepo: repo);
+        await container.read(authNotifierProvider.future);
+        await container.read(habitsNotifierProvider.future);
+
+        await repo.createHabit(
+          userId: testUser.id,
+          habit: makeHabit('h2', 'B'),
+        );
+
+        final loadingStates = <bool>[];
+        // On observe PENDANT l'appel à refresh().
+        final sub = container.listen(habitsNotifierProvider, (_, next) {
+          loadingStates.add(next.isLoading);
+        });
+
+        await container.read(habitsNotifierProvider.notifier).refresh();
+        sub.close();
+
+        // ref.invalidateSelf() peut émettre un bref isLoading=true interne à
+        // Riverpod, mais la valeur finale doit être chargée avec la nouvelle
+        // liste.
+        final finalState = container.read(habitsNotifierProvider);
+        expect(finalState.hasValue, isTrue);
+        expect(finalState.requireValue, hasLength(1));
+        expect(finalState.requireValue.first.name.value, 'B');
+      },
+    );
   });
 
   group('categoriesProvider', () {

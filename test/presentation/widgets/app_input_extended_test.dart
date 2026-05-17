@@ -12,10 +12,7 @@ void main() {
     return MaterialApp(
       home: Scaffold(
         backgroundColor: AppColors.bgPrimary,
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: child,
-        ),
+        body: Padding(padding: const EdgeInsets.all(16), child: child),
       ),
     );
   }
@@ -94,7 +91,9 @@ void main() {
     testWidgets('shows "0/50" counter when maxLength=50 and field is empty', (
       tester,
     ) async {
-      await tester.pumpWidget(wrap(const AppInput(label: 'Bio', maxLength: 50)));
+      await tester.pumpWidget(
+        wrap(const AppInput(label: 'Bio', maxLength: 50)),
+      );
       expect(find.text('0/50'), findsOneWidget);
     });
 
@@ -129,10 +128,7 @@ void main() {
     ) async {
       await tester.pumpWidget(
         wrap(
-          const AppInput(
-            label: 'Email',
-            textInputAction: TextInputAction.next,
-          ),
+          const AppInput(label: 'Email', textInputAction: TextInputAction.next),
         ),
       );
       final tf = tester.widget<TextField>(find.byType(TextField));
@@ -172,10 +168,7 @@ void main() {
     testWidgets('onSubmitted is null by default (no crash)', (tester) async {
       await tester.pumpWidget(
         wrap(
-          const AppInput(
-            label: 'Email',
-            textInputAction: TextInputAction.done,
-          ),
+          const AppInput(label: 'Email', textInputAction: TextInputAction.done),
         ),
       );
       await tester.tap(find.byType(TextField));

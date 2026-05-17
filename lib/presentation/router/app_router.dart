@@ -16,7 +16,7 @@ import 'package:murabbi_mobile/presentation/features/salat/screens/sa_02_prayer_
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_03_prayer_detail_screen.dart';
 import 'package:murabbi_mobile/presentation/features/splash/screens/splash_screen.dart';
 import 'package:murabbi_mobile/presentation/router/auth_redirect.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
+import 'package:murabbi_mobile/presentation/router/scaffold_with_bottom_nav.dart';
 
 /// Pont Riverpod → Listenable pour le `refreshListenable` de GoRouter :
 /// chaque fois que l'état d'auth ou d'onboarding change, on notifie le
@@ -31,6 +31,11 @@ class _RouterRefreshNotifier extends ChangeNotifier {
 /// Provider du GoRouter Murabbi — lifecycle aligné sur le ProviderContainer
 /// racine. Toute la logique de redirection vit dans [authRedirect] (testable
 /// hors GoRouter).
+///
+/// D-18 (issue #103) : les 3 onglets principaux (home / salat / habits) sont
+/// encapsulés dans un [StatefulShellRoute.indexedStack] qui maintient un
+/// [Navigator] persistant par branche — plus de reconstruction à chaque
+/// switch d'onglet, plus d'appel réseau parasite sur SA-01.
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refresh = _RouterRefreshNotifier(ref);
   ref.onDispose(refresh.dispose);
@@ -46,6 +51,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       );
     },
     routes: [
+      // ── Routes hors shell (auth, splash, onboarding) ───────────────────
       GoRoute(path: AppRoutes.splash, builder: (_, _) => const SplashScreen()),
       GoRoute(
         path: AppRoutes.login,
@@ -76,10 +82,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.verifyEmail,
         builder: (context, _) => Au04EmailVerificationGate(
           onContinue: () {
-            // Une fois l'email confirme cote Supabase, on rafraichit la
-            // session puis on quitte le sas verify-email (le redirect
-            // global laisse cette route toujours autorisee — sans push
-            // explicite l'utilisateur resterait bloque ici).
+            // Une fois l'email confirmé côté Supabase, on rafraîchit la
+            // session puis on quitte le sas verify-email.
             ref.invalidate(authNotifierProvider);
             context.go(AppRoutes.home);
           },
@@ -91,97 +95,98 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, _) => Setup01OnboardingScreen(
           onCompleted: () {
             // Le redirect global pousse vers /home après la mise à jour
-            // de onboardingNotifierProvider — rien à faire ici.
+            // de onboardingNotifierProvider.
           },
         ),
       ),
-      GoRoute(
-        path: AppRoutes.home,
-        builder: (context, _) => Consumer(
-          builder: (context, ref, _) => Hm01DashboardScreen(
-            onTabSelected: (tab) => _handleTabSelection(context, tab),
-            // PR #38 (slice Salat) mergée → wiring direct vers les routes.
-            onConfigurePrayers: () => context.go(AppRoutes.salatSettings),
-            onOpenSalat: () => context.go(AppRoutes.salat),
-            // Audit TL PR #42 : Consumer + ref.read plutôt que
-            // ProviderScope.containerOf (plus idiomatique).
-            onSignOut: () => ref.read(authNotifierProvider.notifier).signOut(),
+
+      // ── Shell d'onglets — D-18 : IndexedStack, état préservé ───────────
+      // [StatefulShellRoute.indexedStack] maintient un Navigator indépendant
+      // par branche : la branche salat ne reconstruit plus au retour sur
+      // l'onglet home, et vice-versa.
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            ScaffoldWithBottomNav(navigationShell: navigationShell),
+        branches: [
+          // Branche 0 — Accueil (HM-01)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (context, _) => Consumer(
+                  builder: (context, ref, _) => Hm01DashboardScreen(
+                    // onTabSelected délégué au ScaffoldWithBottomNav.
+                    // Le dashboard n'a plus besoin de connaître les autres
+                    // onglets — navigation inter-tab via la bottom nav.
+                    onTabSelected: (_) {},
+                    onConfigurePrayers: () =>
+                        context.go(AppRoutes.salatSettings),
+                    onOpenSalat: () => context.go(AppRoutes.salat),
+                    onSignOut: () =>
+                        ref.read(authNotifierProvider.notifier).signOut(),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.salat,
-        builder: (context, _) => Sa01TodayScreen(
-          onConfigureSettings: () => context.go(AppRoutes.salatSettings),
-          onOpenDetail: (prayerName) =>
-              context.go(AppRoutes.salatDetail(prayerName)),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.salatSettings,
-        builder: (context, _) => Sa02PrayerSettingsScreen(
-          onBack: () => context.go(AppRoutes.salat),
-          onSaved: () => context.go(AppRoutes.salat),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.salatDetailPattern,
-        builder: (context, state) {
-          final prayerName = state.pathParameters['prayerName'] ?? 'fajr';
-          return Sa03PrayerDetailScreen(
-            prayerName: prayerName,
-            onBack: () => context.go(AppRoutes.salat),
-          );
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.habits,
-        builder: (context, _) => Ha01HabitsListScreen(
-          onCreate: () => context.go(AppRoutes.habitsCreate),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.habitsCreate,
-        builder: (context, _) => Ha02CreateHabitScreen(
-          onCreated: () => context.go(AppRoutes.habits),
-          onCancel: () => context.go(AppRoutes.habits),
-        ),
+
+          // Branche 1 — Salat (SA-01, SA-02, SA-03)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.salat,
+                builder: (context, _) => Sa01TodayScreen(
+                  onConfigureSettings: () =>
+                      context.go(AppRoutes.salatSettings),
+                  onOpenDetail: (prayerName) =>
+                      context.go(AppRoutes.salatDetail(prayerName)),
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'settings',
+                    builder: (context, _) => Sa02PrayerSettingsScreen(
+                      onBack: () => context.go(AppRoutes.salat),
+                      onSaved: () => context.go(AppRoutes.salat),
+                    ),
+                  ),
+                  GoRoute(
+                    path: ':prayerName/detail',
+                    builder: (context, state) {
+                      final prayerName =
+                          state.pathParameters['prayerName'] ?? 'fajr';
+                      return Sa03PrayerDetailScreen(
+                        prayerName: prayerName,
+                        onBack: () => context.go(AppRoutes.salat),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // Branche 2 — Habitudes (HA-01, HA-02)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.habits,
+                builder: (context, _) => Ha01HabitsListScreen(
+                  onCreate: () => context.go(AppRoutes.habitsCreate),
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'create',
+                    builder: (context, _) => Ha02CreateHabitScreen(
+                      onCreated: () => context.go(AppRoutes.habits),
+                      onCancel: () => context.go(AppRoutes.habits),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   );
 });
-
-/// Routage des onglets de [AppBottomNav]. Salat + Habitudes sont activés
-/// (PR #38 + PR #43 mergées), Collections / Classement affichent un
-/// snackbar tant que leurs slices ne sont pas mergées.
-void _handleTabSelection(BuildContext context, AppBottomNavTab tab) {
-  switch (tab) {
-    case AppBottomNavTab.home:
-      // Déjà sur /home.
-      return;
-    case AppBottomNavTab.salat:
-      context.go(AppRoutes.salat);
-    case AppBottomNavTab.habits:
-      context.go(AppRoutes.habits);
-    case AppBottomNavTab.collections:
-    case AppBottomNavTab.leaderboard:
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_tabLabel(tab)} arrive bientôt.')),
-      );
-  }
-}
-
-String _tabLabel(AppBottomNavTab tab) {
-  switch (tab) {
-    case AppBottomNavTab.home:
-      return 'Accueil';
-    case AppBottomNavTab.salat:
-      return 'Salat';
-    case AppBottomNavTab.habits:
-      return 'Habitudes';
-    case AppBottomNavTab.collections:
-      return 'Collections';
-    case AppBottomNavTab.leaderboard:
-      return 'Classement';
-  }
-}

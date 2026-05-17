@@ -5,15 +5,12 @@ import 'package:murabbi_mobile/presentation/widgets/app_toggle.dart';
 
 void main() {
   Widget pump(bool value, {ValueChanged<bool>? onChanged}) => MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: AppToggle(
-              value: value,
-              onChanged: onChanged ?? (v) {},
-            ),
-          ),
-        ),
-      );
+    home: Scaffold(
+      body: Center(
+        child: AppToggle(value: value, onChanged: onChanged ?? (v) {}),
+      ),
+    ),
+  );
 
   testWidgets('AppToggle — fond accent quand value=true', (tester) async {
     await tester.pumpWidget(pump(true));
@@ -24,7 +21,9 @@ void main() {
     expect(decoration.color, AppColors.accent);
   });
 
-  testWidgets('AppToggle — fond borderDefault quand value=false', (tester) async {
+  testWidgets('AppToggle — fond borderDefault quand value=false', (
+    tester,
+  ) async {
     await tester.pumpWidget(pump(false));
     final container = tester.widget<AnimatedContainer>(
       find.byType(AnimatedContainer),

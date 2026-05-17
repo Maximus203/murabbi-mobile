@@ -37,10 +37,7 @@ class LevelUpScreen extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0x00000000),
-                    Color(0xCC000000),
-                  ],
+                  colors: [Color(0x00000000), Color(0xCC000000)],
                   stops: [0.4, 1.0],
                 ),
               ),

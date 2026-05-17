@@ -15,8 +15,8 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
-
 
 /// SA-01 — Écran "Aujourd'hui" Salat (slice 3.C.3).
 ///
@@ -46,8 +46,8 @@ class Sa01TodayScreen extends ConsumerWidget {
       backgroundColor: AppColors.bgPrimary,
       appBar: const AppHeader.title(title: "Aujourd'hui"),
       body: state.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        // D-28 : skeleton list à la place du spinner seul pendant le chargement.
+        loading: () => const _SkeletonLoadingView(),
         error: (e, stackTrace) {
           if (e is PrayerSettingsNotConfiguredFailure) {
             return _NotConfiguredView(onConfigure: onConfigureSettings);
@@ -82,10 +82,7 @@ class _PrayersList extends StatelessWidget {
   /// fournit pas de navigation (rétrocompatibilité tests).
   final ValueChanged<String>? onPrayerTapped;
 
-  const _PrayersList({
-    required this.data,
-    this.onPrayerTapped,
-  });
+  const _PrayersList({required this.data, this.onPrayerTapped});
 
   @override
   Widget build(BuildContext context) {
@@ -277,13 +274,13 @@ class _NotConfiguredView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'Configurez vos prières',
+            'Configure tes prières',
             style: AppTypography.h2,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.s3),
           const Text(
-            'Indiquez votre position et votre méthode de calcul pour afficher '
+            'Indique ta position et ta méthode de calcul pour afficher '
             'les horaires précis.',
             style: AppTypography.body,
             textAlign: TextAlign.center,
@@ -292,6 +289,21 @@ class _NotConfiguredView extends StatelessWidget {
           AppButton(label: 'Configurer les prières', onPressed: onConfigure),
         ],
       ),
+    );
+  }
+}
+
+/// D-28 — Vue squelette SA-01 : 5 AppSkeletonCard simulant les lignes prières.
+class _SkeletonLoadingView extends StatelessWidget {
+  const _SkeletonLoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppSpacing.s4),
+      itemCount: 5,
+      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s3),
+      itemBuilder: (_, _) => const AppSkeletonCard(lineCount: 2),
     );
   }
 }

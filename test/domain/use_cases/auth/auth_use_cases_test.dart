@@ -98,39 +98,59 @@ void main() {
     });
   });
 
-  group('SignUpUseCase (Q-18 — pseudo auto-généré, no displayName param)', () {
+  group('SignUpUseCase (#131 — displayName devient le pseudo)', () {
     late SignUpUseCase useCase;
 
     setUp(() => useCase = SignUpUseCase(mockRepo));
 
     test('normalizes email + delegates on valid input', () async {
       when(
-        () =>
-            mockRepo.signUp(email: 'cherif@example.com', password: 'pass1234'),
+        () => mockRepo.signUp(
+          email: 'cherif@example.com',
+          password: 'pass1234',
+          displayName: 'Cherif',
+        ),
       ).thenAnswer((_) async => testUser);
 
       final result = await useCase(
         email: 'Cherif@Example.COM',
         password: 'pass1234',
+        displayName: 'Cherif',
       );
 
       expect(result, testUser);
       verify(
-        () =>
-            mockRepo.signUp(email: 'cherif@example.com', password: 'pass1234'),
+        () => mockRepo.signUp(
+          email: 'cherif@example.com',
+          password: 'pass1234',
+          displayName: 'Cherif',
+        ),
       ).called(1);
     });
 
     test('rejects malformed email', () async {
       expect(
-        () => useCase(email: 'invalid', password: 'pass1234'),
+        () => useCase(
+          email: 'invalid',
+          password: 'pass1234',
+          displayName: 'Cherif',
+        ),
         throwsArgumentError,
       );
     });
 
     test('rejects too-short password', () async {
       expect(
-        () => useCase(email: 'a@b.co', password: 'short'),
+        () =>
+            useCase(email: 'a@b.co', password: 'short', displayName: 'Cherif'),
+        throwsArgumentError,
+      );
+    });
+
+    test('rejects empty displayName', () async {
+      expect(
+        () =>
+            useCase(email: 'a@b.co', password: 'pass1234', displayName: '   '),
         throwsArgumentError,
       );
     });

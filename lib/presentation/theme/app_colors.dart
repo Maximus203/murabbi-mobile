@@ -19,6 +19,11 @@ class AppColors {
   /// Surface d'input "pressée" / état désactivé doux.
   static const Color bgInput = Color(0xFFEDE9E2);
 
+  /// Reflet shimmer — ton intermédiaire entre bgInput et bgPrimary, utilisé
+  /// pour l'animation de chargement squelette (D-28). Non présent dans le DS
+  /// sheet original, ajouté comme token dérivé.
+  static const Color bgShimmerHighlight = Color(0xFFE8E3DA);
+
   /// Texte principal — anthracite-brun.
   static const Color textPrimary = Color(0xFF1C1A16);
 
@@ -59,6 +64,25 @@ class AppColors {
   static const Color categorySante = Color(0xFF5C7A8C);
   static const Color categoryMental = Color(0xFF7A6B8C);
   static const Color categorySocial = Color(0xFF9B7A4A);
+
+  // -- Marques tierces (Google Sign-In branding, #119) -----------------------
+  /// Couleurs officielles du logo Google. Exception assumée à la règle P-2 :
+  /// les Google Sign-In Branding Guidelines imposent ces teintes exactes
+  /// pour le « G » multicolore. Centralisées ici pour rester l'unique source
+  /// de vérité couleur du repo.
+  static const Color googleBlue = Color(0xFF4285F4);
+  static const Color googleRed = Color(0xFFEA4335);
+  static const Color googleYellow = Color(0xFFFBBC05);
+  static const Color googleGreen = Color(0xFF34A853);
+
+  /// Surface blanche du bouton Google (guideline : fond blanc).
+  static const Color googleSurface = Color(0xFFFFFFFF);
+
+  /// Bordure du bouton Google (`#DADCE0` — guideline Google Identity).
+  static const Color googleBorder = Color(0xFFDADCE0);
+
+  /// Texte du bouton Google (`#3C4043` — guideline Google Identity).
+  static const Color googleText = Color(0xFF3C4043);
 
   // -- Utilitaires -----------------------------------------------------------
   /// Transparent pur — utilisé pour les variantes ghost/link de AppButton (P-2).

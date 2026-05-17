@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -137,7 +139,96 @@ void main() {
     }
   });
 
-  test('markDay() appelle MarkPrayer puis recharge l\'historique', () async {
+  test(
+    'markDay() applique la mise à jour optimiste immédiatement (D-29)',
+    () async {
+      when(
+        () => repo.getPrayerHistory(
+          userId: any(named: 'userId'),
+          from: any(named: 'from'),
+          to: any(named: 'to'),
+        ),
+      ).thenAnswer((_) async => [dayWithFajr(today, PrayerStatus.pending)]);
+
+      // markPrayer prend du temps — on vérifie que l'UI voit déjà le
+      // statut optimiste avant la fin de l'opération réseau.
+      final markCompleter = Completer<void>();
+      when(
+        () => repo.markPrayer(
+          userId: any(named: 'userId'),
+          date: any(named: 'date'),
+          prayerName: any(named: 'prayerName'),
+          status: any(named: 'status'),
+        ),
+      ).thenAnswer((_) => markCompleter.future);
+
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      await container.read(prayerDetailNotifierProvider('fajr').future);
+
+      // Lance markDay sans await — on veut lire l'état optimiste.
+      final markFuture = container
+          .read(prayerDetailNotifierProvider('fajr').notifier)
+          .markDay(dayUtc: today, status: PrayerStatus.onTime);
+
+      // Après le premier microtask (après l'update optimiste synchrone),
+      // l'état doit déjà refléter onTime — sans attendre markCompleter.
+      await Future<void>.microtask(() {});
+      final optimisticState = container
+          .read(prayerDetailNotifierProvider('fajr'))
+          .requireValue;
+      expect(optimisticState.weekStatuses.last, PrayerStatus.onTime);
+      expect(
+        container.read(prayerDetailNotifierProvider('fajr')).isLoading,
+        isFalse,
+        reason: 'Pas de spinner pendant la mise à jour optimiste',
+      );
+
+      // Finalise la persistence.
+      markCompleter.complete();
+      await markFuture;
+
+      // L'état reste onTime après confirmation réseau.
+      final finalState = container
+          .read(prayerDetailNotifierProvider('fajr'))
+          .requireValue;
+      expect(finalState.weekStatuses.last, PrayerStatus.onTime);
+    },
+  );
+
+  test('markDay() rollback si la persistence échoue (D-29)', () async {
+    when(
+      () => repo.getPrayerHistory(
+        userId: any(named: 'userId'),
+        from: any(named: 'from'),
+        to: any(named: 'to'),
+      ),
+    ).thenAnswer((_) async => [dayWithFajr(today, PrayerStatus.pending)]);
+    when(
+      () => repo.markPrayer(
+        userId: any(named: 'userId'),
+        date: any(named: 'date'),
+        prayerName: any(named: 'prayerName'),
+        status: any(named: 'status'),
+      ),
+    ).thenThrow(Exception('Network error'));
+
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    await container.read(prayerDetailNotifierProvider('fajr').future);
+
+    await container
+        .read(prayerDetailNotifierProvider('fajr').notifier)
+        .markDay(dayUtc: today, status: PrayerStatus.onTime);
+
+    // Après l'échec, l'état revient à pending (rollback).
+    final rollbackState = container
+        .read(prayerDetailNotifierProvider('fajr'))
+        .requireValue;
+    expect(rollbackState.weekStatuses.last, PrayerStatus.pending);
+  });
+
+  test('markDay() appelle MarkPrayer pour la bonne prière', () async {
     when(
       () => repo.getPrayerHistory(
         userId: any(named: 'userId'),
@@ -158,15 +249,6 @@ void main() {
     addTearDown(container.dispose);
 
     await container.read(prayerDetailNotifierProvider('fajr').future);
-
-    // Update Fajr à onTime pour aujourd'hui.
-    when(
-      () => repo.getPrayerHistory(
-        userId: any(named: 'userId'),
-        from: any(named: 'from'),
-        to: any(named: 'to'),
-      ),
-    ).thenAnswer((_) async => [dayWithFajr(today, PrayerStatus.onTime)]);
 
     await container
         .read(prayerDetailNotifierProvider('fajr').notifier)

@@ -6,10 +6,7 @@ void main() {
   testWidgets('LevelUpScreen affiche le nom de niveau', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: LevelUpScreen(
-          levelName: 'Constant',
-          onContinue: () {},
-        ),
+        home: LevelUpScreen(levelName: 'Constant', onContinue: () {}),
       ),
     );
     // pump() sans pumpAndSettle — la vidéo de fond ne se "stabilise" jamais.

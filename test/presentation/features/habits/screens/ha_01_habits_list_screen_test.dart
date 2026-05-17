@@ -15,7 +15,6 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_01_habits_list_screen.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_logo.dart';
 
 class _MockAuthRepo extends Mock implements AuthRepository {}
 
@@ -38,7 +37,10 @@ void main() {
     when(() => authRepo.getCurrentUser()).thenAnswer((_) async => testUser);
   });
 
-  Widget pumpable({InMemoryHabitRepository? customRepo}) {
+  Widget pumpable({
+    InMemoryHabitRepository? customRepo,
+    VoidCallback? onCreate,
+  }) {
     return ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(authRepo),
@@ -46,23 +48,61 @@ void main() {
           habitRepositoryProvider.overrideWithValue(customRepo),
       ],
       child: MaterialApp(
-        home: Ha01HabitsListScreen(onCreate: () {}),
+        home: Ha01HabitsListScreen(onCreate: onCreate ?? () {}),
       ),
     );
   }
 
-  testWidgets(
-    'empty state : CTA "Aucune habitude" + bouton "Nouvelle habitude"',
-    (tester) async {
-      await tester.pumpWidget(pumpable());
-      await tester.pumpAndSettle();
+  testWidgets('empty state affiche le message et le CTA', (tester) async {
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
 
-      expect(find.text('Aucune habitude pour le moment'), findsOneWidget);
-      expect(find.text('Nouvelle habitude'), findsWidgets);
-    },
-  );
+    expect(find.text('Aucune habitude configurée'), findsOneWidget);
+    expect(find.text('Ajouter une habitude'), findsOneWidget);
+  });
 
-  testWidgets('rend la liste avec nom + points', (tester) async {
+  testWidgets('#136 — le bouton CTA de l\'empty state déclenche onCreate', (
+    tester,
+  ) async {
+    var created = false;
+    await tester.pumpWidget(pumpable(onCreate: () => created = true));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Ajouter une habitude'));
+    await tester.pumpAndSettle();
+    expect(created, isTrue);
+  });
+
+  testWidgets('#136 — le bouton "+" du header déclenche le même onCreate', (
+    tester,
+  ) async {
+    var created = false;
+    await tester.pumpWidget(pumpable(onCreate: () => created = true));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Nouvelle habitude'));
+    await tester.pumpAndSettle();
+    expect(created, isTrue);
+  });
+
+  testWidgets('#135 — HA-01 n\'embarque pas de bottomNavigationBar local', (
+    tester,
+  ) async {
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
+
+    // La BottomNav appartient au ScaffoldWithBottomNav (shell). HA-01 ne
+    // doit pas en pousser une seconde qui masquerait celle du shell.
+    final scaffold = tester.widget<Scaffold>(
+      find.descendant(
+        of: find.byType(Ha01HabitsListScreen),
+        matching: find.byType(Scaffold),
+      ),
+    );
+    expect(scaffold.bottomNavigationBar, isNull);
+  });
+
+  testWidgets('rend la liste avec le nom de l\'habitude', (tester) async {
     final repo = InMemoryHabitRepository()
       ..createHabit(
         userId: testUser.id,
@@ -81,29 +121,5 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Lecture Coran'), findsOneWidget);
-    expect(find.text('+5 pts'), findsOneWidget);
-  });
-
-  testWidgets('empty state affiche AppLogo (SVG)', (tester) async {
-    await tester.pumpWidget(pumpable());
-    await tester.pumpAndSettle();
-    expect(find.byType(AppLogo), findsOneWidget);
-  });
-
-  testWidgets('FAB tap déclenche onCreate', (tester) async {
-    var created = false;
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [authRepositoryProvider.overrideWithValue(authRepo)],
-        child: MaterialApp(
-          home: Ha01HabitsListScreen(onCreate: () => created = true),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Nouvelle habitude').first);
-    await tester.pumpAndSettle();
-    expect(created, isTrue);
   });
 }

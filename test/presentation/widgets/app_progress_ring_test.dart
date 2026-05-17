@@ -13,9 +13,7 @@ void main() {
   testWidgets('AppProgressRing renders without error at 100%', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: AppProgressRing(progress: 1, centerLabel: '100'),
-        ),
+        home: Scaffold(body: AppProgressRing(progress: 1, centerLabel: '100')),
       ),
     );
     expect(find.text('100'), findsOneWidget);

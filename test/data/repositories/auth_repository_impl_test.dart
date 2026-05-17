@@ -126,12 +126,17 @@ void main() {
   group('signUp (Q-18 — no displayName param)', () {
     test('returns mapped User on success', () async {
       when(
-        () => ds.signUp(email: 'cherif@example.com', password: 'pass1234'),
+        () => ds.signUp(
+          email: 'cherif@example.com',
+          password: 'pass1234',
+          displayName: any(named: 'displayName'),
+        ),
       ).thenAnswer((_) async => validMaps());
 
       final user = await repo.signUp(
         email: 'cherif@example.com',
         password: 'pass1234',
+        displayName: 'Cherif',
       );
 
       expect(user.pseudo.value, 'Cherif');
@@ -144,11 +149,16 @@ void main() {
           () => ds.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
+            displayName: any(named: 'displayName'),
           ),
         ).thenThrow(Exception('User already registered'));
 
         expect(
-          () => repo.signUp(email: 'a@b.co', password: 'pass1234'),
+          () => repo.signUp(
+            email: 'a@b.co',
+            password: 'pass1234',
+            displayName: 'Test',
+          ),
           throwsA(isA<EmailAlreadyInUseFailure>()),
         );
       },
@@ -161,11 +171,16 @@ void main() {
           () => ds.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
+            displayName: any(named: 'displayName'),
           ),
         ).thenThrow(Exception('Password should be at least 6 characters'));
 
         expect(
-          () => repo.signUp(email: 'a@b.co', password: 'pass1234'),
+          () => repo.signUp(
+            email: 'a@b.co',
+            password: 'pass1234',
+            displayName: 'Test',
+          ),
           throwsA(isA<WeakPasswordFailure>()),
         );
       },

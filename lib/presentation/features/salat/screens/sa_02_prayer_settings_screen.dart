@@ -15,6 +15,7 @@ import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_input.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_snackbar.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_toggle.dart';
 import 'package:murabbi_mobile/services/location/location_service.dart';
 
@@ -100,10 +101,7 @@ class _Sa02PrayerSettingsScreenState
       case LocationUnknownError(:final message):
         // Audit TL PR #44 : pas de message technique brut à l'utilisateur.
         // Détail loggé pour debug, snackbar avec libellé canonique FR.
-        appLog.e(
-          'GPS getCurrentPosition unknown error',
-          error: message,
-        );
+        appLog.e('GPS getCurrentPosition unknown error', error: message);
         _showSnack('Erreur lors de la localisation. Réessaie dans un instant.');
     }
   }
@@ -113,13 +111,14 @@ class _Sa02PrayerSettingsScreenState
     String? actionLabel,
     Future<void> Function()? onAction,
   }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        action: (actionLabel != null && onAction != null)
-            ? SnackBarAction(label: actionLabel, onPressed: () => onAction())
-            : null,
-      ),
+    // #146 : SnackBar thémée DS au lieu du ScaffoldMessenger brut.
+    showAppSnackBar(
+      context,
+      message,
+      actionLabel: actionLabel,
+      onAction: (actionLabel != null && onAction != null)
+          ? () => onAction()
+          : null,
     );
   }
 
@@ -204,10 +203,12 @@ class _LocationSection extends StatelessWidget {
           const SizedBox(height: AppSpacing.s3),
           AppButton(
             key: const Key('sa02-use-position-button'),
-            label: isLocating ? 'Localisation…' : 'Ma position GPS',
+            label: isLocating ? 'Localisation en cours…' : 'Ma position GPS',
             leadingIcon: LucideIcons.locateFixed,
+            // #126 : spinner visible pendant la géolocalisation.
+            isLoading: isLocating,
             variant: AppButtonVariant.ghost,
-            onPressed: isLocating ? null : onUsePosition,
+            onPressed: onUsePosition,
           ),
           const SizedBox(height: AppSpacing.s3),
           AppInput(

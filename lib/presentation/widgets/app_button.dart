@@ -9,11 +9,20 @@ enum AppButtonVariant { primary, secondary, ghost, destructive, link }
 
 /// Bouton Murabbi — surface plate, bordure 0.5px, radius 10 (button), aucune
 /// ombre portée (P-5).
+///
+/// Accessibilité (D-33) : le widget est enveloppé dans un [Semantics] qui
+/// expose `button: true`, `enabled` et `label` pour VoiceOver / TalkBack.
+/// Le label Semantics correspond à [label] sauf si le bouton est désactivé,
+/// auquel cas les lecteurs d'écran annoncent "grisé".
 class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final AppButtonVariant variant;
   final IconData? leadingIcon;
+
+  /// Affiche un spinner à la place de l'icône leading et désactive le tap —
+  /// retour visuel pendant une opération asynchrone (issue #126).
+  final bool isLoading;
 
   const AppButton({
     super.key,
@@ -21,9 +30,11 @@ class AppButton extends StatelessWidget {
     required this.onPressed,
     this.variant = AppButtonVariant.primary,
     this.leadingIcon,
+    this.isLoading = false,
   });
 
-  bool get _enabled => onPressed != null;
+  /// Désactivé si aucun callback OU si une opération est en cours (#126).
+  bool get _enabled => onPressed != null && !isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +44,17 @@ class AppButton extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (leadingIcon != null) ...[
+        if (isLoading) ...[
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(spec.foreground),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s2),
+        ] else if (leadingIcon != null) ...[
           Icon(leadingIcon, size: 16, color: spec.foreground),
           const SizedBox(width: AppSpacing.s2),
         ],
@@ -41,22 +62,28 @@ class AppButton extends StatelessWidget {
       ],
     );
 
-    return Material(
-      color: spec.background,
-      shape: RoundedRectangleBorder(
-        side: spec.border == null
-            ? BorderSide.none
-            : BorderSide(color: spec.border!, width: AppBorderWidth.thin),
-        borderRadius: radius,
-      ),
-      child: InkWell(
-        onTap: _enabled ? onPressed : null,
-        borderRadius: radius,
-        child: Container(
-          height: kMinInteractiveDimension,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-          alignment: Alignment.center,
-          child: content,
+    // D-33 : Semantics expose button + enabled pour VoiceOver / TalkBack.
+    return Semantics(
+      button: true,
+      enabled: _enabled,
+      label: label,
+      child: Material(
+        color: spec.background,
+        shape: RoundedRectangleBorder(
+          side: spec.border == null
+              ? BorderSide.none
+              : BorderSide(color: spec.border!, width: AppBorderWidth.thin),
+          borderRadius: radius,
+        ),
+        child: InkWell(
+          onTap: _enabled ? onPressed : null,
+          borderRadius: radius,
+          child: Container(
+            height: kMinInteractiveDimension,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+            alignment: Alignment.center,
+            child: content,
+          ),
         ),
       ),
     );
@@ -65,9 +92,11 @@ class AppButton extends StatelessWidget {
   static _ButtonSpec _spec(AppButtonVariant v, {required bool enabled}) {
     switch (v) {
       case AppButtonVariant.primary:
+        // D-31 : foreground désactivé → textSecondary (ratio WCAG AA ≥ 4.5:1
+        // sur bgInput). textTertiary (#A89880) était en dessous du seuil AA.
         return _ButtonSpec(
           background: enabled ? AppColors.accent : AppColors.bgInput,
-          foreground: enabled ? AppColors.bgSurface : AppColors.textTertiary,
+          foreground: enabled ? AppColors.bgSurface : AppColors.textSecondary,
           border: null,
         );
       case AppButtonVariant.secondary:
