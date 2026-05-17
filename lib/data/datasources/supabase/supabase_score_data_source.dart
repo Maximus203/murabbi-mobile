@@ -15,17 +15,22 @@ abstract interface class SupabaseScoreDataSource {
 
 /// Implémentation Supabase de [SupabaseScoreDataSource].
 ///
-/// Table/vue consommée : `user_scores`
-/// Colonnes attendues : user_id, total_points, weekly_points, level (string),
-/// weekly_rank.
+/// Table consommée : `user_scores`
+/// Colonnes réelles (migration 20260426000000_initial_mobile_schema.sql) :
+///   user_id uuid, total_score int, weekly_score int, level int (1-6).
+///
+/// Note : `weekly_rank` n'existe pas dans le schéma DB. La position dans
+/// le leaderboard est dérivée de l'index de la row dans le résultat ordonné.
+/// Pour un accès par user_id unique (`getUserScore`), weeklyRank = 9999
+/// (sentinelle "inconnu"). Sera affiné par un RPC de ranking si le besoin
+/// s'en fait sentir (cf. Q-26).
 ///
 /// Note : non couvert par tests unitaires (la fluent API Supabase est trop
 /// fragile à mocker — pattern aligné sur `SupabaseSalatDataSource`).
 /// Sera couvert par les integration tests Slice 5.B+.
 class SupabaseScoreDataSourceImpl implements SupabaseScoreDataSource {
   static const _table = 'user_scores';
-  static const _columns =
-      'user_id, total_points, weekly_points, level, weekly_rank';
+  static const _columns = 'user_id, total_score, weekly_score, level';
 
   final sb.SupabaseClient _client;
 
@@ -43,7 +48,8 @@ class SupabaseScoreDataSourceImpl implements SupabaseScoreDataSource {
       throw const ScoreFailure.notFound(message: 'user_scores row absent');
     }
 
-    return _mapRow(row);
+    // weeklyRank inconnu pour un accès unitaire — sentinelle 9999.
+    return _mapRow(row, rank: 9999);
   }
 
   @override
@@ -51,22 +57,30 @@ class SupabaseScoreDataSourceImpl implements SupabaseScoreDataSource {
     final rows = await _client
         .from(_table)
         .select(_columns)
-        .order('total_points', ascending: false)
+        .order('total_score', ascending: false)
         .limit(limit);
 
+    // Le rang hebdomadaire est dérivé de la position dans le résultat
+    // (ordonné par total_score desc) faute de colonne weekly_rank en DB.
     return rows
-        .map<UserScore>((r) => _mapRow(Map<String, dynamic>.from(r)))
+        .asMap()
+        .entries
+        .map<UserScore>(
+          (e) => _mapRow(Map<String, dynamic>.from(e.value), rank: e.key + 1),
+        )
         .toList();
   }
 
   /// Mappe une row Supabase (Map) vers [UserScore].
-  UserScore _mapRow(Map<String, dynamic> row) {
+  ///
+  /// [rank] : position dans le leaderboard (1-based) ou 9999 si inconnu.
+  UserScore _mapRow(Map<String, dynamic> row, {required int rank}) {
     return UserScore(
       userId: UserId(row['user_id'] as String),
-      totalPoints: row['total_points'] as int,
-      weeklyPoints: row['weekly_points'] as int? ?? 0,
-      currentLevel: Level.fromString(row['level'] as String),
-      weeklyRank: row['weekly_rank'] as int? ?? 9999,
+      totalPoints: row['total_score'] as int,
+      weeklyPoints: row['weekly_score'] as int? ?? 0,
+      currentLevel: Level.fromInt(row['level'] as int),
+      weeklyRank: rank,
     );
   }
 }

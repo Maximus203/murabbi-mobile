@@ -20,7 +20,6 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_clock_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_progress_ring.dart';
 import 'package:murabbi_mobile/services/prayer/prayer_times_service.dart';
 import 'package:murabbi_mobile/services/video_service.dart';
 

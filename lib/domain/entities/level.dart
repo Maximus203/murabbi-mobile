@@ -50,4 +50,18 @@ enum Level {
     }
     throw ArgumentError.value(value, 'level', 'unknown level');
   }
+
+  /// Parse le niveau depuis l'entier DB Supabase (`user_scores.level int`).
+  /// Mapping : 1 = aspirant … 6 = murabbi (index décalé de 1).
+  /// Rejette toute valeur hors [1, 6] par `ArgumentError`.
+  static Level fromInt(int value) {
+    if (value >= 1 && value <= Level.values.length) {
+      return Level.values[value - 1];
+    }
+    throw ArgumentError.value(
+      value,
+      'level',
+      'level must be between 1 and ${Level.values.length}',
+    );
+  }
 }
