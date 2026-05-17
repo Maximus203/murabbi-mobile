@@ -278,13 +278,13 @@ class _NotConfiguredView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'Configurez vos prières',
+            'Configure tes prières',
             style: AppTypography.h2,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.s3),
           const Text(
-            'Indiquez votre position et votre méthode de calcul pour afficher '
+            'Indique ta position et ta méthode de calcul pour afficher '
             'les horaires précis.',
             style: AppTypography.body,
             textAlign: TextAlign.center,

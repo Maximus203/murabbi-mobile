@@ -41,6 +41,17 @@ class AppTheme {
         color: AppColors.borderDefault,
         thickness: 0.5,
       ),
+      // #146 : SnackBars cohérentes avec la palette sable/ocre. Le défaut
+      // Material applique un fond noir « inversé » — on force le fond DS
+      // (anthracite-brun) et un texte clair, y compris pour les SnackBars
+      // créées hors `showAppSnackBar` (ex. shell de navigation).
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.textPrimary,
+        contentTextStyle: AppTypography.body.copyWith(
+          color: AppColors.bgSurface,
+        ),
+        actionTextColor: AppColors.accent,
+      ),
     );
   }
 }

@@ -20,15 +20,21 @@ class AppButton extends StatelessWidget {
   final AppButtonVariant variant;
   final IconData? leadingIcon;
 
+  /// Affiche un spinner à la place de l'icône leading et désactive le tap —
+  /// retour visuel pendant une opération asynchrone (issue #126).
+  final bool isLoading;
+
   const AppButton({
     super.key,
     required this.label,
     required this.onPressed,
     this.variant = AppButtonVariant.primary,
     this.leadingIcon,
+    this.isLoading = false,
   });
 
-  bool get _enabled => onPressed != null;
+  /// Désactivé si aucun callback OU si une opération est en cours (#126).
+  bool get _enabled => onPressed != null && !isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +44,17 @@ class AppButton extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (leadingIcon != null) ...[
+        if (isLoading) ...[
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(spec.foreground),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s2),
+        ] else if (leadingIcon != null) ...[
           Icon(leadingIcon, size: 16, color: spec.foreground),
           const SizedBox(width: AppSpacing.s2),
         ],
