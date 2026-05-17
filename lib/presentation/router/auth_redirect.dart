@@ -33,6 +33,11 @@ abstract class AppRoutes {
   static String habitEdit(String id) => '/habits/$id/edit';
   static const habitEditPattern = '/habits/:id/edit';
 
+  /// Habitudes — HB-DETAIL détail (issue #153). Chemin dynamique :
+  /// `/habits/<id>`.
+  static String habitDetail(String id) => '/habits/$id';
+  static const habitDetailPattern = '/habits/:id';
+
   /// Catégories — HB-03 liste (issue #150).
   static const categories = '/categories';
 

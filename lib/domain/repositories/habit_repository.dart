@@ -22,6 +22,15 @@ abstract interface class HabitRepository {
   /// Cf. spec v1.5 § 2.3.
   Future<void> logHabit(HabitLog log);
 
+  /// Renvoie l'historique de logs d'une habitude sur la plage [from]..[to]
+  /// (inclus). Nécessaire pour les stats / heatmap de HB-DETAIL
+  /// (`GetHabitStatsUseCase` — issue #153).
+  Future<List<HabitLog>> getLogsForHabit({
+    required HabitId habitId,
+    required DateTime from,
+    required DateTime to,
+  });
+
   // -------------------- Subtasks (spec v1.5 § 2.2 / § 3.3) --------------------
   Future<List<HabitSubtask>> getSubtasks(HabitId habitId);
   Future<HabitSubtask> addSubtask(HabitSubtask subtask);
