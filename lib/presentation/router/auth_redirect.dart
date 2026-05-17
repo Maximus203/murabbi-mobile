@@ -38,7 +38,6 @@ abstract class AppRoutes {
   static String habitDetail(String id) => '/habits/$id';
   static const habitDetailPattern = '/habits/:id';
 
-
   /// Catégories — HB-03 liste (issue #150).
   static const categories = '/categories';
 
