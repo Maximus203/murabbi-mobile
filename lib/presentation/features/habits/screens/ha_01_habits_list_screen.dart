@@ -6,6 +6,8 @@ import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/habits_filter.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/habits_filter_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/today_habit_statuses_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/widgets/habit_row.dart';
@@ -14,7 +16,9 @@ import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_chip.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_filter_chips.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_search_bar.dart';
 
 /// HA-01 — Liste des habitudes de l'utilisateur (slice 3.D).
 ///
@@ -112,14 +116,65 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
         data: (list) {
           if (list.isEmpty) return _EmptyView(onCreate: widget.onCreate);
 
-          // Filtrage local par catégorie sélectionnée.
+          // Recherche + filtre statut + tri (issue #94) appliqués via le
+          // provider dédié — `HabitsNotifier` n'est jamais retouché.
+          final searchedSorted = ref.watch(filteredHabitsProvider);
+
+          // Filtrage local additionnel par catégorie sélectionnée (#85).
           final filtered = _selectedCategoryId == null
-              ? list
-              : list.where((h) => h.categoryId == _selectedCategoryId).toList();
+              ? searchedSorted
+              : searchedSorted
+                    .where((h) => h.categoryId == _selectedCategoryId)
+                    .toList();
+
+          final filter = ref.watch(habitsFilterProvider);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── Barre de recherche (issue #94) ──────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s4,
+                  AppSpacing.s3,
+                  AppSpacing.s4,
+                  0,
+                ),
+                child: AppSearchBar(
+                  placeholder: 'Rechercher une habitude',
+                  onChanged: (q) =>
+                      ref.read(habitsFilterProvider.notifier).setQuery(q),
+                ),
+              ),
+
+              // ── Chips filtre statut + menu tri (issue #94) ──────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s4,
+                  AppSpacing.s3,
+                  AppSpacing.s4,
+                  0,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: AppFilterChips(
+                        labels: const ['Toutes', 'Actives', 'Inactives'],
+                        selectedIndex: filter.status.index,
+                        onChanged: (i) => ref
+                            .read(habitsFilterProvider.notifier)
+                            .setStatus(HabitFilterStatus.values[i]),
+                      ),
+                    ),
+                    _SortMenuButton(
+                      current: filter.sortBy,
+                      onSelected: (s) =>
+                          ref.read(habitsFilterProvider.notifier).setSortBy(s),
+                    ),
+                  ],
+                ),
+              ),
+
               // ── Chips filtres catégorie ─────────────────────────────
               categoriesAsync.when(
                 loading: () => const SizedBox.shrink(),
@@ -148,30 +203,23 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
                   ),
                 ),
 
-              // ── Liste ───────────────────────────────────────────────
+              // ── Liste groupée par catégorie (issue #94) ─────────────
               Expanded(
                 child: filtered.isEmpty
                     ? Center(
                         child: Text(
-                          'Aucune habitude dans cette catégorie.',
+                          'Aucune habitude ne correspond.',
                           style: AppTypography.body.copyWith(
                             color: AppColors.textSecondary,
                           ),
                           textAlign: TextAlign.center,
                         ),
                       )
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(AppSpacing.s4),
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: AppSpacing.s3),
-                        itemBuilder: (_, i) => _HabitTile(
-                          habit: filtered[i],
-                          onToggle: () => _toggle(filtered[i].id),
-                          onOpen: widget.onOpenHabit == null
-                              ? null
-                              : () => widget.onOpenHabit!(filtered[i].id.value),
-                        ),
+                    : _SectionedHabitsList(
+                        habits: filtered,
+                        categories: categoriesAsync.valueOrNull ?? const [],
+                        onToggle: _toggle,
+                        onOpenHabit: widget.onOpenHabit,
                       ),
               ),
             ],
@@ -192,6 +240,121 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
         const SnackBar(content: Text('Impossible de mettre à jour. Réessaie.')),
       );
     }
+  }
+}
+
+/// Bouton menu de sélection du critère de tri (issue #94).
+class _SortMenuButton extends StatelessWidget {
+  final HabitSortBy current;
+  final ValueChanged<HabitSortBy> onSelected;
+
+  const _SortMenuButton({required this.current, required this.onSelected});
+
+  /// Libellé FR d'un critère de tri.
+  static String _label(HabitSortBy s) {
+    switch (s) {
+      case HabitSortBy.name:
+        return 'Nom (A-Z)';
+      case HabitSortBy.points:
+        return 'Points';
+      case HabitSortBy.category:
+        return 'Catégorie';
+      case HabitSortBy.createdAt:
+        return 'Date de création';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<HabitSortBy>(
+      tooltip: 'Trier',
+      icon: const Icon(
+        LucideIcons.arrowUpDown,
+        size: 20,
+        color: AppColors.textPrimary,
+      ),
+      onSelected: onSelected,
+      itemBuilder: (_) => [
+        for (final s in HabitSortBy.values)
+          PopupMenuItem<HabitSortBy>(
+            value: s,
+            child: Row(
+              children: [
+                Icon(
+                  s == current ? LucideIcons.check : LucideIcons.minus,
+                  size: 16,
+                  color: s == current
+                      ? AppColors.accent
+                      : AppColors.transparent,
+                ),
+                const SizedBox(width: AppSpacing.s2),
+                Text(_label(s), style: AppTypography.body),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Liste d'habitudes groupée par catégorie avec headers de section (issue #94).
+///
+/// Chaque section affiche un header `Label` uppercase (nom de catégorie) suivi
+/// des habitudes de cette catégorie. L'ordre intra-section est celui issu du
+/// tri appliqué par [HabitsFilter].
+class _SectionedHabitsList extends StatelessWidget {
+  final List<Habit> habits;
+  final List<Category> categories;
+  final ValueChanged<HabitId> onToggle;
+  final ValueChanged<String>? onOpenHabit;
+
+  const _SectionedHabitsList({
+    required this.habits,
+    required this.categories,
+    required this.onToggle,
+    required this.onOpenHabit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Groupement en conservant l'ordre d'apparition des catégories.
+    final order = <CategoryId>[];
+    final groups = <CategoryId, List<Habit>>{};
+    for (final h in habits) {
+      if (!groups.containsKey(h.categoryId)) order.add(h.categoryId);
+      groups.putIfAbsent(h.categoryId, () => []).add(h);
+    }
+
+    final nameById = {for (final c in categories) c.id: c.name.value};
+
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.s4),
+      children: [
+        for (final catId in order) ...[
+          Padding(
+            padding: const EdgeInsets.only(
+              top: AppSpacing.s2,
+              bottom: AppSpacing.s2,
+            ),
+            child: Text(
+              (nameById[catId] ?? catId.value).toUpperCase(),
+              style: AppTypography.label,
+            ),
+          ),
+          for (final h in groups[catId]!)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+              child: _HabitTile(
+                habit: h,
+                onToggle: () => onToggle(h.id),
+                onOpen: onOpenHabit == null
+                    ? null
+                    : () => onOpenHabit!(h.id.value),
+              ),
+            ),
+        ],
+      ],
+    );
   }
 }
 
