@@ -28,6 +28,11 @@ abstract class AppRoutes {
   /// Habitudes — HA-02 création (slice 3.D).
   static const habitsCreate = '/habits/create';
 
+  /// Habitudes — HA-02 édition (issue #152). Chemin dynamique :
+  /// `/habits/<id>/edit`.
+  static String habitEdit(String id) => '/habits/$id/edit';
+  static const habitEditPattern = '/habits/:id/edit';
+
   /// Catégories — HB-03 liste (issue #150).
   static const categories = '/categories';
 

@@ -30,10 +30,15 @@ class Ha01HabitsListScreen extends ConsumerStatefulWidget {
   /// Optionnel — si `null`, le bouton catégories n'est pas affiché.
   final VoidCallback? onOpenCategories;
 
+  /// Ouvre HA-02 en mode édition pour l'habitude d'identifiant donné
+  /// (issue #152). Optionnel — si `null`, l'action "Modifier" est masquée.
+  final ValueChanged<String>? onEditHabit;
+
   const Ha01HabitsListScreen({
     super.key,
     required this.onCreate,
     this.onOpenCategories,
+    this.onEditHabit,
   });
 
   @override
@@ -157,6 +162,10 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
                         itemBuilder: (_, i) => _HabitTile(
                           habit: filtered[i],
                           onToggle: () => _toggle(filtered[i].id),
+                          onEdit: widget.onEditHabit == null
+                              ? null
+                              : () =>
+                                    widget.onEditHabit!(filtered[i].id.value),
                         ),
                       ),
               ),
@@ -234,12 +243,20 @@ class _CategoryChipsBar extends StatelessWidget {
   }
 }
 
-/// Tuile d'habitude — connecte [HabitRow] au statut du jour (#151).
+/// Tuile d'habitude — connecte [HabitRow] au statut du jour (#151) et à
+/// l'édition (#152). Le tap sur la ligne ouvre HA-02 en mode édition.
 class _HabitTile extends ConsumerWidget {
   final Habit habit;
   final VoidCallback onToggle;
 
-  const _HabitTile({required this.habit, required this.onToggle});
+  /// Ouvre l'édition de l'habitude — `null` si l'édition est désactivée.
+  final VoidCallback? onEdit;
+
+  const _HabitTile({
+    required this.habit,
+    required this.onToggle,
+    this.onEdit,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -247,7 +264,7 @@ class _HabitTile extends ConsumerWidget {
     return HabitRow(
       habit: habit,
       todayStatus: status,
-      onTap: () {},
+      onTap: onEdit ?? () {},
       onToggle: onToggle,
     );
   }

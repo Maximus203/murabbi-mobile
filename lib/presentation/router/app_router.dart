@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
+import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_01_login_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_02_signup_screen.dart';
@@ -11,6 +12,7 @@ import 'package:murabbi_mobile/presentation/features/categories/providers/catego
 import 'package:murabbi_mobile/presentation/features/categories/screens/hb_03_categories_list_screen.dart';
 import 'package:murabbi_mobile/presentation/features/categories/screens/hb_04_category_form_screen.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_01_habits_list_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_02_create_habit_screen.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/providers/onboarding_notifier.dart';
@@ -208,6 +210,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           onCancel: () => context.go(AppRoutes.habits),
         ),
       ),
+      // HA-02 mode édition (issue #152). L'habitude à éditer est lue depuis
+      // la liste déjà chargée ; si introuvable (deep-link à froid), on
+      // retombe sur HA-01.
+      GoRoute(
+        path: AppRoutes.habitEditPattern,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return Consumer(
+            builder: (context, ref, _) {
+              final habits =
+                  ref.watch(habitsNotifierProvider).valueOrNull ??
+                  const <Habit>[];
+              final matches = habits.where((h) => h.id.value == id).toList();
+              final match = matches.isEmpty ? null : matches.first;
+              if (match == null) {
+                return Ha01HabitsListScreen(
+                  onCreate: () => context.go(AppRoutes.habitsCreate),
+                  onOpenCategories: () => context.go(AppRoutes.categories),
+                  onEditHabit: (id) => context.go(AppRoutes.habitEdit(id)),
+                );
+              }
+              return Ha02CreateHabitScreen(
+                initialHabit: match,
+                onCreated: () => context.go(AppRoutes.habits),
+                onCancel: () => context.go(AppRoutes.habits),
+              );
+            },
+          );
+        },
+      ),
 
       // ── Catégories — HB-03 liste / HB-04 formulaire (issue #150) ──────
       GoRoute(
@@ -314,6 +346,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 builder: (context, _) => Ha01HabitsListScreen(
                   onCreate: () => context.go(AppRoutes.habitsCreate),
                   onOpenCategories: () => context.go(AppRoutes.categories),
+                  onEditHabit: (id) => context.go(AppRoutes.habitEdit(id)),
                 ),
               ),
             ],

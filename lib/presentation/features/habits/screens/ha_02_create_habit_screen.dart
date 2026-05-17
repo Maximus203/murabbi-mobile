@@ -13,19 +13,23 @@ import 'package:murabbi_mobile/presentation/features/habits/providers/habits_not
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_badge.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_chip.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_input.dart';
 
-/// HA-02 — Formulaire de création d'habitude (slice 3.D).
+/// HA-02 — Formulaire de création / édition d'habitude (slice 3.D + #152).
 ///
-/// Version V1 simplifiée :
-/// - Nom (required)
-/// - Catégorie (dropdown)
-/// - Récurrence (daily / per-day / weekly avec sélecteur de jours)
-/// - Points (slider 1..10)
+/// Deux modes :
+/// - **Création** : [initialHabit] == null. Champs vides, chips jours non
+///   pré-sélectionnés (#141), bouton "Créer l'habitude".
+/// - **Édition** : [initialHabit] fourni. Champs pré-remplis, bouton
+///   "Enregistrer les modifications", appel à [updateHabitUseCaseProvider].
+///
+/// Bugs corrigés (#152) : #139 (stepper clamp), #141 (chips jours),
+/// #142 (erreur effacée à la frappe), #143 (erreur inline sous NOM),
+/// #127 (labels fréquence FR), #144 (feedback succès).
 ///
 /// Reporté V2 : sous-tâches, time range, target chiffré, timer. Cf.
 /// `spec v1.5` et ADR-008.
@@ -33,11 +37,18 @@ class Ha02CreateHabitScreen extends ConsumerStatefulWidget {
   final VoidCallback onCreated;
   final VoidCallback onCancel;
 
+  /// Si non-null, l'écran passe en mode édition et pré-remplit les champs.
+  final Habit? initialHabit;
+
   const Ha02CreateHabitScreen({
     super.key,
     required this.onCreated,
     required this.onCancel,
+    this.initialHabit,
   });
+
+  /// True si l'écran est en mode édition.
+  bool get isEditMode => initialHabit != null;
 
   @override
   ConsumerState<Ha02CreateHabitScreen> createState() =>
@@ -45,14 +56,44 @@ class Ha02CreateHabitScreen extends ConsumerStatefulWidget {
 }
 
 class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
-  final _nameCtrl = TextEditingController();
+  /// Nom max — borne UI (#152, validation inline).
+  static const int _nameMaxLength = 64;
+
+  late final TextEditingController _nameCtrl;
   CategoryId? _categoryId;
-  HabitFrequencyType _frequencyType = HabitFrequencyType.daily;
-  int _perDayFrequency = 1;
-  final Set<int> _activeDays = {1, 2, 3, 4, 5, 6, 7};
-  int _points = 3;
+  late HabitFrequencyType _frequencyType;
+  late int _perDayFrequency;
+
+  /// Jours actifs sélectionnés. #141 : `{}` en création, `habit.activeDays`
+  /// en édition (mode "jours précis").
+  late final Set<int> _activeDays;
+  late int _points;
   bool _saving = false;
-  String? _error;
+
+  /// Indique si l'utilisateur a tenté un premier submit — active la validation
+  /// inline (#143).
+  bool _submitted = false;
+
+  /// Erreur globale (réseau / auth) — distincte des erreurs inline.
+  String? _globalError;
+
+  @override
+  void initState() {
+    super.initState();
+    final h = widget.initialHabit;
+    _nameCtrl = TextEditingController(text: h?.name.value ?? '');
+    _categoryId = h?.categoryId;
+    _frequencyType = h?.frequencyType ?? HabitFrequencyType.daily;
+    _perDayFrequency = h?.frequencyType == HabitFrequencyType.perDay
+        ? h!.frequency
+        : 1;
+    // #141 : pas de pré-sélection en création. En édition mode "jours précis",
+    // on reprend les jours de l'habitude.
+    _activeDays = h != null && h.frequencyType == HabitFrequencyType.weekly
+        ? Set.of(h.activeDays)
+        : <int>{};
+    _points = h?.points.value ?? 3;
+  }
 
   @override
   void dispose() {
@@ -60,43 +101,86 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
     super.dispose();
   }
 
+  /// Erreur inline du champ Nom — affichée uniquement après le 1er submit (#143).
+  String? get _nameError {
+    if (!_submitted) return null;
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) return 'Le nom est requis.';
+    if (name.length > _nameMaxLength) {
+      return 'Le nom ne doit pas dépasser $_nameMaxLength caractères.';
+    }
+    return null;
+  }
+
+  /// Erreur inline des jours — affichée après le 1er submit si la fréquence
+  /// est "jours précis" et qu'aucun jour n'est sélectionné (#152).
+  String? get _daysError {
+    if (!_submitted) return null;
+    if (_frequencyType == HabitFrequencyType.weekly && _activeDays.isEmpty) {
+      return 'Sélectionne au moins un jour.';
+    }
+    return null;
+  }
+
   Future<void> _submit(List<Category> categories) async {
     setState(() {
-      _error = null;
+      _submitted = true;
+      _globalError = null;
     });
+
+    // Validation inline — stoppe si une erreur est présente.
+    if (_nameError != null || _daysError != null) return;
+
     final name = _nameCtrl.text.trim();
-    if (name.isEmpty) {
-      setState(() => _error = 'Le nom est requis.');
-      return;
-    }
     final catId = _categoryId ?? categories.first.id;
     final user = ref.read(authNotifierProvider).valueOrNull;
     if (user == null) {
-      setState(() => _error = 'Tu dois être connecté.');
+      setState(() => _globalError = 'Tu dois être connecté.');
       return;
     }
+
+    // Les habitudes "daily" / "perDay" couvrent tous les jours ; "weekly"
+    // utilise la sélection utilisateur.
+    final activeDays = _frequencyType == HabitFrequencyType.weekly
+        ? Set.of(_activeDays)
+        : {1, 2, 3, 4, 5, 6, 7};
 
     setState(() => _saving = true);
     try {
       final habit = Habit(
-        id: HabitId('habit-${DateTime.now().microsecondsSinceEpoch}'),
+        id:
+            widget.initialHabit?.id ??
+            HabitId('habit-${DateTime.now().microsecondsSinceEpoch}'),
         name: NonEmptyString(name),
         categoryId: catId,
         frequencyType: _frequencyType,
         frequency: _frequencyType == HabitFrequencyType.perDay
             ? _perDayFrequency
             : 1,
-        activeDays: Set.of(_activeDays),
+        activeDays: activeDays,
         points: HabitPoints(_points),
         isSystem: false,
       );
-      await ref
-          .read(createHabitUseCaseProvider)
-          .call(userId: user.id, habit: habit);
+
+      if (widget.isEditMode) {
+        await ref.read(updateHabitUseCaseProvider).call(habit);
+      } else {
+        await ref
+            .read(createHabitUseCaseProvider)
+            .call(userId: user.id, habit: habit);
+      }
       await ref.read(habitsNotifierProvider.notifier).refresh();
-      if (mounted) widget.onCreated();
+      if (!mounted) return;
+      // #144 : feedback succès avant de quitter l'écran.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.isEditMode ? 'Habitude mise à jour.' : 'Habitude créée.',
+          ),
+        ),
+      );
+      widget.onCreated();
     } catch (e, stackTrace) {
-      // Audit TL §B.2 PR #43 : log technique + libellé canonique FR.
       appLog.e(
         'Ha02CreateHabitScreen submit failed',
         error: e,
@@ -104,7 +188,9 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
       );
       setState(() {
         _saving = false;
-        _error = 'Impossible de créer l\'habitude. Réessaie dans un instant.';
+        _globalError = widget.isEditMode
+            ? "Impossible de mettre à jour l'habitude. Réessaie dans un instant."
+            : "Impossible de créer l'habitude. Réessaie dans un instant.";
       });
     }
   }
@@ -115,12 +201,15 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       appBar: AppHeader.back(
-        title: 'Nouvelle habitude',
+        title: widget.isEditMode ? "Modifier l'habitude" : 'Nouvelle habitude',
         onBack: widget.onCancel,
       ),
       body: categoriesAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            strokeWidth: AppBorderWidth.indicatorStroke,
+          ),
+        ),
         error: (e, stackTrace) {
           appLog.e(
             'Ha02 categories load failed',
@@ -146,14 +235,21 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s4),
       children: [
+        // ── Nom — validation inline (#142 #143) ─────────────────────
         AppInput(
           label: 'Nom',
           placeholder: 'ex. Lecture Coran',
           controller: _nameCtrl,
+          errorText: _nameError,
+          maxLength: _nameMaxLength,
+          onChanged: (_) {
+            // #142 : efface l'erreur dès que l'utilisateur tape.
+            if (_submitted) setState(() {});
+          },
         ),
         const SizedBox(height: AppSpacing.s4),
 
-        // ── Catégorie ──────────────────────────────────────────────
+        // ── Catégorie — AppChip (#86) ──────────────────────────────
         AppCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,14 +261,17 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                 runSpacing: AppSpacing.s2,
                 children: [
                   for (final c in categories)
-                    GestureDetector(
+                    AppChip(
+                      label: c.name.value,
+                      selected: _categoryId == c.id,
                       onTap: () => setState(() => _categoryId = c.id),
-                      child: AppBadge(
-                        label: c.name.value,
-                        variant: _categoryId == c.id
-                            ? AppBadgeVariant.chipActive
-                            : AppBadgeVariant.chip,
-                        dotColor: _hexToColor(c.color.value),
+                      leading: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: _hexToColor(c.color.value),
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
                 ],
@@ -214,7 +313,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                         const SizedBox(width: AppSpacing.s3),
                         Expanded(
                           child: Text(
-                            _frequencyLabel(t),
+                            _frequencyOptionLabel(t),
                             style: AppTypography.body,
                           ),
                         ),
@@ -229,6 +328,8 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                     const Text('Combien de fois :'),
                     const Spacer(),
                     IconButton(
+                      tooltip: 'Diminuer la fréquence',
+                      // #139 : clamp physique — désactivé à la borne min.
                       onPressed: _perDayFrequency > 1
                           ? () => setState(() => _perDayFrequency--)
                           : null,
@@ -236,6 +337,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                     ),
                     Text('$_perDayFrequency', style: AppTypography.h3),
                     IconButton(
+                      tooltip: 'Augmenter la fréquence',
                       onPressed: _perDayFrequency < 10
                           ? () => setState(() => _perDayFrequency++)
                           : null,
@@ -255,7 +357,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                         selected: _activeDays.contains(d),
                         onTap: () => setState(() {
                           if (_activeDays.contains(d)) {
-                            if (_activeDays.length > 1) _activeDays.remove(d);
+                            _activeDays.remove(d);
                           } else {
                             _activeDays.add(d);
                           }
@@ -263,19 +365,30 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                       ),
                   ],
                 ),
+                // Erreur inline jours (#152).
+                if (_daysError != null) ...[
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    _daysError!,
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.danger,
+                    ),
+                  ),
+                ],
               ],
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.s4),
 
-        // ── Points ─────────────────────────────────────────────────
+        // ── Points / Difficulté — #139 clamp [1..10] ───────────────
         AppCard(
           child: Row(
             children: [
               const Text('Difficulté', style: AppTypography.h3),
               const Spacer(),
               IconButton(
+                tooltip: 'Diminuer les points',
                 onPressed: _points > HabitPoints.min
                     ? () => setState(() => _points--)
                     : null,
@@ -289,6 +402,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                 ),
               ),
               IconButton(
+                tooltip: 'Augmenter les points',
                 onPressed: _points < HabitPoints.max
                     ? () => setState(() => _points++)
                     : null,
@@ -298,7 +412,8 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
           ),
         ),
 
-        if (_error != null) ...[
+        // ── Erreur globale (réseau / auth) ─────────────────────────
+        if (_globalError != null) ...[
           const SizedBox(height: AppSpacing.s4),
           Container(
             padding: const EdgeInsets.all(AppSpacing.s3),
@@ -307,23 +422,38 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
               borderRadius: BorderRadius.circular(AppRadius.button),
             ),
             child: Text(
-              _error!,
+              _globalError!,
               style: AppTypography.body.copyWith(color: AppColors.danger),
             ),
           ),
         ],
 
         const SizedBox(height: AppSpacing.s6),
+
+        // ── Bouton submit ──────────────────────────────────────────
         AppButton(
-          label: _saving ? 'Enregistrement…' : 'Créer l\'habitude',
+          label: widget.isEditMode
+              ? 'Enregistrer les modifications'
+              : "Créer l'habitude",
           onPressed: _saving ? null : () => _submit(categories),
+          child: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: AppBorderWidth.indicatorStroke,
+                    color: AppColors.bgSurface,
+                  ),
+                )
+              : null,
         ),
         const SizedBox(height: AppSpacing.s6),
       ],
     );
   }
 
-  static String _frequencyLabel(HabitFrequencyType t) {
+  /// Libellé de l'option de récurrence dans le sélecteur.
+  static String _frequencyOptionLabel(HabitFrequencyType t) {
     switch (t) {
       case HabitFrequencyType.daily:
         return 'Tous les jours';
@@ -332,9 +462,11 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
       case HabitFrequencyType.weekly:
         return 'Jours précis de la semaine';
       case HabitFrequencyType.perWeek:
+        return 'Plusieurs fois par semaine';
       case HabitFrequencyType.monthly:
+        return 'Une fois par mois';
       case HabitFrequencyType.custom:
-        return t.name;
+        return 'Personnalisée';
     }
   }
 }
@@ -359,26 +491,46 @@ class _DayChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: selected ? AppColors.accent : AppColors.bgSurface,
+    final label = _labels[day - 1];
+    // D-28 (issue #105) : zone de tap ≥ 44×44dp (P-A11Y).
+    // Le visuel reste 36×36, mais la hitbox est étendue à 44×44 via SizedBox.
+    return Semantics(
+      label: label,
+      button: true,
+      selected: selected,
+      child: SizedBox(
+        width: kMinInteractiveDimension,
+        height: kMinInteractiveDimension,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(
-            color: selected ? AppColors.accent : AppColors.borderEmphasis,
-            width: AppBorderWidth.thin,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          _labels[day - 1],
-          style: AppTypography.body.copyWith(
-            color: selected ? AppColors.bgSurface : AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
+          child: Center(
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: selected ? AppColors.accent : AppColors.bgSurface,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(
+                  color: selected ? AppColors.accent : AppColors.borderEmphasis,
+                  width: AppBorderWidth.thin,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: ExcludeSemantics(
+                // D-33 : le texte du chip est purement décoratif — la Semantics
+                // parente porte déjà le label du jour.
+                child: Text(
+                  label,
+                  style: AppTypography.body.copyWith(
+                    color: selected
+                        ? AppColors.bgSurface
+                        : AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
