@@ -8,6 +8,7 @@ import 'package:murabbi_mobile/presentation/features/auth/screens/au_01_login_sc
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_02_signup_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_03_forgot_password_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_verification_gate.dart';
+import 'package:murabbi_mobile/presentation/features/calendar/screens/cal_01_calendar_screen.dart';
 import 'package:murabbi_mobile/presentation/features/categories/providers/categories_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/categories/screens/hb_03_categories_list_screen.dart';
 import 'package:murabbi_mobile/presentation/features/categories/screens/hb_04_category_form_screen.dart';
@@ -304,6 +305,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           collectionId: state.pathParameters['id'] ?? '',
           onBack: () => context.go(AppRoutes.collections),
         ),
+      ),
+
+      // ── Calendrier — CAL-01 (issue #7, Phase 6) ───────────────────────
+      GoRoute(
+        path: AppRoutes.calendar,
+        builder: (context, _) =>
+            Cal01CalendarScreen(onBack: () => context.go(AppRoutes.home)),
       ),
 
       // ── Paramètres — ST-01 / ST-02 / ST-03 (issue #7, Phase 6) ────────
