@@ -4,19 +4,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/prayer_times_provider.dart';
+import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_settings.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_times.dart';
 import 'package:murabbi_mobile/domain/errors/prayer_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/prayer_settings_repository.dart';
 import 'package:murabbi_mobile/domain/use_cases/prayer/get_prayer_times_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/calculation_method.dart';
+import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
+import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
+import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/high_latitude_rule.dart';
 import 'package:murabbi_mobile/domain/value_objects/madhab.dart';
+import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_clock_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_progress_ring.dart';
 import 'package:murabbi_mobile/services/prayer/prayer_times_service.dart';
 
 class _MockSettingsRepo extends Mock implements PrayerSettingsRepository {}
+
+/// Notifier de test retournant une liste statique d'habitudes.
+class _FakeHabitsNotifier extends HabitsNotifier {
+  _FakeHabitsNotifier(this._habits);
+  final List<Habit> _habits;
+
+  @override
+  Future<List<Habit>> build() async => _habits;
+}
 
 class _FakePrayerTimesService implements PrayerTimesService {
   _FakePrayerTimesService(this.response);
@@ -112,15 +128,15 @@ void main() {
     expect(find.textContaining('DEMAIN'), findsOneWidget);
   });
 
-  testWidgets('rend les placeholders Habitudes / Niyyah / Série', (
-    tester,
-  ) async {
+  testWidgets('rend les sections Habitudes / Niyyah / Série', (tester) async {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
 
+    // Habitudes du jour : visible sans scroll (haut du ListView)
     expect(find.text('Habitudes du jour'), findsOneWidget);
-    expect(find.text('Niyyah du jour'), findsOneWidget);
-    expect(find.text('Série globale'), findsOneWidget);
+    // Niyyah et Série peuvent être hors viewport (ListView) : skipOffstage:false
+    expect(find.text('Niyyah du jour', skipOffstage: false), findsOneWidget);
+    expect(find.text('Série globale', skipOffstage: false), findsOneWidget);
   });
 
   test('PrayerSettingsNotConfiguredFailure remonte settingsNotConfigured', () {
@@ -155,7 +171,8 @@ void main() {
   testWidgets('affiche la date avec séparateur Hijri (#66)', (tester) async {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
-    expect(find.textContaining('·'), findsOneWidget);
+    // La date duale contient "·" entre gregorien et hijri, et un mois hijri connu
+    expect(find.textContaining('1447'), findsOneWidget);
   });
 
   testWidgets('_NextPrayerCard affiche un ChevronRight (#59)', (tester) async {
@@ -169,4 +186,137 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byIcon(LucideIcons.bell), findsOneWidget);
   });
+
+  // ── Nouveaux tests — issue #89 ─────────────────────────────────────────────
+
+  testWidgets('score card affiche le badge niveau et les points mock (#89)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
+
+    // Badge niveau
+    expect(find.textContaining('Aspirant'), findsOneWidget);
+    // Points format "X / Y"
+    expect(find.textContaining('42'), findsOneWidget);
+    expect(find.textContaining('60'), findsOneWidget);
+  });
+
+  testWidgets('score card affiche AppProgressRing (#89)', (tester) async {
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppProgressRing), findsOneWidget);
+  });
+
+  testWidgets(
+    'section habitudes affiche état vide quand pas d\'habitudes (#89)',
+    (tester) async {
+      await tester.pumpWidget(pumpable());
+      await tester.pumpAndSettle();
+
+      // Sans habitudes, on affiche le texte d'état vide
+      expect(find.textContaining('habitude'), findsWidgets);
+    },
+  );
+
+  testWidgets(
+    'section habitudes affiche les micro-rows quand habitudes présentes (#89)',
+    (tester) async {
+      when(() => settingsRepo.get()).thenAnswer((_) async => settings);
+      final habit = Habit(
+        id: HabitId('h-test-1'),
+        name: NonEmptyString('Lecture Coran'),
+        categoryId: CategoryId('cat-religion'),
+        frequencyType: HabitFrequencyType.daily,
+        frequency: 1,
+        activeDays: const {1, 2, 3, 4, 5, 6, 7},
+        points: HabitPoints(5),
+        isSystem: false,
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            dashboardClockProvider.overrideWithValue(
+              () => day.add(const Duration(hours: 10)),
+            ),
+            getPrayerTimesUseCaseProvider.overrideWith(
+              (ref) async => GetPrayerTimesUseCase(
+                service: _FakePrayerTimesService(times),
+                repository: settingsRepo,
+              ),
+            ),
+            habitsNotifierProvider.overrideWith(
+              () => _FakeHabitsNotifier([habit]),
+            ),
+          ],
+          child: MaterialApp(
+            home: Hm01DashboardScreen(
+              onTabSelected: (_) {},
+              onConfigurePrayers: () {},
+              onOpenSalat: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Lecture Coran'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'section habitudes max 5 habitudes + lien Voir tout si plus (#89)',
+    (tester) async {
+      when(() => settingsRepo.get()).thenAnswer((_) async => settings);
+      final habits = List.generate(
+        7,
+        (i) => Habit(
+          id: HabitId('h-$i'),
+          name: NonEmptyString('Habitude $i'),
+          categoryId: CategoryId('cat-religion'),
+          frequencyType: HabitFrequencyType.daily,
+          frequency: 1,
+          activeDays: const {1, 2, 3, 4, 5, 6, 7},
+          points: HabitPoints(5),
+          isSystem: false,
+        ),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            dashboardClockProvider.overrideWithValue(
+              () => day.add(const Duration(hours: 10)),
+            ),
+            getPrayerTimesUseCaseProvider.overrideWith(
+              (ref) async => GetPrayerTimesUseCase(
+                service: _FakePrayerTimesService(times),
+                repository: settingsRepo,
+              ),
+            ),
+            habitsNotifierProvider.overrideWith(
+              () => _FakeHabitsNotifier(habits),
+            ),
+          ],
+          child: MaterialApp(
+            home: Hm01DashboardScreen(
+              onTabSelected: (_) {},
+              onConfigurePrayers: () {},
+              onOpenSalat: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Affiche au max 5 habitudes
+      expect(find.text('Habitude 0'), findsOneWidget);
+      expect(find.text('Habitude 4'), findsOneWidget);
+      expect(find.text('Habitude 5'), findsNothing);
+      // Lien "Voir tout" présent
+      expect(find.text('Voir tout'), findsOneWidget);
+    },
+  );
 }
