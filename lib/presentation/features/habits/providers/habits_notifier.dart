@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:murabbi_mobile/data/repositories/in_memory_habit_repository.dart';
+import 'package:murabbi_mobile/data/repositories/category_repository_provider.dart';
+import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/use_cases/categories/get_categories_use_case.dart';
@@ -32,13 +33,18 @@ class HabitsNotifier extends AsyncNotifier<List<Habit>> {
   }
 
   /// Recharge la liste — appelé après une création réussie.
+  ///
+  /// D-18 (issue #103) : on conserve les données précédentes pendant le
+  /// refresh pour éviter le flash de rechargement. `AsyncValue.loading()`
+  /// n'est émis que si l'état courant est déjà vide (premier chargement).
   Future<void> refresh() async {
     final user = ref.read(authNotifierProvider).valueOrNull;
     if (user == null) {
       state = const AsyncValue.data([]);
       return;
     }
-    state = const AsyncValue.loading();
+    // Garde les données existantes visibles pendant le refresh — pas de spinner.
+    state = AsyncValue.data(state.valueOrNull ?? const []);
     state = await AsyncValue.guard(
       () => ref.read(getHabitsUseCaseProvider).call(user.id),
     );

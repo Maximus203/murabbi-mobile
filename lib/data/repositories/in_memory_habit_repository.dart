@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/painting.dart' show Color;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
@@ -199,16 +198,3 @@ class InMemoryCategoryRepository implements CategoryRepository {
     _categories.removeWhere((c) => c.id == categoryId);
   }
 }
-
-/// Provider Riverpod du repository Habits (V1 in-memory dev scaffold).
-final habitRepositoryProvider = Provider<HabitRepository>((ref) {
-  final repo = InMemoryHabitRepository();
-  // Note: `ref.keepAlive()` est par défaut pour Provider sans autoDispose,
-  // ce qui garantit la persistance du store en mémoire entre les widgets.
-  return repo;
-});
-
-/// Provider Riverpod du repository Categories (V1 in-memory).
-final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
-  return InMemoryCategoryRepository();
-});
