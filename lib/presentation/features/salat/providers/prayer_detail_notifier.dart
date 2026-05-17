@@ -107,7 +107,11 @@ class PrayerDetailNotifier
   static String _civilKey(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  /// Met à jour le statut d'un jour précis, puis recharge.
+  /// Met à jour le statut d'un jour précis avec mise à jour optimiste (D-29).
+  ///
+  /// 1. Applique immédiatement le changement en local (pas de spinner).
+  /// 2. Persiste via [MarkPrayerUseCase] en background.
+  /// 3. Si l'écriture échoue, rollback vers l'état précédent.
   Future<void> markDay({
     required DateTime dayUtc,
     required PrayerStatus status,
@@ -117,26 +121,101 @@ class PrayerDetailNotifier
     final user = ref.read(currentUserProvider);
     if (user == null) return;
 
-    final markUseCase = ref.read(markPrayerUseCaseProvider);
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    // 1. Mise à jour optimiste — l'UI répond immédiatement.
+    final optimistic = _updateLocalState(current, dayUtc, status);
+    state = AsyncValue.data(optimistic);
+
+    // 2. Persistence en background.
+    try {
+      final markUseCase = ref.read(markPrayerUseCaseProvider);
       await markUseCase(
         userId: user.id,
         date: dayUtc,
         prayerName: current.prayerName,
         status: status,
       );
-      // Recharge l'historique complet (petit volume — 7 jours).
-      final now = ref.read(clockProvider)();
-      final today = DateTime.utc(now.year, now.month, now.day);
-      final from = today.subtract(const Duration(days: 6));
-      final useCase = ref.read(getPrayerHistoryUseCaseProvider);
-      final days = await useCase(userId: user.id, from: from, to: today);
-      final normalized = _padToSevenDays(days, from: from, userId: user.id);
-      return PrayerDetailState(
-        prayerName: current.prayerName,
-        weekDays: normalized,
-      );
-    });
+    } catch (_) {
+      // 3. Rollback si erreur réseau / serveur.
+      state = AsyncValue.data(current);
+    }
+  }
+
+  /// Applique le changement de [status] pour [dayUtc] localement, sans I/O.
+  PrayerDetailState _updateLocalState(
+    PrayerDetailState current,
+    DateTime dayUtc,
+    PrayerStatus status,
+  ) {
+    final key = _civilKey(dayUtc);
+    final updatedDays = current.weekDays.map((day) {
+      if (_civilKey(day.date) != key) return day;
+      return _applyStatus(day, current.prayerName, status);
+    }).toList();
+    return PrayerDetailState(
+      prayerName: current.prayerName,
+      weekDays: updatedDays,
+    );
+  }
+
+  /// Retourne un [PrayerDay] avec le statut [status] appliqué à [prayerName].
+  static PrayerDay _applyStatus(
+    PrayerDay day,
+    String prayerName,
+    PrayerStatus status,
+  ) {
+    switch (prayerName) {
+      case 'fajr':
+        return PrayerDay(
+          userId: day.userId,
+          date: day.date,
+          fajr: status,
+          dhuhr: day.dhuhr,
+          asr: day.asr,
+          maghrib: day.maghrib,
+          isha: day.isha,
+        );
+      case 'dhuhr':
+        return PrayerDay(
+          userId: day.userId,
+          date: day.date,
+          fajr: day.fajr,
+          dhuhr: status,
+          asr: day.asr,
+          maghrib: day.maghrib,
+          isha: day.isha,
+        );
+      case 'asr':
+        return PrayerDay(
+          userId: day.userId,
+          date: day.date,
+          fajr: day.fajr,
+          dhuhr: day.dhuhr,
+          asr: status,
+          maghrib: day.maghrib,
+          isha: day.isha,
+        );
+      case 'maghrib':
+        return PrayerDay(
+          userId: day.userId,
+          date: day.date,
+          fajr: day.fajr,
+          dhuhr: day.dhuhr,
+          asr: day.asr,
+          maghrib: status,
+          isha: day.isha,
+        );
+      case 'isha':
+        return PrayerDay(
+          userId: day.userId,
+          date: day.date,
+          fajr: day.fajr,
+          dhuhr: day.dhuhr,
+          asr: day.asr,
+          maghrib: day.maghrib,
+          isha: status,
+        );
+      default:
+        return day;
+    }
   }
 }
