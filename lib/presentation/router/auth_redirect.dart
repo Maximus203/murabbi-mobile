@@ -61,6 +61,18 @@ abstract class AppRoutes {
   /// Leaderboard — LB-01 (slice 5.E).
   static const leaderboard = '/leaderboard';
 
+  /// Paramètres — ST-01 (issue #7, Phase 6).
+  static const settings = '/settings';
+
+  /// Paramètres — ST-02 modification du profil (issue #7, Phase 6).
+  static const settingsProfile = '/settings/profile';
+
+  /// Paramètres — ST-03 suppression de compte (issue #7, Phase 6).
+  static const settingsDelete = '/settings/delete';
+
+  /// Calendrier — CAL-01 historique (issue #7, Phase 6).
+  static const calendar = '/calendar';
+
   /// `/auth/verify-email` est traité à part : il est accessible aussi bien
   /// quand l'utilisateur n'a pas de session que quand il vient de signUp et
   /// attend la confirmation par mail.
