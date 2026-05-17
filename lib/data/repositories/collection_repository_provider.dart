@@ -1,0 +1,18 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/data/datasources/collection_data_source.dart';
+import 'package:murabbi_mobile/data/datasources/supabase/supabase_client_provider.dart';
+import 'package:murabbi_mobile/data/datasources/supabase/supabase_collection_data_source.dart';
+import 'package:murabbi_mobile/data/repositories/collection_repository_impl.dart';
+import 'package:murabbi_mobile/domain/repositories/collection_repository.dart';
+
+/// Provider Riverpod du datasource Collections (issue #6, Phase 5).
+final collectionDataSourceProvider = Provider<CollectionDataSource>((ref) {
+  return SupabaseCollectionDataSource(ref.watch(supabaseClientProvider));
+});
+
+/// Provider Riverpod du `CollectionRepository`. La couche presentation
+/// consomme uniquement ce provider (l'interface domain), jamais l'impl ni
+/// le datasource directement.
+final collectionRepositoryProvider = Provider<CollectionRepository>((ref) {
+  return CollectionRepositoryImpl(ref.watch(collectionDataSourceProvider));
+});
