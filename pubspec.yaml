@@ -101,6 +101,7 @@ flutter:
   assets:
     - assets/images/
     - assets/media/
+    - assets/videos/  # vidéos onboarding bundlées (02 03 04 06) — ADR-017
     - assets/fonts/
     - assets/svg/
 
