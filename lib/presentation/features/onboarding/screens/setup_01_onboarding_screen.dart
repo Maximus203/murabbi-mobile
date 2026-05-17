@@ -60,8 +60,14 @@ const List<_OnboardingSlide> _slides = [
     title: 'Tout est prêt',
     body:
         'Tu peux commencer à valider tes prières et tes habitudes dès maintenant. Bonne route, ya Murabbi.',
+    // #123 : pas de vidéo dédiée pour ce slide — un bandeau illustratif thémé
+    // occupe la même zone que [videoAsset] pour garder un layout cohérent.
   ),
 ];
+
+/// Hauteur de la zone illustration (bandeau vidéo ou bandeau thémé). Partagée
+/// par tous les slides pour éviter le saut de layout du dernier slide (#123).
+const double _illustrationHeight = 160;
 
 /// SETUP-01 — Configuration prière (4 slides walkthrough).
 ///
@@ -108,9 +114,18 @@ class _Setup01OnboardingScreenState
   Future<void> _complete() async {
     if (_saving) return;
     setState(() => _saving = true);
-    await ref.read(onboardingNotifierProvider.notifier).markCompleted();
-    if (!mounted) return;
-    widget.onCompleted();
+    // #118 : la persistance du flag ne doit jamais bloquer la navigation.
+    // `markCompleted` capture déjà ses erreurs via `AsyncValue.guard`, mais
+    // on s'assure ici, quoi qu'il arrive, de réinitialiser l'état loading
+    // et de naviguer — le routeur ne doit pas dépendre du succès du storage.
+    try {
+      await ref.read(onboardingNotifierProvider.notifier).markCompleted();
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+        widget.onCompleted();
+      }
+    }
   }
 
   @override
@@ -120,7 +135,12 @@ class _Setup01OnboardingScreenState
       body: SafeArea(
         child: Column(
           children: [
-            _TopBar(onSkip: _saving ? null : _complete),
+            // #121 : "Passer" n'a de sens que sur les slides intermédiaires.
+            // Sur le dernier slide, le CTA "Commencer" couvre la même action.
+            _TopBar(
+              onSkip: _saving ? null : _complete,
+              visible: !_isLast,
+            ),
             Expanded(
               child: PageView.builder(
                 controller: _pageCtrl,
@@ -139,7 +159,10 @@ class _Setup01OnboardingScreenState
                     Expanded(
                       child: AppButton(
                         label: 'Précédent',
-                        variant: AppButtonVariant.ghost,
+                        // #122 : variante `secondary` (fond teinté + bordure)
+                        // pour une affordance cohérente avec le CTA "Suivant".
+                        variant: AppButtonVariant.secondary,
+                        leadingIcon: LucideIcons.arrowLeft,
                         onPressed: _saving
                             ? null
                             : () => _pageCtrl.previousPage(
@@ -171,7 +194,12 @@ class _Setup01OnboardingScreenState
 
 class _TopBar extends StatelessWidget {
   final VoidCallback? onSkip;
-  const _TopBar({required this.onSkip});
+
+  /// `false` sur le dernier slide — "Passer" est alors masqué (#121). La
+  /// hauteur de la barre est conservée pour ne pas décaler le PageView.
+  final bool visible;
+
+  const _TopBar({required this.onSkip, this.visible = true});
 
   @override
   Widget build(BuildContext context) {
@@ -180,11 +208,17 @@ class _TopBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          TextButton(
-            onPressed: onSkip,
-            child: Text(
-              'Passer',
-              style: AppTypography.body.copyWith(color: AppColors.accent),
+          Visibility(
+            visible: visible,
+            maintainState: true,
+            maintainAnimation: true,
+            maintainSize: true,
+            child: TextButton(
+              onPressed: onSkip,
+              child: Text(
+                'Passer',
+                style: AppTypography.body.copyWith(color: AppColors.accent),
+              ),
             ),
           ),
           const SizedBox(width: AppSpacing.s2),
@@ -208,14 +242,18 @@ class _SlideView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (slide.videoAsset != null) ...[
+          // #123 : zone illustration de hauteur fixe sur TOUS les slides —
+          // bandeau vidéo si disponible, sinon bandeau thémé. Garantit un
+          // layout identique entre le slide 4 et les slides 1-3.
+          if (slide.videoAsset != null)
             AppVideoBackground(
               assetPath: slide.videoAsset!,
-              height: 160,
+              height: _illustrationHeight,
               borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
-            const SizedBox(height: AppSpacing.s4),
-          ],
+            )
+          else
+            _IllustrationBanner(icon: slide.icon),
+          const SizedBox(height: AppSpacing.s4),
           Container(
             width: 96,
             height: 96,
@@ -242,6 +280,40 @@ class _SlideView extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Bandeau illustratif thémé — utilisé pour les slides sans vidéo dédiée
+/// (slide 4). Occupe exactement [_illustrationHeight] pour garantir un
+/// layout cohérent avec les bandeaux [AppVideoBackground] (#123).
+class _IllustrationBanner extends StatelessWidget {
+  final IconData icon;
+  const _IllustrationBanner({required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: _illustrationHeight,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.bgInput,
+            AppColors.accent.withValues(alpha: 0.12),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          icon,
+          size: 56,
+          color: AppColors.accent.withValues(alpha: 0.55),
+        ),
       ),
     );
   }
