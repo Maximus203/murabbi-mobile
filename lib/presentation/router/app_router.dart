@@ -19,6 +19,7 @@ import 'package:murabbi_mobile/presentation/features/habits/providers/habits_not
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_01_habits_list_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_02_create_habit_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/hb_detail_screen.dart';
+import 'package:murabbi_mobile/presentation/features/leaderboard/screens/lb_01_leaderboard_screen.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/providers/onboarding_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01_onboarding_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_01_today_screen.dart';
@@ -382,12 +383,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
 
-          // Branche 4 — Classement — LB-01 (livrée dans le commit suivant)
+          // Branche 4 — Classement — LB-01 (issue #6)
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.leaderboard,
-                builder: (_, _) => const _StubScreen(title: 'Classement'),
+                builder: (_, _) => const Lb01LeaderboardScreen(),
               ),
             ],
           ),
@@ -410,20 +411,5 @@ String _tabRootRoute(AppBottomNavTab tab) {
       return AppRoutes.collections;
     case AppBottomNavTab.leaderboard:
       return AppRoutes.leaderboard;
-  }
-}
-
-/// Placeholder minimaliste pour les onglets non encore implémentés.
-/// Remplacé par la vraie feature dans les phases 4 / 5.
-class _StubScreen extends StatelessWidget {
-  final String title;
-  const _StubScreen({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Center(child: Text(title, style: const TextStyle(fontSize: 18))),
-    );
   }
 }
