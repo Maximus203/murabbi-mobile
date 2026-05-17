@@ -25,6 +25,9 @@ import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_01_today_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_02_prayer_settings_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_03_prayer_detail_screen.dart';
+import 'package:murabbi_mobile/presentation/features/settings/screens/st_01_settings_screen.dart';
+import 'package:murabbi_mobile/presentation/features/settings/screens/st_02_edit_profile_screen.dart';
+import 'package:murabbi_mobile/presentation/features/settings/screens/st_03_delete_account_screen.dart';
 import 'package:murabbi_mobile/presentation/features/splash/screens/splash_screen.dart';
 import 'package:murabbi_mobile/presentation/router/auth_redirect.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
@@ -300,6 +303,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => CoDetailCollectionScreen(
           collectionId: state.pathParameters['id'] ?? '',
           onBack: () => context.go(AppRoutes.collections),
+        ),
+      ),
+
+      // ── Paramètres — ST-01 / ST-02 / ST-03 (issue #7, Phase 6) ────────
+      // Hors shell : sous-pages authentifiées. ST-02/ST-03 déclarées avant
+      // rien de plus spécifique — pas de conflit de pattern.
+      GoRoute(
+        path: AppRoutes.settingsProfile,
+        builder: (context, _) => St02EditProfileScreen(
+          onBack: () => context.go(AppRoutes.settings),
+          onSaved: () => context.go(AppRoutes.settings),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.settingsDelete,
+        builder: (context, _) => Consumer(
+          builder: (context, ref, _) => St03DeleteAccountScreen(
+            onBack: () => context.go(AppRoutes.settings),
+            // Suppression réussie → le signOut interne au use case bascule
+            // l'auth state, le redirect global pousse vers /auth/login.
+            onDeleted: () => context.go(AppRoutes.login),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (context, _) => Consumer(
+          builder: (context, ref, _) => St01SettingsScreen(
+            onBack: () => context.go(AppRoutes.home),
+            onEditProfile: () => context.go(AppRoutes.settingsProfile),
+            onDeleteAccount: () => context.go(AppRoutes.settingsDelete),
+            onSignOut: () => ref.read(authNotifierProvider.notifier).signOut(),
+          ),
         ),
       ),
 

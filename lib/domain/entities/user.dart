@@ -34,6 +34,30 @@ class User extends Equatable {
   /// `true` si l'utilisateur a confirmé son email côté Supabase.
   bool get isEmailVerified => emailConfirmedAt != null;
 
+  /// Copie immuable avec champs surchargés — utilisé notamment par
+  /// l'édition de profil ST-02 (mise à jour du pseudo).
+  User copyWith({
+    UserId? id,
+    Pseudonym? pseudo,
+    NonEmptyString? email,
+    DateTime? createdAt,
+    Level? level,
+    int? currentStreak,
+    double? completionRate,
+    DateTime? emailConfirmedAt,
+  }) {
+    return User(
+      id: id ?? this.id,
+      pseudo: pseudo ?? this.pseudo,
+      email: email ?? this.email,
+      createdAt: createdAt ?? this.createdAt,
+      level: level ?? this.level,
+      currentStreak: currentStreak ?? this.currentStreak,
+      completionRate: completionRate ?? this.completionRate,
+      emailConfirmedAt: emailConfirmedAt ?? this.emailConfirmedAt,
+    );
+  }
+
   @override
   List<Object?> get props => [
     id,
