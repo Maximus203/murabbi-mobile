@@ -101,10 +101,7 @@ class _Sa02PrayerSettingsScreenState
       case LocationUnknownError(:final message):
         // Audit TL PR #44 : pas de message technique brut à l'utilisateur.
         // Détail loggé pour debug, snackbar avec libellé canonique FR.
-        appLog.e(
-          'GPS getCurrentPosition unknown error',
-          error: message,
-        );
+        appLog.e('GPS getCurrentPosition unknown error', error: message);
         _showSnack('Erreur lors de la localisation. Réessaie dans un instant.');
     }
   }

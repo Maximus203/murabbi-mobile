@@ -38,16 +38,19 @@ void main() {
       expect(r, isNull);
     });
 
-    test('#134 — /habits authentifié sans flag onboarding → pas de redirect', () {
-      // Q3-A : pas de second flag d'onboarding post-auth ; une session
-      // active suffit à autoriser toute route du shell.
-      final r = authRedirect(
-        auth: AsyncValue.data(user),
-        onboarded: const AsyncValue.data(false),
-        currentPath: '/habits',
-      );
-      expect(r, isNull);
-    });
+    test(
+      '#134 — /habits authentifié sans flag onboarding → pas de redirect',
+      () {
+        // Q3-A : pas de second flag d'onboarding post-auth ; une session
+        // active suffit à autoriser toute route du shell.
+        final r = authRedirect(
+          auth: AsyncValue.data(user),
+          onboarded: const AsyncValue.data(false),
+          currentPath: '/habits',
+        );
+        expect(r, isNull);
+      },
+    );
 
     test('/habits non-authentifié → /auth/login (garde inchangée)', () {
       final r = authRedirect(

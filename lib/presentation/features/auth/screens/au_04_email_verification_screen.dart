@@ -96,8 +96,9 @@ class _Au04EmailVerificationScreenState
                     const SizedBox(height: AppSpacing.s2),
                     Text(
                       widget.email,
-                      style: AppTypography.h3
-                          .copyWith(color: AppColors.textPrimary),
+                      style: AppTypography.h3.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppSpacing.s4),
@@ -129,8 +130,9 @@ class _Au04EmailVerificationScreenState
                       onPressed: _resending ? null : widget.onChangeEmail,
                       child: Text(
                         'Changer d\'adresse',
-                        style: AppTypography.body
-                            .copyWith(color: AppColors.accent),
+                        style: AppTypography.body.copyWith(
+                          color: AppColors.accent,
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.s5),

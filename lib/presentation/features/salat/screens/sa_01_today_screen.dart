@@ -18,7 +18,6 @@ import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 
-
 /// SA-01 — Écran "Aujourd'hui" Salat (slice 3.C.3).
 ///
 /// Affiche les 5 prières du jour avec leur horaire local et leur statut.
@@ -83,10 +82,7 @@ class _PrayersList extends StatelessWidget {
   /// fournit pas de navigation (rétrocompatibilité tests).
   final ValueChanged<String>? onPrayerTapped;
 
-  const _PrayersList({
-    required this.data,
-    this.onPrayerTapped,
-  });
+  const _PrayersList({required this.data, this.onPrayerTapped});
 
   @override
   Widget build(BuildContext context) {

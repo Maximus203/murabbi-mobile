@@ -65,9 +65,9 @@ class AppVideoPlayer extends StatefulWidget {
     this.borderRadius = BorderRadius.zero,
     this.height,
   }) : assert(
-          (assetPath != null) != (url != null),
-          'Exactly one of assetPath or url must be provided.',
-        );
+         (assetPath != null) != (url != null),
+         'Exactly one of assetPath or url must be provided.',
+       );
 
   @override
   State<AppVideoPlayer> createState() => _AppVideoPlayerState();

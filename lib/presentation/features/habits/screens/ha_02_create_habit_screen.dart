@@ -552,7 +552,6 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
     HabitFrequencyType.monthly,
     HabitFrequencyType.custom,
   ];
-
 }
 
 // ── Section label style ───────────────────────────────────────────────────────
@@ -766,9 +765,7 @@ class _StepperButton extends StatelessWidget {
           color: enabled ? AppColors.bgInput : AppColors.bgPrimary,
           borderRadius: BorderRadius.circular(AppRadius.chip),
           border: Border.all(
-            color: enabled
-                ? AppColors.borderEmphasis
-                : AppColors.borderDefault,
+            color: enabled ? AppColors.borderEmphasis : AppColors.borderDefault,
             width: AppBorderWidth.thin,
           ),
         ),

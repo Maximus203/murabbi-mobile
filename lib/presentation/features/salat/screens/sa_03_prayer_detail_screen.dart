@@ -85,10 +85,7 @@ class _DetailBody extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s4),
       children: [
         // ── Header vidéo décoratif 200px (maquette SA-03 — issue #72) ──────
-        const AppVideoBackground(
-          assetPath: 'assets/media/07.mp4',
-          height: 200,
-        ),
+        const AppVideoBackground(assetPath: 'assets/media/07.mp4', height: 200),
         const SizedBox(height: AppSpacing.s4),
 
         // ── Statut courant ─────────────────────────────────────────

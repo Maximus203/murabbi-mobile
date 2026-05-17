@@ -53,20 +53,23 @@ class _AppVideoBackgroundState extends State<AppVideoBackground> {
     if (kIsWeb) return;
     final controller = VideoPlayerController.asset(widget.assetPath);
     _controller = controller;
-    controller.initialize().then((_) {
-      if (mounted) {
-        controller.setLooping(true);
-        controller.setVolume(0);
-        controller.play();
-        setState(() => _initialized = true);
-      }
-    }).catchError((Object _) {
-      // Asset manquant ou format non supporté : on bascule sur le
-      // placeholder thémé plutôt que de laisser un bloc opaque.
-      if (mounted) {
-        setState(() => _failed = true);
-      }
-    });
+    controller
+        .initialize()
+        .then((_) {
+          if (mounted) {
+            controller.setLooping(true);
+            controller.setVolume(0);
+            controller.play();
+            setState(() => _initialized = true);
+          }
+        })
+        .catchError((Object _) {
+          // Asset manquant ou format non supporté : on bascule sur le
+          // placeholder thémé plutôt que de laisser un bloc opaque.
+          if (mounted) {
+            setState(() => _failed = true);
+          }
+        });
   }
 
   @override
@@ -123,10 +126,7 @@ class _VideoPlaceholder extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.bgInput,
-            AppColors.accent.withValues(alpha: 0.12),
-          ],
+          colors: [AppColors.bgInput, AppColors.accent.withValues(alpha: 0.12)],
         ),
       ),
       child: Center(

@@ -49,11 +49,7 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
         title: 'Mes Habitudes',
         trailing: IconButton(
           onPressed: widget.onCreate,
-          icon: const Icon(
-            LucideIcons.plus,
-            size: 22,
-            color: AppColors.accent,
-          ),
+          icon: const Icon(LucideIcons.plus, size: 22, color: AppColors.accent),
           tooltip: 'Nouvelle habitude',
         ),
       ),
@@ -267,10 +263,7 @@ class _CategorySectionHeader extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: AppSpacing.s2),
           Expanded(
@@ -433,7 +426,9 @@ class _HabitRowV15State extends State<_HabitRowV15> {
                     : AppColors.bgInput,
                 borderRadius: BorderRadius.circular(AppRadius.chip),
                 border: Border.all(
-                  color: _checked ? AppColors.success : AppColors.borderEmphasis,
+                  color: _checked
+                      ? AppColors.success
+                      : AppColors.borderEmphasis,
                   width: AppBorderWidth.thin,
                 ),
               ),

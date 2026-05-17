@@ -174,8 +174,9 @@ void main() {
       // Après le premier microtask (après l'update optimiste synchrone),
       // l'état doit déjà refléter onTime — sans attendre markCompleter.
       await Future<void>.microtask(() {});
-      final optimisticState =
-          container.read(prayerDetailNotifierProvider('fajr')).requireValue;
+      final optimisticState = container
+          .read(prayerDetailNotifierProvider('fajr'))
+          .requireValue;
       expect(optimisticState.weekStatuses.last, PrayerStatus.onTime);
       expect(
         container.read(prayerDetailNotifierProvider('fajr')).isLoading,
@@ -188,45 +189,44 @@ void main() {
       await markFuture;
 
       // L'état reste onTime après confirmation réseau.
-      final finalState =
-          container.read(prayerDetailNotifierProvider('fajr')).requireValue;
+      final finalState = container
+          .read(prayerDetailNotifierProvider('fajr'))
+          .requireValue;
       expect(finalState.weekStatuses.last, PrayerStatus.onTime);
     },
   );
 
-  test(
-    'markDay() rollback si la persistence échoue (D-29)',
-    () async {
-      when(
-        () => repo.getPrayerHistory(
-          userId: any(named: 'userId'),
-          from: any(named: 'from'),
-          to: any(named: 'to'),
-        ),
-      ).thenAnswer((_) async => [dayWithFajr(today, PrayerStatus.pending)]);
-      when(
-        () => repo.markPrayer(
-          userId: any(named: 'userId'),
-          date: any(named: 'date'),
-          prayerName: any(named: 'prayerName'),
-          status: any(named: 'status'),
-        ),
-      ).thenThrow(Exception('Network error'));
+  test('markDay() rollback si la persistence échoue (D-29)', () async {
+    when(
+      () => repo.getPrayerHistory(
+        userId: any(named: 'userId'),
+        from: any(named: 'from'),
+        to: any(named: 'to'),
+      ),
+    ).thenAnswer((_) async => [dayWithFajr(today, PrayerStatus.pending)]);
+    when(
+      () => repo.markPrayer(
+        userId: any(named: 'userId'),
+        date: any(named: 'date'),
+        prayerName: any(named: 'prayerName'),
+        status: any(named: 'status'),
+      ),
+    ).thenThrow(Exception('Network error'));
 
-      final container = makeContainer();
-      addTearDown(container.dispose);
-      await container.read(prayerDetailNotifierProvider('fajr').future);
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    await container.read(prayerDetailNotifierProvider('fajr').future);
 
-      await container
-          .read(prayerDetailNotifierProvider('fajr').notifier)
-          .markDay(dayUtc: today, status: PrayerStatus.onTime);
+    await container
+        .read(prayerDetailNotifierProvider('fajr').notifier)
+        .markDay(dayUtc: today, status: PrayerStatus.onTime);
 
-      // Après l'échec, l'état revient à pending (rollback).
-      final rollbackState =
-          container.read(prayerDetailNotifierProvider('fajr')).requireValue;
-      expect(rollbackState.weekStatuses.last, PrayerStatus.pending);
-    },
-  );
+    // Après l'échec, l'état revient à pending (rollback).
+    final rollbackState = container
+        .read(prayerDetailNotifierProvider('fajr'))
+        .requireValue;
+    expect(rollbackState.weekStatuses.last, PrayerStatus.pending);
+  });
 
   test('markDay() appelle MarkPrayer pour la bonne prière', () async {
     when(

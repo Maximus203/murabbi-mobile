@@ -137,10 +137,7 @@ class _Setup01OnboardingScreenState
           children: [
             // #121 : "Passer" n'a de sens que sur les slides intermédiaires.
             // Sur le dernier slide, le CTA "Commencer" couvre la même action.
-            _TopBar(
-              onSkip: _saving ? null : _complete,
-              visible: !_isLast,
-            ),
+            _TopBar(onSkip: _saving ? null : _complete, visible: !_isLast),
             Expanded(
               child: PageView.builder(
                 controller: _pageCtrl,
@@ -166,9 +163,9 @@ class _Setup01OnboardingScreenState
                         onPressed: _saving
                             ? null
                             : () => _pageCtrl.previousPage(
-                                  duration: const Duration(milliseconds: 250),
-                                  curve: Curves.easeOut,
-                                ),
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeOut,
+                              ),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.s3),
@@ -302,10 +299,7 @@ class _IllustrationBanner extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.bgInput,
-            AppColors.accent.withValues(alpha: 0.12),
-          ],
+          colors: [AppColors.bgInput, AppColors.accent.withValues(alpha: 0.12)],
         ),
       ),
       child: Center(

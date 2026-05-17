@@ -61,31 +61,29 @@ void main() {
     expect(find.text('Ajouter une habitude'), findsOneWidget);
   });
 
-  testWidgets(
-    '#136 — le bouton CTA de l\'empty state déclenche onCreate',
-    (tester) async {
-      var created = false;
-      await tester.pumpWidget(pumpable(onCreate: () => created = true));
-      await tester.pumpAndSettle();
+  testWidgets('#136 — le bouton CTA de l\'empty state déclenche onCreate', (
+    tester,
+  ) async {
+    var created = false;
+    await tester.pumpWidget(pumpable(onCreate: () => created = true));
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Ajouter une habitude'));
-      await tester.pumpAndSettle();
-      expect(created, isTrue);
-    },
-  );
+    await tester.tap(find.text('Ajouter une habitude'));
+    await tester.pumpAndSettle();
+    expect(created, isTrue);
+  });
 
-  testWidgets(
-    '#136 — le bouton "+" du header déclenche le même onCreate',
-    (tester) async {
-      var created = false;
-      await tester.pumpWidget(pumpable(onCreate: () => created = true));
-      await tester.pumpAndSettle();
+  testWidgets('#136 — le bouton "+" du header déclenche le même onCreate', (
+    tester,
+  ) async {
+    var created = false;
+    await tester.pumpWidget(pumpable(onCreate: () => created = true));
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.byTooltip('Nouvelle habitude'));
-      await tester.pumpAndSettle();
-      expect(created, isTrue);
-    },
-  );
+    await tester.tap(find.byTooltip('Nouvelle habitude'));
+    await tester.pumpAndSettle();
+    expect(created, isTrue);
+  });
 
   testWidgets('#135 — HA-01 n\'embarque pas de bottomNavigationBar local', (
     tester,

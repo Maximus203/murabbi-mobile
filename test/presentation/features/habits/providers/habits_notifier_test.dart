@@ -98,7 +98,10 @@ void main() {
         await container.read(authNotifierProvider.future);
         await container.read(habitsNotifierProvider.future);
 
-        await repo.createHabit(userId: testUser.id, habit: makeHabit('h2', 'B'));
+        await repo.createHabit(
+          userId: testUser.id,
+          habit: makeHabit('h2', 'B'),
+        );
 
         final loadingStates = <bool>[];
         // On observe PENDANT l'appel à refresh().

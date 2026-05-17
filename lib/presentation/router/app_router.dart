@@ -105,9 +105,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // par branche : la branche salat ne reconstruit plus au retour sur
       // l'onglet home, et vice-versa.
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) => ScaffoldWithBottomNav(
-          navigationShell: navigationShell,
-        ),
+        builder: (context, state, navigationShell) =>
+            ScaffoldWithBottomNav(navigationShell: navigationShell),
         branches: [
           // Branche 0 — Accueil (HM-01)
           StatefulShellBranch(

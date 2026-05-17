@@ -135,58 +135,53 @@ void main() {
     },
   );
 
-  testWidgets(
-    'erreur NOM disparaît dès que l\'utilisateur tape — issue #142',
-    (tester) async {
-      await tester.binding.setSurfaceSize(const Size(400, 1600));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await pumpAndPreWarmAuth(tester);
+  testWidgets('erreur NOM disparaît dès que l\'utilisateur tape — issue #142', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await pumpAndPreWarmAuth(tester);
 
-      // Déclenche l'erreur.
-      await tester.tap(find.text('Créer l\'habitude'));
-      await tester.pumpAndSettle();
-      expect(find.text('Le nom est requis.'), findsOneWidget);
+    // Déclenche l'erreur.
+    await tester.tap(find.text('Créer l\'habitude'));
+    await tester.pumpAndSettle();
+    expect(find.text('Le nom est requis.'), findsOneWidget);
 
-      // Frappe dans le champ NOM.
-      await tester.enterText(
-        find.byType(TextField).first,
-        'Lecture du Coran',
-      );
-      await tester.pumpAndSettle();
+    // Frappe dans le champ NOM.
+    await tester.enterText(find.byType(TextField).first, 'Lecture du Coran');
+    await tester.pumpAndSettle();
 
-      // L'erreur a disparu.
-      expect(find.text('Le nom est requis.'), findsNothing);
-    },
-  );
+    // L'erreur a disparu.
+    expect(find.text('Le nom est requis.'), findsNothing);
+  });
 
   // ── Succès : repo appelé + SnackBar + onCreated (issue #144) ────────────
 
-  testWidgets(
-    'submit success → habitude créée + SnackBar succès + onCreated',
-    (tester) async {
-      final repo = InMemoryHabitRepository();
-      var createdCalled = false;
+  testWidgets('submit success → habitude créée + SnackBar succès + onCreated', (
+    tester,
+  ) async {
+    final repo = InMemoryHabitRepository();
+    var createdCalled = false;
 
-      await tester.binding.setSurfaceSize(const Size(400, 1600));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.pumpWidget(
-        pumpable(customRepo: repo, onCreated: () => createdCalled = true),
-      );
-      await tester.pumpAndSettle();
+    await tester.binding.setSurfaceSize(const Size(400, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      pumpable(customRepo: repo, onCreated: () => createdCalled = true),
+    );
+    await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField).first, 'Lecture Coran');
-      await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'Lecture Coran');
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Créer l\'habitude'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('Créer l\'habitude'));
+    await tester.pumpAndSettle();
 
-      final habits = await repo.getHabits(testUser.id);
-      expect(habits, hasLength(1));
-      expect(habits.first.name.value, 'Lecture Coran');
-      expect(createdCalled, isTrue);
-      expect(find.text('Habitude créée avec succès'), findsOneWidget);
-    },
-  );
+    final habits = await repo.getHabits(testUser.id);
+    expect(habits, hasLength(1));
+    expect(habits.first.name.value, 'Lecture Coran');
+    expect(createdCalled, isTrue);
+    expect(find.text('Habitude créée avec succès'), findsOneWidget);
+  });
 
   testWidgets(
     'submit error → bannière d\'erreur affichée, onCreated PAS appelé',
@@ -231,25 +226,24 @@ void main() {
     },
   );
 
-  testWidgets(
-    'mode "Jours précis" → aucun jour pré-sélectionné — issue #141',
-    (tester) async {
-      final repo = InMemoryHabitRepository();
-      await tester.binding.setSurfaceSize(const Size(400, 1600));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.pumpWidget(pumpable(customRepo: repo));
-      await tester.pumpAndSettle();
+  testWidgets('mode "Jours précis" → aucun jour pré-sélectionné — issue #141', (
+    tester,
+  ) async {
+    final repo = InMemoryHabitRepository();
+    await tester.binding.setSurfaceSize(const Size(400, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(pumpable(customRepo: repo));
+    await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField).first, 'Habitude');
-      await tester.tap(find.text('Jours précis de la semaine'));
-      await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'Habitude');
+    await tester.tap(find.text('Jours précis de la semaine'));
+    await tester.pumpAndSettle();
 
-      // Aucun jour sélectionné : submit refuse et ne crée rien.
-      await tester.tap(find.text('Créer l\'habitude'));
-      await tester.pumpAndSettle();
+    // Aucun jour sélectionné : submit refuse et ne crée rien.
+    await tester.tap(find.text('Créer l\'habitude'));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Sélectionne au moins un jour.'), findsOneWidget);
-      expect(await repo.getHabits(testUser.id), isEmpty);
-    },
-  );
+    expect(find.text('Sélectionne au moins un jour.'), findsOneWidget);
+    expect(await repo.getHabits(testUser.id), isEmpty);
+  });
 }

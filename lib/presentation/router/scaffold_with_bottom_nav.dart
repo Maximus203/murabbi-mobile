@@ -14,10 +14,7 @@ class ScaffoldWithBottomNav extends StatelessWidget {
   /// Shell fourni par [StatefulShellRoute.indexedStack].
   final StatefulNavigationShell navigationShell;
 
-  const ScaffoldWithBottomNav({
-    super.key,
-    required this.navigationShell,
-  });
+  const ScaffoldWithBottomNav({super.key, required this.navigationShell});
 
   /// Mappe l'index de branche (0=home, 1=salat, 2=habits) vers [AppBottomNavTab].
   ///
@@ -60,14 +57,17 @@ class ScaffoldWithBottomNav extends StatelessWidget {
       final label = tab == AppBottomNavTab.collections
           ? 'Collections'
           : 'Classement';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$label arrive bientôt.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$label arrive bientôt.')));
       return;
     }
     // [initialLocation: true] revient à la racine de la branche si déjà
     // dessus, ce qui correspond au comportement natif iOS/Android bottom nav.
-    navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
+    navigationShell.goBranch(
+      index,
+      initialLocation: index == navigationShell.currentIndex,
+    );
   }
 
   @override

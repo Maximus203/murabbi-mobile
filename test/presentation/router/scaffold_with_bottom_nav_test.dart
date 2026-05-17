@@ -37,9 +37,8 @@ GoRouter _makeRouter({
     initialLocation: '/home',
     routes: [
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) => ScaffoldWithBottomNav(
-          navigationShell: navigationShell,
-        ),
+        builder: (context, state, navigationShell) =>
+            ScaffoldWithBottomNav(navigationShell: navigationShell),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -75,12 +74,11 @@ GoRouter _makeRouter({
 
 void main() {
   group('ScaffoldWithBottomNav — D-18 tab state preservation', () {
-    testWidgets('affiche AppBottomNav avec l\'onglet home actif au démarrage',
-        (tester) async {
+    testWidgets('affiche AppBottomNav avec l\'onglet home actif au démarrage', (
+      tester,
+    ) async {
       final router = _makeRouter();
-      await tester.pumpWidget(
-        MaterialApp.router(routerConfig: router),
-      );
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       await tester.pumpAndSettle();
 
       expect(find.byType(AppBottomNav), findsOneWidget);
@@ -88,11 +86,11 @@ void main() {
       expect(find.text('Accueil'), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('navigue vers Salat au tap sur l\'onglet Salat', (tester) async {
+    testWidgets('navigue vers Salat au tap sur l\'onglet Salat', (
+      tester,
+    ) async {
       final router = _makeRouter();
-      await tester.pumpWidget(
-        MaterialApp.router(routerConfig: router),
-      );
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Salat'));
@@ -108,9 +106,7 @@ void main() {
         var homeInitCount = 0;
 
         final router = _makeRouter(onHomeInit: () => homeInitCount++);
-        await tester.pumpWidget(
-          MaterialApp.router(routerConfig: router),
-        );
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
         await tester.pumpAndSettle();
 
         // Home initialisé une seule fois.
@@ -129,7 +125,8 @@ void main() {
         expect(
           homeInitCount,
           equals(1),
-          reason: 'IndexedStack ne doit pas détruire le State home lors '
+          reason:
+              'IndexedStack ne doit pas détruire le State home lors '
               'du retour depuis Salat',
         );
       },
@@ -141,9 +138,7 @@ void main() {
         var salatInitCount = 0;
 
         final router = _makeRouter(onSalatInit: () => salatInitCount++);
-        await tester.pumpWidget(
-          MaterialApp.router(routerConfig: router),
-        );
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
         await tester.pumpAndSettle();
 
         // Premier tap → Salat.
@@ -163,43 +158,38 @@ void main() {
         expect(
           salatInitCount,
           equals(1),
-          reason: 'IndexedStack ne doit pas appeler initState deux fois '
+          reason:
+              'IndexedStack ne doit pas appeler initState deux fois '
               'sur le widget Salat',
         );
       },
     );
 
-    testWidgets(
-      'affiche snackbar pour Collections (non implémenté)',
-      (tester) async {
-        final router = _makeRouter();
-        await tester.pumpWidget(
-          MaterialApp.router(routerConfig: router),
-        );
-        await tester.pumpAndSettle();
+    testWidgets('affiche snackbar pour Collections (non implémenté)', (
+      tester,
+    ) async {
+      final router = _makeRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Collections'));
-        await tester.pumpAndSettle();
+      await tester.tap(find.text('Collections'));
+      await tester.pumpAndSettle();
 
-        expect(find.text('Collections arrive bientôt.'), findsOneWidget);
-      },
-    );
+      expect(find.text('Collections arrive bientôt.'), findsOneWidget);
+    });
 
-    testWidgets(
-      'affiche snackbar pour Classement (non implémenté)',
-      (tester) async {
-        final router = _makeRouter();
-        await tester.pumpWidget(
-          MaterialApp.router(routerConfig: router),
-        );
-        await tester.pumpAndSettle();
+    testWidgets('affiche snackbar pour Classement (non implémenté)', (
+      tester,
+    ) async {
+      final router = _makeRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Classement'));
-        await tester.pumpAndSettle();
+      await tester.tap(find.text('Classement'));
+      await tester.pumpAndSettle();
 
-        expect(find.text('Classement arrive bientôt.'), findsOneWidget);
-      },
-    );
+      expect(find.text('Classement arrive bientôt.'), findsOneWidget);
+    });
   });
 
   group('ScaffoldWithBottomNav — méthodes de mapping (D-18)', () {

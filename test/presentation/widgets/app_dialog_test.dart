@@ -56,10 +56,7 @@ void main() {
 
     testWidgets('shows body text when provided', (tester) async {
       await tester.pumpWidget(
-        wrapWithDialog(
-          title: 'Titre',
-          body: 'Vous devrez vous reconnecter.',
-        ),
+        wrapWithDialog(title: 'Titre', body: 'Vous devrez vous reconnecter.'),
       );
       await openDialog(tester);
       expect(find.text('Vous devrez vous reconnecter.'), findsOneWidget);
@@ -73,11 +70,7 @@ void main() {
 
     testWidgets('shows confirmLabel and cancelLabel buttons', (tester) async {
       await tester.pumpWidget(
-        wrapWithDialog(
-          title: 'Titre',
-          confirmLabel: 'Oui',
-          cancelLabel: 'Non',
-        ),
+        wrapWithDialog(title: 'Titre', confirmLabel: 'Oui', cancelLabel: 'Non'),
       );
       await openDialog(tester);
       expect(find.text('Oui'), findsOneWidget);
@@ -156,10 +149,7 @@ void main() {
       'confirm button text color is NOT danger when isDangerous=false',
       (tester) async {
         await tester.pumpWidget(
-          wrapWithDialog(
-            title: 'Confirmer ?',
-            confirmLabel: 'Confirmer',
-          ),
+          wrapWithDialog(title: 'Confirmer ?', confirmLabel: 'Confirmer'),
         );
         await openDialog(tester);
 
