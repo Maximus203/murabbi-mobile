@@ -142,15 +142,19 @@ void main() {
     expect(find.textContaining('DEMAIN'), findsOneWidget);
   });
 
-  testWidgets('rend les sections Habitudes / Niyyah / Série', (tester) async {
+  testWidgets('rend les sections Habitudes / Niyyah / Score-Streak', (
+    tester,
+  ) async {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
 
-    // Habitudes du jour : visible sans scroll (haut du ListView)
+    // Phase 5 : "Série globale" remplacée par _ScoreStreakCard.
     expect(find.text('Habitudes du jour'), findsOneWidget);
-    // Niyyah et Série peuvent être hors viewport (ListView) : skipOffstage:false
-    expect(find.text('Niyyah du jour', skipOffstage: false), findsOneWidget);
-    expect(find.text('Série globale', skipOffstage: false), findsOneWidget);
+    expect(find.text('Niyyah du jour'), findsOneWidget);
+    // Phase 5 : _ScoreStreakCard affiche au minimum les 3 labels de stats.
+    expect(find.text('Pts hebdo'), findsOneWidget);
+    expect(find.text('Série'), findsOneWidget);
+    expect(find.text('Niveau'), findsOneWidget);
   });
 
   test('PrayerSettingsNotConfiguredFailure remonte settingsNotConfigured', () {
