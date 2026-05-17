@@ -102,6 +102,7 @@ flutter:
     - assets/images/
     - assets/media/
     - assets/fonts/
+    - assets/svg/
 
   fonts:
     - family: Geist
