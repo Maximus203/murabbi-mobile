@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
@@ -34,7 +35,9 @@ class AppVideoBackground extends StatefulWidget {
 }
 
 class _AppVideoBackgroundState extends State<AppVideoBackground> {
-  late VideoPlayerController _controller;
+  /// Null tant que le contrôleur n'est pas créé — notamment sur web, où
+  /// `video_player` gèle le renderer du navigateur (#130).
+  VideoPlayerController? _controller;
   bool _initialized = false;
 
   /// `true` si l'asset vidéo est absent ou n'a pas pu être décodé. Dans ce
@@ -44,26 +47,31 @@ class _AppVideoBackgroundState extends State<AppVideoBackground> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.asset(widget.assetPath)
-      ..initialize().then((_) {
-        if (mounted) {
-          _controller.setLooping(true);
-          _controller.setVolume(0);
-          _controller.play();
-          setState(() => _initialized = true);
-        }
-      }).catchError((Object _) {
-        // Asset manquant ou format non supporté : on bascule sur le
-        // placeholder thémé plutôt que de laisser un bloc opaque.
-        if (mounted) {
-          setState(() => _failed = true);
-        }
-      });
+    // #130 : sur Flutter web, `video_player` gèle le thread principal du
+    // navigateur. On n'initialise pas le contrôleur — le placeholder thémé
+    // reste affiché en permanence.
+    if (kIsWeb) return;
+    final controller = VideoPlayerController.asset(widget.assetPath);
+    _controller = controller;
+    controller.initialize().then((_) {
+      if (mounted) {
+        controller.setLooping(true);
+        controller.setVolume(0);
+        controller.play();
+        setState(() => _initialized = true);
+      }
+    }).catchError((Object _) {
+      // Asset manquant ou format non supporté : on bascule sur le
+      // placeholder thémé plutôt que de laisser un bloc opaque.
+      if (mounted) {
+        setState(() => _failed = true);
+      }
+    });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -82,13 +90,13 @@ class _AppVideoBackgroundState extends State<AppVideoBackground> {
             // #115 : jamais de bloc noir opaque.
             const _VideoPlaceholder(),
             // Vidéo en couverture, affichée uniquement après initialisation.
-            if (_initialized && !_failed)
+            if (_initialized && !_failed && _controller != null)
               FittedBox(
                 fit: BoxFit.cover,
                 child: SizedBox(
-                  width: _controller.value.size.width,
-                  height: _controller.value.size.height,
-                  child: VideoPlayer(_controller),
+                  width: _controller!.value.size.width,
+                  height: _controller!.value.size.height,
+                  child: VideoPlayer(_controller!),
                 ),
               ),
             // L'overlay est toujours rendu (pendant et après le chargement).

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:video_player/video_player.dart';
 
 /// Widget vidéo unifié supportant deux sources — ADR-017.
@@ -10,10 +12,12 @@ import 'package:video_player/video_player.dart';
 /// Exactement **un** des deux paramètres doit être fourni.
 ///
 /// Comportements :
-/// - **Loading** : fond sombre anthracite (`Color(0xFF1C1A16)`) pendant
-///   l'initialisation du lecteur.
-/// - **Erreur** : fallback identique au loading (jamais de crash). L'erreur
-///   est loggée dans la console debug uniquement.
+/// - **Loading / Erreur / Web** : un fallback thémé chaud (dégradé sable/ocre)
+///   est affiché — jamais de bloc noir opaque (issues #137 / #130). L'erreur
+///   est avalée silencieusement (pas de crash).
+/// - **Web** (`kIsWeb`) : le contrôleur `video_player` n'est **jamais**
+///   initialisé — sur Flutter web il gèle le thread principal du navigateur
+///   (issue #130). Le fallback statique reste affiché.
 /// - [autoPlay] : démarre la lecture automatiquement après init (défaut : `true`).
 /// - [looping] : lecture en boucle (défaut : `true`).
 /// - [fit] : mode d'ajustement de la vidéo (défaut : [BoxFit.cover]).
@@ -77,7 +81,11 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    _initController();
+    // #130 : sur Flutter web, `video_player` gèle le renderer du navigateur.
+    // On n'initialise pas le contrôleur — le fallback thémé reste affiché.
+    if (!kIsWeb) {
+      _initController();
+    }
   }
 
   Future<void> _initController() async {
@@ -99,7 +107,7 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
       if (widget.autoPlay) await ctrl.play();
       setState(() => _initialized = true);
     } catch (_) {
-      // Fallback silencieux — le fond sombre reste affiché.
+      // Fallback silencieux — le placeholder thémé reste affiché.
       if (mounted) setState(() => _hasError = true);
     }
   }
@@ -120,11 +128,12 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Fond sombre anthracite-brun — visible pendant le chargement et
-            // utilisé comme fond de secours si la vidéo n'est pas disponible.
-            const ColoredBox(color: Color(0xFF1C1A16)),
+            // Fallback thémé chaud (dégradé sable/ocre) — visible pendant le
+            // chargement, sur web, et si la vidéo échoue. #137 : jamais de
+            // bloc noir opaque, cohérent avec la palette de l'app.
+            const _VideoFallback(),
             // Vidéo en couverture, affichée uniquement après initialisation
-            // sans erreur.
+            // sans erreur (jamais sur web).
             if (_initialized && !_hasError && _controller != null)
               FittedBox(
                 fit: widget.fit,
@@ -137,6 +146,28 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
             // L'overlay est toujours rendu (pendant et après le chargement).
             if (widget.overlay != null) widget.overlay!,
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Fond de secours thémé affiché à la place de la vidéo tant qu'elle n'est
+/// pas chargée — ou définitivement sur web / en cas d'échec (#137 / #130).
+///
+/// Dégradé chaud dans la palette ocre/sable de l'app pour rester cohérent
+/// avec le design system, jamais un bloc noir.
+class _VideoFallback extends StatelessWidget {
+  const _VideoFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.accent, AppColors.accentHover],
         ),
       ),
     );
