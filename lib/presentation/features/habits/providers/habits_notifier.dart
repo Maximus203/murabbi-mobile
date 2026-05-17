@@ -31,17 +31,12 @@ class HabitsNotifier extends AsyncNotifier<List<Habit>> {
     return ref.read(getHabitsUseCaseProvider).call(user.id);
   }
 
-  /// Recharge la liste — appelé après une création réussie.
+  /// Recharge la liste sans flash de chargement — appelé après une création
+  /// réussie (D-17). Utilise [ref.invalidateSelf] + [future] pour préserver
+  /// les données actuelles pendant le refetch (pas de transition loading).
   Future<void> refresh() async {
-    final user = ref.read(authNotifierProvider).valueOrNull;
-    if (user == null) {
-      state = const AsyncValue.data([]);
-      return;
-    }
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
-      () => ref.read(getHabitsUseCaseProvider).call(user.id),
-    );
+    ref.invalidateSelf();
+    await future;
   }
 }
 
