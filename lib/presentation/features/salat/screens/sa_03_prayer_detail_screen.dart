@@ -239,7 +239,9 @@ class _DayPastille extends StatelessWidget {
                 child: Text(
                   '${local.day}',
                   style: AppTypography.body.copyWith(
-                    color: isPending ? AppColors.textTertiary : color,
+                    // D-31 : textTertiary (2.8:1) remplacé par textSecondary
+                    // pour le texte porteur de sens (numéro de jour).
+                    color: isPending ? AppColors.textSecondary : color,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

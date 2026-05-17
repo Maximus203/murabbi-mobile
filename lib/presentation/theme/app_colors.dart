@@ -19,6 +19,11 @@ class AppColors {
   /// Surface d'input "pressée" / état désactivé doux.
   static const Color bgInput = Color(0xFFEDE9E2);
 
+  /// Reflet shimmer — ton intermédiaire entre bgInput et bgPrimary, utilisé
+  /// pour l'animation de chargement squelette (D-28). Non présent dans le DS
+  /// sheet original, ajouté comme token dérivé.
+  static const Color bgShimmerHighlight = Color(0xFFE8E3DA);
+
   /// Texte principal — anthracite-brun.
   static const Color textPrimary = Color(0xFF1C1A16);
 
