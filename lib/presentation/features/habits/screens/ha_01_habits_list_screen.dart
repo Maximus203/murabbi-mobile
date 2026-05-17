@@ -5,12 +5,14 @@ import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
+import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/today_habit_statuses_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/habits/widgets/habit_row.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_chip.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 
@@ -152,7 +154,10 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
                         itemCount: filtered.length,
                         separatorBuilder: (_, _) =>
                             const SizedBox(height: AppSpacing.s3),
-                        itemBuilder: (_, i) => _HabitTile(habit: filtered[i]),
+                        itemBuilder: (_, i) => _HabitTile(
+                          habit: filtered[i],
+                          onToggle: () => _toggle(filtered[i].id),
+                        ),
                       ),
               ),
             ],
@@ -160,6 +165,19 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
         },
       ),
     );
+  }
+
+  /// Déclenche le cycle de statut d'une habitude avec feedback d'erreur.
+  Future<void> _toggle(HabitId habitId) async {
+    try {
+      await ref.read(todayHabitStatusesProvider.notifier).toggle(habitId);
+    } catch (_) {
+      // Le rollback est déjà fait par le notifier — on signale juste l'échec.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Impossible de mettre à jour. Réessaie.')),
+      );
+    }
   }
 }
 
@@ -216,88 +234,21 @@ class _CategoryChipsBar extends StatelessWidget {
   }
 }
 
-class _HabitTile extends StatelessWidget {
+/// Tuile d'habitude — connecte [HabitRow] au statut du jour (#151).
+class _HabitTile extends ConsumerWidget {
   final Habit habit;
-  const _HabitTile({required this.habit});
+  final VoidCallback onToggle;
 
-  String _frequencyLabel() {
-    switch (habit.frequencyType) {
-      case HabitFrequencyType.daily:
-        return 'Tous les jours';
-      case HabitFrequencyType.perDay:
-        return '${habit.frequency}× par jour';
-      case HabitFrequencyType.perWeek:
-        return '${habit.frequency}× par semaine';
-      case HabitFrequencyType.weekly:
-        return '${habit.activeDays.length} jour(s) / semaine';
-      case HabitFrequencyType.monthly:
-        return 'Le ${habit.monthlyDay} de chaque mois';
-      case HabitFrequencyType.custom:
-        return 'Personnalisée';
-    }
-  }
+  const _HabitTile({required this.habit, required this.onToggle});
 
   @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s4,
-        vertical: AppSpacing.s3,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.bgInput,
-              borderRadius: BorderRadius.circular(AppRadius.chip),
-            ),
-            child: const Icon(
-              LucideIcons.target,
-              size: 20,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  habit.name.value,
-                  style: AppTypography.h3,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppSpacing.s1),
-                Text(
-                  _frequencyLabel(),
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s2,
-              vertical: AppSpacing.s1,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppRadius.chip),
-            ),
-            child: Text(
-              '+${habit.points.value} pts',
-              style: AppTypography.label.copyWith(color: AppColors.accent),
-            ),
-          ),
-        ],
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(todayHabitStatusesProvider)[habit.id];
+    return HabitRow(
+      habit: habit,
+      todayStatus: status,
+      onTap: () {},
+      onToggle: onToggle,
     );
   }
 }

@@ -6,6 +6,8 @@ import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/use_cases/categories/get_categories_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/habits/create_habit_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/habits/get_habits_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/habits/toggle_habit_log_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/habits/update_habit_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 
@@ -20,6 +22,16 @@ final createHabitUseCaseProvider = Provider<CreateHabitUseCase>((ref) {
 
 final getCategoriesUseCaseProvider = Provider<GetCategoriesUseCase>((ref) {
   return GetCategoriesUseCase(ref.watch(categoryRepositoryProvider));
+});
+
+/// Mise à jour d'une habitude existante — utilisé par HA-02 mode édition (#152).
+final updateHabitUseCaseProvider = Provider<UpdateHabitUseCase>((ref) {
+  return UpdateHabitUseCase(ref.watch(habitRepositoryProvider));
+});
+
+/// Cycle done/late/missed des logs d'habitude (#151).
+final toggleHabitLogUseCaseProvider = Provider<ToggleHabitLogUseCase>((ref) {
+  return ToggleHabitLogUseCase(ref.watch(habitRepositoryProvider));
 });
 
 /// Stream des habitudes de l'utilisateur courant. Recharge automatiquement

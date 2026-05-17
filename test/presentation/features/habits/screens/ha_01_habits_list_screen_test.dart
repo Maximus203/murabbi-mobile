@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
@@ -16,7 +17,6 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_01_habits_list_screen.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_logo.dart';
 
 class _MockAuthRepo extends Mock implements AuthRepository {}
 
@@ -84,10 +84,10 @@ void main() {
     expect(find.text('+5 pts'), findsOneWidget);
   });
 
-  testWidgets('empty state affiche AppLogo (SVG)', (tester) async {
+  testWidgets('empty state affiche l\'icône Lucide (#77)', (tester) async {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
-    expect(find.byType(AppLogo), findsOneWidget);
+    expect(find.byIcon(LucideIcons.clipboardList), findsOneWidget);
   });
 
   testWidgets('FAB tap déclenche onCreate', (tester) async {
