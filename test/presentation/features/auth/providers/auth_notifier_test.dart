@@ -121,11 +121,19 @@ void main() {
       await container.read(authNotifierProvider.future);
 
       when(
-        () => repo.signUp(email: 'a@b.co', password: 'pass1234'),
+        () => repo.signUp(
+          email: 'a@b.co',
+          password: 'pass1234',
+          displayName: any(named: 'displayName'),
+        ),
       ).thenAnswer((_) async => testUser);
 
       final notifier = container.read(authNotifierProvider.notifier);
-      await notifier.signUp(email: 'a@b.co', password: 'pass1234');
+      await notifier.signUp(
+        email: 'a@b.co',
+        password: 'pass1234',
+        displayName: 'Tester',
+      );
 
       expect(container.read(authNotifierProvider).value, testUser);
     });
@@ -138,11 +146,16 @@ void main() {
         () => repo.signUp(
           email: any(named: 'email'),
           password: any(named: 'password'),
+          displayName: any(named: 'displayName'),
         ),
       ).thenThrow(const AuthFailure.emailAlreadyInUse());
 
       final notifier = container.read(authNotifierProvider.notifier);
-      await notifier.signUp(email: 'a@b.co', password: 'pass1234');
+      await notifier.signUp(
+        email: 'a@b.co',
+        password: 'pass1234',
+        displayName: 'Tester',
+      );
 
       expect(
         container.read(authNotifierProvider).error,
@@ -151,22 +164,71 @@ void main() {
     });
   });
 
+  group('AuthNotifier — clearError (#116)', () {
+    test('clearError réinitialise un état AsyncError en AsyncData', () async {
+      final container = makeContainer();
+      await container.read(authNotifierProvider.future);
+
+      when(
+        () => repo.signIn(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenThrow(const AuthFailure.invalidCredentials());
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      await notifier.signIn(email: 'bad@b.co', password: 'wrongpass');
+      expect(container.read(authNotifierProvider).hasError, isTrue);
+
+      notifier.clearError();
+
+      final state = container.read(authNotifierProvider);
+      expect(state.hasError, isFalse);
+      expect(state.value, isNull);
+    });
+
+    test('clearError est un no-op si l\'état n\'est pas une erreur', () async {
+      final container = makeContainer();
+      await container.read(authNotifierProvider.future);
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      final before = container.read(authNotifierProvider);
+      notifier.clearError();
+      final after = container.read(authNotifierProvider);
+
+      expect(after.hasError, isFalse);
+      expect(after.value, before.value);
+    });
+  });
+
   group('AuthNotifier — defensive initialization', () {
     test('signUp works even if build() has not been started yet', () async {
       final container = makeContainer();
 
       when(
-        () => repo.signUp(email: 'a@b.co', password: 'pass1234'),
+        () => repo.signUp(
+          email: 'a@b.co',
+          password: 'pass1234',
+          displayName: any(named: 'displayName'),
+        ),
       ).thenAnswer((_) async => testUser);
 
       final notifier = container.read(authNotifierProvider.notifier);
 
       await expectLater(
-        notifier.signUp(email: 'a@b.co', password: 'pass1234'),
+        notifier.signUp(
+          email: 'a@b.co',
+          password: 'pass1234',
+          displayName: 'Tester',
+        ),
         completes,
       );
       verify(
-        () => repo.signUp(email: 'a@b.co', password: 'pass1234'),
+        () => repo.signUp(
+          email: 'a@b.co',
+          password: 'pass1234',
+          displayName: any(named: 'displayName'),
+        ),
       ).called(1);
     });
 
@@ -202,7 +264,11 @@ void main() {
         );
 
         final notifier = container.read(authNotifierProvider.notifier);
-        await notifier.signUp(email: 'a@b.co', password: 'pass1234');
+        await notifier.signUp(
+          email: 'a@b.co',
+          password: 'pass1234',
+          displayName: 'Tester',
+        );
 
         final state = container.read(authNotifierProvider);
         expect(state.hasError, isTrue);
@@ -378,6 +444,7 @@ void main() {
         () => repo.signUp(
           email: any(named: 'email'),
           password: any(named: 'password'),
+          displayName: any(named: 'displayName'),
         ),
       ).thenAnswer((_) async => testUser);
       final container = makeContainer();
@@ -385,7 +452,11 @@ void main() {
 
       await container
           .read(authNotifierProvider.notifier)
-          .signUp(email: 'new@example.com', password: 'pass1234');
+          .signUp(
+            email: 'new@example.com',
+            password: 'pass1234',
+            displayName: 'Tester',
+          );
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       final remembered = await container.read(
