@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
@@ -123,5 +124,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Lecture Coran'), findsOneWidget);
+    expect(find.text('+5 pts'), findsOneWidget);
+  });
+
+  testWidgets('empty state affiche l\'icône Lucide (#77)', (tester) async {
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
+    expect(find.byIcon(LucideIcons.clipboardList), findsOneWidget);
+  });
+
+  testWidgets('FAB tap déclenche onCreate', (tester) async {
+    var created = false;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(authRepo),
+          habitRepositoryProvider.overrideWithValue(InMemoryHabitRepository()),
+        ],
+        child: MaterialApp(
+          home: Ha01HabitsListScreen(onCreate: () => created = true),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Nouvelle habitude').first);
+    await tester.pumpAndSettle();
+    expect(created, isTrue);
   });
 }
