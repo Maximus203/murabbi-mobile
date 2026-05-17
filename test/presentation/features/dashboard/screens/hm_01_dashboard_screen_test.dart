@@ -112,15 +112,16 @@ void main() {
     expect(find.textContaining('DEMAIN'), findsOneWidget);
   });
 
-  testWidgets('rend les placeholders Habitudes / Niyyah / Série', (
-    tester,
-  ) async {
+  testWidgets('rend la carte Niyyah du jour', (tester) async {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
 
-    expect(find.text('Habitudes du jour'), findsOneWidget);
+    // Issue #6 : les placeholders "Habitudes du jour" / "Série globale"
+    // sont remplacés par la section score (DashboardScoreCard +
+    // DashboardStatsGrid), masquée hors session dans ce test sans auth.
     expect(find.text('Niyyah du jour'), findsOneWidget);
-    expect(find.text('Série globale'), findsOneWidget);
+    expect(find.text('Habitudes du jour'), findsNothing);
+    expect(find.text('Série globale'), findsNothing);
   });
 
   test('PrayerSettingsNotConfiguredFailure remonte settingsNotConfigured', () {
