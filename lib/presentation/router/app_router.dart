@@ -11,6 +11,9 @@ import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_ve
 import 'package:murabbi_mobile/presentation/features/categories/providers/categories_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/categories/screens/hb_03_categories_list_screen.dart';
 import 'package:murabbi_mobile/presentation/features/categories/screens/hb_04_category_form_screen.dart';
+import 'package:murabbi_mobile/presentation/features/collections/screens/co_01_collections_list_screen.dart';
+import 'package:murabbi_mobile/presentation/features/collections/screens/co_02_create_collection_screen.dart';
+import 'package:murabbi_mobile/presentation/features/collections/screens/co_detail_collection_screen.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_01_habits_list_screen.dart';
@@ -82,36 +85,12 @@ class _ShellScaffold extends ConsumerWidget {
     final index = _tabs.indexOf(tab);
     if (index == -1) return;
 
-    // Collections et Classement non encore implémentés (slices Phase 4 / 5).
-    if (tab == AppBottomNavTab.collections ||
-        tab == AppBottomNavTab.leaderboard) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_tabLabel(tab)} arrive bientôt.')),
-      );
-      return;
-    }
-
     // goBranch avec `initialLocation: true` si on retap le même onglet
     // → remonte en haut de l'historique de cet onglet (comportement standard).
     navigationShell.goBranch(
       index,
       initialLocation: index == navigationShell.currentIndex,
     );
-  }
-
-  static String _tabLabel(AppBottomNavTab tab) {
-    switch (tab) {
-      case AppBottomNavTab.home:
-        return 'Accueil';
-      case AppBottomNavTab.salat:
-        return 'Salat';
-      case AppBottomNavTab.habits:
-        return 'Habitudes';
-      case AppBottomNavTab.collections:
-        return 'Collections';
-      case AppBottomNavTab.leaderboard:
-        return 'Classement';
-    }
   }
 }
 
@@ -305,6 +284,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+      // ── Collections — CO-02 création / CO-DETAIL (issue #6) ───────────
+      // Déclarées hors shell ; CO-02 avant CO-DETAIL pour que `/new` matche
+      // avant `/:id`.
+      GoRoute(
+        path: AppRoutes.collectionsCreate,
+        builder: (context, _) => Co02CreateCollectionScreen(
+          onCreated: () => context.go(AppRoutes.collections),
+          onCancel: () => context.go(AppRoutes.collections),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.collectionDetailPattern,
+        builder: (context, state) => CoDetailCollectionScreen(
+          collectionId: state.pathParameters['id'] ?? '',
+          onBack: () => context.go(AppRoutes.collections),
+        ),
+      ),
+
       // ── Shell persistant — onglets principaux (D-17) ──────────────────
       // StatefulShellRoute.indexedStack maintient un Navigator distinct par
       // branche → l'état (scroll, providers, page stack) est préservé lors
@@ -371,17 +368,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
 
-          // Branche 3 — Collections (stub — Phase 4)
+          // Branche 3 — Collections — CO-01 (issue #6)
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.collections,
-                builder: (_, _) => const _StubScreen(title: 'Collections'),
+                builder: (context, _) => Co01CollectionsListScreen(
+                  onCreate: () => context.go(AppRoutes.collectionsCreate),
+                  onOpenCollection: (id) =>
+                      context.go(AppRoutes.collectionDetail(id)),
+                ),
               ),
             ],
           ),
 
-          // Branche 4 — Classement (stub — Phase 5)
+          // Branche 4 — Classement — LB-01 (livrée dans le commit suivant)
           StatefulShellBranch(
             routes: [
               GoRoute(

@@ -49,10 +49,18 @@ abstract class AppRoutes {
   static String categoryEdit(String id) => '/categories/$id/edit';
   static const categoryEditPattern = '/categories/:id/edit';
 
-  /// Collections — stub Phase 4.
+  /// Collections — CO-01 liste (issue #6, Phase 5).
   static const collections = '/collections';
 
-  /// Classement — stub Phase 5.
+  /// Collections — CO-02 création (issue #6, Phase 5).
+  static const collectionsCreate = '/collections/new';
+
+  /// Collections — CO-DETAIL détail (issue #6, Phase 5). Chemin dynamique :
+  /// `/collections/<id>`.
+  static String collectionDetail(String id) => '/collections/$id';
+  static const collectionDetailPattern = '/collections/:id';
+
+  /// Classement — LB-01 (issue #6, Phase 5).
   static const leaderboard = '/leaderboard';
 
   /// `/auth/verify-email` est traité à part : il est accessible aussi bien
