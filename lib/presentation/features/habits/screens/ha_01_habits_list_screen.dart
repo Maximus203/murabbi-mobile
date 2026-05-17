@@ -50,7 +50,9 @@ class Ha01HabitsListScreen extends ConsumerWidget {
             error: e,
             stackTrace: stackTrace,
           );
-          return const _ErrorView();
+          return _ErrorView(
+            onRetry: () => ref.invalidate(habitsNotifierProvider),
+          );
         },
         data: (list) {
           if (list.isEmpty) return _EmptyView(onCreate: onCreate);
@@ -186,18 +188,34 @@ class _EmptyView extends StatelessWidget {
 }
 
 class _ErrorView extends StatelessWidget {
-  const _ErrorView();
+  /// Callback de relance — invalide le provider pour re-fetcher les données.
+  final VoidCallback? onRetry;
+
+  const _ErrorView({this.onRetry});
 
   @override
   Widget build(BuildContext context) {
     // Message FR neutre (audit TL §B.2 PR #43). Détail loggé caller-side.
-    return const Padding(
-      padding: EdgeInsets.all(AppSpacing.s6),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.s6),
       child: Center(
-        child: Text(
-          'Une erreur est survenue.\nMerci de réessayer plus tard.',
-          style: AppTypography.body,
-          textAlign: TextAlign.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Une erreur est survenue.\nMerci de réessayer plus tard.',
+              style: AppTypography.body,
+              textAlign: TextAlign.center,
+            ),
+            if (onRetry != null) ...[
+              const SizedBox(height: AppSpacing.s4),
+              AppButton(
+                label: 'Réessayer',
+                variant: AppButtonVariant.secondary,
+                onPressed: onRetry,
+              ),
+            ],
+          ],
         ),
       ),
     );

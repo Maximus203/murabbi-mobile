@@ -7,6 +7,15 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 /// Input texte Murabbi — DS sheet § Inputs.
 /// 3 modes : texte simple, avec icône leading, password (eye toggle).
 ///
+/// Paramètres étendus (issues #95) :
+/// - [enabled] : quand false, champ grisé (opacity 0.5) et non interactif.
+/// - [errorText] : si non-null, affiche un libellé d'erreur en rouge sous le
+///   champ et la bordure passe en [AppColors.danger].
+/// - [maxLength] : si fourni, affiche un compteur "n/max" en caption sous le
+///   champ (côté droit).
+/// - [textInputAction] : transmis directement au [TextField].
+/// - [onSubmitted] : callback déclenché à la validation clavier.
+///
 /// Accessibilité (Copilot review #5 + #6) :
 /// - Le bouton eye/eye-off du mode password porte un `tooltip` ("Afficher/
 ///   Masquer le mot de passe") — VoiceOver/TalkBack annoncent l'action.
@@ -24,6 +33,22 @@ class AppInput extends StatefulWidget {
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
 
+  /// Quand false, le champ est grisé (opacity 0.5) et non interactif.
+  final bool enabled;
+
+  /// Si non-null, affiche un texte d'erreur rouge sous le champ et la bordure
+  /// devient [AppColors.danger].
+  final String? errorText;
+
+  /// Si fourni, affiche un compteur "n/[maxLength]" en caption sous le champ.
+  final int? maxLength;
+
+  /// Transmis directement au [TextField] sous-jacent.
+  final TextInputAction? textInputAction;
+
+  /// Appelé quand l'utilisateur valide avec le clavier.
+  final VoidCallback? onSubmitted;
+
   const AppInput({
     super.key,
     this.label,
@@ -33,6 +58,11 @@ class AppInput extends StatefulWidget {
     this.isPassword = false,
     this.keyboardType,
     this.onChanged,
+    this.enabled = true,
+    this.errorText,
+    this.maxLength,
+    this.textInputAction,
+    this.onSubmitted,
   });
 
   @override
@@ -44,14 +74,35 @@ class _AppInputState extends State<AppInput> {
   late final FocusNode _focusNode;
   bool _focused = false;
 
+  /// Suivi interne du nb de caractères — nécessaire quand maxLength est fourni
+  /// sans controller externe.
+  int _currentLength = 0;
+
   @override
   void initState() {
     super.initState();
     _focusNode = FocusNode()..addListener(_onFocusChange);
+    if (widget.controller != null) {
+      _currentLength = widget.controller!.text.length;
+      widget.controller!.addListener(_onControllerChanged);
+    }
+  }
+
+  @override
+  void didUpdateWidget(AppInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.controller != oldWidget.controller) {
+      oldWidget.controller?.removeListener(_onControllerChanged);
+      if (widget.controller != null) {
+        _currentLength = widget.controller!.text.length;
+        widget.controller!.addListener(_onControllerChanged);
+      }
+    }
   }
 
   @override
   void dispose() {
+    widget.controller?.removeListener(_onControllerChanged);
     _focusNode
       ..removeListener(_onFocusChange)
       ..dispose();
@@ -64,17 +115,33 @@ class _AppInputState extends State<AppInput> {
     }
   }
 
+  void _onControllerChanged() {
+    if (widget.maxLength != null) {
+      final newLen = widget.controller!.text.length;
+      if (newLen != _currentLength) {
+        setState(() => _currentLength = newLen);
+      }
+    }
+  }
+
+  Color get _borderColor {
+    if (widget.errorText != null) return AppColors.danger;
+    if (_focused) return AppColors.accent;
+    return AppColors.borderEmphasis;
+  }
+
+  double get _borderWidth {
+    if (_focused) return AppBorderWidth.focusRing;
+    return AppBorderWidth.thin;
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasLeading = widget.leadingIcon != null;
     final hasTrailing = widget.isPassword;
+    final hasFooter = widget.errorText != null || widget.maxLength != null;
 
-    final borderColor = _focused ? AppColors.accent : AppColors.borderEmphasis;
-    final borderWidth = _focused
-        ? AppBorderWidth.focusRing
-        : AppBorderWidth.thin;
-
-    return Column(
+    final inputField = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -90,7 +157,7 @@ class _AppInputState extends State<AppInput> {
           decoration: BoxDecoration(
             color: AppColors.bgInput,
             borderRadius: BorderRadius.circular(AppRadius.button),
-            border: Border.all(color: borderColor, width: borderWidth),
+            border: Border.all(color: _borderColor, width: _borderWidth),
           ),
           child: Row(
             children: [
@@ -114,7 +181,17 @@ class _AppInputState extends State<AppInput> {
                     focusNode: _focusNode,
                     obscureText: widget.isPassword && _obscured,
                     keyboardType: widget.keyboardType,
-                    onChanged: widget.onChanged,
+                    enabled: widget.enabled,
+                    textInputAction: widget.textInputAction,
+                    onChanged: (value) {
+                      if (widget.maxLength != null) {
+                        setState(() => _currentLength = value.length);
+                      }
+                      widget.onChanged?.call(value);
+                    },
+                    onSubmitted: widget.onSubmitted == null
+                        ? null
+                        : (_) => widget.onSubmitted!(),
                     style: AppTypography.body,
                     decoration: InputDecoration(
                       isDense: true,
@@ -144,7 +221,38 @@ class _AppInputState extends State<AppInput> {
             ],
           ),
         ),
+        if (hasFooter) ...[
+          const SizedBox(height: AppSpacing.s1),
+          Row(
+            children: [
+              if (widget.errorText != null)
+                Expanded(
+                  child: Text(
+                    widget.errorText!,
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.danger,
+                    ),
+                  ),
+                )
+              else
+                const Spacer(),
+              if (widget.maxLength != null)
+                Text(
+                  '$_currentLength/${widget.maxLength}',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+            ],
+          ),
+        ],
       ],
     );
+
+    // Wrap dans Opacity si désactivé pour l'indication visuelle.
+    if (!widget.enabled) {
+      return Opacity(opacity: 0.5, child: inputField);
+    }
+    return inputField;
   }
 }

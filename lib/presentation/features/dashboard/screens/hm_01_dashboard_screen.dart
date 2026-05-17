@@ -13,6 +13,7 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_dialog.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 
 // ignore: prefer_final_fields
@@ -178,37 +179,28 @@ class _DashboardBody extends ConsumerWidget {
             subtitle: 'Ta progression apparaîtra ici dès que tu auras commencé.',
           ),
 
-          // D-25 : confirmation avant déconnexion
+          // D-25 : confirmation avant déconnexion via AppDialog DS.
           if (onSignOut != null) ...[
             const SizedBox(height: AppSpacing.s6),
             AppButton(
               label: 'Se déconnecter',
               variant: AppButtonVariant.ghost,
-              onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Se déconnecter ?'),
-                    content: const Text(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (ctx) => AppDialog(
+                  title: 'Se déconnecter ?',
+                  body:
                       "Vous devrez vous reconnecter pour accéder à l'application.",
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('Annuler'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.danger,
-                        ),
-                        child: const Text('Se déconnecter'),
-                      ),
-                    ],
-                  ),
-                );
-                if (confirmed == true) onSignOut!();
-              },
+                  confirmLabel: 'Se déconnecter',
+                  cancelLabel: 'Annuler',
+                  isDangerous: true,
+                  onConfirm: () {
+                    Navigator.pop(ctx);
+                    onSignOut!();
+                  },
+                  onCancel: () => Navigator.pop(ctx),
+                ),
+              ),
             ),
           ],
         ],

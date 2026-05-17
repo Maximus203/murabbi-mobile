@@ -60,7 +60,9 @@ class Sa01TodayScreen extends ConsumerWidget {
             error: e,
             stackTrace: stackTrace,
           );
-          return const _GenericErrorView();
+          return _GenericErrorView(
+            onRetry: () => ref.invalidate(todaySalatNotifierProvider),
+          );
         },
         data: (data) => _PrayersList(
           data: data,
@@ -295,19 +297,35 @@ class _NotConfiguredView extends StatelessWidget {
 }
 
 class _GenericErrorView extends StatelessWidget {
-  const _GenericErrorView();
+  /// Callback de relance — invalide le provider pour re-fetcher les données.
+  final VoidCallback? onRetry;
+
+  const _GenericErrorView({this.onRetry});
 
   @override
   Widget build(BuildContext context) {
     // Message FR neutre, sans détail technique (cf. audit TL §B.2 PR #38).
     // L'erreur précise est loggée via appLog côté caller.
-    return const Padding(
-      padding: EdgeInsets.all(AppSpacing.s6),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.s6),
       child: Center(
-        child: Text(
-          'Une erreur est survenue.\nMerci de réessayer plus tard.',
-          style: AppTypography.body,
-          textAlign: TextAlign.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Une erreur est survenue.\nMerci de réessayer plus tard.',
+              style: AppTypography.body,
+              textAlign: TextAlign.center,
+            ),
+            if (onRetry != null) ...[
+              const SizedBox(height: AppSpacing.s4),
+              AppButton(
+                label: 'Réessayer',
+                variant: AppButtonVariant.secondary,
+                onPressed: onRetry,
+              ),
+            ],
+          ],
         ),
       ),
     );
