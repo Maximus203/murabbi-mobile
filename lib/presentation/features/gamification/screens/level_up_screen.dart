@@ -13,12 +13,17 @@ class LevelUpScreen extends StatelessWidget {
   /// Label du nouveau niveau (ex : "Aspirant", "Constant", …).
   final String levelName;
 
+  /// Description courte du nouveau niveau affichée sous le nom. Si `null`,
+  /// un message générique de félicitations est utilisé.
+  final String? levelDescription;
+
   /// Callback déclenchée par "Continuer" — le caller gère la navigation.
   final VoidCallback onContinue;
 
   const LevelUpScreen({
     super.key,
     required this.levelName,
+    this.levelDescription,
     required this.onContinue,
   });
 
@@ -37,10 +42,7 @@ class LevelUpScreen extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0x00000000),
-                    Color(0xCC000000),
-                  ],
+                  colors: [Color(0x00000000), Color(0xCC000000)],
                   stops: [0.4, 1.0],
                 ),
               ),
@@ -55,7 +57,7 @@ class LevelUpScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'NIVEAU ATTEINT',
+                    'NOUVEAU NIVEAU',
                     style: AppTypography.label.copyWith(
                       color: Colors.white.withValues(alpha: 0.7),
                     ),
@@ -69,7 +71,8 @@ class LevelUpScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.s3),
                   Text(
-                    'Félicitations ! Tu franchis un nouveau palier dans ta croissance.',
+                    levelDescription ??
+                        'Félicitations ! Tu franchis un nouveau palier dans ta croissance.',
                     style: AppTypography.body.copyWith(
                       color: Colors.white.withValues(alpha: 0.85),
                     ),
