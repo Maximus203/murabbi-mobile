@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
+import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
 import 'package:murabbi_mobile/data/repositories/in_memory_habit_repository.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
@@ -44,8 +45,9 @@ void main() {
     return ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(authRepo),
-        if (customRepo != null)
-          habitRepositoryProvider.overrideWithValue(customRepo),
+        habitRepositoryProvider.overrideWithValue(
+          customRepo ?? InMemoryHabitRepository(),
+        ),
       ],
       child: MaterialApp(
         home: Ha01HabitsListScreen(onCreate: onCreate ?? () {}),

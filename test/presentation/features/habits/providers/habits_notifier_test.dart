@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
+import 'package:murabbi_mobile/data/repositories/category_repository_provider.dart';
+import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
 import 'package:murabbi_mobile/data/repositories/in_memory_habit_repository.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
@@ -42,8 +44,12 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         authRepositoryProvider.overrideWithValue(authRepo),
-        if (customRepo != null)
-          habitRepositoryProvider.overrideWithValue(customRepo),
+        habitRepositoryProvider.overrideWithValue(
+          customRepo ?? InMemoryHabitRepository(),
+        ),
+        categoryRepositoryProvider.overrideWithValue(
+          InMemoryCategoryRepository(),
+        ),
       ],
     );
     addTearDown(container.dispose);
