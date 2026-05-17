@@ -18,49 +18,37 @@ import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_chip.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_input.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_logo.dart';
 
-/// HA-02 — Formulaire de création d'habitude (spec v1.5 slice 3.D).
+/// HA-02 — Formulaire de création / édition d'habitude (slice 3.D + #152).
 ///
-/// Refactorisé (issue #86) :
-/// - Chips catégorie avec dot couleur + badge "Système"
-/// - Chips fréquence en grille (Wrap)
-/// - Plage horaire (TimeOfDay pickers)
-/// - Notification preview
-/// - Points : stepper stylisé
-/// - Bouton "Créer" sticky en bas via Scaffold.bottomNavigationBar
+/// Deux modes :
+/// - **Création** : [initialHabit] == null. Champs vides, chips jours non
+///   pré-sélectionnés (#141), bouton "Créer l'habitude".
+/// - **Édition** : [initialHabit] fourni. Champs pré-remplis, bouton
+///   "Enregistrer les modifications", appel à [updateHabitUseCaseProvider].
+///
+/// Bugs corrigés (#152) : #139 (stepper clamp), #141 (chips jours),
+/// #142 (erreur effacée à la frappe), #143 (erreur inline sous NOM),
+/// #127 (labels fréquence FR), #144 (feedback succès).
+///
+/// Reporté V2 : sous-tâches, time range, target chiffré, timer. Cf.
+/// `spec v1.5` et ADR-008.
 class Ha02CreateHabitScreen extends ConsumerStatefulWidget {
   final VoidCallback onCreated;
   final VoidCallback onCancel;
+
+  /// Si non-null, l'écran passe en mode édition et pré-remplit les champs.
+  final Habit? initialHabit;
 
   const Ha02CreateHabitScreen({
     super.key,
     required this.onCreated,
     required this.onCancel,
+    this.initialHabit,
   });
 
-  /// Libellé FR de chaque fréquence — issue #127.
-  ///
-  /// Chaque valeur de l'enum est mappée explicitement. Le `switch` exhaustif
-  /// (sans `default`) garantit qu'aucune valeur ne tombe sur le nom anglais
-  /// brut de l'enum : ajouter une valeur à [HabitFrequencyType] casserait la
-  /// compilation tant que son label FR n'est pas fourni ici.
-  static String frequencyLabel(HabitFrequencyType t) {
-    switch (t) {
-      case HabitFrequencyType.daily:
-        return 'Quotidien';
-      case HabitFrequencyType.perDay:
-        return 'Plusieurs fois/jour';
-      case HabitFrequencyType.perWeek:
-        return 'Plusieurs fois/sem.';
-      case HabitFrequencyType.weekly:
-        return 'Jours précis de la semaine';
-      case HabitFrequencyType.monthly:
-        return 'Mensuel';
-      case HabitFrequencyType.custom:
-        return 'Personnalisé';
-    }
-  }
+  /// True si l'écran est en mode édition.
+  bool get isEditMode => initialHabit != null;
 
   @override
   ConsumerState<Ha02CreateHabitScreen> createState() =>
@@ -68,24 +56,44 @@ class Ha02CreateHabitScreen extends ConsumerStatefulWidget {
 }
 
 class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
-  final _nameCtrl = TextEditingController();
+  /// Nom max — borne UI (#152, validation inline).
+  static const int _nameMaxLength = 64;
+
+  late final TextEditingController _nameCtrl;
   CategoryId? _categoryId;
-  HabitFrequencyType _frequencyType = HabitFrequencyType.daily;
-  int _perDayFrequency = 1;
-  // Jours actifs : tous par défaut (mode quotidien). En mode "Jours précis"
-  // (weekly), la sélection démarre vide — l'utilisateur choisit explicitement
-  // ses jours (issue #141).
-  final Set<int> _activeDays = {1, 2, 3, 4, 5, 6, 7};
-  int _points = 3;
-  TimeOfDay? _rangeStart;
-  TimeOfDay? _rangeEnd;
+  late HabitFrequencyType _frequencyType;
+  late int _perDayFrequency;
+
+  /// Jours actifs sélectionnés. #141 : `{}` en création, `habit.activeDays`
+  /// en édition (mode "jours précis").
+  late final Set<int> _activeDays;
+  late int _points;
   bool _saving = false;
 
-  /// Erreur globale du formulaire (ex. échec réseau) — bannière en bas.
-  String? _error;
+  /// Indique si l'utilisateur a tenté un premier submit — active la validation
+  /// inline (#143).
+  bool _submitted = false;
 
-  /// Erreur inline du champ NOM — affichée sous le champ (issues #142/#143).
-  String? _nameError;
+  /// Erreur globale (réseau / auth) — distincte des erreurs inline.
+  String? _globalError;
+
+  @override
+  void initState() {
+    super.initState();
+    final h = widget.initialHabit;
+    _nameCtrl = TextEditingController(text: h?.name.value ?? '');
+    _categoryId = h?.categoryId;
+    _frequencyType = h?.frequencyType ?? HabitFrequencyType.daily;
+    _perDayFrequency = h?.frequencyType == HabitFrequencyType.perDay
+        ? h!.frequency
+        : 1;
+    // #141 : pas de pré-sélection en création. En édition mode "jours précis",
+    // on reprend les jours de l'habitude.
+    _activeDays = h != null && h.frequencyType == HabitFrequencyType.weekly
+        ? Set.of(h.activeDays)
+        : <int>{};
+    _points = h?.points.value ?? 3;
+  }
 
   @override
   void dispose() {
@@ -93,121 +101,85 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
     super.dispose();
   }
 
-  /// Change la fréquence. En passant en mode "Jours précis" (weekly), la
-  /// sélection de jours démarre vide ; en quittant ce mode, tous les jours
-  /// sont réactivés (issue #141).
-  void _onFrequencyChanged(HabitFrequencyType t) {
-    if (t == _frequencyType) return;
-    if (t == HabitFrequencyType.weekly) {
-      _activeDays.clear();
-    } else if (_frequencyType == HabitFrequencyType.weekly) {
-      _activeDays
-        ..clear()
-        ..addAll({1, 2, 3, 4, 5, 6, 7});
+  /// Erreur inline du champ Nom — affichée uniquement après le 1er submit (#143).
+  String? get _nameError {
+    if (!_submitted) return null;
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) return 'Le nom est requis.';
+    if (name.length > _nameMaxLength) {
+      return 'Le nom ne doit pas dépasser $_nameMaxLength caractères.';
     }
-    _frequencyType = t;
+    return null;
   }
 
-  /// Efface l'erreur inline du champ NOM dès que l'utilisateur tape (#142).
-  void _onNameChanged(String _) {
-    if (_nameError != null) {
-      setState(() => _nameError = null);
+  /// Erreur inline des jours — affichée après le 1er submit si la fréquence
+  /// est "jours précis" et qu'aucun jour n'est sélectionné (#152).
+  String? get _daysError {
+    if (!_submitted) return null;
+    if (_frequencyType == HabitFrequencyType.weekly && _activeDays.isEmpty) {
+      return 'Sélectionne au moins un jour.';
     }
-  }
-
-  Future<void> _pickTime({required bool isStart}) async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: (isStart ? _rangeStart : _rangeEnd) ?? TimeOfDay.now(),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          timePickerTheme: const TimePickerThemeData(
-            backgroundColor: AppColors.bgSurface,
-            hourMinuteColor: AppColors.bgInput,
-            dialBackgroundColor: AppColors.bgInput,
-            entryModeIconColor: AppColors.accent,
-          ),
-        ),
-        child: child!,
-      ),
-    );
-    if (picked != null) {
-      setState(() {
-        if (isStart) {
-          _rangeStart = picked;
-        } else {
-          _rangeEnd = picked;
-        }
-      });
-    }
+    return null;
   }
 
   Future<void> _submit(List<Category> categories) async {
     setState(() {
-      _error = null;
-      _nameError = null;
+      _submitted = true;
+      _globalError = null;
     });
+
+    // Validation inline — stoppe si une erreur est présente.
+    if (_nameError != null || _daysError != null) return;
+
     final name = _nameCtrl.text.trim();
-    if (name.isEmpty) {
-      // Erreur inline sous le champ NOM, pas en bannière (issue #143).
-      setState(() => _nameError = 'Le nom est requis.');
-      return;
-    }
-    if (_frequencyType == HabitFrequencyType.weekly && _activeDays.isEmpty) {
-      setState(() => _error = 'Sélectionne au moins un jour.');
-      return;
-    }
     final catId = _categoryId ?? categories.first.id;
     final user = ref.read(authNotifierProvider).valueOrNull;
     if (user == null) {
-      setState(() => _error = 'Tu dois être connecté.');
+      setState(() => _globalError = 'Tu dois être connecté.');
       return;
     }
+
+    // Les habitudes "daily" / "perDay" couvrent tous les jours ; "weekly"
+    // utilise la sélection utilisateur.
+    final activeDays = _frequencyType == HabitFrequencyType.weekly
+        ? Set.of(_activeDays)
+        : {1, 2, 3, 4, 5, 6, 7};
 
     setState(() => _saving = true);
     try {
       final habit = Habit(
-        id: HabitId('habit-${DateTime.now().microsecondsSinceEpoch}'),
+        id:
+            widget.initialHabit?.id ??
+            HabitId('habit-${DateTime.now().microsecondsSinceEpoch}'),
         name: NonEmptyString(name),
         categoryId: catId,
         frequencyType: _frequencyType,
         frequency: _frequencyType == HabitFrequencyType.perDay
             ? _perDayFrequency
             : 1,
-        activeDays: Set.of(_activeDays),
+        activeDays: activeDays,
         points: HabitPoints(_points),
         isSystem: false,
       );
-      await ref
-          .read(createHabitUseCaseProvider)
-          .call(userId: user.id, habit: habit);
-      await ref.read(habitsNotifierProvider.notifier).refresh();
-      if (mounted) {
-        // Feedback de succès thémé avant le retour à HA-01 (issue #144).
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            content: Row(
-              children: [
-                const Icon(
-                  LucideIcons.check,
-                  size: 16,
-                  color: AppColors.bgSurface,
-                ),
-                const SizedBox(width: AppSpacing.s2),
-                Text(
-                  'Habitude créée avec succès',
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.bgSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-        widget.onCreated();
+
+      if (widget.isEditMode) {
+        await ref.read(updateHabitUseCaseProvider).call(habit);
+      } else {
+        await ref
+            .read(createHabitUseCaseProvider)
+            .call(userId: user.id, habit: habit);
       }
+      await ref.read(habitsNotifierProvider.notifier).refresh();
+      if (!mounted) return;
+      // #144 : feedback succès avant de quitter l'écran.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.isEditMode ? 'Habitude mise à jour.' : 'Habitude créée.',
+          ),
+        ),
+      );
+      widget.onCreated();
     } catch (e, stackTrace) {
       appLog.e(
         'Ha02CreateHabitScreen submit failed',
@@ -216,7 +188,9 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
       );
       setState(() {
         _saving = false;
-        _error = "Impossible de créer l'habitude. Réessaie dans un instant.";
+        _globalError = widget.isEditMode
+            ? "Impossible de mettre à jour l'habitude. Réessaie dans un instant."
+            : "Impossible de créer l'habitude. Réessaie dans un instant.";
       });
     }
   }
@@ -227,30 +201,15 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       appBar: AppHeader.back(
-        title: 'Nouvelle habitude',
+        title: widget.isEditMode ? "Modifier l'habitude" : 'Nouvelle habitude',
         onBack: widget.onCancel,
       ),
-      // Bouton "Créer l'habitude" sticky en bas — toujours visible
-      bottomNavigationBar: categoriesAsync.maybeWhen(
-        data: (cats) => SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s4,
-              AppSpacing.s3,
-              AppSpacing.s4,
-              AppSpacing.s4,
-            ),
-            child: AppButton(
-              label: _saving ? 'Enregistrement…' : "Créer l'habitude",
-              onPressed: _saving ? null : () => _submit(cats),
-            ),
+      body: categoriesAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            strokeWidth: AppBorderWidth.indicatorStroke,
           ),
         ),
-        orElse: () => const SizedBox.shrink(),
-      ),
-      body: categoriesAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
         error: (e, stackTrace) {
           appLog.e(
             'Ha02 categories load failed',
@@ -274,34 +233,28 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
 
   Widget _buildForm(List<Category> categories) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s4,
-        AppSpacing.s4,
-        AppSpacing.s4,
-        AppSpacing.s6,
-      ),
+      padding: const EdgeInsets.all(AppSpacing.s4),
       children: [
-        // ── Nom ────────────────────────────────────────────────────
+        // ── Nom — validation inline (#142 #143) ─────────────────────
         AppInput(
           label: 'Nom',
           placeholder: 'ex. Lecture Coran',
           controller: _nameCtrl,
-          // Erreur inline rouge sous le champ + bordure rouge (issue #143).
           errorText: _nameError,
-          // Efface l'erreur dès la frappe + rafraîchit l'aperçu (issue #142).
-          onChanged: (v) {
-            _onNameChanged(v);
-            setState(() {});
+          maxLength: _nameMaxLength,
+          onChanged: (_) {
+            // #142 : efface l'erreur dès que l'utilisateur tape.
+            if (_submitted) setState(() {});
           },
         ),
         const SizedBox(height: AppSpacing.s4),
 
-        // ── Catégorie — chips avec dot + badge système ──────────────
+        // ── Catégorie — AppChip (#86) ──────────────────────────────
         AppCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('CATÉGORIE', style: _sectionLabelStyle),
+              const Text('Catégorie', style: AppTypography.h3),
               const SizedBox(height: AppSpacing.s3),
               Wrap(
                 spacing: AppSpacing.s2,
@@ -312,40 +265,13 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                       label: c.name.value,
                       selected: _categoryId == c.id,
                       onTap: () => setState(() => _categoryId = c.id),
-                      leading: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: _hexToColor(c.color.value),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          if (c.isSystem) ...[
-                            const SizedBox(width: AppSpacing.s1),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                                vertical: 1,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.accent.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.chip,
-                                ),
-                              ),
-                              child: Text(
-                                'S',
-                                style: AppTypography.caption.copyWith(
-                                  color: AppColors.accent,
-                                  fontSize: 9,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
+                      leading: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: _hexToColor(c.color.value),
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
                 ],
@@ -355,62 +281,71 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
         ),
         const SizedBox(height: AppSpacing.s4),
 
-        // ── Fréquence — chip grid ───────────────────────────────────
+        // ── Récurrence ─────────────────────────────────────────────
         AppCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('FRÉQUENCE', style: _sectionLabelStyle),
+              const Text('Récurrence', style: AppTypography.h3),
               const SizedBox(height: AppSpacing.s3),
-              Wrap(
-                spacing: AppSpacing.s2,
-                runSpacing: AppSpacing.s2,
-                children: [
-                  for (final t in _frequencyOptions)
-                    AppChip(
-                      label: Ha02CreateHabitScreen.frequencyLabel(t),
-                      selected: _frequencyType == t,
-                      onTap: () => setState(() => _onFrequencyChanged(t)),
+              for (final t in [
+                HabitFrequencyType.daily,
+                HabitFrequencyType.perDay,
+                HabitFrequencyType.weekly,
+              ])
+                InkWell(
+                  onTap: () => setState(() => _frequencyType = t),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.s2,
                     ),
-                ],
-              ),
-              // Stepper fois/jour si perDay
+                    child: Row(
+                      children: [
+                        Icon(
+                          _frequencyType == t
+                              ? LucideIcons.circleCheck
+                              : LucideIcons.circle,
+                          size: 20,
+                          color: _frequencyType == t
+                              ? AppColors.accent
+                              : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: AppSpacing.s3),
+                        Expanded(
+                          child: Text(
+                            _frequencyOptionLabel(t),
+                            style: AppTypography.body,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               if (_frequencyType == HabitFrequencyType.perDay) ...[
-                const SizedBox(height: AppSpacing.s3),
+                const SizedBox(height: AppSpacing.s2),
                 Row(
                   children: [
-                    Text(
-                      'Combien de fois :',
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
+                    const Text('Combien de fois :'),
                     const Spacer(),
-                    _StepperButton(
-                      icon: LucideIcons.minus,
+                    IconButton(
+                      tooltip: 'Diminuer la fréquence',
+                      // #139 : clamp physique — désactivé à la borne min.
                       onPressed: _perDayFrequency > 1
                           ? () => setState(() => _perDayFrequency--)
                           : null,
+                      icon: const Icon(LucideIcons.minus, size: 16),
                     ),
-                    const SizedBox(width: AppSpacing.s2),
-                    Text(
-                      '$_perDayFrequency',
-                      style: AppTypography.h3.copyWith(
-                        fontFamily: 'Geist Mono',
-                        color: AppColors.accent,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.s2),
-                    _StepperButton(
-                      icon: LucideIcons.plus,
+                    Text('$_perDayFrequency', style: AppTypography.h3),
+                    IconButton(
+                      tooltip: 'Augmenter la fréquence',
                       onPressed: _perDayFrequency < 10
                           ? () => setState(() => _perDayFrequency++)
                           : null,
+                      icon: const Icon(LucideIcons.plus, size: 16),
                     ),
                   ],
                 ),
               ],
-              // Sélecteur de jours si weekly
               if (_frequencyType == HabitFrequencyType.weekly) ...[
                 const SizedBox(height: AppSpacing.s3),
                 Wrap(
@@ -430,103 +365,55 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                       ),
                   ],
                 ),
+                // Erreur inline jours (#152).
+                if (_daysError != null) ...[
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    _daysError!,
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.danger,
+                    ),
+                  ),
+                ],
               ],
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.s4),
 
-        // ── Plage horaire ───────────────────────────────────────────
+        // ── Points / Difficulté — #139 clamp [1..10] ───────────────
         AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              const Text('PLAGE HORAIRE', style: _sectionLabelStyle),
-              const SizedBox(height: AppSpacing.s1),
+              const Text('Difficulté', style: AppTypography.h3),
+              const Spacer(),
+              IconButton(
+                tooltip: 'Diminuer les points',
+                onPressed: _points > HabitPoints.min
+                    ? () => setState(() => _points--)
+                    : null,
+                icon: const Icon(LucideIcons.minus, size: 16),
+              ),
               Text(
-                'Heure de rappel pour la notification.',
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.textTertiary,
+                '$_points pt${_points > 1 ? 's' : ''}',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: AppSpacing.s3),
-              Row(
-                children: [
-                  Expanded(
-                    child: _TimePickerButton(
-                      label: 'Début',
-                      time: _rangeStart,
-                      onTap: () => _pickTime(isStart: true),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s3),
-                  const Icon(
-                    LucideIcons.arrowRight,
-                    size: 16,
-                    color: AppColors.textTertiary,
-                  ),
-                  const SizedBox(width: AppSpacing.s3),
-                  Expanded(
-                    child: _TimePickerButton(
-                      label: 'Fin',
-                      time: _rangeEnd,
-                      onTap: () => _pickTime(isStart: false),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s4),
-
-        // ── Notification preview ────────────────────────────────────
-        if (_nameCtrl.text.trim().isNotEmpty || _rangeStart != null) ...[
-          _NotificationPreview(
-            habitName: _nameCtrl.text.trim().isEmpty
-                ? 'Mon habitude'
-                : _nameCtrl.text.trim(),
-            time: _rangeStart,
-          ),
-          const SizedBox(height: AppSpacing.s4),
-        ],
-
-        // ── Points / Difficulté ─────────────────────────────────────
-        AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('DIFFICULTÉ', style: _sectionLabelStyle),
-              const SizedBox(height: AppSpacing.s3),
-              Row(
-                children: [
-                  Expanded(
-                    child: _StyledSlider(
-                      value: _points.toDouble(),
-                      min: HabitPoints.min.toDouble(),
-                      max: HabitPoints.max.toDouble(),
-                      onChanged: (v) => setState(() => _points = v.round()),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s3),
-                  Container(
-                    width: 44,
-                    alignment: Alignment.center,
-                    child: Text(
-                      '$_points pt${_points > 1 ? 's' : ''}',
-                      style: AppTypography.mono.copyWith(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
+              IconButton(
+                tooltip: 'Augmenter les points',
+                onPressed: _points < HabitPoints.max
+                    ? () => setState(() => _points++)
+                    : null,
+                icon: const Icon(LucideIcons.plus, size: 16),
               ),
             ],
           ),
         ),
 
-        if (_error != null) ...[
+        // ── Erreur globale (réseau / auth) ─────────────────────────
+        if (_globalError != null) ...[
           const SizedBox(height: AppSpacing.s4),
           Container(
             padding: const EdgeInsets.all(AppSpacing.s3),
@@ -535,297 +422,118 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
               borderRadius: BorderRadius.circular(AppRadius.button),
             ),
             child: Text(
-              _error!,
+              _globalError!,
               style: AppTypography.body.copyWith(color: AppColors.danger),
             ),
           ),
         ],
+
+        const SizedBox(height: AppSpacing.s6),
+
+        // ── Bouton submit ──────────────────────────────────────────
+        AppButton(
+          label: widget.isEditMode
+              ? 'Enregistrer les modifications'
+              : "Créer l'habitude",
+          onPressed: _saving ? null : () => _submit(categories),
+          child: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: AppBorderWidth.indicatorStroke,
+                    color: AppColors.bgSurface,
+                  ),
+                )
+              : null,
+        ),
+        const SizedBox(height: AppSpacing.s6),
       ],
     );
   }
 
-  static const List<HabitFrequencyType> _frequencyOptions = [
-    HabitFrequencyType.daily,
-    HabitFrequencyType.perDay,
-    HabitFrequencyType.perWeek,
-    HabitFrequencyType.weekly,
-    HabitFrequencyType.monthly,
-    HabitFrequencyType.custom,
-  ];
-}
-
-// ── Section label style ───────────────────────────────────────────────────────
-
-const _sectionLabelStyle = TextStyle(
-  fontFamily: 'Geist',
-  fontSize: 11,
-  fontWeight: FontWeight.w500,
-  letterSpacing: 0.8,
-  color: AppColors.textSecondary,
-);
-
-// ── Notification preview widget ───────────────────────────────────────────────
-
-/// Prévisualisation de la notification push — logo + nom + heure.
-class _NotificationPreview extends StatelessWidget {
-  final String habitName;
-  final TimeOfDay? time;
-
-  const _NotificationPreview({required this.habitName, this.time});
-
-  @override
-  Widget build(BuildContext context) {
-    final timeLabel = time != null
-        ? time!.format(context)
-        : 'Heure non définie';
-
-    return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.s3),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'APERÇU NOTIFICATION',
-            style: AppTypography.label.copyWith(
-              color: AppColors.textTertiary,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s3),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.s3),
-            decoration: BoxDecoration(
-              color: AppColors.bgInput,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
-            child: Row(
-              children: [
-                const AppLogo(size: 32),
-                const SizedBox(width: AppSpacing.s3),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Murabbi',
-                        style: AppTypography.caption.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.s1),
-                      Text(
-                        habitName,
-                        style: AppTypography.body,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: AppSpacing.s1),
-                      Text(
-                        timeLabel,
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.textTertiary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  /// Libellé de l'option de récurrence dans le sélecteur.
+  static String _frequencyOptionLabel(HabitFrequencyType t) {
+    switch (t) {
+      case HabitFrequencyType.daily:
+        return 'Tous les jours';
+      case HabitFrequencyType.perDay:
+        return 'Plusieurs fois par jour';
+      case HabitFrequencyType.weekly:
+        return 'Jours précis de la semaine';
+      case HabitFrequencyType.perWeek:
+        return 'Plusieurs fois par semaine';
+      case HabitFrequencyType.monthly:
+        return 'Une fois par mois';
+      case HabitFrequencyType.custom:
+        return 'Personnalisée';
+    }
   }
 }
 
-// ── Time picker button ────────────────────────────────────────────────────────
-
-class _TimePickerButton extends StatelessWidget {
-  final String label;
-  final TimeOfDay? time;
-  final VoidCallback onTap;
-
-  const _TimePickerButton({
-    required this.label,
-    required this.time,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hasTime = time != null;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s3,
-          vertical: AppSpacing.s3,
-        ),
-        decoration: BoxDecoration(
-          color: hasTime
-              ? AppColors.accent.withValues(alpha: 0.08)
-              : AppColors.bgInput,
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          border: Border.all(
-            color: hasTime ? AppColors.accent : AppColors.borderEmphasis,
-            width: AppBorderWidth.thin,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textTertiary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s1),
-            Row(
-              children: [
-                Icon(
-                  LucideIcons.clock,
-                  size: 14,
-                  color: hasTime ? AppColors.accent : AppColors.textTertiary,
-                ),
-                const SizedBox(width: AppSpacing.s2),
-                Text(
-                  hasTime ? time!.format(context) : '--:--',
-                  style: AppTypography.body.copyWith(
-                    color: hasTime ? AppColors.accent : AppColors.textTertiary,
-                    fontWeight: hasTime ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+/// Convertit un token couleur au format `#RRGGBB` (DS — HexColor) en [Color].
+Color _hexToColor(String hex) {
+  final cleaned = hex.replaceFirst('#', '');
+  return Color(int.parse('FF$cleaned', radix: 16));
 }
-
-// ── Styled slider ─────────────────────────────────────────────────────────────
-
-class _StyledSlider extends StatelessWidget {
-  final double value;
-  final double min;
-  final double max;
-  final ValueChanged<double> onChanged;
-
-  const _StyledSlider({
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SliderTheme(
-      data: SliderThemeData(
-        trackHeight: 6,
-        activeTrackColor: AppColors.accent,
-        inactiveTrackColor: AppColors.bgInput,
-        thumbColor: AppColors.accent,
-        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-        overlayColor: AppColors.accent.withValues(alpha: 0.12),
-        overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
-        trackShape: const RoundedRectSliderTrackShape(),
-      ),
-      child: Slider(
-        value: value,
-        min: min,
-        max: max,
-        divisions: (max - min).toInt(),
-        onChanged: onChanged,
-      ),
-    );
-  }
-}
-
-// ── Stepper button ────────────────────────────────────────────────────────────
-
-class _StepperButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onPressed;
-
-  const _StepperButton({required this.icon, this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onPressed != null;
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: enabled ? AppColors.bgInput : AppColors.bgPrimary,
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-          border: Border.all(
-            color: enabled ? AppColors.borderEmphasis : AppColors.borderDefault,
-            width: AppBorderWidth.thin,
-          ),
-        ),
-        child: Icon(
-          icon,
-          size: 14,
-          color: enabled ? AppColors.textPrimary : AppColors.textTertiary,
-        ),
-      ),
-    );
-  }
-}
-
-// ── Day chip ──────────────────────────────────────────────────────────────────
 
 class _DayChip extends StatelessWidget {
   final int day;
   final bool selected;
   final VoidCallback onTap;
-
   const _DayChip({
     required this.day,
     required this.selected,
     required this.onTap,
   });
 
-  // Labels 2 lettres non ambigus — issue #129 (les deux 'M' Lundi/Mardi).
-  static const _labels = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
+  static const _labels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: selected ? AppColors.accent : AppColors.bgSurface,
+    final label = _labels[day - 1];
+    // D-28 (issue #105) : zone de tap ≥ 44×44dp (P-A11Y).
+    // Le visuel reste 36×36, mais la hitbox est étendue à 44×44 via SizedBox.
+    return Semantics(
+      label: label,
+      button: true,
+      selected: selected,
+      child: SizedBox(
+        width: kMinInteractiveDimension,
+        height: kMinInteractiveDimension,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(
-            color: selected ? AppColors.accent : AppColors.borderEmphasis,
-            width: AppBorderWidth.thin,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          _labels[day - 1],
-          style: AppTypography.body.copyWith(
-            color: selected ? AppColors.bgSurface : AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
+          child: Center(
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: selected ? AppColors.accent : AppColors.bgSurface,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(
+                  color: selected ? AppColors.accent : AppColors.borderEmphasis,
+                  width: AppBorderWidth.thin,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: ExcludeSemantics(
+                // D-33 : le texte du chip est purement décoratif — la Semantics
+                // parente porte déjà le label du jour.
+                child: Text(
+                  label,
+                  style: AppTypography.body.copyWith(
+                    color: selected
+                        ? AppColors.bgSurface
+                        : AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
-}
-
-/// Convertit un token couleur `#RRGGBB` en [Color].
-Color _hexToColor(String hex) {
-  final cleaned = hex.replaceFirst('#', '');
-  return Color(int.parse('FF$cleaned', radix: 16));
 }
