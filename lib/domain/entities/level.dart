@@ -30,9 +30,41 @@ enum Level {
     Level.murabbi: 105,
   };
 
+  /// Libellés FR affichables (HM-01 score card) — translittérations
+  /// alignées sur le glossaire produit.
+  static const Map<Level, String> _labels = {
+    Level.aspirant: 'Aspirant',
+    Level.murid: 'Murīd',
+    Level.salik: 'Sālik',
+    Level.mujahid: 'Mujāhid',
+    Level.wali: 'Walī',
+    Level.murabbi: 'Murabbī',
+  };
+
   int get threshold => thresholds[this]!;
 
   int get dailyGoal => _dailyGoals[this]!;
+
+  /// Libellé FR affichable de ce niveau.
+  String get label => _labels[this]!;
+
+  /// Palier immédiatement supérieur, ou `null` si c'est le dernier niveau.
+  Level? get nextLevel {
+    final idx = Level.values.indexOf(this);
+    if (idx == Level.values.length - 1) return null;
+    return Level.values[idx + 1];
+  }
+
+  /// Progression [0..1] de [totalPoints] entre le seuil de ce niveau et
+  /// celui du palier suivant. Le dernier niveau renvoie toujours `1.0`.
+  double progressToNext(int totalPoints) {
+    final next = nextLevel;
+    if (next == null) return 1.0;
+    final span = next.threshold - threshold;
+    if (span <= 0) return 1.0;
+    final done = (totalPoints - threshold) / span;
+    return done.clamp(0.0, 1.0);
+  }
 
   static Level fromPoints(int totalPoints) {
     final sorted = Level.values.reversed.toList();

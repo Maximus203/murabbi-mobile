@@ -7,6 +7,9 @@ import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifie
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_ticker_provider.dart';
+import 'package:murabbi_mobile/presentation/features/dashboard/providers/user_score_provider.dart';
+import 'package:murabbi_mobile/presentation/features/dashboard/widgets/dashboard_score_card.dart';
+import 'package:murabbi_mobile/presentation/features/dashboard/widgets/dashboard_stats_grid.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -143,7 +146,8 @@ class _DashboardBody extends ConsumerWidget {
                 label: 'Notifications',
                 button: true,
                 child: const IconButton(
-                  onPressed: null, // stub — navigation Notifications à venir (Phase 5)
+                  onPressed:
+                      null, // stub — navigation Notifications à venir (Phase 5)
                   icon: Icon(
                     LucideIcons.bell,
                     size: 22,
@@ -155,6 +159,10 @@ class _DashboardBody extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s6),
 
+          // ── Score & niveau (issue #6) ──────────────────────────────
+          const _ScoreSection(),
+          const SizedBox(height: AppSpacing.s4),
+
           // ── Prochaine prière ───────────────────────────────────────
           _NextPrayerCard(
             state: data,
@@ -163,21 +171,8 @@ class _DashboardBody extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s4),
 
-          // ── Placeholders à venir ───────────────────────────────────
-          // D-23 : subtitles neutres sans mention "slice X.Y"
-          const _PlaceholderCard(
-            icon: LucideIcons.listChecks,
-            title: 'Habitudes du jour',
-            subtitle: "Aucune habitude pour aujourd'hui.",
-          ),
-          const SizedBox(height: AppSpacing.s3),
+          // ── Niyyah du jour ─────────────────────────────────────────
           const _NiyyahCard(),
-          const SizedBox(height: AppSpacing.s3),
-          const _PlaceholderCard(
-            icon: LucideIcons.flame,
-            title: 'Série globale',
-            subtitle: 'Ta progression apparaîtra ici dès que tu auras commencé.',
-          ),
 
           // D-25 : confirmation avant déconnexion via AppDialog DS.
           if (onSignOut != null) ...[
@@ -261,6 +256,60 @@ class _DashboardBody extends ConsumerWidget {
   }
 }
 
+/// Section score du dashboard : score card + grille de stats (issue #6).
+///
+/// Consume [userScoreProvider] de façon isolée pour que son chargement /
+/// erreur ne fasse pas vaciller le reste du dashboard.
+class _ScoreSection extends ConsumerWidget {
+  const _ScoreSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scoreAsync = ref.watch(userScoreProvider);
+    return scoreAsync.when(
+      loading: () => const _ScoreCardSkeleton(),
+      error: (e, st) {
+        appLog.w('userScoreProvider error', error: e, stackTrace: st);
+        return const SizedBox.shrink();
+      },
+      data: (score) {
+        if (score == null) return const SizedBox.shrink();
+        return Column(
+          children: [
+            DashboardScoreCard(score: score),
+            const SizedBox(height: AppSpacing.s3),
+            DashboardStatsGrid(
+              streakDays: 0,
+              salatLabel: '—',
+              habitsLabel: '—',
+              weeklyRank: score.weeklyRank,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Skeleton sobre pendant le chargement du score (pas de spinner intrusif).
+class _ScoreCardSkeleton extends StatelessWidget {
+  const _ScoreCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const AppCard(
+      child: SizedBox(
+        height: 88,
+        child: Center(
+          child: CircularProgressIndicator(
+            strokeWidth: AppBorderWidth.indicatorStroke,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _NextPrayerCard extends StatelessWidget {
   final DashboardState state;
   final VoidCallback onConfigurePrayers;
@@ -320,7 +369,8 @@ class _NextPrayerCard extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: 'Prochaine prière : $label à $hh:$mm. Ouvrir le détail des prières.',
+      label:
+          'Prochaine prière : $label à $hh:$mm. Ouvrir le détail des prières.',
       excludeSemantics: true,
       child: AppCard(
         onTap: onOpenSalat,
@@ -343,8 +393,9 @@ class _NextPrayerCard extends StatelessWidget {
                         next.isTomorrow
                             ? 'PROCHAINE PRIÈRE (DEMAIN)'
                             : 'PROCHAINE PRIÈRE',
-                        style:
-                            AppTypography.label.copyWith(color: AppColors.accent),
+                        style: AppTypography.label.copyWith(
+                          color: AppColors.accent,
+                        ),
                       ),
                     ],
                   ),
@@ -464,46 +515,6 @@ class _NiyyahCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _PlaceholderCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  const _PlaceholderCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      child: Row(
-        children: [
-          ExcludeSemantics(
-            child: Icon(icon, size: 22, color: AppColors.textTertiary),
-          ),
-          const SizedBox(width: AppSpacing.s3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: AppTypography.h3),
-                const SizedBox(height: AppSpacing.s1),
-                Text(
-                  subtitle,
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
