@@ -4,6 +4,7 @@ import 'package:hijri/hijri_calendar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
+import 'package:murabbi_mobile/domain/entities/habit_schedule.dart';
 import 'package:murabbi_mobile/domain/entities/habit_target.dart';
 import 'package:murabbi_mobile/presentation/common/app_video_player.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
@@ -108,6 +109,9 @@ class _DashboardBody extends ConsumerWidget {
       color: AppColors.accent,
       onRefresh: () async {
         ref.invalidate(dashboardNotifierProvider);
+        // #145 : rafraîchit aussi la liste d'habitudes — une habitude créée
+        // depuis HA-02 doit apparaître dans « Habitudes du jour ».
+        await ref.read(habitsNotifierProvider.notifier).refresh();
         await ref.read(dashboardNotifierProvider.future);
       },
       child: ListView(
@@ -119,6 +123,9 @@ class _DashboardBody extends ConsumerWidget {
         ),
         children: [
           // ── En-tête ────────────────────────────────────────────────
+          // #128 : le bouton cloche notification (stub `onPressed: null`)
+          // a été retiré — fausse affordance. Il sera réintroduit avec la
+          // navigation Notifications réelle (Phase 5).
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -127,8 +134,11 @@ class _DashboardBody extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // D-30 : salutation en label/accent UPPERCASE — convention AppTypography.label.
+                    // #132 : ʿ (ayn, U+02BF) rendu □ sur certaines plateformes —
+                    // remplacé par une apostrophe ASCII. Les macrons (ā/ī/ū)
+                    // sont conservés (couverts par la police).
                     Text(
-                      'AS-SALĀMU ʿALAYKUM',
+                      "AS-SALĀMU 'ALAYKUM",
                       style: AppTypography.label.copyWith(
                         color: AppColors.accent,
                       ),
@@ -143,19 +153,6 @@ class _DashboardBody extends ConsumerWidget {
                       ),
                     ),
                   ],
-                ),
-              ),
-              Semantics(
-                label: 'Notifications',
-                button: true,
-                child: const IconButton(
-                  onPressed:
-                      null, // stub — navigation Notifications à venir (Phase 5)
-                  icon: Icon(
-                    LucideIcons.bell,
-                    size: 22,
-                    color: AppColors.textSecondary,
-                  ),
                 ),
               ),
             ],
@@ -198,7 +195,7 @@ class _DashboardBody extends ConsumerWidget {
                 builder: (ctx) => AppDialog(
                   title: 'Se déconnecter ?',
                   body:
-                      "Vous devrez vous reconnecter pour accéder à l'application.",
+                      "Tu devras te reconnecter pour accéder à l'application.",
                   confirmLabel: 'Se déconnecter',
                   cancelLabel: 'Annuler',
                   isDangerous: true,
@@ -239,18 +236,21 @@ class _DashboardBody extends ConsumerWidget {
     'samedi',
     'dimanche',
   ];
+  // #132 : ʿ (ayn, U+02BF) remplacé par apostrophe ASCII — rendu □ sur
+  // certaines plateformes. Les macrons (ā/ī/ū) sont conservés (couverts par
+  // la police). Ḥ conservé pour Dhul-Ḥijjah.
   static const _hijriMonths = [
     'Muharram',
     'Safar',
-    'Rabīʿ al-Awwal',
-    'Rabīʿ al-Thānī',
+    "Rabī' al-Awwal",
+    "Rabī' al-Thānī",
     'Jumādā al-Ūlā',
     'Jumādā al-Ākhira',
     'Rajab',
-    'Shaʿbān',
+    "Sha'bān",
     'Ramadan',
     'Shawwāl',
-    'Dhul-Qaʿdah',
+    "Dhul-Qa'dah",
     'Dhul-Ḥijjah',
   ];
 
@@ -295,10 +295,10 @@ class _NextPrayerCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Configurez vos prières', style: AppTypography.h3),
+            const Text('Configure tes prières', style: AppTypography.h3),
             const SizedBox(height: AppSpacing.s2),
             Text(
-              'Indiquez votre position et votre méthode pour afficher les '
+              'Indique ta position et ta méthode pour afficher les '
               'horaires précis.',
               style: AppTypography.body.copyWith(
                 color: AppColors.textSecondary,
@@ -604,7 +604,12 @@ class _HabitsCard extends ConsumerWidget {
           ],
         ),
       ),
-      data: (habits) {
+      data: (allHabits) {
+        // #145 : ne garder que les habitudes dues aujourd'hui. Une habitude
+        // `daily` créée le jour même est due le jour même et doit donc
+        // apparaître ici (cf. HabitSchedule.isDueOn).
+        final today = DateTime.now();
+        final habits = habitsDueOn(allHabits, today);
         final visible = habits.take(_maxVisible).toList();
         final hasMore = habits.length > _maxVisible;
         return AppCard(

@@ -114,7 +114,8 @@ void main() {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
 
-    expect(find.text('AS-SALĀMU ʿALAYKUM'), findsOneWidget);
+    // #132 : ʿ (ayn) remplacé par apostrophe ASCII.
+    expect(find.text("AS-SALĀMU 'ALAYKUM"), findsOneWidget);
     expect(find.text('PROCHAINE PRIÈRE'), findsOneWidget);
     expect(find.text('Dhuhr'), findsOneWidget);
   });
@@ -125,7 +126,8 @@ void main() {
     await tester.pumpWidget(pumpable(settingsNotConfigured: true));
     await tester.pumpAndSettle();
 
-    expect(find.text('Configurez vos prières'), findsOneWidget);
+    // #133 : registre "tu" cohérent.
+    expect(find.text('Configure tes prières'), findsOneWidget);
     expect(find.text('Configurer'), findsOneWidget);
   });
 
@@ -193,10 +195,14 @@ void main() {
     expect(find.byIcon(LucideIcons.chevronRight), findsOneWidget);
   });
 
-  testWidgets('affiche l\'icône Bell dans le header (#58)', (tester) async {
+  testWidgets('ne montre plus le stub notification Bell (#128)', (
+    tester,
+  ) async {
+    // #128 : le bouton cloche stub (fausse affordance) a été retiré du
+    // header jusqu'à l'implémentation réelle des notifications (Phase 5).
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
-    expect(find.byIcon(LucideIcons.bell), findsOneWidget);
+    expect(find.byIcon(LucideIcons.bell), findsNothing);
   });
 
   // ── Nouveaux tests — issue #89 ─────────────────────────────────────────────
