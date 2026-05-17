@@ -1,4 +1,5 @@
 import 'package:murabbi_mobile/domain/entities/category.dart';
+import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 abstract interface class CategoryRepository {
@@ -7,4 +8,10 @@ abstract interface class CategoryRepository {
     required UserId userId,
     required Category category,
   });
+
+  /// Met à jour une catégorie existante et retourne sa version persistée.
+  Future<Category> updateCategory(Category category);
+
+  /// Supprime la catégorie identifiée par [categoryId].
+  Future<void> deleteCategory(CategoryId categoryId);
 }

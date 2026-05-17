@@ -183,6 +183,21 @@ class InMemoryCategoryRepository implements CategoryRepository {
     _categories.add(category);
     return category;
   }
+
+  @override
+  Future<Category> updateCategory(Category category) async {
+    final idx = _categories.indexWhere((c) => c.id == category.id);
+    if (idx == -1) {
+      throw StateError('Category not found: ${category.id}');
+    }
+    _categories[idx] = category;
+    return category;
+  }
+
+  @override
+  Future<void> deleteCategory(CategoryId categoryId) async {
+    _categories.removeWhere((c) => c.id == categoryId);
+  }
 }
 
 /// Provider Riverpod du repository Habits (V1 in-memory dev scaffold).
