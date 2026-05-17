@@ -1,3 +1,4 @@
+import 'package:murabbi_mobile/domain/constants/scoring_constants.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/entities/habit_target.dart';
@@ -14,8 +15,11 @@ import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 /// **Prayer** (Q-02 + Q-07 makeup verrouillées) :
 /// - `onTime` ⇒ +3, `late` ⇒ +1, `makeup` ⇒ +1, `missed`/`pending` ⇒ 0
 class ScoreCalculatorUseCase {
-  static const int latePoints = 1;
-  static const int prayerOnTimePoints = 3;
+  /// @deprecated — conservé pour compatibilité ; voir [ScoringConstants].
+  static const int latePoints = ScoringConstants.prayerLatePoints;
+
+  /// @deprecated — conservé pour compatibilité ; voir [ScoringConstants].
+  static const int prayerOnTimePoints = ScoringConstants.prayerOnTimePoints;
 
   const ScoreCalculatorUseCase();
 
@@ -34,9 +38,9 @@ class ScoreCalculatorUseCase {
       case HabitLogStatus.onTime:
         return habit.points.value;
       case HabitLogStatus.late:
-        return latePoints;
+        return ScoringConstants.habitLatePoints;
       case HabitLogStatus.missed:
-        return 0;
+        return ScoringConstants.habitMissedPoints;
     }
   }
 
@@ -64,13 +68,13 @@ class ScoreCalculatorUseCase {
   int forPrayer(PrayerStatus status) {
     switch (status) {
       case PrayerStatus.onTime:
-        return prayerOnTimePoints;
+        return ScoringConstants.prayerOnTimePoints;
       case PrayerStatus.late:
       case PrayerStatus.makeup:
-        return latePoints;
+        return ScoringConstants.prayerLatePoints;
       case PrayerStatus.missed:
       case PrayerStatus.pending:
-        return 0;
+        return ScoringConstants.prayerMissedPoints;
     }
   }
 }
