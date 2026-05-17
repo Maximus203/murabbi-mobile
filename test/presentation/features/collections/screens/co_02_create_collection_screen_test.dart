@@ -44,7 +44,7 @@ void main() {
     );
   });
 
-  Widget _buildSut({VoidCallback? onCreated, VoidCallback? onCancel}) {
+  Widget buildSut({VoidCallback? onCreated, VoidCallback? onCancel}) {
     return ProviderScope(
       overrides: [
         currentUserProvider.overrideWithValue(testUser),
@@ -60,13 +60,13 @@ void main() {
   }
 
   testWidgets('affiche les champs nom et description', (tester) async {
-    await tester.pumpWidget(_buildSut());
+    await tester.pumpWidget(buildSut());
     expect(find.byKey(const Key('field_name')), findsOneWidget);
     expect(find.byKey(const Key('field_description')), findsOneWidget);
   });
 
   testWidgets('erreur si nom vide à la soumission', (tester) async {
-    await tester.pumpWidget(_buildSut());
+    await tester.pumpWidget(buildSut());
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Créer'));
@@ -96,7 +96,7 @@ void main() {
     when(() => mockRepo.getCollections(any())).thenAnswer((_) async => []);
 
     var created = false;
-    await tester.pumpWidget(_buildSut(onCreated: () => created = true));
+    await tester.pumpWidget(buildSut(onCreated: () => created = true));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byKey(const Key('field_name')), 'Test');

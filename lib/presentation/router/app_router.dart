@@ -224,20 +224,3 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-
-/// Routage des onglets de [AppBottomNav] — slice 5.G : tous les onglets
-/// sont maintenant câblés vers leurs routes réelles.
-void _handleTabSelection(BuildContext context, AppBottomNavTab tab) {
-  switch (tab) {
-    case AppBottomNavTab.home:
-      context.go(AppRoutes.home);
-    case AppBottomNavTab.salat:
-      context.go(AppRoutes.salat);
-    case AppBottomNavTab.habits:
-      context.go(AppRoutes.habits);
-    case AppBottomNavTab.collections:
-      context.go(AppRoutes.collections);
-    case AppBottomNavTab.leaderboard:
-      context.go(AppRoutes.leaderboard);
-  }
-}

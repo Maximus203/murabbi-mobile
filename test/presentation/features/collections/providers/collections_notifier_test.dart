@@ -53,7 +53,7 @@ void main() {
     registerFallbackValue(collection1);
   });
 
-  ProviderContainer _makeContainer() {
+  ProviderContainer makeContainer() {
     return ProviderContainer(
       overrides: [
         currentUserProvider.overrideWithValue(testUser),
@@ -67,7 +67,7 @@ void main() {
       when(() => mockRepo.getCollections(userId))
           .thenAnswer((_) async => [collection1, collection2]);
 
-      final container = _makeContainer();
+      final container = makeContainer();
       addTearDown(container.dispose);
 
       final result = await container.read(collectionsNotifierProvider.future);
@@ -98,7 +98,7 @@ void main() {
         ),
       ).thenAnswer((_) async {});
 
-      final container = _makeContainer();
+      final container = makeContainer();
       addTearDown(container.dispose);
 
       // Attendre le build initial
@@ -127,7 +127,7 @@ void main() {
         ),
       ).thenAnswer((_) async {});
 
-      final container = _makeContainer();
+      final container = makeContainer();
       addTearDown(container.dispose);
 
       await container.read(collectionsNotifierProvider.future);

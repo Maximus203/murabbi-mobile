@@ -49,7 +49,7 @@ void main() {
     registerFallbackValue(UserId('fallback'));
   });
 
-  Widget _buildSut(List<UserScore> scores) {
+  Widget buildSut(List<UserScore> scores) {
     when(() => mockRepo.getLeaderboard(limit: 50))
         .thenAnswer((_) async => scores);
 
@@ -63,7 +63,7 @@ void main() {
   }
 
   testWidgets('affiche les scores du leaderboard', (tester) async {
-    await tester.pumpWidget(_buildSut([score1, score2]));
+    await tester.pumpWidget(buildSut([score1, score2]));
     await tester.pumpAndSettle();
 
     // Les rangs
@@ -75,7 +75,7 @@ void main() {
   });
 
   testWidgets('affiche empty state si leaderboard vide', (tester) async {
-    await tester.pumpWidget(_buildSut([]));
+    await tester.pumpWidget(buildSut([]));
     await tester.pumpAndSettle();
 
     expect(find.text('Aucun score disponible'), findsOneWidget);

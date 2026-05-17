@@ -53,7 +53,7 @@ void main() {
     registerFallbackValue(collection1);
   });
 
-  Widget _buildSut({
+  Widget buildSut({
     required List<Collection> collections,
     VoidCallback? onCreate,
     void Function(Collection)? onTap,
@@ -77,7 +77,7 @@ void main() {
 
   testWidgets('affiche la liste des collections', (tester) async {
     await tester.pumpWidget(
-      _buildSut(collections: [collection1, collection2]),
+      buildSut(collections: [collection1, collection2]),
     );
     await tester.pumpAndSettle();
 
@@ -86,7 +86,7 @@ void main() {
   });
 
   testWidgets('affiche empty state si aucune collection', (tester) async {
-    await tester.pumpWidget(_buildSut(collections: []));
+    await tester.pumpWidget(buildSut(collections: []));
     await tester.pumpAndSettle();
 
     expect(find.text('Aucune collection'), findsOneWidget);
@@ -95,7 +95,7 @@ void main() {
   testWidgets('bouton Nouvelle collection appelle onCreate', (tester) async {
     var called = false;
     await tester.pumpWidget(
-      _buildSut(collections: [], onCreate: () => called = true),
+      buildSut(collections: [], onCreate: () => called = true),
     );
     await tester.pumpAndSettle();
 
@@ -106,7 +106,7 @@ void main() {
   testWidgets('tap sur une collection appelle onTap', (tester) async {
     Collection? tapped;
     await tester.pumpWidget(
-      _buildSut(
+      buildSut(
         collections: [collection1],
         onTap: (c) => tapped = c,
       ),

@@ -3,15 +3,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/score_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
+import 'package:murabbi_mobile/domain/entities/level.dart' as level_lib;
+import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/entities/user_score.dart';
 import 'package:murabbi_mobile/domain/repositories/score_repository.dart';
+import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/leaderboard/providers/leaderboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/current_user_provider.dart';
-import 'package:murabbi_mobile/domain/entities/level.dart' as level_lib;
-import 'package:murabbi_mobile/domain/entities/user.dart';
-import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
-import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 
 class MockScoreRepository extends Mock implements ScoreRepository {}
 
@@ -47,7 +47,7 @@ void main() {
     registerFallbackValue(UserId('fallback-user'));
   });
 
-  ProviderContainer _makeContainer({User? user}) {
+  ProviderContainer makeContainer({User? user}) {
     return ProviderContainer(
       overrides: [
         currentUserProvider.overrideWithValue(user ?? testUser),
@@ -62,7 +62,7 @@ void main() {
         () => mockRepo.getLeaderboard(limit: 50),
       ).thenAnswer((_) async => [score1, score2]);
 
-      final container = _makeContainer();
+      final container = makeContainer();
       addTearDown(container.dispose);
 
       final result = await container.read(leaderboardNotifierProvider.future);
@@ -91,7 +91,7 @@ void main() {
         () => mockRepo.getLeaderboard(limit: 50),
       ).thenAnswer((_) async => [score1]);
 
-      final container = _makeContainer();
+      final container = makeContainer();
       addTearDown(container.dispose);
 
       await container.read(leaderboardNotifierProvider.future);

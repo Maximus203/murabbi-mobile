@@ -32,9 +32,10 @@ class ScaffoldWithBottomNav extends StatelessWidget {
     }
   }
 
-  /// Mappe [AppBottomNavTab] vers l'index de branche.
+  /// Mappe [AppBottomNavTab] vers l'index de branche shell.
   ///
-  /// Retourne -1 pour les onglets non encore implémentés (Collections / Classement).
+  /// Retourne -1 pour les onglets gérés hors du shell (Collections / Classement)
+  /// qui naviguent via `context.go()` plutôt que `goBranch()`.
   /// Exposé en public pour faciliter les tests unitaires.
   static int indexFromTab(AppBottomNavTab tab) {
     switch (tab) {
@@ -46,22 +47,22 @@ class ScaffoldWithBottomNav extends StatelessWidget {
         return 2;
       case AppBottomNavTab.collections:
       case AppBottomNavTab.leaderboard:
-        return -1; // non implémenté
+        return -1; // routes hors shell — navigation via context.go()
     }
   }
 
   void _onTabSelected(BuildContext context, AppBottomNavTab tab) {
-    final index = indexFromTab(tab);
-    if (index == -1) {
-      // Collections / Classement pas encore implémentés.
-      final label = tab == AppBottomNavTab.collections
-          ? 'Collections'
-          : 'Classement';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('$label arrive bientôt.')));
+    // Collections et Leaderboard sont des routes hors du StatefulShellRoute :
+    // on utilise context.go() pour y accéder (Phase 5 — slice 5.G).
+    if (tab == AppBottomNavTab.collections) {
+      context.go(AppRoutes.collections);
       return;
     }
+    if (tab == AppBottomNavTab.leaderboard) {
+      context.go(AppRoutes.leaderboard);
+      return;
+    }
+    final index = indexFromTab(tab);
     // [initialLocation: true] revient à la racine de la branche si déjà
     // dessus, ce qui correspond au comportement natif iOS/Android bottom nav.
     navigationShell.goBranch(

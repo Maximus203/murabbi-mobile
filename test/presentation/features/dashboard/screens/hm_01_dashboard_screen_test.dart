@@ -209,27 +209,20 @@ void main() {
     expect(find.byIcon(LucideIcons.bell), findsNothing);
   });
 
-  // ── Nouveaux tests — issue #89 ─────────────────────────────────────────────
+  // ── Nouveaux tests — issue #89 (mis à jour Phase 5 : _ScoreStreakCard) ──────
 
-  testWidgets('score card affiche le badge niveau et les points mock (#89)', (
-    tester,
-  ) async {
-    await tester.pumpWidget(pumpable());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'score card (_ScoreStreakCard) affiche les labels de stats (#89 Phase 5)',
+    (tester) async {
+      await tester.pumpWidget(pumpable());
+      await tester.pumpAndSettle();
 
-    // Badge niveau
-    expect(find.textContaining('Aspirant'), findsOneWidget);
-    // Points format "X / Y"
-    expect(find.textContaining('42'), findsOneWidget);
-    expect(find.textContaining('60'), findsOneWidget);
-  });
-
-  testWidgets('score card affiche AppProgressRing (#89)', (tester) async {
-    await tester.pumpWidget(pumpable());
-    await tester.pumpAndSettle();
-
-    expect(find.byType(AppProgressRing), findsOneWidget);
-  });
+      // _ScoreStreakCard affiche 3 labels permanents (Phase 5 — _ScoreCard supprimée)
+      expect(find.text('Pts hebdo'), findsOneWidget);
+      expect(find.text('Série'), findsOneWidget);
+      expect(find.text('Niveau'), findsOneWidget);
+    },
+  );
 
   testWidgets(
     'section habitudes affiche état vide quand pas d\'habitudes (#89)',

@@ -53,7 +53,7 @@ void main() {
     registerFallbackValue(userId);
   });
 
-  Widget _buildSut(Collection collection) {
+  Widget buildSut(Collection collection) {
     when(() => mockRepo.getCollections(any()))
         .thenAnswer((_) async => [inactive, active]);
 
@@ -74,7 +74,7 @@ void main() {
   testWidgets('affiche le nom et la description de la collection', (
     tester,
   ) async {
-    await tester.pumpWidget(_buildSut(inactive));
+    await tester.pumpWidget(buildSut(inactive));
     await tester.pumpAndSettle();
 
     expect(find.text('Routine matinale'), findsWidgets);
@@ -82,7 +82,7 @@ void main() {
   });
 
   testWidgets('affiche bouton Activer si collection inactive', (tester) async {
-    await tester.pumpWidget(_buildSut(inactive));
+    await tester.pumpWidget(buildSut(inactive));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('btn_activate')), findsOneWidget);
@@ -90,7 +90,7 @@ void main() {
   });
 
   testWidgets('affiche bouton Désactiver si collection active', (tester) async {
-    await tester.pumpWidget(_buildSut(active));
+    await tester.pumpWidget(buildSut(active));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('btn_deactivate')), findsOneWidget);
@@ -105,7 +105,7 @@ void main() {
       ),
     ).thenAnswer((_) async {});
 
-    await tester.pumpWidget(_buildSut(inactive));
+    await tester.pumpWidget(buildSut(inactive));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('btn_activate')));

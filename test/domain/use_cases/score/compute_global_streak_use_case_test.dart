@@ -7,7 +7,7 @@ void main() {
   final ref = DateTime(2026, 5, 17);
 
   group('ComputeGlobalStreakUseCase', () {
-    test("historique vide → streak = 0", () {
+    test('historique vide → streak = 0', () {
       expect(
         useCase(history: const [], referenceDate: ref, level: Level.aspirant),
         0,

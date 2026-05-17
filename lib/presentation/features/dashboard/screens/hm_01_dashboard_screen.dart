@@ -476,82 +476,6 @@ class _NiyyahCard extends ConsumerWidget {
   }
 }
 
-/// Carte Score quotidien — données mock pour la Phase 3.
-///
-/// Affiche [AppProgressRing] 84px, les points du jour et le badge niveau.
-/// Les données réelles (scoring Supabase) seront branchées en Phase 4 (issue #89).
-class _ScoreCard extends StatelessWidget {
-  // Valeurs mock — Phase 4 branchera le ScoringService réel.
-  static const double _mockProgress = 0.70;
-  static const int _mockPoints = 42;
-  static const int _mockMaxPoints = 60;
-  static const String _mockLevel = 'Aspirant · Niveau 2';
-
-  const _ScoreCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Anneau de progression (cf. wireframe v1.5 : 84px, stroke 4)
-          AppProgressRing(progress: _mockProgress, size: 84, strokeWidth: 4),
-          const SizedBox(width: AppSpacing.s4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'SCORE DU JOUR',
-                  style: AppTypography.label.copyWith(color: AppColors.accent),
-                ),
-                const SizedBox(height: AppSpacing.s2),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      '$_mockPoints',
-                      style: AppTypography.mono.copyWith(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      ' / $_mockMaxPoints',
-                      style: AppTypography.mono.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.s1),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s2,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgInput,
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                  ),
-                  child: Text(
-                    _mockLevel,
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Carte Habitudes du jour — affiche les micro-rows depuis [habitsNotifierProvider].
 ///
 /// Limite l'affichage à 5 habitudes avec un lien "Voir tout" si la liste
@@ -737,44 +661,6 @@ class _HabitMicroRow extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-/// Carte Série globale — état neutre (données disponibles en Phase 4).
-class _StreakCard extends StatelessWidget {
-  const _StreakCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      child: Row(
-        children: [
-          const ExcludeSemantics(
-            child: Icon(
-              LucideIcons.flame,
-              size: 22,
-              color: AppColors.textTertiary,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Série globale', style: AppTypography.h3),
-                const SizedBox(height: AppSpacing.s1),
-                Text(
-                  'Ta progression apparaîtra ici dès que tu auras commencé.',
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
