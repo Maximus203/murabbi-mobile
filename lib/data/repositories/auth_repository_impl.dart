@@ -22,14 +22,18 @@ class AuthRepositoryImpl implements AuthRepository {
   });
 
   @override
-  Future<User> signUp({required String email, required String password}) =>
-      _guard(() async {
-        final maps = await _ds.signUp(email: email, password: password);
-        return UserMapper.fromMaps(
-          authUser: maps.authUser,
-          profile: maps.profile,
-        );
-      });
+  Future<User> signUp({
+    required String email,
+    required String password,
+    required String displayName,
+  }) => _guard(() async {
+    final maps = await _ds.signUp(
+      email: email,
+      password: password,
+      displayName: displayName,
+    );
+    return UserMapper.fromMaps(authUser: maps.authUser, profile: maps.profile);
+  });
 
   @override
   Future<User> signInWithGoogle() => _guard(() async {

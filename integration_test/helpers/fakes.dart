@@ -84,10 +84,14 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<User> signUp({required String email, required String password}) async {
+  Future<User> signUp({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
     final pending = makeUser(
       email: email,
-      pseudo: 'Anonyme',
+      pseudo: displayName,
       emailVerified: false,
     );
     _pendingSignUpUser = pending;
