@@ -84,20 +84,27 @@ class _Au02SignupScreenState extends ConsumerState<Au02SignupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: AppSpacing.s4),
+                    // D-32 : textInputAction.next déplace le focus vers
+                    // le champ mot de passe.
                     AppInput(
                       label: 'Email',
                       placeholder: 'vous@exemple.com',
                       controller: _emailCtrl,
                       leadingIcon: LucideIcons.mail,
                       keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: AppSpacing.s4),
+                    // D-32 : textInputAction.done ferme le clavier et
+                    // déclenche la soumission.
                     AppInput(
                       label: 'Mot de passe',
                       placeholder: '8 caractères minimum',
                       controller: _passwordCtrl,
                       leadingIcon: LucideIcons.lock,
                       isPassword: true,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: _submit,
                     ),
                     if (state.hasError) ...[
                       const SizedBox(height: AppSpacing.s3),

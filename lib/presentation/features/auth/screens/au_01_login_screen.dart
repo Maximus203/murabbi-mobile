@@ -88,20 +88,28 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
                         _emailCtrl.text = email;
                       },
                     ),
+                    // D-32 : textInputAction.next déplace le focus vers
+                    // le champ mot de passe — ergonomie clavier physique et
+                    // clavier logiciel Android/iOS.
                     AppInput(
                       label: 'Email',
                       placeholder: 'vous@exemple.com',
                       controller: _emailCtrl,
                       leadingIcon: LucideIcons.mail,
                       keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: AppSpacing.s4),
+                    // D-32 : textInputAction.done ferme le clavier et
+                    // déclenche la soumission — évite l'appui sur le bouton.
                     AppInput(
                       label: 'Mot de passe',
                       placeholder: '••••••••',
                       controller: _passwordCtrl,
                       leadingIcon: LucideIcons.lock,
                       isPassword: true,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: _submit,
                     ),
                     const SizedBox(height: AppSpacing.s2),
                     Align(
