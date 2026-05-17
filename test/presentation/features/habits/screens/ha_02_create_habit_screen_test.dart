@@ -78,7 +78,30 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('rend le formulaire (nom + catégorie + récurrence + points)', (
+  // ── Logique pure : labels FR de fréquence (issue #127) ──────────────────
+
+  group('frequencyLabel — issue #127', () {
+    test('chaque valeur de l\'enum a un label FR explicite', () {
+      const expected = {
+        HabitFrequencyType.daily: 'Quotidien',
+        HabitFrequencyType.perDay: 'Plusieurs fois/jour',
+        HabitFrequencyType.perWeek: 'Plusieurs fois/sem.',
+        HabitFrequencyType.weekly: 'Jours précis de la semaine',
+        HabitFrequencyType.monthly: 'Mensuel',
+        HabitFrequencyType.custom: 'Personnalisé',
+      };
+      for (final t in HabitFrequencyType.values) {
+        final label = Ha02CreateHabitScreen.frequencyLabel(t);
+        expect(label, expected[t]);
+        // Aucun label ne doit être le nom brut anglais de l'enum.
+        expect(label, isNot(equals(t.name)));
+      }
+    });
+  });
+
+  // ── Rendu du formulaire ─────────────────────────────────────────────────
+
+  testWidgets('rend le formulaire (nom + catégorie + fréquence + difficulté)', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(400, 1600));
@@ -86,58 +109,87 @@ void main() {
     await pumpAndPreWarmAuth(tester);
 
     expect(find.text('NOM'), findsOneWidget);
-    expect(find.text('Catégorie'), findsOneWidget);
-    expect(find.text('Récurrence'), findsOneWidget);
-    expect(find.text('Difficulté'), findsOneWidget);
+    expect(find.text('CATÉGORIE'), findsOneWidget);
+    expect(find.text('FRÉQUENCE'), findsOneWidget);
+    expect(find.text('DIFFICULTÉ'), findsOneWidget);
     expect(find.text('Créer l\'habitude'), findsOneWidget);
   });
 
-  testWidgets('submit avec nom vide → message d\'erreur, repo non appelé', (
-    tester,
-  ) async {
-    final repo = InMemoryHabitRepository();
-    await tester.binding.setSurfaceSize(const Size(400, 1600));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(pumpable(customRepo: repo));
-    await tester.pumpAndSettle();
-
-    // Tap "Créer" sans avoir saisi le nom.
-    await tester.tap(find.text('Créer l\'habitude'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Le nom est requis.'), findsOneWidget);
-    expect(await repo.getHabits(testUser.id), isEmpty);
-  });
-
-  testWidgets('submit success → createHabit appelé + onCreated déclenché', (
-    tester,
-  ) async {
-    final repo = InMemoryHabitRepository();
-    var createdCalled = false;
-
-    await tester.binding.setSurfaceSize(const Size(400, 1600));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.pumpWidget(
-      pumpable(customRepo: repo, onCreated: () => createdCalled = true),
-    );
-    await tester.pumpAndSettle();
-
-    // Saisie nom.
-    await tester.enterText(find.byType(TextField).first, 'Lecture Coran');
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Créer l\'habitude'));
-    await tester.pumpAndSettle();
-
-    final habits = await repo.getHabits(testUser.id);
-    expect(habits, hasLength(1));
-    expect(habits.first.name.value, 'Lecture Coran');
-    expect(createdCalled, isTrue);
-  });
+  // ── Validation NOM : inline + clear à la frappe (issues #142/#143) ──────
 
   testWidgets(
-    'submit error → message d\'erreur affiché, onCreated PAS appelé',
+    'submit avec nom vide → erreur inline sous le champ, repo non appelé',
+    (tester) async {
+      final repo = InMemoryHabitRepository();
+      await tester.binding.setSurfaceSize(const Size(400, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(pumpable(customRepo: repo));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Créer l\'habitude'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Le nom est requis.'), findsOneWidget);
+      expect(await repo.getHabits(testUser.id), isEmpty);
+    },
+  );
+
+  testWidgets(
+    'erreur NOM disparaît dès que l\'utilisateur tape — issue #142',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await pumpAndPreWarmAuth(tester);
+
+      // Déclenche l'erreur.
+      await tester.tap(find.text('Créer l\'habitude'));
+      await tester.pumpAndSettle();
+      expect(find.text('Le nom est requis.'), findsOneWidget);
+
+      // Frappe dans le champ NOM.
+      await tester.enterText(
+        find.byType(TextField).first,
+        'Lecture du Coran',
+      );
+      await tester.pumpAndSettle();
+
+      // L'erreur a disparu.
+      expect(find.text('Le nom est requis.'), findsNothing);
+    },
+  );
+
+  // ── Succès : repo appelé + SnackBar + onCreated (issue #144) ────────────
+
+  testWidgets(
+    'submit success → habitude créée + SnackBar succès + onCreated',
+    (tester) async {
+      final repo = InMemoryHabitRepository();
+      var createdCalled = false;
+
+      await tester.binding.setSurfaceSize(const Size(400, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        pumpable(customRepo: repo, onCreated: () => createdCalled = true),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, 'Lecture Coran');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Créer l\'habitude'));
+      await tester.pumpAndSettle();
+
+      final habits = await repo.getHabits(testUser.id);
+      expect(habits, hasLength(1));
+      expect(habits.first.name.value, 'Lecture Coran');
+      expect(createdCalled, isTrue);
+      expect(find.text('Habitude créée avec succès'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'submit error → bannière d\'erreur affichée, onCreated PAS appelé',
     (tester) async {
       final repo = _FailingHabitRepo(shouldThrow: true);
       var createdCalled = false;
@@ -160,23 +212,44 @@ void main() {
     },
   );
 
-  testWidgets('switch récurrence weekly affiche les day chips L-D', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(400, 1600));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await pumpAndPreWarmAuth(tester);
+  // ── Sélecteur de jours : labels non ambigus + défaut vide ───────────────
 
-    // Au boot : daily sélectionnée, pas de day chips.
-    expect(find.text('L'), findsNothing);
+  testWidgets(
+    'mode "Jours précis" affiche des labels jours non ambigus — issue #129',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await pumpAndPreWarmAuth(tester);
 
-    await tester.tap(find.text('Jours précis de la semaine'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Jours précis de la semaine'));
+      await tester.pumpAndSettle();
 
-    // Day chips L M M J V S D apparaissent. "M" apparaît 2x (mardi + mercredi).
-    expect(find.text('L'), findsOneWidget);
-    expect(find.text('J'), findsOneWidget);
-    expect(find.text('V'), findsOneWidget);
-    expect(find.text('D'), findsOneWidget);
-  });
+      // Labels 2 lettres uniques — plus de double 'M'.
+      for (final label in ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di']) {
+        expect(find.text(label), findsOneWidget);
+      }
+    },
+  );
+
+  testWidgets(
+    'mode "Jours précis" → aucun jour pré-sélectionné — issue #141',
+    (tester) async {
+      final repo = InMemoryHabitRepository();
+      await tester.binding.setSurfaceSize(const Size(400, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(pumpable(customRepo: repo));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, 'Habitude');
+      await tester.tap(find.text('Jours précis de la semaine'));
+      await tester.pumpAndSettle();
+
+      // Aucun jour sélectionné : submit refuse et ne crée rien.
+      await tester.tap(find.text('Créer l\'habitude'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sélectionne au moins un jour.'), findsOneWidget);
+      expect(await repo.getHabits(testUser.id), isEmpty);
+    },
+  );
 }

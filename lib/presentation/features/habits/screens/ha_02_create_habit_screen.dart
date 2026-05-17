@@ -39,6 +39,29 @@ class Ha02CreateHabitScreen extends ConsumerStatefulWidget {
     required this.onCancel,
   });
 
+  /// Libellé FR de chaque fréquence — issue #127.
+  ///
+  /// Chaque valeur de l'enum est mappée explicitement. Le `switch` exhaustif
+  /// (sans `default`) garantit qu'aucune valeur ne tombe sur le nom anglais
+  /// brut de l'enum : ajouter une valeur à [HabitFrequencyType] casserait la
+  /// compilation tant que son label FR n'est pas fourni ici.
+  static String frequencyLabel(HabitFrequencyType t) {
+    switch (t) {
+      case HabitFrequencyType.daily:
+        return 'Quotidien';
+      case HabitFrequencyType.perDay:
+        return 'Plusieurs fois/jour';
+      case HabitFrequencyType.perWeek:
+        return 'Plusieurs fois/sem.';
+      case HabitFrequencyType.weekly:
+        return 'Jours précis de la semaine';
+      case HabitFrequencyType.monthly:
+        return 'Mensuel';
+      case HabitFrequencyType.custom:
+        return 'Personnalisé';
+    }
+  }
+
   @override
   ConsumerState<Ha02CreateHabitScreen> createState() =>
       _Ha02CreateHabitScreenState();
@@ -49,17 +72,47 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
   CategoryId? _categoryId;
   HabitFrequencyType _frequencyType = HabitFrequencyType.daily;
   int _perDayFrequency = 1;
+  // Jours actifs : tous par défaut (mode quotidien). En mode "Jours précis"
+  // (weekly), la sélection démarre vide — l'utilisateur choisit explicitement
+  // ses jours (issue #141).
   final Set<int> _activeDays = {1, 2, 3, 4, 5, 6, 7};
   int _points = 3;
   TimeOfDay? _rangeStart;
   TimeOfDay? _rangeEnd;
   bool _saving = false;
+
+  /// Erreur globale du formulaire (ex. échec réseau) — bannière en bas.
   String? _error;
+
+  /// Erreur inline du champ NOM — affichée sous le champ (issues #142/#143).
+  String? _nameError;
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     super.dispose();
+  }
+
+  /// Change la fréquence. En passant en mode "Jours précis" (weekly), la
+  /// sélection de jours démarre vide ; en quittant ce mode, tous les jours
+  /// sont réactivés (issue #141).
+  void _onFrequencyChanged(HabitFrequencyType t) {
+    if (t == _frequencyType) return;
+    if (t == HabitFrequencyType.weekly) {
+      _activeDays.clear();
+    } else if (_frequencyType == HabitFrequencyType.weekly) {
+      _activeDays
+        ..clear()
+        ..addAll({1, 2, 3, 4, 5, 6, 7});
+    }
+    _frequencyType = t;
+  }
+
+  /// Efface l'erreur inline du champ NOM dès que l'utilisateur tape (#142).
+  void _onNameChanged(String _) {
+    if (_nameError != null) {
+      setState(() => _nameError = null);
+    }
   }
 
   Future<void> _pickTime({required bool isStart}) async {
@@ -90,10 +143,18 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
   }
 
   Future<void> _submit(List<Category> categories) async {
-    setState(() => _error = null);
+    setState(() {
+      _error = null;
+      _nameError = null;
+    });
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Le nom est requis.');
+      // Erreur inline sous le champ NOM, pas en bannière (issue #143).
+      setState(() => _nameError = 'Le nom est requis.');
+      return;
+    }
+    if (_frequencyType == HabitFrequencyType.weekly && _activeDays.isEmpty) {
+      setState(() => _error = 'Sélectionne au moins un jour.');
       return;
     }
     final catId = _categoryId ?? categories.first.id;
@@ -121,7 +182,32 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
           .read(createHabitUseCaseProvider)
           .call(userId: user.id, habit: habit);
       await ref.read(habitsNotifierProvider.notifier).refresh();
-      if (mounted) widget.onCreated();
+      if (mounted) {
+        // Feedback de succès thémé avant le retour à HA-01 (issue #144).
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            content: Row(
+              children: [
+                const Icon(
+                  LucideIcons.check,
+                  size: 16,
+                  color: AppColors.bgSurface,
+                ),
+                const SizedBox(width: AppSpacing.s2),
+                Text(
+                  'Habitude créée avec succès',
+                  style: AppTypography.body.copyWith(
+                    color: AppColors.bgSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+        widget.onCreated();
+      }
     } catch (e, stackTrace) {
       appLog.e(
         'Ha02CreateHabitScreen submit failed',
@@ -200,6 +286,13 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
           label: 'Nom',
           placeholder: 'ex. Lecture Coran',
           controller: _nameCtrl,
+          // Erreur inline rouge sous le champ + bordure rouge (issue #143).
+          errorText: _nameError,
+          // Efface l'erreur dès la frappe + rafraîchit l'aperçu (issue #142).
+          onChanged: (v) {
+            _onNameChanged(v);
+            setState(() {});
+          },
         ),
         const SizedBox(height: AppSpacing.s4),
 
@@ -275,9 +368,9 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                 children: [
                   for (final t in _frequencyOptions)
                     AppChip(
-                      label: _frequencyLabel(t),
+                      label: Ha02CreateHabitScreen.frequencyLabel(t),
                       selected: _frequencyType == t,
-                      onTap: () => setState(() => _frequencyType = t),
+                      onTap: () => setState(() => _onFrequencyChanged(t)),
                     ),
                 ],
               ),
@@ -329,7 +422,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                         selected: _activeDays.contains(d),
                         onTap: () => setState(() {
                           if (_activeDays.contains(d)) {
-                            if (_activeDays.length > 1) _activeDays.remove(d);
+                            _activeDays.remove(d);
                           } else {
                             _activeDays.add(d);
                           }
@@ -460,22 +553,6 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
     HabitFrequencyType.custom,
   ];
 
-  static String _frequencyLabel(HabitFrequencyType t) {
-    switch (t) {
-      case HabitFrequencyType.daily:
-        return 'Quotidien';
-      case HabitFrequencyType.perDay:
-        return 'X×/jour';
-      case HabitFrequencyType.perWeek:
-        return '3×/sem.';
-      case HabitFrequencyType.weekly:
-        return 'Hebdo';
-      case HabitFrequencyType.monthly:
-        return 'Mensuel';
-      case HabitFrequencyType.custom:
-        return 'Custom';
-    }
-  }
 }
 
 // ── Section label style ───────────────────────────────────────────────────────
@@ -718,7 +795,8 @@ class _DayChip extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _labels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  // Labels 2 lettres non ambigus — issue #129 (les deux 'M' Lundi/Mardi).
+  static const _labels = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
 
   @override
   Widget build(BuildContext context) {
