@@ -121,6 +121,51 @@ void main() {
     expect(called, 1);
   });
 
+  // #117 : un email vide ne déclenche aucun appel réseau.
+  testWidgets('empty email shows inline error and does not call repo', (
+    tester,
+  ) async {
+    await tester.pumpWidget(makeApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Envoyer le lien'));
+    await tester.pumpAndSettle();
+
+    expect(find.text("L'email est requis"), findsOneWidget);
+    verifyNever(() => repo.sendPasswordResetEmail(email: any(named: 'email')));
+  });
+
+  // #117 : un email malformé est rejeté côté client.
+  testWidgets('invalid email shows inline error and does not call repo', (
+    tester,
+  ) async {
+    await tester.pumpWidget(makeApp());
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'notanemail');
+    await tester.tap(find.text('Envoyer le lien'));
+    await tester.pumpAndSettle();
+
+    expect(find.text("Format d'email invalide"), findsOneWidget);
+    verifyNever(() => repo.sendPasswordResetEmail(email: any(named: 'email')));
+  });
+
+  // #124 : lien "Se connecter" affiché en bas du formulaire.
+  testWidgets('#124 — form shows "Se connecter" back link at the bottom', (
+    tester,
+  ) async {
+    var called = 0;
+    await tester.pumpWidget(makeApp(onBack: () => called++));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tu te souviens de ton mot de passe ? '), findsOneWidget);
+    expect(find.text('Se connecter'), findsOneWidget);
+
+    await tester.tap(find.text('Se connecter'));
+    await tester.pump();
+    expect(called, 1);
+  });
+
   testWidgets('back arrow in header calls onBack from initial state', (
     tester,
   ) async {

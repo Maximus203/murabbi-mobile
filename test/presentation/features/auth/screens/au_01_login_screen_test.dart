@@ -59,7 +59,8 @@ void main() {
     await tester.pumpWidget(makeApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Connexion'), findsOneWidget);
+    // AU-01 affiche le wordmark, pas de titre texte "Connexion".
+    expect(find.byType(AppWordmark), findsOneWidget);
     // AppInput uppercases its label (cf. Phase 1 DS).
     expect(find.text('EMAIL'), findsOneWidget);
     expect(find.text('MOT DE PASSE'), findsOneWidget);
@@ -180,6 +181,79 @@ void main() {
     verify(() => repo.signInWithGoogle()).called(1);
   });
 
+  // #117 : un formulaire vide ne déclenche aucun appel réseau.
+  testWidgets('empty form shows inline errors and does not call signIn', (
+    tester,
+  ) async {
+    await tester.pumpWidget(makeApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Se connecter'));
+    await tester.pumpAndSettle();
+
+    expect(find.text("L'email est requis"), findsOneWidget);
+    expect(find.text('Le mot de passe est requis'), findsOneWidget);
+    verifyNever(
+      () => repo.signIn(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      ),
+    );
+  });
+
+  // #117 : un email malformé est rejeté côté client, aucun appel réseau.
+  testWidgets('invalid email shows inline error and does not call signIn', (
+    tester,
+  ) async {
+    await tester.pumpWidget(makeApp());
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.first, 'notanemail');
+    await tester.enterText(fields.last, 'pass1234');
+    await tester.tap(find.text('Se connecter'));
+    await tester.pumpAndSettle();
+
+    expect(find.text("Format d'email invalide"), findsOneWidget);
+    verifyNever(
+      () => repo.signIn(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      ),
+    );
+  });
+
+  // #116 : naviguer vers signup purge l'état d'erreur du provider.
+  testWidgets('navigating to signup clears the auth error state', (
+    tester,
+  ) async {
+    when(
+      () => repo.signIn(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      ),
+    ).thenThrow(const AuthFailure.invalidCredentials());
+
+    var signUpCalled = 0;
+    await tester.pumpWidget(makeApp(onSignUp: () => signUpCalled++));
+    await tester.pumpAndSettle();
+
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.first, 'bad@b.co');
+    await tester.enterText(fields.last, 'wrongpass');
+    await tester.tap(find.text('Se connecter'));
+    await tester.pumpAndSettle();
+    expect(find.text('Email ou mot de passe incorrect.'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Créer un compte'));
+    await tester.tap(find.text('Créer un compte'));
+    await tester.pumpAndSettle();
+
+    expect(signUpCalled, 1);
+    // L'erreur a été purgée — elle ne fuiterait pas sur l'écran signup.
+    expect(find.text('Email ou mot de passe incorrect.'), findsNothing);
+  });
+
   testWidgets('AU-01 affiche le Logo Wordmark', (tester) async {
     await tester.pumpWidget(makeApp());
     await tester.pumpAndSettle();
@@ -191,10 +265,7 @@ void main() {
     var forgotCalled = 0;
     var signUpCalled = 0;
     await tester.pumpWidget(
-      makeApp(
-        onForgot: (_) => forgotCalled++,
-        onSignUp: () => signUpCalled++,
-      ),
+      makeApp(onForgot: (_) => forgotCalled++, onSignUp: () => signUpCalled++),
     );
     await tester.pumpAndSettle();
 

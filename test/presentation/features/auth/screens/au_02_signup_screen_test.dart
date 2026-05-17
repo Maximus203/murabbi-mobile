@@ -48,13 +48,28 @@ void main() {
     );
   }
 
-  testWidgets('renders email + password fields, primary CTA, signin link', (
+  // Remplit les 3 champs (Nom, Email, Mot de passe) dans l'ordre du Column.
+  Future<void> fillForm(
+    WidgetTester tester, {
+    String name = 'Yusuf',
+    String email = 'new@example.com',
+    String password = 'pass1234',
+  }) async {
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.at(0), name);
+    await tester.enterText(fields.at(1), email);
+    await tester.enterText(fields.at(2), password);
+  }
+
+  testWidgets('renders name + email + password fields, primary CTA, link', (
     tester,
   ) async {
     await tester.pumpWidget(makeApp());
     await tester.pumpAndSettle();
 
     expect(find.text('Créer un compte'), findsOneWidget);
+    // #131 : champ Nom requis.
+    expect(find.text('NOM'), findsOneWidget);
     expect(find.text('EMAIL'), findsOneWidget);
     expect(find.text('MOT DE PASSE'), findsOneWidget);
     // CTA primary distinct from AppHeader title.
@@ -67,23 +82,93 @@ void main() {
     'tapping "Créer mon compte" calls repo.signUp with field values',
     (tester) async {
       when(
-        () => repo.signUp(email: 'new@example.com', password: 'pass1234'),
+        () => repo.signUp(
+          email: 'new@example.com',
+          password: 'pass1234',
+          displayName: 'Yusuf',
+        ),
       ).thenAnswer((_) async => testUser);
 
       await tester.pumpWidget(makeApp());
       await tester.pumpAndSettle();
 
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.first, 'new@example.com');
-      await tester.enterText(fields.last, 'pass1234');
+      await fillForm(tester);
       await tester.tap(find.text('Créer mon compte'));
       await tester.pumpAndSettle();
 
       verify(
-        () => repo.signUp(email: 'new@example.com', password: 'pass1234'),
+        () => repo.signUp(
+          email: 'new@example.com',
+          password: 'pass1234',
+          displayName: 'Yusuf',
+        ),
       ).called(1);
     },
   );
+
+  // #117 : un formulaire vide ne déclenche aucun appel réseau.
+  testWidgets('empty form shows inline errors and does not call signUp', (
+    tester,
+  ) async {
+    await tester.pumpWidget(makeApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Créer mon compte'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Le nom est requis'), findsOneWidget);
+    expect(find.text("L'email est requis"), findsOneWidget);
+    expect(find.text('Le mot de passe est requis'), findsOneWidget);
+    verifyNever(
+      () => repo.signUp(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+        displayName: any(named: 'displayName'),
+      ),
+    );
+  });
+
+  // #117 : un email malformé est rejeté côté client, aucun appel réseau.
+  testWidgets('invalid email shows inline error and does not call signUp', (
+    tester,
+  ) async {
+    await tester.pumpWidget(makeApp());
+    await tester.pumpAndSettle();
+
+    await fillForm(tester, email: 'notanemail');
+    await tester.tap(find.text('Créer mon compte'));
+    await tester.pumpAndSettle();
+
+    expect(find.text("Format d'email invalide"), findsOneWidget);
+    verifyNever(
+      () => repo.signUp(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+        displayName: any(named: 'displayName'),
+      ),
+    );
+  });
+
+  // #117 : un mot de passe trop court est rejeté côté client.
+  testWidgets('short password shows inline error and does not call signUp', (
+    tester,
+  ) async {
+    await tester.pumpWidget(makeApp());
+    await tester.pumpAndSettle();
+
+    await fillForm(tester, password: 'short');
+    await tester.tap(find.text('Créer mon compte'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('8 caractères minimum'), findsOneWidget);
+    verifyNever(
+      () => repo.signUp(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+        displayName: any(named: 'displayName'),
+      ),
+    );
+  });
 
   testWidgets('displays FR error message on EmailAlreadyInUseFailure', (
     tester,
@@ -92,15 +177,14 @@ void main() {
       () => repo.signUp(
         email: any(named: 'email'),
         password: any(named: 'password'),
+        displayName: any(named: 'displayName'),
       ),
     ).thenThrow(const AuthFailure.emailAlreadyInUse());
 
     await tester.pumpWidget(makeApp());
     await tester.pumpAndSettle();
 
-    final fields = find.byType(TextField);
-    await tester.enterText(fields.first, 'taken@example.com');
-    await tester.enterText(fields.last, 'pass1234');
+    await fillForm(tester, email: 'taken@example.com');
     await tester.tap(find.text('Créer mon compte'));
     await tester.pumpAndSettle();
 
@@ -114,15 +198,15 @@ void main() {
       () => repo.signUp(
         email: any(named: 'email'),
         password: any(named: 'password'),
+        displayName: any(named: 'displayName'),
       ),
     ).thenThrow(const AuthFailure.weakPassword());
 
     await tester.pumpWidget(makeApp());
     await tester.pumpAndSettle();
 
-    final fields = find.byType(TextField);
-    await tester.enterText(fields.first, 'a@b.co');
-    await tester.enterText(fields.last, 'short');
+    // Mot de passe valide côté client (8+ car.) — on teste le rejet serveur.
+    await fillForm(tester, password: 'pass1234');
     await tester.tap(find.text('Créer mon compte'));
     await tester.pumpAndSettle();
 
@@ -139,6 +223,7 @@ void main() {
       () => repo.signUp(
         email: any(named: 'email'),
         password: any(named: 'password'),
+        displayName: any(named: 'displayName'),
       ),
     ).thenAnswer((_) async => testUser);
 
@@ -146,9 +231,7 @@ void main() {
     await tester.pumpWidget(makeApp(onSignedUp: () => called++));
     await tester.pumpAndSettle();
 
-    final fields = find.byType(TextField);
-    await tester.enterText(fields.first, 'new@example.com');
-    await tester.enterText(fields.last, 'pass1234');
+    await fillForm(tester);
     await tester.tap(find.text('Créer mon compte'));
     await tester.pumpAndSettle();
 
