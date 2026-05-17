@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/providers/onboarding_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_media.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
@@ -35,21 +36,24 @@ const List<_OnboardingSlide> _slides = [
     title: 'Localisation',
     body:
         'Murabbi détecte ta ville pour calculer les horaires de prière au plus juste. Tu pourras affiner manuellement dans Réglages.',
-    videoAsset: 'assets/media/03.mp4',
+    // OB-04 → 03_murabbi — ADR-017 : vidéo bundlée assets/videos/
+    videoAsset: AppMedia.onboarding04Video,
   ),
   _OnboardingSlide(
     icon: LucideIcons.calculator,
     title: 'Méthode de calcul',
     body:
         'Choisis la méthode (MWL, ISNA, UmmAlQura, …) qui correspond à ton école. La valeur par défaut convient à 80 % des utilisateurs.',
-    videoAsset: 'assets/media/04.mp4',
+    // OB-03 → 04_murabbi — ADR-017 : vidéo bundlée assets/videos/
+    videoAsset: AppMedia.onboarding03Video,
   ),
   _OnboardingSlide(
     icon: LucideIcons.clock,
     title: 'Heure d\'été automatique',
     body:
         'Les horaires s\'ajustent automatiquement avec le passage à l\'heure d\'été / d\'hiver, selon ton fuseau (Africa/Dakar par défaut).',
-    videoAsset: 'assets/media/06.mp4',
+    // OB-02 → 06_murabbi — ADR-017 : vidéo bundlée assets/videos/
+    videoAsset: AppMedia.onboarding02Video,
   ),
   _OnboardingSlide(
     icon: LucideIcons.circleCheck,
