@@ -70,6 +70,7 @@ class HabitRepositoryImpl implements HabitRepository {
 
   /// Renvoie l'historique de logs d'une habitude sur la plage [from]..[to]
   /// (inclus). Nécessaire pour les stats / heatmap (`GetHabitStatsUseCase`).
+  @override
   Future<List<HabitLog>> getLogsForHabit({
     required HabitId habitId,
     required DateTime from,

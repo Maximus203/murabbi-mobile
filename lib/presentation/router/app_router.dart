@@ -15,6 +15,7 @@ import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_das
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_01_habits_list_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_02_create_habit_screen.dart';
+import 'package:murabbi_mobile/presentation/features/habits/screens/hb_detail_screen.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/providers/onboarding_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01_onboarding_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_01_today_screen.dart';
@@ -229,6 +230,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   onCreate: () => context.go(AppRoutes.habitsCreate),
                   onOpenCategories: () => context.go(AppRoutes.categories),
                   onEditHabit: (id) => context.go(AppRoutes.habitEdit(id)),
+                  onOpenHabit: (id) => context.go(AppRoutes.habitDetail(id)),
                 );
               }
               return Ha02CreateHabitScreen(
@@ -237,6 +239,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 onCancel: () => context.go(AppRoutes.habits),
               );
             },
+          );
+        },
+      ),
+
+      // HB-DETAIL — détail habitude (issue #153). Déclarée APRÈS
+      // `/habits/create` et `/habits/:id/edit` pour que go_router matche
+      // ces routes plus spécifiques d'abord.
+      GoRoute(
+        path: AppRoutes.habitDetailPattern,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return HbDetailScreen(
+            habitId: id,
+            onBack: () => context.go(AppRoutes.habits),
+            onEdit: (habitId) => context.go(AppRoutes.habitEdit(habitId)),
+            onDeleted: () => context.go(AppRoutes.habits),
           );
         },
       ),
@@ -347,6 +365,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   onCreate: () => context.go(AppRoutes.habitsCreate),
                   onOpenCategories: () => context.go(AppRoutes.categories),
                   onEditHabit: (id) => context.go(AppRoutes.habitEdit(id)),
+                  onOpenHabit: (id) => context.go(AppRoutes.habitDetail(id)),
                 ),
               ),
             ],

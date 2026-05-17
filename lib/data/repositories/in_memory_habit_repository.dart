@@ -83,6 +83,16 @@ class InMemoryHabitRepository implements HabitRepository {
   }
 
   @override
+  Future<List<HabitLog>> getLogsForHabit({
+    required HabitId habitId,
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    // V1 dev scaffold — pas d'historique persisté en mémoire.
+    return const [];
+  }
+
+  @override
   Future<List<HabitSubtask>> getSubtasks(HabitId habitId) async {
     final habit = _habits.firstWhere(
       (h) => h.id == habitId,

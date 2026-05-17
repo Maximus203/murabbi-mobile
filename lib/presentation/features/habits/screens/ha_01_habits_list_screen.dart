@@ -34,11 +34,17 @@ class Ha01HabitsListScreen extends ConsumerStatefulWidget {
   /// (issue #152). Optionnel — si `null`, l'action "Modifier" est masquée.
   final ValueChanged<String>? onEditHabit;
 
+  /// Ouvre HB-DETAIL pour l'habitude d'identifiant donné (issue #153).
+  /// C'est l'action déclenchée par le tap sur la ligne. Optionnel — si
+  /// `null`, le tap sur la ligne est inerte.
+  final ValueChanged<String>? onOpenHabit;
+
   const Ha01HabitsListScreen({
     super.key,
     required this.onCreate,
     this.onOpenCategories,
     this.onEditHabit,
+    this.onOpenHabit,
   });
 
   @override
@@ -162,10 +168,9 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
                         itemBuilder: (_, i) => _HabitTile(
                           habit: filtered[i],
                           onToggle: () => _toggle(filtered[i].id),
-                          onEdit: widget.onEditHabit == null
+                          onOpen: widget.onOpenHabit == null
                               ? null
-                              : () =>
-                                    widget.onEditHabit!(filtered[i].id.value),
+                              : () => widget.onOpenHabit!(filtered[i].id.value),
                         ),
                       ),
               ),
@@ -243,20 +248,17 @@ class _CategoryChipsBar extends StatelessWidget {
   }
 }
 
-/// Tuile d'habitude — connecte [HabitRow] au statut du jour (#151) et à
-/// l'édition (#152). Le tap sur la ligne ouvre HA-02 en mode édition.
+/// Tuile d'habitude — connecte [HabitRow] au statut du jour (#151).
+/// Le tap sur la ligne ouvre HB-DETAIL (#153) ; l'édition se fait depuis
+/// le menu "..." de HB-DETAIL.
 class _HabitTile extends ConsumerWidget {
   final Habit habit;
   final VoidCallback onToggle;
 
-  /// Ouvre l'édition de l'habitude — `null` si l'édition est désactivée.
-  final VoidCallback? onEdit;
+  /// Ouvre le détail de l'habitude — `null` si la navigation est désactivée.
+  final VoidCallback? onOpen;
 
-  const _HabitTile({
-    required this.habit,
-    required this.onToggle,
-    this.onEdit,
-  });
+  const _HabitTile({required this.habit, required this.onToggle, this.onOpen});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -264,7 +266,7 @@ class _HabitTile extends ConsumerWidget {
     return HabitRow(
       habit: habit,
       todayStatus: status,
-      onTap: onEdit ?? () {},
+      onTap: onOpen ?? () {},
       onToggle: onToggle,
     );
   }
