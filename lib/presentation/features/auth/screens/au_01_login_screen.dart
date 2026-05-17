@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/auth/widgets/auth_error_banner.dart';
-import 'package:murabbi_mobile/presentation/features/auth/widgets/remembered_accounts_chips.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -67,33 +67,53 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s5,
-              vertical: AppSpacing.s4,
-            ),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: IntrinsicHeight(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s5,
+            vertical: AppSpacing.s5,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header compact : logo + wordmark en ligne
+              Row(
+                children: [
+                  const AppLogo(size: 28),
+                  const SizedBox(width: AppSpacing.s2),
+                  Text(
+                    'Murabbi',
+                    style: AppTypography.label.copyWith(
+                      color: AppColors.accent,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              // Titre d'écran
+              const Text('Bon retour.', style: AppTypography.h1),
+              const SizedBox(height: AppSpacing.s2),
+              Text(
+                'Reprenez votre pratique là où vous l\'aviez laissée.',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              // Formulaire avec autofill natif
+              AutofillGroup(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: AppSpacing.s4),
-                    // Logo + Wordmark centré
-                    const Center(child: AppWordmark(width: 140)),
-                    const SizedBox(height: AppSpacing.s6),
-                    RememberedAccountsChips(
-                      onTap: (email) {
-                        _emailCtrl.text = email;
-                      },
-                    ),
                     AppInput(
                       label: 'Email',
                       placeholder: 'vous@exemple.com',
                       controller: _emailCtrl,
                       leadingIcon: LucideIcons.mail,
                       keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.email],
                     ),
                     const SizedBox(height: AppSpacing.s4),
                     AppInput(
@@ -102,66 +122,89 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
                       controller: _passwordCtrl,
                       leadingIcon: LucideIcons.lock,
                       isPassword: true,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: isLoading ? null : _submit,
+                      autofillHints: const [AutofillHints.password],
                     ),
-                    const SizedBox(height: AppSpacing.s2),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: isLoading
-                            ? null
-                            : () => widget.onForgotPassword(
-                                  _emailCtrl.text.trim(),
-                                ),
-                        child: Text(
-                          'Mot de passe oublié ?',
-                          style: AppTypography.body
-                              .copyWith(color: AppColors.accent),
-                        ),
-                      ),
-                    ),
-                    if (state.hasError) ...[
-                      const SizedBox(height: AppSpacing.s2),
-                      AuthErrorBanner(failure: state.error),
-                    ],
-                    const Spacer(),
-                    const SizedBox(height: AppSpacing.s4),
-                    AppButton(
-                      label: isLoading ? 'Connexion…' : 'Se connecter',
-                      onPressed: isLoading ? null : _submit,
-                    ),
-                    const SizedBox(height: AppSpacing.s3),
-                    AppButton(
-                      label: 'Continuer avec Google',
-                      onPressed: isLoading ? null : _signInWithGoogle,
-                      variant: AppButtonVariant.ghost,
-                    ),
-                    const SizedBox(height: AppSpacing.s5),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Pas encore de compte ? ',
-                          style: AppTypography.body.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: isLoading ? null : widget.onSignUp,
-                          child: Text(
-                            'Créer un compte',
-                            style: AppTypography.body.copyWith(
-                              color: AppColors.accent,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.s5),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(height: AppSpacing.s2),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: isLoading
+                      ? null
+                      : () => widget.onForgotPassword(_emailCtrl.text.trim()),
+                  child: Text(
+                    'Mot de passe oublié ?',
+                    style: AppTypography.body.copyWith(color: AppColors.accent),
+                  ),
+                ),
+              ),
+              if (state.hasError) ...[
+                const SizedBox(height: AppSpacing.s2),
+                AuthErrorBanner(failure: state.error),
+              ],
+              const SizedBox(height: AppSpacing.s6),
+              AppButton(
+                label: isLoading ? 'Connexion…' : 'Se connecter',
+                onPressed: isLoading ? null : _submit,
+              ),
+              const SizedBox(height: AppSpacing.s4),
+              // Séparateur OU
+              Row(
+                children: [
+                  const Expanded(child: Divider(thickness: 0.5)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s3,
+                    ),
+                    child: Text(
+                      'OU',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textTertiary,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  const Expanded(child: Divider(thickness: 0.5)),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s4),
+              AppButton(
+                label: 'Continuer avec Google',
+                onPressed: isLoading ? null : _signInWithGoogle,
+                variant: AppButtonVariant.secondary,
+                leadingWidget: SvgPicture.asset(
+                  'assets/images/logo_google.svg',
+                  width: 18,
+                  height: 18,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Pas encore de compte ? ',
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: isLoading ? null : widget.onSignUp,
+                    child: Text(
+                      'Créer',
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.accent,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

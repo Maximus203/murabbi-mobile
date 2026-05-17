@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/presentation/features/collections/providers/collections_notifier.dart';
@@ -34,7 +35,7 @@ class Co01CollectionsListScreen extends ConsumerWidget {
         onPressed: onCreate,
         backgroundColor: AppColors.accent,
         foregroundColor: AppColors.bgSurface,
-        child: const Icon(LucideIcons.plus),
+        child: Icon(lu(LucideIcons.plus)),
       ),
       body: SafeArea(
         bottom: false,

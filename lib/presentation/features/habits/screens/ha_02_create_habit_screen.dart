@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
@@ -333,7 +334,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                       onPressed: _perDayFrequency > 1
                           ? () => setState(() => _perDayFrequency--)
                           : null,
-                      icon: const Icon(LucideIcons.minus, size: 16),
+                      icon: Icon(lu(LucideIcons.minus), size: 16),
                     ),
                     Text('$_perDayFrequency', style: AppTypography.h3),
                     IconButton(
@@ -341,7 +342,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                       onPressed: _perDayFrequency < 10
                           ? () => setState(() => _perDayFrequency++)
                           : null,
-                      icon: const Icon(LucideIcons.plus, size: 16),
+                      icon: Icon(lu(LucideIcons.plus), size: 16),
                     ),
                   ],
                 ),
@@ -392,7 +393,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                 onPressed: _points > HabitPoints.min
                     ? () => setState(() => _points--)
                     : null,
-                icon: const Icon(LucideIcons.minus, size: 16),
+                icon: Icon(lu(LucideIcons.minus), size: 16),
               ),
               Text(
                 '$_points pt${_points > 1 ? 's' : ''}',
@@ -406,7 +407,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                 onPressed: _points < HabitPoints.max
                     ? () => setState(() => _points++)
                     : null,
-                icon: const Icon(LucideIcons.plus, size: 16),
+                icon: Icon(lu(LucideIcons.plus), size: 16),
               ),
             ],
           ),

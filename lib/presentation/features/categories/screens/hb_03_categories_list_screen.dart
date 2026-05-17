@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
@@ -164,7 +165,7 @@ class _CategoriesBody extends ConsumerWidget {
         color: AppColors.danger.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.card),
       ),
-      child: const Icon(LucideIcons.trash2, color: AppColors.danger, size: 20),
+      child: Icon(lu(LucideIcons.trash2), color: AppColors.danger, size: 20),
     );
   }
 

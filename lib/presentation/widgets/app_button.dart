@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -9,11 +10,23 @@ enum AppButtonVariant { primary, secondary, ghost, destructive, link }
 
 /// Bouton Murabbi — surface plate, bordure 0.5px, radius 10 (button), aucune
 /// ombre portée (P-5).
+///
+/// Le paramètre optionnel [child] permet de remplacer l'ensemble du contenu
+/// (label + icône) par un widget personnalisé — typiquement un spinner inline
+/// pendant un état de chargement (issue #86).
 class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final AppButtonVariant variant;
   final IconData? leadingIcon;
+
+  /// Widget arbitraire affiché à gauche du label — prioritaire sur [leadingIcon].
+  /// Typiquement un SVG (logo Google, etc.).
+  final Widget? leadingWidget;
+
+  /// Si fourni, remplace le contenu textuel du bouton (label + leadingIcon).
+  /// Utile pour afficher un spinner inline pendant [_saving].
+  final Widget? child;
 
   const AppButton({
     super.key,
@@ -21,6 +34,8 @@ class AppButton extends StatelessWidget {
     required this.onPressed,
     this.variant = AppButtonVariant.primary,
     this.leadingIcon,
+    this.leadingWidget,
+    this.child,
   });
 
   bool get _enabled => onPressed != null;
@@ -29,17 +44,24 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final spec = _spec(variant, enabled: _enabled);
     final radius = BorderRadius.circular(AppRadius.button);
-    final content = Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (leadingIcon != null) ...[
-          Icon(leadingIcon, size: 16, color: spec.foreground),
-          const SizedBox(width: AppSpacing.s2),
-        ],
-        Text(label, style: AppTypography.body.copyWith(color: spec.foreground)),
-      ],
-    );
+    final content = child ??
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (leadingWidget != null) ...[
+              leadingWidget!,
+              const SizedBox(width: AppSpacing.s2),
+            ] else if (leadingIcon != null) ...[
+              Icon(lu(leadingIcon!), size: 16, color: spec.foreground),
+              const SizedBox(width: AppSpacing.s2),
+            ],
+            Text(
+              label,
+              style: AppTypography.body.copyWith(color: spec.foreground),
+            ),
+          ],
+        );
 
     return Material(
       color: spec.background,

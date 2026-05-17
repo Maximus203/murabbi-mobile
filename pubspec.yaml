@@ -124,3 +124,6 @@ flutter:
           weight: 400
         - asset: assets/fonts/NotoSansArabic-Medium.ttf
           weight: 500
+    - family: Lucide
+      fonts:
+        - asset: assets/fonts/lucide.ttf

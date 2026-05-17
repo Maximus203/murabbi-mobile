@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
@@ -152,14 +153,14 @@ class _MonthNavBar extends StatelessWidget {
         IconButton(
           tooltip: 'Mois précédent',
           onPressed: onPrevious,
-          icon: const Icon(LucideIcons.chevronLeft, size: 22),
+          icon: Icon(lu(LucideIcons.chevronLeft), size: 22),
           color: AppColors.textPrimary,
         ),
         Text(label, style: AppTypography.h3),
         IconButton(
           tooltip: 'Mois suivant',
           onPressed: onNext,
-          icon: const Icon(LucideIcons.chevronRight, size: 22),
+          icon: Icon(lu(LucideIcons.chevronRight), size: 22),
           color: AppColors.textPrimary,
         ),
       ],
