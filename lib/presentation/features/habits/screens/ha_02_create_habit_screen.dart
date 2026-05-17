@@ -359,12 +359,13 @@ class _DayChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Touch target 44dp minimum (WCAG 2.5.5 / Apple HIG / Material 3).
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.pill),
       child: Container(
-        width: 36,
-        height: 36,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
           color: selected ? AppColors.accent : AppColors.bgSurface,
           borderRadius: BorderRadius.circular(AppRadius.pill),
