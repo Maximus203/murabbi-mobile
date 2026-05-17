@@ -64,8 +64,9 @@ void main() {
 
   group('CollectionsNotifier', () {
     test('build charge les collections de l\'utilisateur', () async {
-      when(() => mockRepo.getCollections(userId))
-          .thenAnswer((_) async => [collection1, collection2]);
+      when(
+        () => mockRepo.getCollections(userId),
+      ).thenAnswer((_) async => [collection1, collection2]);
 
       final container = makeContainer();
       addTearDown(container.dispose);
@@ -89,8 +90,9 @@ void main() {
     });
 
     test('activate appelle repository.activateCollection et refresh', () async {
-      when(() => mockRepo.getCollections(userId))
-          .thenAnswer((_) async => [collection1]);
+      when(
+        () => mockRepo.getCollections(userId),
+      ).thenAnswer((_) async => [collection1]);
       when(
         () => mockRepo.activateCollection(
           userId: userId,
@@ -117,31 +119,35 @@ void main() {
       ).called(1);
     });
 
-    test('deactivate appelle repository.deactivateCollection et refresh', () async {
-      when(() => mockRepo.getCollections(userId))
-          .thenAnswer((_) async => [collection2]);
-      when(
-        () => mockRepo.deactivateCollection(
-          userId: userId,
-          collectionId: collection2.id,
-        ),
-      ).thenAnswer((_) async {});
+    test(
+      'deactivate appelle repository.deactivateCollection et refresh',
+      () async {
+        when(
+          () => mockRepo.getCollections(userId),
+        ).thenAnswer((_) async => [collection2]);
+        when(
+          () => mockRepo.deactivateCollection(
+            userId: userId,
+            collectionId: collection2.id,
+          ),
+        ).thenAnswer((_) async {});
 
-      final container = makeContainer();
-      addTearDown(container.dispose);
+        final container = makeContainer();
+        addTearDown(container.dispose);
 
-      await container.read(collectionsNotifierProvider.future);
+        await container.read(collectionsNotifierProvider.future);
 
-      await container
-          .read(collectionsNotifierProvider.notifier)
-          .deactivate(collection2.id);
+        await container
+            .read(collectionsNotifierProvider.notifier)
+            .deactivate(collection2.id);
 
-      verify(
-        () => mockRepo.deactivateCollection(
-          userId: userId,
-          collectionId: collection2.id,
-        ),
-      ).called(1);
-    });
+        verify(
+          () => mockRepo.deactivateCollection(
+            userId: userId,
+            collectionId: collection2.id,
+          ),
+        ).called(1);
+      },
+    );
   });
 }

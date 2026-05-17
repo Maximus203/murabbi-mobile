@@ -58,9 +58,9 @@ void main() {
     VoidCallback? onCreate,
     void Function(Collection)? onTap,
   }) {
-    when(() => mockRepo.getCollections(any())).thenAnswer(
-      (_) async => collections,
-    );
+    when(
+      () => mockRepo.getCollections(any()),
+    ).thenAnswer((_) async => collections);
     return ProviderScope(
       overrides: [
         currentUserProvider.overrideWithValue(testUser),
@@ -76,9 +76,7 @@ void main() {
   }
 
   testWidgets('affiche la liste des collections', (tester) async {
-    await tester.pumpWidget(
-      buildSut(collections: [collection1, collection2]),
-    );
+    await tester.pumpWidget(buildSut(collections: [collection1, collection2]));
     await tester.pumpAndSettle();
 
     expect(find.text('Routine matinale'), findsOneWidget);
@@ -106,10 +104,7 @@ void main() {
   testWidgets('tap sur une collection appelle onTap', (tester) async {
     Collection? tapped;
     await tester.pumpWidget(
-      buildSut(
-        collections: [collection1],
-        onTap: (c) => tapped = c,
-      ),
+      buildSut(collections: [collection1], onTap: (c) => tapped = c),
     );
     await tester.pumpAndSettle();
 

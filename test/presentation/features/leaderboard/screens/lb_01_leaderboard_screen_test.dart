@@ -50,8 +50,9 @@ void main() {
   });
 
   Widget buildSut(List<UserScore> scores) {
-    when(() => mockRepo.getLeaderboard(limit: 50))
-        .thenAnswer((_) async => scores);
+    when(
+      () => mockRepo.getLeaderboard(limit: 50),
+    ).thenAnswer((_) async => scores);
 
     return ProviderScope(
       overrides: [
@@ -84,8 +85,9 @@ void main() {
   testWidgets('affiche un indicateur de chargement', (tester) async {
     // Utilise un Completer pour bloquer la résolution sans timer pending.
     final completer = Completer<List<UserScore>>();
-    when(() => mockRepo.getLeaderboard(limit: 50))
-        .thenAnswer((_) => completer.future);
+    when(
+      () => mockRepo.getLeaderboard(limit: 50),
+    ).thenAnswer((_) => completer.future);
 
     final container = ProviderContainer(
       overrides: [

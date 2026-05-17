@@ -174,45 +174,37 @@ void main() {
       },
     );
 
-    testWidgets(
-      'Collections navigue vers /collections (Phase 5 — slice 5.G)',
-      (tester) async {
-        final router = _makeRouter();
-        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
-        await tester.pumpAndSettle();
+    testWidgets('Collections navigue vers /collections (Phase 5 — slice 5.G)', (
+      tester,
+    ) async {
+      final router = _makeRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Collections'));
-        await tester.pumpAndSettle();
+      await tester.tap(find.text('Collections'));
+      await tester.pumpAndSettle();
 
-        // Navigation vers /collections — l'écran Collections est affiché.
-        expect(find.text('Collections'), findsWidgets);
-        // Aucun snackbar "arrive bientôt" (remplacé par navigation réelle).
-        expect(
-          find.text('Collections arrive bientôt.'),
-          findsNothing,
-        );
-      },
-    );
+      // Navigation vers /collections — l'écran Collections est affiché.
+      expect(find.text('Collections'), findsWidgets);
+      // Aucun snackbar "arrive bientôt" (remplacé par navigation réelle).
+      expect(find.text('Collections arrive bientôt.'), findsNothing);
+    });
 
-    testWidgets(
-      'Classement navigue vers /leaderboard (Phase 5 — slice 5.G)',
-      (tester) async {
-        final router = _makeRouter();
-        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
-        await tester.pumpAndSettle();
+    testWidgets('Classement navigue vers /leaderboard (Phase 5 — slice 5.G)', (
+      tester,
+    ) async {
+      final router = _makeRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Classement'));
-        await tester.pumpAndSettle();
+      await tester.tap(find.text('Classement'));
+      await tester.pumpAndSettle();
 
-        // Navigation vers /leaderboard — l'écran Classement est affiché.
-        expect(find.text('Classement'), findsWidgets);
-        // Aucun snackbar "arrive bientôt" (remplacé par navigation réelle).
-        expect(
-          find.text('Classement arrive bientôt.'),
-          findsNothing,
-        );
-      },
-    );
+      // Navigation vers /leaderboard — l'écran Classement est affiché.
+      expect(find.text('Classement'), findsWidgets);
+      // Aucun snackbar "arrive bientôt" (remplacé par navigation réelle).
+      expect(find.text('Classement arrive bientôt.'), findsNothing);
+    });
   });
 
   group('ScaffoldWithBottomNav — méthodes de mapping (D-18)', () {

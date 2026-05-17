@@ -9,8 +9,8 @@ import 'package:murabbi_mobile/presentation/features/salat/providers/current_use
 /// Retourne une liste vide si l'utilisateur n'est pas authentifié.
 final leaderboardNotifierProvider =
     AsyncNotifierProvider<LeaderboardNotifier, List<UserScore>>(
-  LeaderboardNotifier.new,
-);
+      LeaderboardNotifier.new,
+    );
 
 /// Notifier du leaderboard hebdomadaire.
 ///

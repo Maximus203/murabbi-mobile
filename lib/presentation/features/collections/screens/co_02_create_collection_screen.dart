@@ -62,7 +62,9 @@ class _Co02CreateCollectionScreenState
         // L'id sera remplacé par l'UUID Supabase côté serveur lors du INSERT.
         // On passe un placeholder — le datasource n'utilise pas cet id lors
         // du createCollection (INSERT … RETURNING retourne le vrai UUID).
-        id: CollectionId('placeholder-${DateTime.now().millisecondsSinceEpoch}'),
+        id: CollectionId(
+          'placeholder-${DateTime.now().millisecondsSinceEpoch}',
+        ),
         name: NonEmptyString(name),
         description: NonEmptyString(
           description.isEmpty ? 'Collection sans description' : description,
@@ -73,12 +75,14 @@ class _Co02CreateCollectionScreenState
         isSystem: false,
         isActive: false,
       );
-      await ref
-          .read(collectionsNotifierProvider.notifier)
-          .create(collection);
+      await ref.read(collectionsNotifierProvider.notifier).create(collection);
       widget.onCreated();
     } catch (e, st) {
-      appLog.e('Co02CreateCollectionScreen submit error', error: e, stackTrace: st);
+      appLog.e(
+        'Co02CreateCollectionScreen submit error',
+        error: e,
+        stackTrace: st,
+      );
       setState(() => _error = 'Une erreur est survenue. Réessaie.');
     } finally {
       if (mounted) setState(() => _saving = false);

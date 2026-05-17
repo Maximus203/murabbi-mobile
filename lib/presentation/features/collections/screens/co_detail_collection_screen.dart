@@ -33,17 +33,16 @@ class CoDetailCollectionScreen extends ConsumerWidget {
     final collectionsAsync = ref.watch(collectionsNotifierProvider);
 
     // Résout la collection courante depuis le state si disponible.
-    final current = collectionsAsync.valueOrNull?.firstWhere(
-      (c) => c.id == collection.id,
-      orElse: () => collection,
-    ) ?? collection;
+    final current =
+        collectionsAsync.valueOrNull?.firstWhere(
+          (c) => c.id == collection.id,
+          orElse: () => collection,
+        ) ??
+        collection;
 
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
-      appBar: AppHeader.back(
-        title: current.name.value,
-        onBack: onBack,
-      ),
+      appBar: AppHeader.back(title: current.name.value, onBack: onBack),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.s4),
         children: [
@@ -132,16 +131,16 @@ class CoDetailCollectionScreen extends ConsumerWidget {
   }) async {
     try {
       if (activate) {
-        await ref
-            .read(collectionsNotifierProvider.notifier)
-            .activate(c.id);
+        await ref.read(collectionsNotifierProvider.notifier).activate(c.id);
       } else {
-        await ref
-            .read(collectionsNotifierProvider.notifier)
-            .deactivate(c.id);
+        await ref.read(collectionsNotifierProvider.notifier).deactivate(c.id);
       }
     } catch (e, st) {
-      appLog.e('CoDetailCollectionScreen toggle error', error: e, stackTrace: st);
+      appLog.e(
+        'CoDetailCollectionScreen toggle error',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 }

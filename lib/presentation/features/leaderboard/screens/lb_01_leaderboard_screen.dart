@@ -43,7 +43,9 @@ class Lb01LeaderboardScreen extends ConsumerWidget {
               children: [
                 Text(
                   'Erreur de chargement',
-                  style: AppTypography.h3.copyWith(color: AppColors.textPrimary),
+                  style: AppTypography.h3.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.s4),
                 IconButton(
@@ -72,8 +74,7 @@ class Lb01LeaderboardScreen extends ConsumerWidget {
             child: ListView.separated(
               padding: const EdgeInsets.all(AppSpacing.s4),
               itemCount: scores.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: AppSpacing.s3),
+              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s3),
               itemBuilder: (_, i) => _ScoreTile(
                 score: scores[i],
                 isCurrentUser:
@@ -114,10 +115,7 @@ class _ScoreTile extends StatelessWidget {
             width: 36,
             child: Text(
               '#$rank',
-              style: (isTop3
-                      ? AppTypography.h2
-                      : AppTypography.body)
-                  .copyWith(
+              style: (isTop3 ? AppTypography.h2 : AppTypography.body).copyWith(
                 color: isTop3 ? AppColors.accent : AppColors.textSecondary,
                 fontWeight: isTop3 ? FontWeight.w700 : FontWeight.w400,
               ),
@@ -150,11 +148,8 @@ class _ScoreTile extends StatelessWidget {
                   ? 'Toi'
                   : 'Utilisateur ${score.userId.value.substring(0, 6)}…',
               style: AppTypography.body.copyWith(
-                color: isCurrentUser
-                    ? AppColors.accent
-                    : AppColors.textPrimary,
-                fontWeight:
-                    isCurrentUser ? FontWeight.w600 : FontWeight.w400,
+                color: isCurrentUser ? AppColors.accent : AppColors.textPrimary,
+                fontWeight: isCurrentUser ? FontWeight.w600 : FontWeight.w400,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

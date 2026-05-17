@@ -54,8 +54,9 @@ void main() {
   });
 
   Widget buildSut(Collection collection) {
-    when(() => mockRepo.getCollections(any()))
-        .thenAnswer((_) async => [inactive, active]);
+    when(
+      () => mockRepo.getCollections(any()),
+    ).thenAnswer((_) async => [inactive, active]);
 
     return ProviderScope(
       overrides: [
@@ -63,10 +64,7 @@ void main() {
         collectionRepositoryProvider.overrideWithValue(mockRepo),
       ],
       child: MaterialApp(
-        home: CoDetailCollectionScreen(
-          collection: collection,
-          onBack: () {},
-        ),
+        home: CoDetailCollectionScreen(collection: collection, onBack: () {}),
       ),
     );
   }

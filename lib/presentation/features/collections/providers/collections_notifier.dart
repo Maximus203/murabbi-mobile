@@ -8,8 +8,8 @@ import 'package:murabbi_mobile/presentation/features/salat/providers/current_use
 /// (cf. ADR-016 : 100% providers manuels, pas de codegen `@riverpod`).
 final collectionsNotifierProvider =
     AsyncNotifierProvider<CollectionsNotifier, List<Collection>>(
-  CollectionsNotifier.new,
-);
+      CollectionsNotifier.new,
+    );
 
 /// Notifier gérant la liste des [Collection] de l'utilisateur courant.
 ///
@@ -30,10 +30,9 @@ class CollectionsNotifier extends AsyncNotifier<List<Collection>> {
   Future<void> activate(CollectionId id) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
-    await ref.read(collectionRepositoryProvider).activateCollection(
-          userId: user.id,
-          collectionId: id,
-        );
+    await ref
+        .read(collectionRepositoryProvider)
+        .activateCollection(userId: user.id, collectionId: id);
     ref.invalidateSelf();
     await future;
   }
@@ -42,10 +41,9 @@ class CollectionsNotifier extends AsyncNotifier<List<Collection>> {
   Future<void> deactivate(CollectionId id) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
-    await ref.read(collectionRepositoryProvider).deactivateCollection(
-          userId: user.id,
-          collectionId: id,
-        );
+    await ref
+        .read(collectionRepositoryProvider)
+        .deactivateCollection(userId: user.id, collectionId: id);
     ref.invalidateSelf();
     await future;
   }
@@ -54,10 +52,9 @@ class CollectionsNotifier extends AsyncNotifier<List<Collection>> {
   Future<void> create(Collection collection) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
-    await ref.read(collectionRepositoryProvider).createCollection(
-          userId: user.id,
-          collection: collection,
-        );
+    await ref
+        .read(collectionRepositoryProvider)
+        .createCollection(userId: user.id, collection: collection);
     ref.invalidateSelf();
     await future;
   }

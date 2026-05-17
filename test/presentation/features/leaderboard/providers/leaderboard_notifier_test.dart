@@ -95,9 +95,7 @@ void main() {
       addTearDown(container.dispose);
 
       await container.read(leaderboardNotifierProvider.future);
-      await container
-          .read(leaderboardNotifierProvider.notifier)
-          .refresh();
+      await container.read(leaderboardNotifierProvider.notifier).refresh();
 
       // Appelé 2 fois : build initial + refresh
       verify(() => mockRepo.getLeaderboard(limit: 50)).called(2);

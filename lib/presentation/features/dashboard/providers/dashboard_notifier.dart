@@ -55,10 +55,7 @@ class DashboardNotifier extends AsyncNotifier<DashboardState> {
         settingsNotConfigured: false,
       );
     } on PrayerSettingsNotConfiguredFailure {
-      return const _PrayerResult(
-        nextPrayer: null,
-        settingsNotConfigured: true,
-      );
+      return const _PrayerResult(nextPrayer: null, settingsNotConfigured: true);
     }
   }
 

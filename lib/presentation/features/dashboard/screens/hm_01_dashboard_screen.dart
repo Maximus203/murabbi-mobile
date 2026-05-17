@@ -690,11 +690,7 @@ class _ScoreStreakCard extends StatelessWidget {
               value: weekly == 0 ? '—' : '$weekly',
             ),
           ),
-          Container(
-            width: 0.5,
-            height: 32,
-            color: AppColors.borderDefault,
-          ),
+          Container(width: 0.5, height: 32, color: AppColors.borderDefault),
           Expanded(
             child: _StatItem(
               icon: LucideIcons.flame,
@@ -702,11 +698,7 @@ class _ScoreStreakCard extends StatelessWidget {
               value: streak == 0 ? '—' : '${streak}j',
             ),
           ),
-          Container(
-            width: 0.5,
-            height: 32,
-            color: AppColors.borderDefault,
-          ),
+          Container(width: 0.5, height: 32, color: AppColors.borderDefault),
           Expanded(
             child: _StatItem(
               icon: LucideIcons.award,
@@ -752,11 +744,7 @@ class _StatItem extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: AppColors.accent),
           const SizedBox(height: AppSpacing.s1),
-          Text(
-            value,
-            style: AppTypography.h3,
-            textAlign: TextAlign.center,
-          ),
+          Text(value, style: AppTypography.h3, textAlign: TextAlign.center),
           Text(
             label,
             style: AppTypography.caption.copyWith(

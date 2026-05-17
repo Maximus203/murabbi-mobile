@@ -61,8 +61,7 @@ class Co01CollectionsScreen extends ConsumerWidget {
           return ListView.separated(
             padding: const EdgeInsets.all(AppSpacing.s4),
             itemCount: list.length,
-            separatorBuilder: (_, _) =>
-                const SizedBox(height: AppSpacing.s3),
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s3),
             itemBuilder: (_, i) =>
                 _CollectionTile(collection: list[i], onTap: onTap),
           );
@@ -187,7 +186,9 @@ class _EmptyView extends StatelessWidget {
             const SizedBox(height: AppSpacing.s3),
             Text(
               'Crée ta première collection pour regrouper tes habitudes.',
-              style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.s6),

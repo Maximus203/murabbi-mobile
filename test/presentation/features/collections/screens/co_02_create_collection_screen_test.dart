@@ -83,14 +83,16 @@ void main() {
         userId: any(named: 'userId'),
         collection: any(named: 'collection'),
       ),
-    ).thenAnswer((_) async => Collection(
-          id: CollectionId('new-coll'),
-          name: NonEmptyString('Test'),
-          description: NonEmptyString('Desc'),
-          habitIds: [HabitId('placeholder')],
-          isSystem: false,
-          isActive: false,
-        ));
+    ).thenAnswer(
+      (_) async => Collection(
+        id: CollectionId('new-coll'),
+        name: NonEmptyString('Test'),
+        description: NonEmptyString('Desc'),
+        habitIds: [HabitId('placeholder')],
+        isSystem: false,
+        isActive: false,
+      ),
+    );
 
     // getCollections est appelé par le notifier après create
     when(() => mockRepo.getCollections(any())).thenAnswer((_) async => []);
