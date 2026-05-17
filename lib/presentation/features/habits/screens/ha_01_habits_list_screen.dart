@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/category_icons.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
@@ -215,9 +216,15 @@ class _HabitListView extends StatelessWidget {
               horizontal: AppSpacing.s4,
               vertical: AppSpacing.s1,
             ),
-            child: _HabitRowV15(habit: h, categoryColor: cat != null
-                ? _hexToColor(cat.color.value)
-                : AppColors.accent),
+            child: _HabitRowV15(
+              habit: h,
+              categoryColor: cat != null
+                  ? _hexToColor(cat.color.value)
+                  : AppColors.accent,
+              // Issue #125 : icône dérivée de la catégorie de l'habitude
+              // (slug en base) — plus de `target` uniforme.
+              categoryIcon: categoryIconFromSlug(cat?.icon),
+            ),
           ),
         );
       }
@@ -294,7 +301,14 @@ class _HabitRowV15 extends StatefulWidget {
   final Habit habit;
   final Color categoryColor;
 
-  const _HabitRowV15({required this.habit, required this.categoryColor});
+  /// Icône dérivée de la catégorie (issue #125).
+  final IconData categoryIcon;
+
+  const _HabitRowV15({
+    required this.habit,
+    required this.categoryColor,
+    required this.categoryIcon,
+  });
 
   @override
   State<_HabitRowV15> createState() => _HabitRowV15State();
@@ -329,13 +343,18 @@ class _HabitRowV15State extends State<_HabitRowV15> {
       ),
       child: Row(
         children: [
-          // Dot catégorie 6px
+          // Badge icône catégorie (issue #125 — différenciation visuelle)
           Container(
-            width: 6,
-            height: 6,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
+              color: widget.categoryColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
+            ),
+            child: Icon(
+              widget.categoryIcon,
+              size: 18,
               color: widget.categoryColor,
-              shape: BoxShape.circle,
             ),
           ),
           const SizedBox(width: AppSpacing.s3),
