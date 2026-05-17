@@ -28,6 +28,23 @@ abstract class AppRoutes {
   /// Habitudes — HA-02 création (slice 3.D).
   static const habitsCreate = '/habits/create';
 
+  /// Catégories — HB-03 liste (issue #150).
+  static const categories = '/categories';
+
+  /// Catégories — HB-04 création (issue #150).
+  static const categoriesCreate = '/categories/new';
+
+  /// Catégories — HB-04 édition (issue #150). Chemin dynamique :
+  /// `/categories/<id>/edit`.
+  static String categoryEdit(String id) => '/categories/$id/edit';
+  static const categoryEditPattern = '/categories/:id/edit';
+
+  /// Collections — stub Phase 4.
+  static const collections = '/collections';
+
+  /// Classement — stub Phase 5.
+  static const leaderboard = '/leaderboard';
+
   /// `/auth/verify-email` est traité à part : il est accessible aussi bien
   /// quand l'utilisateur n'a pas de session que quand il vient de signUp et
   /// attend la confirmation par mail.

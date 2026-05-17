@@ -60,6 +60,28 @@ class AppColors {
   static const Color categoryMental = Color(0xFF7A6B8C);
   static const Color categorySocial = Color(0xFF9B7A4A);
 
+  /// Couleurs catégorie additionnelles (issue #150 — HB-04 ColorPickerGrid).
+  /// Complètent la palette terreuse à 9 teintes pour le sélecteur de couleur
+  /// de catégorie utilisateur. Tons cohérents avec la palette v3.
+  static const Color categoryEtudes = Color(0xFF8C6B5C);
+  static const Color categoryFamille = Color(0xFFA88C5C);
+  static const Color categoryFinance = Color(0xFF5C8C7A);
+  static const Color categoryCreatif = Color(0xFF8C5C6B);
+
+  /// Palette complète des couleurs assignables à une catégorie (HB-04).
+  /// Ordre figé — utilisé tel quel par `ColorPickerGrid` (9 cases).
+  static const List<Color> categoryPalette = [
+    categoryReligion,
+    categorySport,
+    categorySante,
+    categoryMental,
+    categorySocial,
+    categoryEtudes,
+    categoryFamille,
+    categoryFinance,
+    categoryCreatif,
+  ];
+
   // -- Utilitaires -----------------------------------------------------------
   /// Transparent pur — utilisé pour les variantes ghost/link de AppButton (P-2).
   /// Centralise l'usage de `Colors.transparent` pour respecter la règle P-2 :

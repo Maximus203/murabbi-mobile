@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_01_login_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_02_signup_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_03_forgot_password_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_verification_gate.dart';
+import 'package:murabbi_mobile/presentation/features/categories/providers/categories_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/categories/screens/hb_03_categories_list_screen.dart';
+import 'package:murabbi_mobile/presentation/features/categories/screens/hb_04_category_form_screen.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_01_habits_list_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_02_create_habit_screen.dart';
@@ -28,6 +32,86 @@ class _RouterRefreshNotifier extends ChangeNotifier {
   }
 }
 
+/// Shell principal avec barre de navigation persistante (D-17 — issue #103).
+///
+/// Utilise [StatefulShellRoute.indexedStack] pour conserver l'état de chaque
+/// onglet lorsque l'utilisateur navigue entre Accueil, Salat et Habitudes.
+/// Sans ce shell, chaque `context.go()` détruisait et recréait l'arbre du
+/// nouvel onglet, déclenchant un re-fetch complet et un flash de chargement.
+class _ShellScaffold extends ConsumerWidget {
+  /// Shell fourni par [StatefulShellRoute] — contient le [Navigator] de
+  /// l'onglet actif avec son historique propre.
+  final StatefulNavigationShell navigationShell;
+
+  const _ShellScaffold({required this.navigationShell});
+
+  /// Index → onglet [AppBottomNavTab] correspondant.
+  static const List<AppBottomNavTab> _tabs = [
+    AppBottomNavTab.home,
+    AppBottomNavTab.salat,
+    AppBottomNavTab.habits,
+    AppBottomNavTab.collections,
+    AppBottomNavTab.leaderboard,
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeTab = _tabs[navigationShell.currentIndex];
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      // La BottomNav est dans le shell → un seul widget partagé entre onglets,
+      // pas de reconstruction à chaque changement d'onglet.
+      bottomNavigationBar: AppBottomNav(
+        active: activeTab,
+        onTabSelected: (tab) => _onTabSelected(context, ref, tab),
+      ),
+      // Le body est le Navigator de l'onglet courant maintenu par go_router.
+      body: navigationShell,
+    );
+  }
+
+  void _onTabSelected(
+    BuildContext context,
+    WidgetRef ref,
+    AppBottomNavTab tab,
+  ) {
+    final index = _tabs.indexOf(tab);
+    if (index == -1) return;
+
+    // Collections et Classement non encore implémentés (slices Phase 4 / 5).
+    if (tab == AppBottomNavTab.collections ||
+        tab == AppBottomNavTab.leaderboard) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${_tabLabel(tab)} arrive bientôt.')),
+      );
+      return;
+    }
+
+    // goBranch avec `initialLocation: true` si on retap le même onglet
+    // → remonte en haut de l'historique de cet onglet (comportement standard).
+    navigationShell.goBranch(
+      index,
+      initialLocation: index == navigationShell.currentIndex,
+    );
+  }
+
+  static String _tabLabel(AppBottomNavTab tab) {
+    switch (tab) {
+      case AppBottomNavTab.home:
+        return 'Accueil';
+      case AppBottomNavTab.salat:
+        return 'Salat';
+      case AppBottomNavTab.habits:
+        return 'Habitudes';
+      case AppBottomNavTab.collections:
+        return 'Collections';
+      case AppBottomNavTab.leaderboard:
+        return 'Classement';
+    }
+  }
+}
+
 /// Provider du GoRouter Murabbi — lifecycle aligné sur le ProviderContainer
 /// racine. Toute la logique de redirection vit dans [authRedirect] (testable
 /// hors GoRouter).
@@ -46,6 +130,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       );
     },
     routes: [
+      // ── Routes pre-home (hors shell) ──────────────────────────────────
       GoRoute(path: AppRoutes.splash, builder: (_, _) => const SplashScreen()),
       GoRoute(
         path: AppRoutes.login,
@@ -76,10 +161,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.verifyEmail,
         builder: (context, _) => Au04EmailVerificationGate(
           onContinue: () {
-            // Une fois l'email confirme cote Supabase, on rafraichit la
+            // Une fois l'email confirmé côté Supabase, on rafraîchit la
             // session puis on quitte le sas verify-email (le redirect
-            // global laisse cette route toujours autorisee — sans push
-            // explicite l'utilisateur resterait bloque ici).
+            // global laisse cette route toujours autorisée — sans push
+            // explicite l'utilisateur resterait bloqué ici).
             ref.invalidate(authNotifierProvider);
             context.go(AppRoutes.home);
           },
@@ -95,28 +180,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           },
         ),
       ),
-      GoRoute(
-        path: AppRoutes.home,
-        builder: (context, _) => Consumer(
-          builder: (context, ref, _) => Hm01DashboardScreen(
-            onTabSelected: (tab) => _handleTabSelection(context, tab),
-            // PR #38 (slice Salat) mergée → wiring direct vers les routes.
-            onConfigurePrayers: () => context.go(AppRoutes.salatSettings),
-            onOpenSalat: () => context.go(AppRoutes.salat),
-            // Audit TL PR #42 : Consumer + ref.read plutôt que
-            // ProviderScope.containerOf (plus idiomatique).
-            onSignOut: () => ref.read(authNotifierProvider.notifier).signOut(),
-          ),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.salat,
-        builder: (context, _) => Sa01TodayScreen(
-          onConfigureSettings: () => context.go(AppRoutes.salatSettings),
-          onOpenDetail: (prayerName) =>
-              context.go(AppRoutes.salatDetail(prayerName)),
-        ),
-      ),
+
+      // ── Routes hors-shell (modal / sous-pages) ────────────────────────
+      // Ces routes naviguent en dehors du shell indexedStack — l'utilisateur
+      // les quitte via `context.go(AppRoutes.salat)` ou `context.go(AppRoutes.habits)`.
       GoRoute(
         path: AppRoutes.salatSettings,
         builder: (context, _) => Sa02PrayerSettingsScreen(
@@ -135,53 +202,175 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: AppRoutes.habits,
-        builder: (context, _) => Ha01HabitsListScreen(
-          onCreate: () => context.go(AppRoutes.habitsCreate),
-        ),
-      ),
-      GoRoute(
         path: AppRoutes.habitsCreate,
         builder: (context, _) => Ha02CreateHabitScreen(
           onCreated: () => context.go(AppRoutes.habits),
           onCancel: () => context.go(AppRoutes.habits),
         ),
       ),
+
+      // ── Catégories — HB-03 liste / HB-04 formulaire (issue #150) ──────
+      GoRoute(
+        path: AppRoutes.categories,
+        builder: (context, _) => Hb03CategoriesListScreen(
+          onCreate: () => context.go(AppRoutes.categoriesCreate),
+          onEdit: (id) => context.go(AppRoutes.categoryEdit(id.value)),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.categoriesCreate,
+        builder: (context, _) => Hb04CategoryFormScreen(
+          onDone: () => context.go(AppRoutes.categories),
+          onCancel: () => context.go(AppRoutes.categories),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.categoryEditPattern,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return Consumer(
+            builder: (context, ref, _) {
+              // La catégorie à éditer est lue depuis la liste déjà chargée.
+              // Si introuvable (deep-link à froid), on retombe sur HB-03.
+              final categories =
+                  ref.watch(categoriesNotifierProvider).valueOrNull ??
+                  const <Category>[];
+              final matches = categories
+                  .where((c) => c.id.value == id)
+                  .toList();
+              final match = matches.isEmpty ? null : matches.first;
+              if (match == null) {
+                return Hb03CategoriesListScreen(
+                  onCreate: () => context.go(AppRoutes.categoriesCreate),
+                  onEdit: (id) => context.go(AppRoutes.categoryEdit(id.value)),
+                );
+              }
+              return Hb04CategoryFormScreen(
+                initialCategory: match,
+                onDone: () => context.go(AppRoutes.categories),
+                onCancel: () => context.go(AppRoutes.categories),
+              );
+            },
+          );
+        },
+      ),
+
+      // ── Shell persistant — onglets principaux (D-17) ──────────────────
+      // StatefulShellRoute.indexedStack maintient un Navigator distinct par
+      // branche → l'état (scroll, providers, page stack) est préservé lors
+      // du changement d'onglet. Chaque branche a sa propre initialLocation.
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            _ShellScaffold(navigationShell: navigationShell),
+        branches: [
+          // Branche 0 — Accueil
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (context, _) => Consumer(
+                  builder: (context, ref, _) => Hm01DashboardScreen(
+                    onTabSelected: (tab) {
+                      // La BottomNav dans _ShellScaffold gère la navigation
+                      // inter-onglets. Ce callback couvre l'éventuel tap
+                      // résiduel depuis la card dashboard (contexte hors shell).
+                      final index = _ShellScaffold._tabs.indexOf(tab);
+                      if (index == -1) return;
+                      context.go(_tabRootRoute(tab));
+                    },
+                    onConfigurePrayers: () =>
+                        context.go(AppRoutes.salatSettings),
+                    onOpenSalat: () => context.go(AppRoutes.salat),
+                    // Audit TL PR #42 : Consumer + ref.read plutôt que
+                    // ProviderScope.containerOf (plus idiomatique).
+                    onSignOut: () =>
+                        ref.read(authNotifierProvider.notifier).signOut(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Branche 1 — Salat
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.salat,
+                builder: (context, _) => Sa01TodayScreen(
+                  onConfigureSettings: () =>
+                      context.go(AppRoutes.salatSettings),
+                  onOpenDetail: (prayerName) =>
+                      context.go(AppRoutes.salatDetail(prayerName)),
+                ),
+              ),
+            ],
+          ),
+
+          // Branche 2 — Habitudes
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.habits,
+                builder: (context, _) => Ha01HabitsListScreen(
+                  onCreate: () => context.go(AppRoutes.habitsCreate),
+                  onOpenCategories: () => context.go(AppRoutes.categories),
+                ),
+              ),
+            ],
+          ),
+
+          // Branche 3 — Collections (stub — Phase 4)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.collections,
+                builder: (_, _) => const _StubScreen(title: 'Collections'),
+              ),
+            ],
+          ),
+
+          // Branche 4 — Classement (stub — Phase 5)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.leaderboard,
+                builder: (_, _) => const _StubScreen(title: 'Classement'),
+              ),
+            ],
+          ),
+        ],
+      ),
     ],
   );
 });
 
-/// Routage des onglets de [AppBottomNav]. Salat + Habitudes sont activés
-/// (PR #38 + PR #43 mergées), Collections / Classement affichent un
-/// snackbar tant que leurs slices ne sont pas mergées.
-void _handleTabSelection(BuildContext context, AppBottomNavTab tab) {
+/// Route racine par onglet — utilisée pour naviguer directement via `context.go`.
+String _tabRootRoute(AppBottomNavTab tab) {
   switch (tab) {
     case AppBottomNavTab.home:
-      // Déjà sur /home.
-      return;
+      return AppRoutes.home;
     case AppBottomNavTab.salat:
-      context.go(AppRoutes.salat);
+      return AppRoutes.salat;
     case AppBottomNavTab.habits:
-      context.go(AppRoutes.habits);
+      return AppRoutes.habits;
     case AppBottomNavTab.collections:
+      return AppRoutes.collections;
     case AppBottomNavTab.leaderboard:
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_tabLabel(tab)} arrive bientôt.')),
-      );
+      return AppRoutes.leaderboard;
   }
 }
 
-String _tabLabel(AppBottomNavTab tab) {
-  switch (tab) {
-    case AppBottomNavTab.home:
-      return 'Accueil';
-    case AppBottomNavTab.salat:
-      return 'Salat';
-    case AppBottomNavTab.habits:
-      return 'Habitudes';
-    case AppBottomNavTab.collections:
-      return 'Collections';
-    case AppBottomNavTab.leaderboard:
-      return 'Classement';
+/// Placeholder minimaliste pour les onglets non encore implémentés.
+/// Remplacé par la vraie feature dans les phases 4 / 5.
+class _StubScreen extends StatelessWidget {
+  final String title;
+  const _StubScreen({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Center(child: Text(title, style: const TextStyle(fontSize: 18))),
+    );
   }
 }
