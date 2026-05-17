@@ -11,6 +11,7 @@ import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_logo.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 
 /// HA-01 — Liste des habitudes de l'utilisateur (slice 3.D).
 ///
@@ -40,8 +41,8 @@ class Ha01HabitsListScreen extends ConsumerWidget {
         ),
       ),
       body: habits.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        // D-28 : skeleton list à la place du spinner seul pendant le chargement.
+        loading: () => const _SkeletonLoadingView(),
         error: (e, stackTrace) {
           // Audit TL §B.2 PR #43 : pas de `e.toString()` brut en UI.
           // Détail loggé via appLog, libellé canonique FR.
@@ -64,6 +65,21 @@ class Ha01HabitsListScreen extends ConsumerWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// D-28 — Vue squelette HA-01 : 5 AppSkeletonCard simulant les habitudes.
+class _SkeletonLoadingView extends StatelessWidget {
+  const _SkeletonLoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppSpacing.s4),
+      itemCount: 5,
+      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s3),
+      itemBuilder: (_, _) => const AppSkeletonCard(lineCount: 3),
     );
   }
 }
