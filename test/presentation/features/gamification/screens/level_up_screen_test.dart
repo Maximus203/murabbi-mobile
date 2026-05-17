@@ -12,7 +12,26 @@ void main() {
     // pump() sans pumpAndSettle — la vidéo de fond ne se "stabilise" jamais.
     await tester.pump();
     expect(find.text('Constant'), findsOneWidget);
-    expect(find.text('NIVEAU ATTEINT'), findsOneWidget);
+    expect(find.text('NOUVEAU NIVEAU'), findsOneWidget);
+  });
+
+  testWidgets('LevelUpScreen affiche la description du niveau quand fournie', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LevelUpScreen(
+          levelName: 'Murīd',
+          levelDescription: 'Tu t\'engages sur le chemin avec constance.',
+          onContinue: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(
+      find.text('Tu t\'engages sur le chemin avec constance.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('LevelUpScreen appelle onContinue au tap', (tester) async {

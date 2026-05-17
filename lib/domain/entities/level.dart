@@ -41,12 +41,25 @@ enum Level {
     Level.murabbi: 'Murabbī',
   };
 
+  /// Descriptions FR courtes affichées sur l'overlay LEVEL-UP (issue #7).
+  static const Map<Level, String> _descriptions = {
+    Level.aspirant: 'Tu poses les premières pierres de ta pratique.',
+    Level.murid: 'Tu t\'engages sur le chemin avec constance.',
+    Level.salik: 'Tu avances avec discipline et régularité.',
+    Level.mujahid: 'Ton effort intérieur devient une force.',
+    Level.wali: 'Ta proximité se traduit dans chaque acte.',
+    Level.murabbi: 'Tu guides désormais autant que tu progresses.',
+  };
+
   int get threshold => thresholds[this]!;
 
   int get dailyGoal => _dailyGoals[this]!;
 
   /// Libellé FR affichable de ce niveau.
   String get label => _labels[this]!;
+
+  /// Description FR courte de ce niveau (overlay LEVEL-UP).
+  String get description => _descriptions[this]!;
 
   /// Palier immédiatement supérieur, ou `null` si c'est le dernier niveau.
   Level? get nextLevel {
