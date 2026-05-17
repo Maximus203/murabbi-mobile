@@ -58,7 +58,7 @@ void main() {
     when(() => habit.getHabits(any())).thenAnswer((_) async => <Habit>[]);
   });
 
-  PrayerDay _day(DateTime date) => PrayerDay(
+  PrayerDay dayOf(DateTime date) => PrayerDay(
     userId: _user.id,
     date: date,
     fajr: PrayerStatus.onTime,
@@ -91,7 +91,7 @@ void main() {
         from: any(named: 'from'),
         to: any(named: 'to'),
       ),
-    ).thenAnswer((_) async => [_day(DateTime(2026, 5, 10))]);
+    ).thenAnswer((_) async => [dayOf(DateTime(2026, 5, 10))]);
 
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
@@ -126,7 +126,7 @@ void main() {
         from: any(named: 'from'),
         to: any(named: 'to'),
       ),
-    ).thenAnswer((_) async => [_day(DateTime(2026, 5, 10))]);
+    ).thenAnswer((_) async => [dayOf(DateTime(2026, 5, 10))]);
     when(
       () => habit.getLogsForHabit(
         habitId: any(named: 'habitId'),
