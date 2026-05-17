@@ -167,10 +167,8 @@ class _DashboardBody extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s4),
 
-          // ── Score quotidien ────────────────────────────────────────
-          // Données mock Phase 3 — les vraies données scoring arrivent en Phase 4
-          // (cf. ADR-016 et issue #89).
-          const _ScoreCard(),
+          // ── Score & Série ──────────────────────────────────────────
+          _ScoreStreakCard(data: data),
           const SizedBox(height: AppSpacing.s3),
 
           // ── Habitudes du jour ──────────────────────────────────────
@@ -179,10 +177,6 @@ class _DashboardBody extends ConsumerWidget {
 
           // ── Niyyah vidéo ───────────────────────────────────────────
           const _NiyyahCard(),
-          const SizedBox(height: AppSpacing.s3),
-
-          // ── Série globale ──────────────────────────────────────────
-          const _StreakCard(),
 
           // D-25 : confirmation avant déconnexion via AppDialog DS.
           if (onSignOut != null) ...[
@@ -778,6 +772,111 @@ class _StreakCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Card score + série globale — slice 5.F.
+///
+/// Affiche les points hebdomadaires, le niveau courant et la série globale.
+/// Si aucun score n'est encore disponible, affiche des tirets.
+class _ScoreStreakCard extends StatelessWidget {
+  final DashboardState data;
+
+  const _ScoreStreakCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final level = data.currentLevel;
+    final weekly = data.weeklyPoints;
+    final streak = data.globalStreak;
+
+    return AppCard(
+      child: Row(
+        children: [
+          Expanded(
+            child: _StatItem(
+              icon: LucideIcons.star,
+              label: 'Pts hebdo',
+              value: weekly == 0 ? '—' : '$weekly',
+            ),
+          ),
+          Container(
+            width: 0.5,
+            height: 32,
+            color: AppColors.borderDefault,
+          ),
+          Expanded(
+            child: _StatItem(
+              icon: LucideIcons.flame,
+              label: 'Série',
+              value: streak == 0 ? '—' : '${streak}j',
+            ),
+          ),
+          Container(
+            width: 0.5,
+            height: 32,
+            color: AppColors.borderDefault,
+          ),
+          Expanded(
+            child: _StatItem(
+              icon: LucideIcons.award,
+              label: 'Niveau',
+              value: _levelLabel(level),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _levelLabel(dynamic level) {
+    return switch (level.toString().split('.').last) {
+      'aspirant' => 'Aspirant',
+      'murid' => 'Murid',
+      'salik' => 'Salik',
+      'mujahid' => 'Mujahid',
+      'wali' => 'Wali',
+      'murabbi' => 'Murabbi',
+      _ => '—',
+    };
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _StatItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: AppColors.accent),
+          const SizedBox(height: AppSpacing.s1),
+          Text(
+            value,
+            style: AppTypography.h3,
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            label,
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

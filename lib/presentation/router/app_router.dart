@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_01_login_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_02_signup_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_03_forgot_password_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_verification_gate.dart';
+import 'package:murabbi_mobile/presentation/features/collections/screens/co_01_collections_screen.dart';
+import 'package:murabbi_mobile/presentation/features/collections/screens/co_02_create_collection_screen.dart';
+import 'package:murabbi_mobile/presentation/features/collections/screens/co_detail_collection_screen.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_01_habits_list_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_02_create_habit_screen.dart';
+import 'package:murabbi_mobile/presentation/features/leaderboard/screens/lb_01_leaderboard_screen.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/providers/onboarding_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01_onboarding_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_01_today_screen.dart';
@@ -187,6 +192,52 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
+      GoRoute(
+        path: AppRoutes.collections,
+        builder: (context, _) => Co01CollectionsScreen(
+          onCreate: () => context.go(AppRoutes.collectionsCreate),
+          onTap: (collection) =>
+              context.go(AppRoutes.collectionsDetail, extra: collection),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.collectionsCreate,
+        builder: (context, _) => Co02CreateCollectionScreen(
+          onCreated: () => context.go(AppRoutes.collections),
+          onCancel: () => context.go(AppRoutes.collections),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.collectionsDetail,
+        builder: (context, state) {
+          final collection = state.extra as Collection;
+          return CoDetailCollectionScreen(
+            collection: collection,
+            onBack: () => context.go(AppRoutes.collections),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.leaderboard,
+        builder: (_, _) => const Lb01LeaderboardScreen(),
+      ),
     ],
   );
 });
+
+/// Routage des onglets de [AppBottomNav] — slice 5.G : tous les onglets
+/// sont maintenant câblés vers leurs routes réelles.
+void _handleTabSelection(BuildContext context, AppBottomNavTab tab) {
+  switch (tab) {
+    case AppBottomNavTab.home:
+      context.go(AppRoutes.home);
+    case AppBottomNavTab.salat:
+      context.go(AppRoutes.salat);
+    case AppBottomNavTab.habits:
+      context.go(AppRoutes.habits);
+    case AppBottomNavTab.collections:
+      context.go(AppRoutes.collections);
+    case AppBottomNavTab.leaderboard:
+      context.go(AppRoutes.leaderboard);
+  }
+}
