@@ -55,8 +55,10 @@ String _suggestToken(double value) {
 void main() {
   final libDir = Directory('lib');
   if (!libDir.existsSync()) {
-    stderr.writeln('check_stroke_width: dossier `lib/` introuvable — '
-        'lance ce script depuis la racine du repo.');
+    stderr.writeln(
+      'check_stroke_width: dossier `lib/` introuvable — '
+      'lance ce script depuis la racine du repo.',
+    );
     exit(2);
   }
 
