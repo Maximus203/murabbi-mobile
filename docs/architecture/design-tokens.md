@@ -48,6 +48,22 @@ Border.all(width: AppBorderWidth.thin)
 `test/presentation/features/splash/splash_screen_test.dart` vérifie que le splash spinner
 consomme bien le token (et non une valeur littérale).
 
+**Garde-fou CI `avoid_literal_stroke_width`** (issue #32, ADR-017) :
+le script `tool/check_stroke_width.dart` interdit tout `strokeWidth: <nombre
+littéral>` dans `lib/`. Il suggère le token `AppBorderWidth` le plus proche du
+littéral fautif et fait échouer la CI (exit code 1) en cas de violation.
+
+```bash
+# Lancer manuellement / en pré-commit (zéro dépendance, dart:io only)
+dart run tool/check_stroke_width.dart
+```
+
+Périmètre : `lib/` uniquement — `test/` est toléré (golden tests, comparaisons
+numériques). Les déclarations de paramètre des widgets custom
+(`AppProgressRing.strokeWidth`) ne sont pas concernées : seules les valeurs
+hardcodées côté call-site le sont. Le choix d'un script CI plutôt que d'un
+plugin `custom_lint` est justifié dans `docs/adr/ADR-017-lint-stroke-width-ci-script.md`.
+
 ---
 
 ## Voir aussi

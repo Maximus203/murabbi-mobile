@@ -115,7 +115,7 @@ void main() {
 
     setUp(() => useCase = ToggleHabitLogUseCase(mockRepo));
 
-    test('calls repository.toggleHabitLog with correct params', () async {
+    test('calcule le next status (null → onTime) et le persiste', () async {
       when(
         () => mockRepo.toggleHabitLog(
           habitId: habitId,
@@ -124,12 +124,13 @@ void main() {
         ),
       ).thenAnswer((_) async {});
 
-      await useCase(
+      final next = await useCase(
         habitId: habitId,
         date: date,
-        status: HabitLogStatus.onTime,
+        currentStatus: null,
       );
 
+      expect(next, HabitLogStatus.onTime);
       verify(
         () => mockRepo.toggleHabitLog(
           habitId: habitId,

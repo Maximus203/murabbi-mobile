@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/painting.dart' show Color;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
@@ -81,6 +80,16 @@ class InMemoryHabitRepository implements HabitRepository {
   @override
   Future<void> logHabit(HabitLog log) async {
     // No-op in V1 dev scaffold (cf. ci-dessus).
+  }
+
+  @override
+  Future<List<HabitLog>> getLogsForHabit({
+    required HabitId habitId,
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    // V1 dev scaffold — pas d'historique persisté en mémoire.
+    return const [];
   }
 
   @override
@@ -183,17 +192,19 @@ class InMemoryCategoryRepository implements CategoryRepository {
     _categories.add(category);
     return category;
   }
+
+  @override
+  Future<Category> updateCategory(Category category) async {
+    final idx = _categories.indexWhere((c) => c.id == category.id);
+    if (idx == -1) {
+      throw StateError('Category not found: ${category.id}');
+    }
+    _categories[idx] = category;
+    return category;
+  }
+
+  @override
+  Future<void> deleteCategory(CategoryId categoryId) async {
+    _categories.removeWhere((c) => c.id == categoryId);
+  }
 }
-
-/// Provider Riverpod du repository Habits (V1 in-memory dev scaffold).
-final habitRepositoryProvider = Provider<HabitRepository>((ref) {
-  final repo = InMemoryHabitRepository();
-  // Note: `ref.keepAlive()` est par défaut pour Provider sans autoDispose,
-  // ce qui garantit la persistance du store en mémoire entre les widgets.
-  return repo;
-});
-
-/// Provider Riverpod du repository Categories (V1 in-memory).
-final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
-  return InMemoryCategoryRepository();
-});

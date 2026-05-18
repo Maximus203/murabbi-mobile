@@ -3,7 +3,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/repositories/category_repository.dart';
 import 'package:murabbi_mobile/domain/use_cases/categories/create_category_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/categories/delete_category_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/categories/get_categories_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/categories/update_category_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
@@ -61,6 +63,41 @@ void main() {
       verify(
         () => mockRepo.createCategory(userId: userId, category: testCategory),
       ).called(1);
+    });
+  });
+
+  group('UpdateCategoryUseCase', () {
+    late UpdateCategoryUseCase useCase;
+
+    setUp(() => useCase = UpdateCategoryUseCase(mockRepo));
+
+    test(
+      'delegates to repository.updateCategory and returns category',
+      () async {
+        when(
+          () => mockRepo.updateCategory(testCategory),
+        ).thenAnswer((_) async => testCategory);
+
+        final result = await useCase(testCategory);
+
+        expect(result, testCategory);
+        verify(() => mockRepo.updateCategory(testCategory)).called(1);
+      },
+    );
+  });
+
+  group('DeleteCategoryUseCase', () {
+    late DeleteCategoryUseCase useCase;
+
+    setUp(() => useCase = DeleteCategoryUseCase(mockRepo));
+
+    test('delegates to repository.deleteCategory', () async {
+      final categoryId = CategoryId('cat-uuid-001');
+      when(() => mockRepo.deleteCategory(categoryId)).thenAnswer((_) async {});
+
+      await useCase(categoryId);
+
+      verify(() => mockRepo.deleteCategory(categoryId)).called(1);
     });
   });
 }

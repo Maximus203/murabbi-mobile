@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
+import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
 import 'package:murabbi_mobile/data/repositories/in_memory_habit_repository.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
@@ -44,8 +46,9 @@ void main() {
     return ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(authRepo),
-        if (customRepo != null)
-          habitRepositoryProvider.overrideWithValue(customRepo),
+        habitRepositoryProvider.overrideWithValue(
+          customRepo ?? InMemoryHabitRepository(),
+        ),
       ],
       child: MaterialApp(
         home: Ha01HabitsListScreen(onCreate: onCreate ?? () {}),
@@ -57,8 +60,9 @@ void main() {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
 
-    expect(find.text('Aucune habitude configurée'), findsOneWidget);
-    expect(find.text('Ajouter une habitude'), findsOneWidget);
+    expect(find.text('Aucune habitude pour le moment'), findsOneWidget);
+    // Le CTA est dans le bottomNavigationBar et dans l'empty state.
+    expect(find.text('Nouvelle habitude'), findsWidgets);
   });
 
   testWidgets('#136 — le bouton CTA de l\'empty state déclenche onCreate', (
@@ -68,39 +72,50 @@ void main() {
     await tester.pumpWidget(pumpable(onCreate: () => created = true));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Ajouter une habitude'));
+    // Tapper le bouton "Nouvelle habitude" de l'empty state (premier match).
+    await tester.tap(find.text('Nouvelle habitude').first);
     await tester.pumpAndSettle();
     expect(created, isTrue);
   });
 
-  testWidgets('#136 — le bouton "+" du header déclenche le même onCreate', (
+  testWidgets('#136 — le bouton catégories du header est présent', (
     tester,
   ) async {
-    var created = false;
-    await tester.pumpWidget(pumpable(onCreate: () => created = true));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byTooltip('Nouvelle habitude'));
-    await tester.pumpAndSettle();
-    expect(created, isTrue);
-  });
-
-  testWidgets('#135 — HA-01 n\'embarque pas de bottomNavigationBar local', (
-    tester,
-  ) async {
-    await tester.pumpWidget(pumpable());
-    await tester.pumpAndSettle();
-
-    // La BottomNav appartient au ScaffoldWithBottomNav (shell). HA-01 ne
-    // doit pas en pousser une seconde qui masquerait celle du shell.
-    final scaffold = tester.widget<Scaffold>(
-      find.descendant(
-        of: find.byType(Ha01HabitsListScreen),
-        matching: find.byType(Scaffold),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(authRepo),
+          habitRepositoryProvider.overrideWithValue(InMemoryHabitRepository()),
+        ],
+        child: MaterialApp(
+          home: Ha01HabitsListScreen(onCreate: () {}, onOpenCategories: () {}),
+        ),
       ),
     );
-    expect(scaffold.bottomNavigationBar, isNull);
+    await tester.pumpAndSettle();
+
+    // Le bouton "Catégories" est présent dans le header quand onOpenCategories
+    // est fourni.
+    expect(find.byTooltip('Catégories'), findsOneWidget);
   });
+
+  testWidgets(
+    '#135 — HA-01 a un bottomNavigationBar avec le bouton "Nouvelle habitude"',
+    (tester) async {
+      await tester.pumpWidget(pumpable());
+      await tester.pumpAndSettle();
+
+      // Le bouton "Nouvelle habitude" est dans le bottomNavigationBar du Scaffold
+      // HA-01 — comportement intentionnel v15 (non dans le shell).
+      final scaffold = tester.widget<Scaffold>(
+        find.descendant(
+          of: find.byType(Ha01HabitsListScreen),
+          matching: find.byType(Scaffold),
+        ),
+      );
+      expect(scaffold.bottomNavigationBar, isNotNull);
+    },
+  );
 
   testWidgets('rend la liste avec le nom de l\'habitude', (tester) async {
     final repo = InMemoryHabitRepository()
@@ -121,5 +136,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Lecture Coran'), findsOneWidget);
+    expect(find.text('+5 pts'), findsOneWidget);
+  });
+
+  testWidgets('empty state affiche l\'icône Lucide (#77)', (tester) async {
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
+    expect(find.byIcon(LucideIcons.clipboardList), findsOneWidget);
+  });
+
+  testWidgets('FAB tap déclenche onCreate', (tester) async {
+    var created = false;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(authRepo),
+          habitRepositoryProvider.overrideWithValue(InMemoryHabitRepository()),
+        ],
+        child: MaterialApp(
+          home: Ha01HabitsListScreen(onCreate: () => created = true),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Nouvelle habitude').first);
+    await tester.pumpAndSettle();
+    expect(created, isTrue);
   });
 }

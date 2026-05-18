@@ -1,10 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:murabbi_mobile/data/repositories/in_memory_habit_repository.dart';
+import 'package:murabbi_mobile/data/repositories/category_repository_provider.dart';
+import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/use_cases/categories/get_categories_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/habits/create_habit_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/habits/get_habits_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/habits/toggle_habit_log_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/habits/update_habit_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 
@@ -21,6 +24,16 @@ final getCategoriesUseCaseProvider = Provider<GetCategoriesUseCase>((ref) {
   return GetCategoriesUseCase(ref.watch(categoryRepositoryProvider));
 });
 
+/// Mise à jour d'une habitude existante — utilisé par HA-02 mode édition (#152).
+final updateHabitUseCaseProvider = Provider<UpdateHabitUseCase>((ref) {
+  return UpdateHabitUseCase(ref.watch(habitRepositoryProvider));
+});
+
+/// Cycle done/late/missed des logs d'habitude (#151).
+final toggleHabitLogUseCaseProvider = Provider<ToggleHabitLogUseCase>((ref) {
+  return ToggleHabitLogUseCase(ref.watch(habitRepositoryProvider));
+});
+
 /// Stream des habitudes de l'utilisateur courant. Recharge automatiquement
 /// au signin/signout et après création (`invalidate`).
 class HabitsNotifier extends AsyncNotifier<List<Habit>> {
@@ -31,12 +44,22 @@ class HabitsNotifier extends AsyncNotifier<List<Habit>> {
     return ref.read(getHabitsUseCaseProvider).call(user.id);
   }
 
-  /// Recharge la liste sans flash de chargement — appelé après une création
-  /// réussie (D-17). Utilise [ref.invalidateSelf] + [future] pour préserver
-  /// les données actuelles pendant le refetch (pas de transition loading).
+  /// Recharge la liste — appelé après une création réussie.
+  ///
+  /// D-18 (issue #103) : on conserve les données précédentes pendant le
+  /// refresh pour éviter le flash de rechargement. `AsyncValue.loading()`
+  /// n'est émis que si l'état courant est déjà vide (premier chargement).
   Future<void> refresh() async {
-    ref.invalidateSelf();
-    await future;
+    final user = ref.read(authNotifierProvider).valueOrNull;
+    if (user == null) {
+      state = const AsyncValue.data([]);
+      return;
+    }
+    // Garde les données existantes visibles pendant le refresh — pas de spinner.
+    state = AsyncValue.data(state.valueOrNull ?? const []);
+    state = await AsyncValue.guard(
+      () => ref.read(getHabitsUseCaseProvider).call(user.id),
+    );
   }
 }
 

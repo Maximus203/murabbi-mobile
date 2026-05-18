@@ -28,6 +28,27 @@ abstract class AppRoutes {
   /// Habitudes — HA-02 création (slice 3.D).
   static const habitsCreate = '/habits/create';
 
+  /// Habitudes — HA-02 édition (issue #152). Chemin dynamique :
+  /// `/habits/<id>/edit`.
+  static String habitEdit(String id) => '/habits/$id/edit';
+  static const habitEditPattern = '/habits/:id/edit';
+
+  /// Habitudes — HB-DETAIL détail (issue #153). Chemin dynamique :
+  /// `/habits/<id>`.
+  static String habitDetail(String id) => '/habits/$id';
+  static const habitDetailPattern = '/habits/:id';
+
+  /// Catégories — HB-03 liste (issue #150).
+  static const categories = '/categories';
+
+  /// Catégories — HB-04 création (issue #150).
+  static const categoriesCreate = '/categories/new';
+
+  /// Catégories — HB-04 édition (issue #150). Chemin dynamique :
+  /// `/categories/<id>/edit`.
+  static String categoryEdit(String id) => '/categories/$id/edit';
+  static const categoryEditPattern = '/categories/:id/edit';
+
   /// Collections — CO-01 liste (slice 5.D).
   static const collections = '/collections';
 
