@@ -362,14 +362,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: AppRoutes.home,
                 builder: (context, _) => Consumer(
                   builder: (context, ref, _) => Hm01DashboardScreen(
-                    onTabSelected: (tab) {
-                      // La BottomNav dans _ShellScaffold gère la navigation
-                      // inter-onglets. Ce callback couvre l'éventuel tap
-                      // résiduel depuis la card dashboard (contexte hors shell).
-                      final index = _ShellScaffold._tabs.indexOf(tab);
-                      if (index == -1) return;
-                      context.go(_tabRootRoute(tab));
-                    },
                     onConfigurePrayers: () =>
                         context.go(AppRoutes.salatSettings),
                     onOpenSalat: () => context.go(AppRoutes.salat),
@@ -441,19 +433,3 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-
-/// Route racine par onglet — utilisée pour naviguer directement via `context.go`.
-String _tabRootRoute(AppBottomNavTab tab) {
-  switch (tab) {
-    case AppBottomNavTab.home:
-      return AppRoutes.home;
-    case AppBottomNavTab.salat:
-      return AppRoutes.salat;
-    case AppBottomNavTab.habits:
-      return AppRoutes.habits;
-    case AppBottomNavTab.collections:
-      return AppRoutes.collections;
-    case AppBottomNavTab.leaderboard:
-      return AppRoutes.leaderboard;
-  }
-}

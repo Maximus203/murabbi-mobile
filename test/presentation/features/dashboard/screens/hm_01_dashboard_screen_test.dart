@@ -72,7 +72,6 @@ void main() {
       ],
       child: MaterialApp(
         home: Hm01DashboardScreen(
-          onTabSelected: (_) {},
           onConfigurePrayers: () {},
           onOpenSalat: () {},
         ),

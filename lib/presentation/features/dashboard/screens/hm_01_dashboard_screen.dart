@@ -15,7 +15,6 @@ import 'package:murabbi_mobile/presentation/features/gamification/screens/level_
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_dialog.dart';
@@ -29,14 +28,12 @@ import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 /// placeholders habitudes / niyyah / streak (slices à venir 3.D/3.E/scoring),
 /// et barre de navigation principale.
 class Hm01DashboardScreen extends ConsumerWidget {
-  final ValueChanged<AppBottomNavTab> onTabSelected;
   final VoidCallback onConfigurePrayers;
   final VoidCallback onOpenSalat;
   final VoidCallback? onSignOut;
 
   const Hm01DashboardScreen({
     super.key,
-    required this.onTabSelected,
     required this.onConfigurePrayers,
     required this.onOpenSalat,
     this.onSignOut,
@@ -62,10 +59,6 @@ class Hm01DashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
-      bottomNavigationBar: AppBottomNav(
-        active: AppBottomNavTab.home,
-        onTabSelected: onTabSelected,
-      ),
       body: Stack(
         children: [
           SafeArea(
