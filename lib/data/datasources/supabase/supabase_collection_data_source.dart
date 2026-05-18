@@ -86,4 +86,16 @@ class SupabaseCollectionDataSource implements CollectionDataSource {
       'collection_id': collectionId,
     }, onConflict: 'user_id,collection_id');
   }
+
+  @override
+  Future<void> deactivateCollection({
+    required String userId,
+    required String collectionId,
+  }) async {
+    await _client
+        .from(_userCollections)
+        .delete()
+        .eq('user_id', userId)
+        .eq('collection_id', collectionId);
+  }
 }

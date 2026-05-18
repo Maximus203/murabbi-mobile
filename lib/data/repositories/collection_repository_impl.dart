@@ -34,6 +34,17 @@ class CollectionRepositoryImpl implements CollectionRepository {
   }
 
   @override
+  Future<void> deactivateCollection({
+    required UserId userId,
+    required CollectionId collectionId,
+  }) {
+    return _ds.deactivateCollection(
+      userId: userId.value,
+      collectionId: collectionId.value,
+    );
+  }
+
+  @override
   Future<Collection> createCollection({
     required UserId userId,
     required Collection collection,

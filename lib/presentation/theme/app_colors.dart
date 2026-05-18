@@ -82,6 +82,32 @@ class AppColors {
     categoryCreatif,
   ];
 
+  // -- Shimmer -------------------------------------------------------------------
+  /// Highlight shimmer — reflet lumineux clair au-dessus de [bgInput].
+  static const Color bgShimmerHighlight = Color(0xFFFAF8F5);
+
+  // -- Marques tierces — Google Sign-In Branding Guidelines (#119) -----------
+  /// Fond blanc du bouton Google (guidelines officielles).
+  static const Color googleSurface = Color(0xFFFFFFFF);
+
+  /// Bordure `#DADCE0` du bouton Google.
+  static const Color googleBorder = Color(0xFFDADCE0);
+
+  /// Texte `#3C4043` du bouton Google.
+  static const Color googleText = Color(0xFF3C4043);
+
+  /// Arc rouge du logo « G » Google.
+  static const Color googleRed = Color(0xFFEA4335);
+
+  /// Arc jaune du logo « G » Google.
+  static const Color googleYellow = Color(0xFFFBBC05);
+
+  /// Arc vert du logo « G » Google.
+  static const Color googleGreen = Color(0xFF34A853);
+
+  /// Arc bleu du logo « G » Google.
+  static const Color googleBlue = Color(0xFF4285F4);
+
   // -- Utilitaires -----------------------------------------------------------
   /// Transparent pur — utilisé pour les variantes ghost/link de AppButton (P-2).
   /// Centralise l'usage de `Colors.transparent` pour respecter la règle P-2 :

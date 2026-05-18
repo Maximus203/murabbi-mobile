@@ -15,25 +15,41 @@ import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 ///
 /// Affiche la description, la liste des habitudes (nombre), le potentiel
 /// journalier et un bouton Activer (collections système non encore actives).
+///
+/// Accepte soit [collection] directement (tests, navigation avec `extra`),
+/// soit [collectionId] (navigation par path param go_router).
 class CoDetailCollectionScreen extends ConsumerWidget {
-  final String collectionId;
+  /// Entité passée directement — prioritaire sur [collectionId].
+  final Collection? collection;
+
+  /// Identifiant string passé via le path param go_router — ignoré si
+  /// [collection] est fourni.
+  final String? collectionId;
+
   final VoidCallback onBack;
 
   const CoDetailCollectionScreen({
     super.key,
-    required this.collectionId,
+    this.collection,
+    this.collectionId,
     required this.onBack,
-  });
+  }) : assert(
+         collection != null || collectionId != null,
+         'Fournir collection ou collectionId',
+       );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final collections = ref.watch(collectionsNotifierProvider);
-    final collection = collections.valueOrNull
-        ?.where((c) => c.id.value == collectionId)
-        .toList();
-    final match = (collection == null || collection.isEmpty)
-        ? null
-        : collection.first;
+    final Collection? match;
+    if (collection != null) {
+      match = collection;
+    } else {
+      final collections = ref.watch(collectionsNotifierProvider);
+      final found = collections.valueOrNull
+          ?.where((c) => c.id.value == collectionId)
+          .toList();
+      match = (found == null || found.isEmpty) ? null : found.first;
+    }
 
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,

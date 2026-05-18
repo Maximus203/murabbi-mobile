@@ -28,6 +28,10 @@ class AppButton extends StatelessWidget {
   /// Utile pour afficher un spinner inline pendant [_saving].
   final Widget? child;
 
+  /// Lorsque `true`, désactive le bouton (équivalent `onPressed: null`) et
+  /// affiche un [CircularProgressIndicator] inline à la place des icônes.
+  final bool isLoading;
+
   const AppButton({
     super.key,
     required this.label,
@@ -36,9 +40,10 @@ class AppButton extends StatelessWidget {
     this.leadingIcon,
     this.leadingWidget,
     this.child,
+    this.isLoading = false,
   });
 
-  bool get _enabled => onPressed != null;
+  bool get _enabled => onPressed != null && !isLoading;
 
   @override
   Widget build(BuildContext context) {

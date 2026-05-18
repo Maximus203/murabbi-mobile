@@ -3,6 +3,7 @@ import 'package:murabbi_mobile/data/repositories/collection_repository_provider.
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/use_cases/collections/activate_collection_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/collections/create_collection_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/collections/deactivate_collection_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/collections/get_collections_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
@@ -17,6 +18,11 @@ final activateCollectionUseCaseProvider = Provider<ActivateCollectionUseCase>((
 ) {
   return ActivateCollectionUseCase(ref.watch(collectionRepositoryProvider));
 });
+
+final deactivateCollectionUseCaseProvider =
+    Provider<DeactivateCollectionUseCase>((ref) {
+      return DeactivateCollectionUseCase(ref.watch(collectionRepositoryProvider));
+    });
 
 final createCollectionUseCaseProvider = Provider<CreateCollectionUseCase>((
   ref,
@@ -42,6 +48,20 @@ class CollectionsNotifier extends AsyncNotifier<List<Collection>> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await ref.read(activateCollectionUseCaseProvider)(
+        userId: user.id,
+        collectionId: collectionId,
+      );
+      return ref.read(getCollectionsUseCaseProvider)(user.id);
+    });
+  }
+
+  /// Désactive une collection pour l'utilisateur connecté puis recharge la liste.
+  Future<void> deactivate(CollectionId collectionId) async {
+    final user = ref.read(authNotifierProvider).valueOrNull;
+    if (user == null) return;
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(deactivateCollectionUseCaseProvider)(
         userId: user.id,
         collectionId: collectionId,
       );
