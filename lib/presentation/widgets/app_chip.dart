@@ -33,12 +33,11 @@ class AppChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor =
-        selected ? AppColors.accent.withValues(alpha: 0.15) : AppColors.bgInput;
-    final borderColor =
-        selected ? AppColors.accent : AppColors.borderDefault;
-    final textColor =
-        selected ? AppColors.accent : AppColors.textPrimary;
+    final bgColor = selected
+        ? AppColors.accent.withValues(alpha: 0.15)
+        : AppColors.bgInput;
+    final borderColor = selected ? AppColors.accent : AppColors.borderDefault;
+    final textColor = selected ? AppColors.accent : AppColors.textPrimary;
 
     final radius = BorderRadius.circular(AppRadius.pill);
 

@@ -73,10 +73,7 @@ void main() {
         ),
       ],
       child: MaterialApp(
-        home: Sa03PrayerDetailScreen(
-          prayerName: prayerName,
-          onBack: () {},
-        ),
+        home: Sa03PrayerDetailScreen(prayerName: prayerName, onBack: () {}),
       ),
     );
   }
@@ -151,48 +148,50 @@ void main() {
   );
 
   // D-26 (issue #99) : légende supprimée — _LegendChip n'est plus présent
-  testWidgets(
-    'D-26 : légende redondante (_LegendChip) absente de l\'écran',
-    (tester) async {
-      when(
-        () => prayerRepo.getPrayerHistory(
-          userId: testUser.id,
-          from: any(named: 'from'),
-          to: any(named: 'to'),
-        ),
-      ).thenAnswer((_) async => sevenDaysPending());
+  testWidgets('D-26 : légende redondante (_LegendChip) absente de l\'écran', (
+    tester,
+  ) async {
+    when(
+      () => prayerRepo.getPrayerHistory(
+        userId: testUser.id,
+        from: any(named: 'from'),
+        to: any(named: 'to'),
+      ),
+    ).thenAnswer((_) async => sevenDaysPending());
 
-      await tester.pumpWidget(pumpableScreen());
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(pumpableScreen());
+    await tester.pumpAndSettle();
 
-      // Les labels de statuts ne doivent pas apparaître en double (légende
-      // supprimée). "Non priée" doit apparaître exactement 1 fois (statut
-      // courant), pas N fois (légende).
-      // Avec 7 jours tous pending et le statut courant, sans légende :
-      // "Non priée" = 1 occurrence (statut courant uniquement).
-      expect(find.text('Non priée'), findsOneWidget);
-    },
-  );
+    // Les labels de statuts ne doivent pas apparaître en double (légende
+    // supprimée). "Non priée" doit apparaître exactement 1 fois (statut
+    // courant), pas N fois (légende).
+    // Avec 7 jours tous pending et le statut courant, sans légende :
+    // "Non priée" = 1 occurrence (statut courant uniquement).
+    expect(find.text('Non priée'), findsOneWidget);
+  });
 
   // D-26 : icône info + tooltip visible
-  testWidgets(
-    'D-26 : icône info présente (légende accessible via tooltip)',
-    (tester) async {
-      when(
-        () => prayerRepo.getPrayerHistory(
-          userId: testUser.id,
-          from: any(named: 'from'),
-          to: any(named: 'to'),
-        ),
-      ).thenAnswer((_) async => sevenDaysPending());
+  testWidgets('D-26 : icône info présente (légende accessible via tooltip)', (
+    tester,
+  ) async {
+    when(
+      () => prayerRepo.getPrayerHistory(
+        userId: testUser.id,
+        from: any(named: 'from'),
+        to: any(named: 'to'),
+      ),
+    ).thenAnswer((_) async => sevenDaysPending());
 
-      await tester.pumpWidget(pumpableScreen());
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(pumpableScreen());
+    await tester.pumpAndSettle();
 
-      expect(find.byTooltip('À l\'heure · En retard · Rattrapée · Manquée · Non priée'),
-          findsOneWidget);
-    },
-  );
+    expect(
+      find.byTooltip(
+        'À l\'heure · En retard · Rattrapée · Manquée · Non priée',
+      ),
+      findsOneWidget,
+    );
+  });
 
   testWidgets('affiche les 7 pastilles de la heatmap', (tester) async {
     when(

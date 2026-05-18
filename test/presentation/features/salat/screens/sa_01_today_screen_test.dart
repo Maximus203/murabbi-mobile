@@ -181,62 +181,59 @@ void main() {
   );
 
   // D-22 : sans onOpenDetail, le tap ne provoque pas d'erreur
-  testWidgets(
-    'D-22 : tap sans onOpenDetail ne provoque pas d\'erreur',
-    (tester) async {
-      when(
-        () => prayerRepo.getTodayPrayers(testUser.id),
-      ).thenAnswer((_) async => emptyDay);
-      when(() => settingsRepo.get()).thenAnswer((_) async => settings);
+  testWidgets('D-22 : tap sans onOpenDetail ne provoque pas d\'erreur', (
+    tester,
+  ) async {
+    when(
+      () => prayerRepo.getTodayPrayers(testUser.id),
+    ).thenAnswer((_) async => emptyDay);
+    when(() => settingsRepo.get()).thenAnswer((_) async => settings);
 
-      await tester.pumpWidget(pumpableScreen());
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(pumpableScreen());
+    await tester.pumpAndSettle();
 
-      // Aucun onTap → tap silencieux, pas d'exception.
-      await tester.tap(find.text('Fajr'), warnIfMissed: false);
-      await tester.pumpAndSettle();
-    },
-  );
+    // Aucun onTap → tap silencieux, pas d'exception.
+    await tester.tap(find.text('Fajr'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+  });
 
   // D-34 (issue #98) : noms arabes affichés sous les noms latins
-  testWidgets(
-    'D-34 : noms arabes affichés sous chaque nom latin',
-    (tester) async {
-      when(
-        () => prayerRepo.getTodayPrayers(testUser.id),
-      ).thenAnswer((_) async => emptyDay);
-      when(() => settingsRepo.get()).thenAnswer((_) async => settings);
+  testWidgets('D-34 : noms arabes affichés sous chaque nom latin', (
+    tester,
+  ) async {
+    when(
+      () => prayerRepo.getTodayPrayers(testUser.id),
+    ).thenAnswer((_) async => emptyDay);
+    when(() => settingsRepo.get()).thenAnswer((_) async => settings);
 
-      await tester.pumpWidget(pumpableScreen());
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(pumpableScreen());
+    await tester.pumpAndSettle();
 
-      expect(find.text('فَجْر'), findsOneWidget);
-      expect(find.text('ظُهْر'), findsOneWidget);
-      expect(find.text('عَصْر'), findsOneWidget);
-      expect(find.text('مَغْرِب'), findsOneWidget);
-      expect(find.text('عِشَاء'), findsOneWidget);
-    },
-  );
+    expect(find.text('فَجْر'), findsOneWidget);
+    expect(find.text('ظُهْر'), findsOneWidget);
+    expect(find.text('عَصْر'), findsOneWidget);
+    expect(find.text('مَغْرِب'), findsOneWidget);
+    expect(find.text('عِشَاء'), findsOneWidget);
+  });
 
   // D-19 (issue #98) : prières passées non priées à opacité réduite
-  testWidgets(
-    'D-19 : prières passées non priées rendues avec Opacity réduite',
-    (tester) async {
-      // clockNow = 14h30 UTC → fajr (04h12) et dhuhr (13h51) sont passées.
-      when(
-        () => prayerRepo.getTodayPrayers(testUser.id),
-      ).thenAnswer((_) async => emptyDay);
-      when(() => settingsRepo.get()).thenAnswer((_) async => settings);
+  testWidgets('D-19 : prières passées non priées rendues avec Opacity réduite', (
+    tester,
+  ) async {
+    // clockNow = 14h30 UTC → fajr (04h12) et dhuhr (13h51) sont passées.
+    when(
+      () => prayerRepo.getTodayPrayers(testUser.id),
+    ).thenAnswer((_) async => emptyDay);
+    when(() => settingsRepo.get()).thenAnswer((_) async => settings);
 
-      await tester.pumpWidget(pumpableScreen());
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(pumpableScreen());
+    await tester.pumpAndSettle();
 
-      // Au moins une Opacity à 0.55 doit être présente (prières passées pending).
-      final opacities = tester
-          .widgetList<Opacity>(find.byType(Opacity))
-          .where((o) => o.opacity < 1.0)
-          .toList();
-      expect(opacities, isNotEmpty);
-    },
-  );
+    // Au moins une Opacity à 0.55 doit être présente (prières passées pending).
+    final opacities = tester
+        .widgetList<Opacity>(find.byType(Opacity))
+        .where((o) => o.opacity < 1.0)
+        .toList();
+    expect(opacities, isNotEmpty);
+  });
 }

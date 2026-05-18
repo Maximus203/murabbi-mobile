@@ -53,8 +53,17 @@ class SupabaseAuthDataSource implements AuthDataSource {
   Future<AuthMaps> signUp({
     required String email,
     required String password,
+    required String displayName,
   }) async {
-    final res = await _client.auth.signUp(email: email, password: password);
+    // #131 : le nom choisi par l'utilisateur est transmis dans les metadata
+    // Supabase (`data: {display_name}`). Le trigger SECURITY DEFINER
+    // `on_auth_user_created` lit `raw_user_meta_data->>'display_name'` pour
+    // renseigner `users.pseudo` — fini le placeholder « Anonyme #xxxx ».
+    final res = await _client.auth.signUp(
+      email: email,
+      password: password,
+      data: {'display_name': displayName},
+    );
     final user = res.user!;
     // La création de la ligne `public.users` est désormais autoritairement
     // gérée côté backend par le trigger SECURITY DEFINER
@@ -68,7 +77,11 @@ class SupabaseAuthDataSource implements AuthDataSource {
     // streak, completion_rate, email) — ce qui permet de fournir un
     // `profileOverride` cohérent au mapper, et reste anti-drift via le
     // contract test (PR #29).
-    final payload = buildSignUpInsertPayload(userId: user.id, email: email);
+    final payload = buildSignUpInsertPayload(
+      userId: user.id,
+      email: email,
+      displayName: displayName,
+    );
     return _toMaps(
       user,
       profileOverride: {
@@ -86,16 +99,22 @@ class SupabaseAuthDataSource implements AuthDataSource {
   /// Pure function — testable sans mock Supabase. Contrat figé par
   /// `supabase_auth_data_source_test.dart` (anti-drift colonnes).
   ///
+  /// [displayName] (#131) : si fourni et non vide, devient le `pseudo`.
+  /// Sinon on retombe sur le placeholder auto-généré (`Anonyme #xxxx`) —
+  /// rétrocompatibilité OAuth Google où aucun nom n'est saisi.
+  ///
   /// Volontairement absents :
   ///   - `total_points` (SoT = `user_scores.total_score`),
   ///   - `deletion_requested_at` (NULL par défaut côté SQL).
   static Map<String, dynamic> buildSignUpInsertPayload({
     required String userId,
     required String email,
+    String? displayName,
   }) {
+    final trimmedName = displayName?.trim() ?? '';
     return {
       'id': userId,
-      'pseudo': _autoPseudo(userId),
+      'pseudo': trimmedName.isNotEmpty ? trimmedName : _autoPseudo(userId),
       'email': email,
       'level': 'aspirant',
       'current_streak': 0,

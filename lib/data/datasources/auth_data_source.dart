@@ -13,10 +13,18 @@ abstract interface class AuthDataSource {
   Future<({Map<String, dynamic> authUser, Map<String, dynamic> profile})>
   signInWithPassword({required String email, required String password});
 
-  /// Crée un compte (auth + row `users` avec pseudo auto-généré),
-  /// renvoie `{authUser, profile}`.
+  /// Crée un compte (auth + row `users`), renvoie `{authUser, profile}`.
+  ///
+  /// [displayName] est le nom choisi par l'utilisateur à l'inscription
+  /// (#131) — transmis dans les metadata Supabase (`data: {display_name}`)
+  /// pour que le trigger `on_auth_user_created` l'utilise comme `pseudo`
+  /// au lieu du placeholder auto-généré.
   Future<({Map<String, dynamic> authUser, Map<String, dynamic> profile})>
-  signUp({required String email, required String password});
+  signUp({
+    required String email,
+    required String password,
+    required String displayName,
+  });
 
   /// OAuth Google. Bloque jusqu'à la fin du redirect, puis renvoie
   /// `{authUser, profile}`.

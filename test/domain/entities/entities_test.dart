@@ -218,6 +218,22 @@ void main() {
       expect(() => Level.fromString('Aspirant'), throwsArgumentError);
     });
 
+    // Supabase user_scores.level stocké en int (1-6) — ADR datasource fix
+    test('Level.fromInt mappe 1-6 vers les valeurs enum (user_scores DB)', () {
+      expect(Level.fromInt(1), Level.aspirant);
+      expect(Level.fromInt(2), Level.murid);
+      expect(Level.fromInt(3), Level.salik);
+      expect(Level.fromInt(4), Level.mujahid);
+      expect(Level.fromInt(5), Level.wali);
+      expect(Level.fromInt(6), Level.murabbi);
+    });
+
+    test('Level.fromInt rejette les valeurs hors 1-6', () {
+      expect(() => Level.fromInt(0), throwsArgumentError);
+      expect(() => Level.fromInt(7), throwsArgumentError);
+      expect(() => Level.fromInt(-1), throwsArgumentError);
+    });
+
     test('two users with same id are equal', () {
       final now = DateTime.now();
       final a = User(
