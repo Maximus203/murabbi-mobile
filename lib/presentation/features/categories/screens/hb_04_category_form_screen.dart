@@ -145,16 +145,7 @@ class _Hb04CategoryFormScreenState
           AppButton(
             label: 'Enregistrer',
             onPressed: form.canSubmit && !_saving ? () => _save(form) : null,
-            child: _saving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: AppBorderWidth.indicatorStroke,
-                      color: AppColors.bgSurface,
-                    ),
-                  )
-                : null,
+            isLoading: _saving,
           ),
 
           // ── Supprimer (mode édition uniquement) ───────────────────────

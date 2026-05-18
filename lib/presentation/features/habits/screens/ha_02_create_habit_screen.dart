@@ -436,16 +436,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
               ? 'Enregistrer les modifications'
               : "Créer l'habitude",
           onPressed: _saving ? null : () => _submit(categories),
-          child: _saving
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: AppBorderWidth.indicatorStroke,
-                    color: AppColors.bgSurface,
-                  ),
-                )
-              : null,
+          isLoading: _saving,
         ),
         const SizedBox(height: AppSpacing.s6),
       ],
