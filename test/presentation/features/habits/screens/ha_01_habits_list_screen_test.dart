@@ -60,8 +60,9 @@ void main() {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
 
-    expect(find.text('Aucune habitude configurée'), findsOneWidget);
-    expect(find.text('Ajouter une habitude'), findsOneWidget);
+    expect(find.text('Aucune habitude pour le moment'), findsOneWidget);
+    // Le CTA est dans le bottomNavigationBar et dans l'empty state.
+    expect(find.text('Nouvelle habitude'), findsWidgets);
   });
 
   testWidgets('#136 — le bouton CTA de l\'empty state déclenche onCreate', (
@@ -71,39 +72,50 @@ void main() {
     await tester.pumpWidget(pumpable(onCreate: () => created = true));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Ajouter une habitude'));
+    // Tapper le bouton "Nouvelle habitude" de l'empty state (premier match).
+    await tester.tap(find.text('Nouvelle habitude').first);
     await tester.pumpAndSettle();
     expect(created, isTrue);
   });
 
-  testWidgets('#136 — le bouton "+" du header déclenche le même onCreate', (
+  testWidgets('#136 — le bouton catégories du header est présent', (
     tester,
   ) async {
-    var created = false;
-    await tester.pumpWidget(pumpable(onCreate: () => created = true));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byTooltip('Nouvelle habitude'));
-    await tester.pumpAndSettle();
-    expect(created, isTrue);
-  });
-
-  testWidgets('#135 — HA-01 n\'embarque pas de bottomNavigationBar local', (
-    tester,
-  ) async {
-    await tester.pumpWidget(pumpable());
-    await tester.pumpAndSettle();
-
-    // La BottomNav appartient au ScaffoldWithBottomNav (shell). HA-01 ne
-    // doit pas en pousser une seconde qui masquerait celle du shell.
-    final scaffold = tester.widget<Scaffold>(
-      find.descendant(
-        of: find.byType(Ha01HabitsListScreen),
-        matching: find.byType(Scaffold),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(authRepo),
+          habitRepositoryProvider.overrideWithValue(InMemoryHabitRepository()),
+        ],
+        child: MaterialApp(
+          home: Ha01HabitsListScreen(onCreate: () {}, onOpenCategories: () {}),
+        ),
       ),
     );
-    expect(scaffold.bottomNavigationBar, isNull);
+    await tester.pumpAndSettle();
+
+    // Le bouton "Catégories" est présent dans le header quand onOpenCategories
+    // est fourni.
+    expect(find.byTooltip('Catégories'), findsOneWidget);
   });
+
+  testWidgets(
+    '#135 — HA-01 a un bottomNavigationBar avec le bouton "Nouvelle habitude"',
+    (tester) async {
+      await tester.pumpWidget(pumpable());
+      await tester.pumpAndSettle();
+
+      // Le bouton "Nouvelle habitude" est dans le bottomNavigationBar du Scaffold
+      // HA-01 — comportement intentionnel v15 (non dans le shell).
+      final scaffold = tester.widget<Scaffold>(
+        find.descendant(
+          of: find.byType(Ha01HabitsListScreen),
+          matching: find.byType(Scaffold),
+        ),
+      );
+      expect(scaffold.bottomNavigationBar, isNotNull);
+    },
+  );
 
   testWidgets('rend la liste avec le nom de l\'habitude', (tester) async {
     final repo = InMemoryHabitRepository()
