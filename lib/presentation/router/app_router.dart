@@ -9,6 +9,7 @@ import 'package:murabbi_mobile/presentation/features/auth/screens/au_01_login_sc
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_02_signup_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_03_forgot_password_screen.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_verification_gate.dart';
+import 'package:murabbi_mobile/presentation/features/calendar/screens/cal_01_calendar_screen.dart';
 import 'package:murabbi_mobile/presentation/features/categories/providers/categories_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/categories/screens/hb_03_categories_list_screen.dart';
 import 'package:murabbi_mobile/presentation/features/categories/screens/hb_04_category_form_screen.dart';
@@ -26,6 +27,9 @@ import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_01_today_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_02_prayer_settings_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/screens/sa_03_prayer_detail_screen.dart';
+import 'package:murabbi_mobile/presentation/features/settings/screens/st_01_settings_screen.dart';
+import 'package:murabbi_mobile/presentation/features/settings/screens/st_02_edit_profile_screen.dart';
+import 'package:murabbi_mobile/presentation/features/settings/screens/st_03_delete_account_screen.dart';
 import 'package:murabbi_mobile/presentation/features/splash/screens/splash_screen.dart';
 import 'package:murabbi_mobile/presentation/router/auth_redirect.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
@@ -308,6 +312,46 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             },
           );
         },
+      ),
+
+      // ── Calendrier — CAL-01 (issue #7, Phase 6) ───────────────────────
+      GoRoute(
+        path: AppRoutes.calendar,
+        builder: (context, _) =>
+            Cal01CalendarScreen(onBack: () => context.go(AppRoutes.home)),
+      ),
+
+      // ── Paramètres — ST-01 / ST-02 / ST-03 (issue #7, Phase 6) ────────
+      // Hors shell : sous-pages authentifiées. ST-02/ST-03 déclarées avant
+      // rien de plus spécifique — pas de conflit de pattern.
+      GoRoute(
+        path: AppRoutes.settingsProfile,
+        builder: (context, _) => St02EditProfileScreen(
+          onBack: () => context.go(AppRoutes.settings),
+          onSaved: () => context.go(AppRoutes.settings),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.settingsDelete,
+        builder: (context, _) => Consumer(
+          builder: (context, ref, _) => St03DeleteAccountScreen(
+            onBack: () => context.go(AppRoutes.settings),
+            // Suppression réussie → le signOut interne au use case bascule
+            // l'auth state, le redirect global pousse vers /auth/login.
+            onDeleted: () => context.go(AppRoutes.login),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (context, _) => Consumer(
+          builder: (context, ref, _) => St01SettingsScreen(
+            onBack: () => context.go(AppRoutes.home),
+            onEditProfile: () => context.go(AppRoutes.settingsProfile),
+            onDeleteAccount: () => context.go(AppRoutes.settingsDelete),
+            onSignOut: () => ref.read(authNotifierProvider.notifier).signOut(),
+          ),
+        ),
       ),
 
       // ── Shell persistant — onglets principaux (D-17) ──────────────────

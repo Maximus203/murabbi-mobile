@@ -11,6 +11,9 @@ import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifie
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_ticker_provider.dart';
+import 'package:murabbi_mobile/presentation/features/dashboard/providers/user_score_provider.dart';
+import 'package:murabbi_mobile/presentation/features/gamification/providers/level_up_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/gamification/screens/level_up_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_media.dart';
@@ -50,38 +53,65 @@ class Hm01DashboardScreen extends ConsumerWidget {
     final user = ref.watch(authNotifierProvider).valueOrNull;
     final pseudo = user?.pseudo.value ?? 'Murabbi';
 
+    // LEVEL-UP (issue #7) : à chaque nouvelle valeur de score total, on
+    // alimente le notifier qui détecte le franchissement d'un palier.
+    ref.listen(userScoreProvider, (_, next) {
+      final score = next.valueOrNull;
+      if (score != null) {
+        ref
+            .read(levelUpNotifierProvider.notifier)
+            .observeTotal(score.totalPoints);
+      }
+    });
+    final pendingLevelUp = ref.watch(levelUpNotifierProvider);
+
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       bottomNavigationBar: AppBottomNav(
         active: AppBottomNavTab.home,
         onTabSelected: onTabSelected,
       ),
-      body: SafeArea(
-        bottom: false,
-        child: dashboard.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(
-              strokeWidth: AppBorderWidth.indicatorStroke,
+      body: Stack(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: dashboard.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: AppBorderWidth.indicatorStroke,
+                ),
+              ),
+              error: (e, stackTrace) {
+                // Audit TL §B.2 PR #42 : pas de `e.toString()` brut exposé.
+                // Détail loggé via appLog, libellé canonique FR.
+                appLog.e(
+                  'Hm01DashboardScreen render error',
+                  error: e,
+                  stackTrace: stackTrace,
+                );
+                return const _GenericError();
+              },
+              data: (data) => _DashboardBody(
+                data: data,
+                pseudo: pseudo,
+                onConfigurePrayers: onConfigurePrayers,
+                onOpenSalat: onOpenSalat,
+                onSignOut: onSignOut,
+              ),
             ),
           ),
-          error: (e, stackTrace) {
-            // Audit TL §B.2 PR #42 : pas de `e.toString()` brut exposé.
-            // Détail loggé via appLog, libellé canonique FR.
-            appLog.e(
-              'Hm01DashboardScreen render error',
-              error: e,
-              stackTrace: stackTrace,
-            );
-            return const _GenericError();
-          },
-          data: (data) => _DashboardBody(
-            data: data,
-            pseudo: pseudo,
-            onConfigurePrayers: onConfigurePrayers,
-            onOpenSalat: onOpenSalat,
-            onSignOut: onSignOut,
-          ),
-        ),
+          // Overlay plein écran LEVEL-UP — affiché tant qu'un palier vient
+          // d'être franchi ; "Continuer" appelle `acknowledge`.
+          if (pendingLevelUp != null)
+            Positioned.fill(
+              child: LevelUpScreen(
+                levelName: pendingLevelUp.label,
+                levelDescription: pendingLevelUp.description,
+                onContinue: () =>
+                    ref.read(levelUpNotifierProvider.notifier).acknowledge(),
+              ),
+            ),
+        ],
       ),
     );
   }
