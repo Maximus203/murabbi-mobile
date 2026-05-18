@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/data/repositories/category_repository_provider.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
@@ -40,8 +41,19 @@ class HabitsNotifier extends AsyncNotifier<List<Habit>> {
   @override
   Future<List<Habit>> build() async {
     final user = ref.watch(authNotifierProvider).valueOrNull;
-    if (user == null) return const [];
-    return ref.read(getHabitsUseCaseProvider).call(user.id);
+    if (user == null) {
+      appLog.w('HabitsNotifier: auth null — returning empty (session not ready?)');
+      return const [];
+    }
+    appLog.d('HabitsNotifier: fetching habits for user_id=${user.id.value}');
+    try {
+      final habits = await ref.read(getHabitsUseCaseProvider).call(user.id);
+      appLog.d('HabitsNotifier: ${habits.length} habits received');
+      return habits;
+    } catch (e, st) {
+      appLog.e('HabitsNotifier: fetch failed', error: e, stackTrace: st);
+      rethrow;
+    }
   }
 
   /// Recharge la liste — appelé après une création réussie.
