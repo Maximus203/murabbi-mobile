@@ -6,6 +6,7 @@ import 'package:murabbi_mobile/domain/entities/prayer_day.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_times.dart';
 import 'package:murabbi_mobile/domain/errors/prayer_failure.dart';
+import 'package:murabbi_mobile/presentation/features/salat/providers/prayer_status_filter.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/today_salat_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/today_salat_state.dart';
 import 'package:murabbi_mobile/presentation/features/salat/widgets/prayer_status_visuals.dart';
@@ -14,6 +15,7 @@ import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_filter_chips.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
@@ -75,7 +77,7 @@ class Sa01TodayScreen extends ConsumerWidget {
   }
 }
 
-class _PrayersList extends StatelessWidget {
+class _PrayersList extends StatefulWidget {
   final TodaySalatState data;
 
   /// Callback de navigation SA-03 (D-22 Option A). Null si le caller ne
@@ -85,8 +87,16 @@ class _PrayersList extends StatelessWidget {
   const _PrayersList({required this.data, this.onPrayerTapped});
 
   @override
+  State<_PrayersList> createState() => _PrayersListState();
+}
+
+class _PrayersListState extends State<_PrayersList> {
+  /// Filtre statut actif (issue #94) — state local à l'écran SA-01.
+  PrayerStatusFilter _filter = PrayerStatusFilter.all;
+
+  @override
   Widget build(BuildContext context) {
-    final rows = _buildRows(data.prayerDay, data.prayerTimes);
+    final rows = _buildRows(widget.data.prayerDay, widget.data.prayerTimes);
     final completed = rows
         .where((r) => r.status != PrayerStatus.pending)
         .length;
@@ -95,30 +105,79 @@ class _PrayersList extends StatelessWidget {
     final now = DateTime.now().toUtc();
     final nextIndex = _nextPrayerIndex(rows, now);
 
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.s4),
+    // Filtre statut (issue #94) — on conserve l'index d'origine pour `isNext`.
+    final visible = <int>[
+      for (var i = 0; i < rows.length; i++)
+        if (_filter.matches(rows[i].status)) i,
+    ];
+
+    // La barre de filtres (issue #94) est un en-tête FIXE hors de la liste
+    // scrollable : le contenu de la `ListView` reste identique à l'historique
+    // (vidéo + compteur + 5 lignes) — la 5e prière reste donc dans le viewport.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Bandeau vidéo décoratif 130px (maquette ScreenSL01 — issue #71).
-        AppVideoBackground(
-          assetPath: 'assets/media/09.mp4',
-          height: 130,
-          borderRadius: BorderRadius.circular(AppRadius.card),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s4,
+            AppSpacing.s3,
+            AppSpacing.s4,
+            0,
+          ),
+          child: AppFilterChips(
+            labels: PrayerStatusFilter.values.map((f) => f.label).toList(),
+            selectedIndex: _filter.index,
+            onChanged: (i) =>
+                setState(() => _filter = PrayerStatusFilter.values[i]),
+          ),
         ),
-        const SizedBox(height: AppSpacing.s3),
-        Text('$completed / 5 prières', style: AppTypography.label),
-        const SizedBox(height: AppSpacing.s3),
-        for (var i = 0; i < rows.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.s3),
-            child: _PrayerRow(
-              row: rows[i],
-              isPast: rows[i].utcTime.isBefore(now),
-              isNext: i == nextIndex,
-              onTap: onPrayerTapped == null
-                  ? null
-                  : () => onPrayerTapped!(rows[i].name),
+        Expanded(
+          // SingleChildScrollView + Column : matérialise toutes les lignes de
+          // prière dans l'arbre (pas de lazy-build), indépendamment du
+          // viewport — comportement attendu par les tests widget SA-01.
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.s4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Bandeau vidéo décoratif 130px (maquette ScreenSL01 — #71).
+                AppVideoBackground(
+                  assetPath: 'assets/media/09.mp4',
+                  height: 130,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                ),
+                const SizedBox(height: AppSpacing.s3),
+                Text('$completed / 5 prières', style: AppTypography.label),
+                const SizedBox(height: AppSpacing.s3),
+                if (visible.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.s6,
+                    ),
+                    child: Text(
+                      'Aucune prière ne correspond.',
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                for (final i in visible)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+                    child: _PrayerRow(
+                      row: rows[i],
+                      isPast: rows[i].utcTime.isBefore(now),
+                      isNext: i == nextIndex,
+                      onTap: widget.onPrayerTapped == null
+                          ? null
+                          : () => widget.onPrayerTapped!(rows[i].name),
+                    ),
+                  ),
+              ],
             ),
           ),
+        ),
       ],
     );
   }
@@ -214,10 +273,14 @@ class _PrayerRow extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(
-                PrayerStatusVisuals.icon(row.status),
-                size: 22,
-                color: PrayerStatusVisuals.color(row.status),
+              // D-33 (issue #105) : icône de statut en lecture seule → purement
+              // décorative. La sémantique est portée par le label de la carte.
+              ExcludeSemantics(
+                child: Icon(
+                  PrayerStatusVisuals.icon(row.status),
+                  size: 22,
+                  color: PrayerStatusVisuals.color(row.status),
+                ),
               ),
               const SizedBox(width: AppSpacing.s3),
               Expanded(
@@ -231,26 +294,30 @@ class _PrayerRow extends StatelessWidget {
                     // D-34 (issue #98) : nom arabe sous le nom latin.
                     if (_arabicPrayerNames[row.name] case final arabic?
                         when arabic.isNotEmpty)
-                      Text(
-                        arabic,
-                        style: AppTypography.caption.copyWith(
-                          fontFamily: 'Noto Sans Arabic',
-                          color: AppColors.textSecondary,
+                      // D-33 : redondant avec le label latin → décoratif.
+                      ExcludeSemantics(
+                        child: Text(
+                          arabic,
+                          style: AppTypography.caption.copyWith(
+                            fontFamily: 'Noto Sans Arabic',
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
                   ],
                 ),
               ),
               Text('$hh:$mm', style: AppTypography.body),
-              // Chevron toujours visible quand la navigation SA-03 est
-              // disponible — indique un tap de navigation (D-22 Option A).
+              // D-33 : le chevron est décoratif — la Semantics de AppCard
+              // porte déjà l'action de navigation.
               if (onTap != null) ...[
                 const SizedBox(width: AppSpacing.s2),
-                const Icon(
-                  LucideIcons.chevronRight,
-                  size: 16,
-                  color: AppColors.textSecondary,
-                  semanticLabel: 'Voir le détail',
+                const ExcludeSemantics(
+                  child: Icon(
+                    LucideIcons.chevronRight,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ],
