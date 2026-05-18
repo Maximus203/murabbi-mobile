@@ -28,6 +28,18 @@ abstract class AppRoutes {
   /// Habitudes — HA-02 création (slice 3.D).
   static const habitsCreate = '/habits/create';
 
+  /// Collections — CO-01 liste (slice 5.D).
+  static const collections = '/collections';
+
+  /// Collections — CO-02 création (slice 5.D).
+  static const collectionsCreate = '/collections/create';
+
+  /// Collections — CO-DETAIL (slice 5.D). `extra` = [Collection].
+  static const collectionsDetail = '/collections/detail';
+
+  /// Leaderboard — LB-01 (slice 5.E).
+  static const leaderboard = '/leaderboard';
+
   /// `/auth/verify-email` est traité à part : il est accessible aussi bien
   /// quand l'utilisateur n'a pas de session que quand il vient de signUp et
   /// attend la confirmation par mail.

@@ -167,10 +167,8 @@ class _DashboardBody extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s4),
 
-          // ── Score quotidien ────────────────────────────────────────
-          // Données mock Phase 3 — les vraies données scoring arrivent en Phase 4
-          // (cf. ADR-016 et issue #89).
-          const _ScoreCard(),
+          // ── Score & Série ──────────────────────────────────────────
+          _ScoreStreakCard(data: data),
           const SizedBox(height: AppSpacing.s3),
 
           // ── Habitudes du jour ──────────────────────────────────────
@@ -179,10 +177,6 @@ class _DashboardBody extends ConsumerWidget {
 
           // ── Niyyah vidéo ───────────────────────────────────────────
           const _NiyyahCard(),
-          const SizedBox(height: AppSpacing.s3),
-
-          // ── Série globale ──────────────────────────────────────────
-          const _StreakCard(),
 
           // D-25 : confirmation avant déconnexion via AppDialog DS.
           if (onSignOut != null) ...[
@@ -482,82 +476,6 @@ class _NiyyahCard extends ConsumerWidget {
   }
 }
 
-/// Carte Score quotidien — données mock pour la Phase 3.
-///
-/// Affiche [AppProgressRing] 84px, les points du jour et le badge niveau.
-/// Les données réelles (scoring Supabase) seront branchées en Phase 4 (issue #89).
-class _ScoreCard extends StatelessWidget {
-  // Valeurs mock — Phase 4 branchera le ScoringService réel.
-  static const double _mockProgress = 0.70;
-  static const int _mockPoints = 42;
-  static const int _mockMaxPoints = 60;
-  static const String _mockLevel = 'Aspirant · Niveau 2';
-
-  const _ScoreCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Anneau de progression (cf. wireframe v1.5 : 84px, stroke 4)
-          AppProgressRing(progress: _mockProgress, size: 84, strokeWidth: 4),
-          const SizedBox(width: AppSpacing.s4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'SCORE DU JOUR',
-                  style: AppTypography.label.copyWith(color: AppColors.accent),
-                ),
-                const SizedBox(height: AppSpacing.s2),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      '$_mockPoints',
-                      style: AppTypography.mono.copyWith(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      ' / $_mockMaxPoints',
-                      style: AppTypography.mono.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.s1),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s2,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgInput,
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                  ),
-                  child: Text(
-                    _mockLevel,
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Carte Habitudes du jour — affiche les micro-rows depuis [habitsNotifierProvider].
 ///
 /// Limite l'affichage à 5 habitudes avec un lien "Voir tout" si la liste
@@ -747,37 +665,92 @@ class _HabitMicroRow extends StatelessWidget {
   }
 }
 
-/// Carte Série globale — état neutre (données disponibles en Phase 4).
-class _StreakCard extends StatelessWidget {
-  const _StreakCard();
+/// Card score + série globale — slice 5.F.
+///
+/// Affiche les points hebdomadaires, le niveau courant et la série globale.
+/// Si aucun score n'est encore disponible, affiche des tirets.
+class _ScoreStreakCard extends StatelessWidget {
+  final DashboardState data;
+
+  const _ScoreStreakCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
+    final level = data.currentLevel;
+    final weekly = data.weeklyPoints;
+    final streak = data.globalStreak;
+
     return AppCard(
       child: Row(
         children: [
-          const ExcludeSemantics(
-            child: Icon(
-              LucideIcons.flame,
-              size: 22,
-              color: AppColors.textTertiary,
+          Expanded(
+            child: _StatItem(
+              icon: LucideIcons.star,
+              label: 'Pts hebdo',
+              value: weekly == 0 ? '—' : '$weekly',
             ),
           ),
-          const SizedBox(width: AppSpacing.s3),
+          Container(width: 0.5, height: 32, color: AppColors.borderDefault),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Série globale', style: AppTypography.h3),
-                const SizedBox(height: AppSpacing.s1),
-                Text(
-                  'Ta progression apparaîtra ici dès que tu auras commencé.',
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+            child: _StatItem(
+              icon: LucideIcons.flame,
+              label: 'Série',
+              value: streak == 0 ? '—' : '${streak}j',
             ),
+          ),
+          Container(width: 0.5, height: 32, color: AppColors.borderDefault),
+          Expanded(
+            child: _StatItem(
+              icon: LucideIcons.award,
+              label: 'Niveau',
+              value: _levelLabel(level),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _levelLabel(dynamic level) {
+    return switch (level.toString().split('.').last) {
+      'aspirant' => 'Aspirant',
+      'murid' => 'Murid',
+      'salik' => 'Salik',
+      'mujahid' => 'Mujahid',
+      'wali' => 'Wali',
+      'murabbi' => 'Murabbi',
+      _ => '—',
+    };
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _StatItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: AppColors.accent),
+          const SizedBox(height: AppSpacing.s1),
+          Text(value, style: AppTypography.h3, textAlign: TextAlign.center),
+          Text(
+            label,
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

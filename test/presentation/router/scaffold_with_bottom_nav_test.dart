@@ -68,6 +68,15 @@ GoRouter _makeRouter({
           ),
         ],
       ),
+      // Routes hors shell — Phase 5 : Collections & Classement
+      GoRoute(
+        path: '/collections',
+        builder: (_, _) => const FakeTabScreen(label: 'Collections'),
+      ),
+      GoRoute(
+        path: '/leaderboard',
+        builder: (_, _) => const FakeTabScreen(label: 'Classement'),
+      ),
     ],
   );
 }
@@ -165,7 +174,7 @@ void main() {
       },
     );
 
-    testWidgets('affiche snackbar pour Collections (non implémenté)', (
+    testWidgets('Collections navigue vers /collections (Phase 5 — slice 5.G)', (
       tester,
     ) async {
       final router = _makeRouter();
@@ -175,10 +184,13 @@ void main() {
       await tester.tap(find.text('Collections'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Collections arrive bientôt.'), findsOneWidget);
+      // Navigation vers /collections — l'écran Collections est affiché.
+      expect(find.text('Collections'), findsWidgets);
+      // Aucun snackbar "arrive bientôt" (remplacé par navigation réelle).
+      expect(find.text('Collections arrive bientôt.'), findsNothing);
     });
 
-    testWidgets('affiche snackbar pour Classement (non implémenté)', (
+    testWidgets('Classement navigue vers /leaderboard (Phase 5 — slice 5.G)', (
       tester,
     ) async {
       final router = _makeRouter();
@@ -188,7 +200,10 @@ void main() {
       await tester.tap(find.text('Classement'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Classement arrive bientôt.'), findsOneWidget);
+      // Navigation vers /leaderboard — l'écran Classement est affiché.
+      expect(find.text('Classement'), findsWidgets);
+      // Aucun snackbar "arrive bientôt" (remplacé par navigation réelle).
+      expect(find.text('Classement arrive bientôt.'), findsNothing);
     });
   });
 

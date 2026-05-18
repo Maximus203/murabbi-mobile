@@ -44,4 +44,14 @@ abstract interface class CollectionRepository {
     required UserId userId,
     required Collection collection,
   });
+
+  /// Marque une collection comme désactivée pour [userId].
+  ///
+  /// Implémentations : mettre `is_active = false` pour la ligne
+  /// `(user_id, collection_id)` — ne supprime pas les habitudes dupliquées
+  /// (l'utilisateur peut réactiver la collection plus tard).
+  Future<void> deactivateCollection({
+    required UserId userId,
+    required CollectionId collectionId,
+  });
 }

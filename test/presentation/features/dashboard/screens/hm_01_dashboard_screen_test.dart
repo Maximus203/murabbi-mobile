@@ -20,7 +20,6 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_clock_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_progress_ring.dart';
 import 'package:murabbi_mobile/services/prayer/prayer_times_service.dart';
 import 'package:murabbi_mobile/services/video_service.dart';
 
@@ -142,15 +141,19 @@ void main() {
     expect(find.textContaining('DEMAIN'), findsOneWidget);
   });
 
-  testWidgets('rend les sections Habitudes / Niyyah / Série', (tester) async {
+  testWidgets('rend les sections Habitudes / Niyyah / Score-Streak', (
+    tester,
+  ) async {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
 
-    // Habitudes du jour : visible sans scroll (haut du ListView)
+    // Phase 5 : "Série globale" remplacée par _ScoreStreakCard.
     expect(find.text('Habitudes du jour'), findsOneWidget);
-    // Niyyah et Série peuvent être hors viewport (ListView) : skipOffstage:false
-    expect(find.text('Niyyah du jour', skipOffstage: false), findsOneWidget);
-    expect(find.text('Série globale', skipOffstage: false), findsOneWidget);
+    expect(find.text('Niyyah du jour'), findsOneWidget);
+    // Phase 5 : _ScoreStreakCard affiche au minimum les 3 labels de stats.
+    expect(find.text('Pts hebdo'), findsOneWidget);
+    expect(find.text('Série'), findsOneWidget);
+    expect(find.text('Niveau'), findsOneWidget);
   });
 
   test('PrayerSettingsNotConfiguredFailure remonte settingsNotConfigured', () {
@@ -205,27 +208,20 @@ void main() {
     expect(find.byIcon(LucideIcons.bell), findsNothing);
   });
 
-  // ── Nouveaux tests — issue #89 ─────────────────────────────────────────────
+  // ── Nouveaux tests — issue #89 (mis à jour Phase 5 : _ScoreStreakCard) ──────
 
-  testWidgets('score card affiche le badge niveau et les points mock (#89)', (
-    tester,
-  ) async {
-    await tester.pumpWidget(pumpable());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'score card (_ScoreStreakCard) affiche les labels de stats (#89 Phase 5)',
+    (tester) async {
+      await tester.pumpWidget(pumpable());
+      await tester.pumpAndSettle();
 
-    // Badge niveau
-    expect(find.textContaining('Aspirant'), findsOneWidget);
-    // Points format "X / Y"
-    expect(find.textContaining('42'), findsOneWidget);
-    expect(find.textContaining('60'), findsOneWidget);
-  });
-
-  testWidgets('score card affiche AppProgressRing (#89)', (tester) async {
-    await tester.pumpWidget(pumpable());
-    await tester.pumpAndSettle();
-
-    expect(find.byType(AppProgressRing), findsOneWidget);
-  });
+      // _ScoreStreakCard affiche 3 labels permanents (Phase 5 — _ScoreCard supprimée)
+      expect(find.text('Pts hebdo'), findsOneWidget);
+      expect(find.text('Série'), findsOneWidget);
+      expect(find.text('Niveau'), findsOneWidget);
+    },
+  );
 
   testWidgets(
     'section habitudes affiche état vide quand pas d\'habitudes (#89)',
