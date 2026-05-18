@@ -12,8 +12,6 @@ import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboa
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_ticker_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/user_score_provider.dart';
-import 'package:murabbi_mobile/presentation/features/dashboard/widgets/dashboard_score_card.dart';
-import 'package:murabbi_mobile/presentation/features/dashboard/widgets/dashboard_stats_grid.dart';
 import 'package:murabbi_mobile/presentation/features/gamification/providers/level_up_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/gamification/screens/level_up_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';

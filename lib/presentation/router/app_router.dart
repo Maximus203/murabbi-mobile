@@ -321,7 +321,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             Cal01CalendarScreen(onBack: () => context.go(AppRoutes.home)),
       ),
 
-
       // ── Paramètres — ST-01 / ST-02 / ST-03 (issue #7, Phase 6) ────────
       // Hors shell : sous-pages authentifiées. ST-02/ST-03 déclarées avant
       // rien de plus spécifique — pas de conflit de pattern.
@@ -354,7 +353,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
         ),
       ),
-
 
       // ── Shell persistant — onglets principaux (D-17) ──────────────────
       // StatefulShellRoute.indexedStack maintient un Navigator distinct par

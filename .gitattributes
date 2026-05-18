@@ -1,0 +1,20 @@
+# Dart / Flutter
+*.dart text eol=lf
+*.yaml text eol=lf
+*.yml  text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+
+# Shell scripts — toujours LF (build WSL)
+*.sh   text eol=lf
+
+# Binaires
+*.ttf  binary
+*.otf  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.svg  binary
+*.apk  binary
+*.aab  binary
