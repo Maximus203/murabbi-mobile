@@ -55,6 +55,11 @@ class AuthErrorBanner extends StatelessWidget {
       return 'Erreur inattendue. Réessaie dans un instant.';
     }
     return switch (f) {
+      // "email not confirmed" → message distinct qui invite à valider l'inbox.
+      InvalidCredentialsFailure(message: final msg)
+          when msg != null &&
+              msg.toLowerCase().contains('email not confirmed') =>
+        'Confirme ton email avant de te connecter.',
       InvalidCredentialsFailure() => 'Email ou mot de passe incorrect.',
       EmailAlreadyInUseFailure() => 'Cet email est déjà utilisé.',
       WeakPasswordFailure() =>

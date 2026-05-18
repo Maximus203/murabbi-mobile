@@ -71,8 +71,10 @@ echo "[1/4] flutter pub get..."
 "$FLUTTER" pub get --suppress-analytics
 
 # ── flutter analyze ────────────────────────────────────────────
-echo "[2/4] flutter analyze..."
-"$FLUTTER" analyze --no-fatal-infos --suppress-analytics
+echo "[2/4] flutter analyze lib/..."
+# Analyse uniquement lib/ — les test/ files ont des imports non résolvables
+# en WSL (package:flutter/material.dart invisible hors pub-cache Linux).
+"$FLUTTER" analyze lib/ --no-fatal-infos --suppress-analytics
 echo "      ✓ 0 issues"
 
 # ── Build APK ──────────────────────────────────────────────────
@@ -110,7 +112,7 @@ if $DO_INSTALL; then
       echo "      Désinstallation ancienne version (conflit signature)..."
       "$ADB_WIN" shell pm uninstall --user 0 com.murabbi.murabbi 2>/dev/null || true
     fi
-    "$ADB_WIN" install "$APK_PATH" 2>&1
+    "$ADB_WIN" install "$WIN_APK_PATH" 2>&1
     "$ADB_WIN" shell monkey -p com.murabbi.murabbi -c android.intent.category.LAUNCHER 1 2>/dev/null || true
     echo "      ✓ App installée et lancée (ADB Windows)"
   fi
