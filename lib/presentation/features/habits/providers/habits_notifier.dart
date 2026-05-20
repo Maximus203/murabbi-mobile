@@ -45,7 +45,7 @@ class HabitsNotifier extends AsyncNotifier<List<Habit>> {
       appLog.w('HabitsNotifier: auth null — returning empty (session not ready?)');
       return const [];
     }
-    appLog.d('HabitsNotifier: fetching habits for user_id=${user.id.value}');
+    appLog.d('HabitsNotifier: fetching habits');
     try {
       final habits = await ref.read(getHabitsUseCaseProvider).call(user.id);
       appLog.d('HabitsNotifier: ${habits.length} habits received');

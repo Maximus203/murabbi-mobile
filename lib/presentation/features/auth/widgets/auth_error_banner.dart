@@ -59,7 +59,7 @@ class AuthErrorBanner extends StatelessWidget {
       InvalidCredentialsFailure(message: final msg)
           when msg != null &&
               msg.toLowerCase().contains('email not confirmed') =>
-        'Confirme ton email avant de te connecter.',
+        'Confirmez votre adresse email avant de vous connecter.',
       InvalidCredentialsFailure() => 'Email ou mot de passe incorrect.',
       EmailAlreadyInUseFailure() => 'Cet email est déjà utilisé.',
       WeakPasswordFailure() =>

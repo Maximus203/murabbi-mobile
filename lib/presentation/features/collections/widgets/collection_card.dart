@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
@@ -82,7 +83,7 @@ class CollectionCard extends StatelessWidget {
                 ),
                 if (ptsPerDay != null) ...[
                   const SizedBox(width: AppSpacing.s3),
-                  const Icon(LucideIcons.zap, size: 12, color: AppColors.accent),
+                  Icon(lu(LucideIcons.zap), size: 12, color: AppColors.accent),
                   const SizedBox(width: AppSpacing.s1),
                   Text(
                     '$ptsPerDay pts/jour',

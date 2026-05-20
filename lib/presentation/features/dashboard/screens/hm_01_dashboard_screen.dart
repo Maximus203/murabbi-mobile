@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
@@ -167,11 +168,11 @@ class _DashboardBody extends ConsumerWidget {
               Semantics(
                 label: 'Notifications',
                 button: true,
-                child: const IconButton(
+                child: IconButton(
                   onPressed:
                       null, // stub — navigation Notifications à venir (Phase 5)
                   icon: Icon(
-                    LucideIcons.bell,
+                    lu(LucideIcons.bell),
                     size: 22,
                     color: AppColors.textSecondary,
                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/presentation/features/collections/providers/collections_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
@@ -41,11 +42,14 @@ class CoDetailCollectionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final Collection? match;
+    bool isLoading = false;
+
     if (collection != null) {
       match = collection;
     } else {
-      final collections = ref.watch(collectionsNotifierProvider);
-      final found = collections.valueOrNull
+      final collectionsAsync = ref.watch(collectionsNotifierProvider);
+      isLoading = collectionsAsync.isLoading;
+      final found = collectionsAsync.valueOrNull
           ?.where((c) => c.id.value == collectionId)
           .toList();
       match = (found == null || found.isEmpty) ? null : found.first;
@@ -55,9 +59,11 @@ class CoDetailCollectionScreen extends ConsumerWidget {
       backgroundColor: AppColors.bgPrimary,
       body: SafeArea(
         bottom: false,
-        child: match == null
-            ? _Missing(onBack: onBack)
-            : _DetailBody(collection: match, onBack: onBack),
+        child: isLoading && match == null
+            ? const Center(child: CircularProgressIndicator())
+            : match == null
+                ? _Missing(onBack: onBack)
+                : _DetailBody(collection: match, onBack: onBack),
       ),
     );
   }
@@ -93,8 +99,8 @@ class _DetailBody extends ConsumerWidget {
         AppCard(
           child: Row(
             children: [
-              const Icon(
-                LucideIcons.listChecks,
+              Icon(
+                lu(LucideIcons.listChecks),
                 size: 20,
                 color: AppColors.accent,
               ),
@@ -114,8 +120,8 @@ class _DetailBody extends ConsumerWidget {
           AppCard(
             child: Row(
               children: [
-                const Icon(
-                  LucideIcons.circleCheck,
+                Icon(
+                  lu(LucideIcons.circleCheck),
                   size: 20,
                   color: AppColors.success,
                 ),

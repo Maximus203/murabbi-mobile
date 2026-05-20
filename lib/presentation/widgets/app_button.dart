@@ -50,23 +50,32 @@ class AppButton extends StatelessWidget {
     final spec = _spec(variant, enabled: _enabled);
     final radius = BorderRadius.circular(AppRadius.button);
     final content = child ??
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (leadingWidget != null) ...[
-              leadingWidget!,
-              const SizedBox(width: AppSpacing.s2),
-            ] else if (leadingIcon != null) ...[
-              Icon(lu(leadingIcon!), size: 16, color: spec.foreground),
-              const SizedBox(width: AppSpacing.s2),
-            ],
-            Text(
-              label,
-              style: AppTypography.body.copyWith(color: spec.foreground),
-            ),
-          ],
-        );
+        (isLoading
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: AppBorderWidth.indicatorStroke,
+                  color: spec.foreground,
+                ),
+              )
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (leadingWidget != null) ...[
+                    leadingWidget!,
+                    const SizedBox(width: AppSpacing.s2),
+                  ] else if (leadingIcon != null) ...[
+                    Icon(lu(leadingIcon!), size: 16, color: spec.foreground),
+                    const SizedBox(width: AppSpacing.s2),
+                  ],
+                  Text(
+                    label,
+                    style: AppTypography.body.copyWith(color: spec.foreground),
+                  ),
+                ],
+              ));
 
     return Material(
       color: spec.background,
@@ -94,7 +103,7 @@ class AppButton extends StatelessWidget {
       case AppButtonVariant.primary:
         return _ButtonSpec(
           background: enabled ? AppColors.accent : AppColors.bgInput,
-          foreground: enabled ? AppColors.bgSurface : AppColors.textTertiary,
+          foreground: enabled ? AppColors.bgSurface : AppColors.textSecondary,
           border: null,
         );
       case AppButtonVariant.secondary:

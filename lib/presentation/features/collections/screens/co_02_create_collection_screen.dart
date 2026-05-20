@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
@@ -81,8 +82,8 @@ class _Co02CreateCollectionScreenState
 
     final collection = Collection(
       id: CollectionId('pending'),
-      name: NonEmptyString(_nameController.text),
-      description: NonEmptyString(_descController.text),
+      name: NonEmptyString(_nameController.text.trim()),
+      description: NonEmptyString(_descController.text.trim()),
       habitIds: _selected.map(HabitId.new).toList(),
       isSystem: false,
       isActive: false,
@@ -294,7 +295,7 @@ class _IconGrid extends StatelessWidget {
               ),
             ),
             child: Icon(
-              entry.value,
+              lu(entry.value),
               size: 24,
               color:
                   isSelected ? AppColors.bgSurface : AppColors.textSecondary,
@@ -337,7 +338,7 @@ class _HabitPicker extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  isSelected ? LucideIcons.squareCheck : LucideIcons.square,
+                  lu(isSelected ? LucideIcons.squareCheck : LucideIcons.square),
                   size: 20,
                   color: isSelected ? AppColors.accent : AppColors.textTertiary,
                 ),
