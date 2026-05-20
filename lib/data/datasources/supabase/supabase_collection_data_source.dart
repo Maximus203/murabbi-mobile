@@ -34,6 +34,7 @@ class SupabaseCollectionDataSource implements CollectionDataSource {
         .from(_collections)
         .select(
           'id, name, description, is_system, cover_image_url, created_at, '
+          'primary_category_id, icon, '
           'collection_habits(habit_id), '
           'user_collections(user_id)',
         )

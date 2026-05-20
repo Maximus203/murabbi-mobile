@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
+import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/presentation/features/categories/providers/categories_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/collections/providers/collections_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
@@ -16,10 +19,26 @@ import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_input.dart';
 
-/// CO-02 — Création d'une collection (issue #6, Phase 5).
+/// Map statique nom kebab-case → IconData pour les icônes Lucide proposées
+/// dans CO-02 (Q-23). Le nom est persisté en base ; l'icône est résolue
+/// côté client à l'affichage.
+const Map<String, IconData> _kCollectionIconMap = {
+  'layers': LucideIcons.layers,
+  'star': LucideIcons.star,
+  'flame': LucideIcons.flame,
+  'target': LucideIcons.target,
+  'zap': LucideIcons.zap,
+  'heart': LucideIcons.heart,
+  'shield': LucideIcons.shield,
+  'trophy': LucideIcons.trophy,
+  'compass': LucideIcons.compass,
+  'sparkles': LucideIcons.sparkles,
+};
+
+/// CO-02 — Création d'une collection (issue #6, Phase 5 / Q-23).
 ///
-/// Formulaire : titre, description, sélection multiple d'habitudes.
-/// La collection nécessite au moins une habitude (invariant domaine).
+/// Formulaire : titre, description, catégorie principale (optionnel),
+/// icône (optionnel), sélection multiple d'habitudes (obligatoire).
 class Co02CreateCollectionScreen extends ConsumerStatefulWidget {
   final VoidCallback onCreated;
   final VoidCallback onCancel;
@@ -40,6 +59,8 @@ class _Co02CreateCollectionScreenState
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   final _selected = <String>{};
+  CategoryId? _selectedCategoryId;
+  String? _selectedIcon;
   bool _submitted = false;
 
   @override
@@ -58,8 +79,6 @@ class _Co02CreateCollectionScreenState
     setState(() => _submitted = true);
     if (!_isValid) return;
 
-    // L'id réel est attribué par Supabase ; on fournit un placeholder
-    // remplacé par la row persistée côté repository.
     final collection = Collection(
       id: CollectionId('pending'),
       name: NonEmptyString(_nameController.text),
@@ -67,6 +86,8 @@ class _Co02CreateCollectionScreenState
       habitIds: _selected.map(HabitId.new).toList(),
       isSystem: false,
       isActive: false,
+      primaryCategoryId: _selectedCategoryId,
+      icon: _selectedIcon,
     );
 
     await ref.read(collectionsNotifierProvider.notifier).create(collection);
@@ -76,6 +97,7 @@ class _Co02CreateCollectionScreenState
   @override
   Widget build(BuildContext context) {
     final habits = ref.watch(habitsNotifierProvider);
+    final categories = ref.watch(categoriesNotifierProvider);
     final isSaving = ref.watch(collectionsNotifierProvider).isLoading;
 
     return Scaffold(
@@ -115,8 +137,51 @@ class _Co02CreateCollectionScreenState
                   : null,
             ),
             const SizedBox(height: AppSpacing.s5),
+
+            // ── Catégorie principale (optionnel) ──────────────────────────
             Text(
-              'HABITUDES'.toUpperCase(),
+              'CATÉGORIE PRINCIPALE',
+              style: AppTypography.label.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s3),
+            categories.when(
+              loading: () => const SizedBox(
+                height: 36,
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+              error: (_, _) => const SizedBox.shrink(),
+              data: (cats) => _CategoryPicker(
+                categories: cats,
+                selectedId: _selectedCategoryId,
+                onToggle: (id) => setState(() {
+                  _selectedCategoryId =
+                      _selectedCategoryId == id ? null : id;
+                }),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s5),
+
+            // ── Icône (optionnel) ─────────────────────────────────────────
+            Text(
+              'ICÔNE',
+              style: AppTypography.label.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s3),
+            _IconGrid(
+              selectedIcon: _selectedIcon,
+              onToggle: (name) => setState(() {
+                _selectedIcon = _selectedIcon == name ? null : name;
+              }),
+            ),
+            const SizedBox(height: AppSpacing.s5),
+
+            // ── Habitudes ─────────────────────────────────────────────────
+            Text(
+              'HABITUDES',
               style: AppTypography.label.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -162,6 +227,85 @@ class _Co02CreateCollectionScreenState
   }
 }
 
+class _CategoryPicker extends StatelessWidget {
+  final List<Category> categories;
+  final CategoryId? selectedId;
+  final void Function(CategoryId) onToggle;
+
+  const _CategoryPicker({
+    required this.categories,
+    required this.selectedId,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (categories.isEmpty) return const SizedBox.shrink();
+    return Wrap(
+      spacing: AppSpacing.s2,
+      runSpacing: AppSpacing.s2,
+      children: categories.map((cat) {
+        final isSelected = selectedId == cat.id;
+        return ChoiceChip(
+          label: Text(cat.name.value),
+          selected: isSelected,
+          onSelected: (_) => onToggle(cat.id),
+          selectedColor: AppColors.accent,
+          labelStyle: AppTypography.caption.copyWith(
+            color: isSelected ? AppColors.bgSurface : AppColors.textPrimary,
+          ),
+          backgroundColor: AppColors.bgSurface,
+          side: BorderSide(
+            color: isSelected ? AppColors.accent : AppColors.borderDefault,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.s2),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _IconGrid extends StatelessWidget {
+  final String? selectedIcon;
+  final void Function(String) onToggle;
+
+  const _IconGrid({required this.selectedIcon, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: AppSpacing.s2,
+      runSpacing: AppSpacing.s2,
+      children: _kCollectionIconMap.entries.map((entry) {
+        final isSelected = selectedIcon == entry.key;
+        return GestureDetector(
+          onTap: () => onToggle(entry.key),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.accent : AppColors.bgSurface,
+              borderRadius: BorderRadius.circular(AppSpacing.s2),
+              border: Border.all(
+                color: isSelected ? AppColors.accent : AppColors.borderDefault,
+              ),
+            ),
+            child: Icon(
+              entry.value,
+              size: 24,
+              color:
+                  isSelected ? AppColors.bgSurface : AppColors.textSecondary,
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
 class _HabitPicker extends StatelessWidget {
   final List<Habit> habits;
   final Set<String> selected;
@@ -198,7 +342,9 @@ class _HabitPicker extends StatelessWidget {
                   color: isSelected ? AppColors.accent : AppColors.textTertiary,
                 ),
                 const SizedBox(width: AppSpacing.s3),
-                Expanded(child: Text(h.name.value, style: AppTypography.body)),
+                Expanded(
+                  child: Text(h.name.value, style: AppTypography.body),
+                ),
                 Text(
                   '${h.points.value} pts',
                   style: AppTypography.caption.copyWith(
