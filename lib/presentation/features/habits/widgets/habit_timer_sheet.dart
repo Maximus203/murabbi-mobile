@@ -93,9 +93,7 @@ class HabitTimerSheet extends ConsumerWidget {
               const Spacer(),
 
               // ── Cercle de progression ─────────────────────────────────
-              Center(
-                child: _TimerCircle(state: timerState),
-              ),
+              Center(child: _TimerCircle(state: timerState)),
               const Spacer(),
 
               // ── Boutons play / pause / stop ───────────────────────────
@@ -326,35 +324,35 @@ class _ControlButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (state.status) {
       HabitTimerStatus.initial => _RoundButton(
-          icon: Icons.play_arrow_rounded,
-          onTap: onPlay,
-          filled: true,
-        ),
+        icon: Icons.play_arrow_rounded,
+        onTap: onPlay,
+        filled: true,
+      ),
       HabitTimerStatus.running => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _RoundButton(icon: Icons.pause_rounded, onTap: onPause),
-            const SizedBox(width: AppSpacing.s4),
-            _RoundButton(icon: Icons.stop_rounded, onTap: onStop),
-          ],
-        ),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _RoundButton(icon: Icons.pause_rounded, onTap: onPause),
+          const SizedBox(width: AppSpacing.s4),
+          _RoundButton(icon: Icons.stop_rounded, onTap: onStop),
+        ],
+      ),
       HabitTimerStatus.paused => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _RoundButton(
-              icon: Icons.play_arrow_rounded,
-              onTap: onPlay,
-              filled: true,
-            ),
-            const SizedBox(width: AppSpacing.s4),
-            _RoundButton(icon: Icons.stop_rounded, onTap: onStop),
-          ],
-        ),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _RoundButton(
+            icon: Icons.play_arrow_rounded,
+            onTap: onPlay,
+            filled: true,
+          ),
+          const SizedBox(width: AppSpacing.s4),
+          _RoundButton(icon: Icons.stop_rounded, onTap: onStop),
+        ],
+      ),
       HabitTimerStatus.completed => _RoundButton(
-          icon: Icons.check_rounded,
-          onTap: onStop,
-          filled: true,
-        ),
+        icon: Icons.check_rounded,
+        onTap: onStop,
+        filled: true,
+      ),
     };
   }
 }
@@ -408,19 +406,17 @@ class _PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (state.status) {
       HabitTimerStatus.initial => AppButton(
-          label: '✓ Valider l\'habitude',
-          onPressed: onValidateWithoutTimer,
-        ),
-      HabitTimerStatus.running ||
-      HabitTimerStatus.paused =>
-        AppButton(
-          label: 'Arrêter le timer pour valider',
-          onPressed: onStopAndValidate,
-        ),
+        label: '✓ Valider l\'habitude',
+        onPressed: onValidateWithoutTimer,
+      ),
+      HabitTimerStatus.running || HabitTimerStatus.paused => AppButton(
+        label: 'Arrêter le timer pour valider',
+        onPressed: onStopAndValidate,
+      ),
       HabitTimerStatus.completed => AppButton(
-          label: '✓ Valider l\'habitude',
-          onPressed: onStopAndValidate,
-        ),
+        label: '✓ Valider l\'habitude',
+        onPressed: onStopAndValidate,
+      ),
     };
   }
 }

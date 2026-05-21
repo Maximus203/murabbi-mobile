@@ -191,13 +191,15 @@ class _DetailContent extends ConsumerWidget {
     Duration? duration,
   }) async {
     final today = DateTime.now().toUtc();
-    await ref.read(logHabitValueUseCaseProvider).call(
-      habitId: HabitId(habitId),
-      date: DateTime.utc(today.year, today.month, today.day),
-      actualValue: actualValue,
-      targetValue: targetValue,
-      duration: duration,
-    );
+    await ref
+        .read(logHabitValueUseCaseProvider)
+        .call(
+          habitId: HabitId(habitId),
+          date: DateTime.utc(today.year, today.month, today.day),
+          actualValue: actualValue,
+          targetValue: targetValue,
+          duration: duration,
+        );
     await ref
         .read(habitDetailNotifierProvider(habitId).notifier)
         .refreshStats();
@@ -281,45 +283,42 @@ class _DetailContent extends ConsumerWidget {
     final target = state.habit.target;
     return switch (target) {
       HabitTargetValue() => [
-          _ObjectiveCard(
+        _ObjectiveCard(
+          target: target,
+          currentValue: _todayActualValue,
+          onTap: () => showHabitObjectiveSheet(
+            context,
             target: target,
             currentValue: _todayActualValue,
-            onTap: () => showHabitObjectiveSheet(
-              context,
-              target: target,
-              currentValue: _todayActualValue,
-              onValidate: (value) => _log(
-                ref,
-                actualValue: value,
-                targetValue: target.value.value,
-              ),
-            ),
+            onValidate: (value) =>
+                _log(ref, actualValue: value, targetValue: target.value.value),
           ),
-          const SizedBox(height: AppSpacing.s6),
-        ],
+        ),
+        const SizedBox(height: AppSpacing.s6),
+      ],
       HabitTargetTimed() => [
-          _TimerCard(
+        _TimerCard(
+          target: target,
+          alreadyDone: _todayActualValue != null,
+          onTap: () => showHabitTimerSheet(
+            context,
+            habit: state.habit,
             target: target,
-            alreadyDone: _todayActualValue != null,
-            onTap: () => showHabitTimerSheet(
-              context,
-              habit: state.habit,
-              target: target,
-              onValidate: (elapsed) {
-                final actualValue = target.unit == TargetUnit.hours
-                    ? elapsed.inSeconds ~/ 3600
-                    : elapsed.inMinutes;
-                _log(
-                  ref,
-                  actualValue: actualValue,
-                  targetValue: target.value.value,
-                  duration: elapsed,
-                );
-              },
-            ),
+            onValidate: (elapsed) {
+              final actualValue = target.unit == TargetUnit.hours
+                  ? elapsed.inSeconds ~/ 3600
+                  : elapsed.inMinutes;
+              _log(
+                ref,
+                actualValue: actualValue,
+                targetValue: target.value.value,
+                duration: elapsed,
+              );
+            },
           ),
-          const SizedBox(height: AppSpacing.s6),
-        ],
+        ),
+        const SizedBox(height: AppSpacing.s6),
+      ],
       HabitTargetNone() => const [],
     };
   }
@@ -362,9 +361,18 @@ class _ObjectiveCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Objectif du jour', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
+              Text(
+                'Objectif du jour',
+                style: AppTypography.label.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
               if (_done)
-                const Icon(LucideIcons.circleCheck, size: 18, color: AppColors.success),
+                const Icon(
+                  LucideIcons.circleCheck,
+                  size: 18,
+                  color: AppColors.success,
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.s3),
@@ -374,11 +382,16 @@ class _ObjectiveCard extends StatelessWidget {
             children: [
               Text(
                 '$_actual',
-                style: AppTypography.h1.copyWith(fontSize: 40, color: _valueColor),
+                style: AppTypography.h1.copyWith(
+                  fontSize: 40,
+                  color: _valueColor,
+                ),
               ),
               Text(
                 ' / $_targetValue $_unitLabel',
-                style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
           ),
@@ -432,9 +445,18 @@ class _TimerCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Timer', style: AppTypography.label.copyWith(color: AppColors.textSecondary)),
+              Text(
+                'Timer',
+                style: AppTypography.label.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
               if (alreadyDone)
-                const Icon(LucideIcons.circleCheck, size: 18, color: AppColors.success),
+                const Icon(
+                  LucideIcons.circleCheck,
+                  size: 18,
+                  color: AppColors.success,
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.s3),

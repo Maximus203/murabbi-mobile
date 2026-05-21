@@ -57,9 +57,7 @@ class _HabitObjectiveSheetState extends State<HabitObjectiveSheet> {
   void initState() {
     super.initState();
     _value = widget.currentValue ?? 0;
-    _directController = TextEditingController(
-      text: _targetValue.toString(),
-    );
+    _directController = TextEditingController(text: _targetValue.toString());
   }
 
   @override
@@ -71,8 +69,8 @@ class _HabitObjectiveSheetState extends State<HabitObjectiveSheet> {
   void _increment() => setState(() => _value++);
 
   void _decrement() => setState(() {
-        if (_value > 0) _value--;
-      });
+    if (_value > 0) _value--;
+  });
 
   void _applyDirect() {
     final parsed = int.tryParse(_directController.text.trim());
@@ -149,9 +147,7 @@ class _HabitObjectiveSheetState extends State<HabitObjectiveSheet> {
                   width: 56,
                   child: Text(
                     '$_value',
-                    style: AppTypography.h1.copyWith(
-                      color: _valueColor,
-                    ),
+                    style: AppTypography.h1.copyWith(color: _valueColor),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -195,8 +191,7 @@ class _HabitObjectiveSheetState extends State<HabitObjectiveSheet> {
                       filled: true,
                       fillColor: AppColors.bgInput,
                       border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.button),
+                        borderRadius: BorderRadius.circular(AppRadius.button),
                         borderSide: BorderSide.none,
                       ),
                       contentPadding: const EdgeInsets.symmetric(

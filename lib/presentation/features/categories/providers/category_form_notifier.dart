@@ -39,11 +39,7 @@ class CategoryFormState extends Equatable {
   /// Le formulaire peut être enregistré uniquement si le nom est valide.
   bool get canSubmit => isNameValid;
 
-  CategoryFormState copyWith({
-    String? name,
-    Color? color,
-    String? icon,
-  }) {
+  CategoryFormState copyWith({String? name, Color? color, String? icon}) {
     return CategoryFormState(
       name: name ?? this.name,
       color: color ?? this.color,

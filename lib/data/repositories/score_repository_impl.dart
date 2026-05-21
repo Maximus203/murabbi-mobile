@@ -16,11 +16,10 @@ class ScoreRepositoryImpl implements ScoreRepository {
   const ScoreRepositoryImpl(this._ds);
 
   @override
-  Future<UserScore> getUserScore(UserId userId) =>
-      _guard(() async {
-        final row = await _ds.getUserScore(userId.value);
-        return UserScoreMapper.fromRow(row);
-      });
+  Future<UserScore> getUserScore(UserId userId) => _guard(() async {
+    final row = await _ds.getUserScore(userId.value);
+    return UserScoreMapper.fromRow(row);
+  });
 
   @override
   Future<List<UserScore>> getLeaderboard({required int limit}) =>

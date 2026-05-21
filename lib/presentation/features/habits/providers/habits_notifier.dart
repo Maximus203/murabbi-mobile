@@ -42,7 +42,9 @@ class HabitsNotifier extends AsyncNotifier<List<Habit>> {
   Future<List<Habit>> build() async {
     final user = ref.watch(authNotifierProvider).valueOrNull;
     if (user == null) {
-      appLog.w('HabitsNotifier: auth null — returning empty (session not ready?)');
+      appLog.w(
+        'HabitsNotifier: auth null — returning empty (session not ready?)',
+      );
       return const [];
     }
     appLog.d('HabitsNotifier: fetching habits');

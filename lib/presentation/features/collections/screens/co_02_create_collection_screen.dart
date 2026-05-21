@@ -157,8 +157,7 @@ class _Co02CreateCollectionScreenState
                 categories: cats,
                 selectedId: _selectedCategoryId,
                 onToggle: (id) => setState(() {
-                  _selectedCategoryId =
-                      _selectedCategoryId == id ? null : id;
+                  _selectedCategoryId = _selectedCategoryId == id ? null : id;
                 }),
               ),
             ),
@@ -297,8 +296,7 @@ class _IconGrid extends StatelessWidget {
             child: Icon(
               lu(entry.value),
               size: 24,
-              color:
-                  isSelected ? AppColors.bgSurface : AppColors.textSecondary,
+              color: isSelected ? AppColors.bgSurface : AppColors.textSecondary,
             ),
           ),
         );
@@ -343,9 +341,7 @@ class _HabitPicker extends StatelessWidget {
                   color: isSelected ? AppColors.accent : AppColors.textTertiary,
                 ),
                 const SizedBox(width: AppSpacing.s3),
-                Expanded(
-                  child: Text(h.name.value, style: AppTypography.body),
-                ),
+                Expanded(child: Text(h.name.value, style: AppTypography.body)),
                 Text(
                   '${h.points.value} pts',
                   style: AppTypography.caption.copyWith(

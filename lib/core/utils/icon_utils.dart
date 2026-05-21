@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 /// build WSL ne garantit pas. Ce wrapper lit uniquement le codePoint et
 /// reconstruit un IconData dans le namespace de l'app.
 IconData lu(IconData icon) => IconData(
-      icon.codePoint,
-      fontFamily: 'Lucide',
-      matchTextDirection: icon.matchTextDirection,
-    );
+  icon.codePoint,
+  fontFamily: 'Lucide',
+  matchTextDirection: icon.matchTextDirection,
+);

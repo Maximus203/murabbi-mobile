@@ -62,8 +62,8 @@ class CoDetailCollectionScreen extends ConsumerWidget {
         child: isLoading && match == null
             ? const Center(child: CircularProgressIndicator())
             : match == null
-                ? _Missing(onBack: onBack)
-                : _DetailBody(collection: match, onBack: onBack),
+            ? _Missing(onBack: onBack)
+            : _DetailBody(collection: match, onBack: onBack),
       ),
     );
   }

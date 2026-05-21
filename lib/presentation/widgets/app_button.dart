@@ -49,7 +49,8 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final spec = _spec(variant, enabled: _enabled);
     final radius = BorderRadius.circular(AppRadius.button);
-    final content = child ??
+    final content =
+        child ??
         (isLoading
             ? SizedBox(
                 width: 20,

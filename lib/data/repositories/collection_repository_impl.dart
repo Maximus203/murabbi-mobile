@@ -21,59 +21,59 @@ class CollectionRepositoryImpl implements CollectionRepository {
   const CollectionRepositoryImpl(this._ds);
 
   @override
-  Future<List<Collection>> getCollections(UserId userId) =>
-      _guard(() async {
-        final rows = await _ds.getCollections(userId.value);
-        return rows.map(CollectionMapper.fromRow).toList(growable: false);
-      });
+  Future<List<Collection>> getCollections(UserId userId) => _guard(() async {
+    final rows = await _ds.getCollections(userId.value);
+    return rows.map(CollectionMapper.fromRow).toList(growable: false);
+  });
 
   @override
   Future<void> activateCollection({
     required UserId userId,
     required CollectionId collectionId,
-  }) =>
-      _guard(() => _ds.activateCollection(
-            userId: userId.value,
-            collectionId: collectionId.value,
-          ));
+  }) => _guard(
+    () => _ds.activateCollection(
+      userId: userId.value,
+      collectionId: collectionId.value,
+    ),
+  );
 
   @override
   Future<void> deactivateCollection({
     required UserId userId,
     required CollectionId collectionId,
-  }) =>
-      _guard(() => _ds.deactivateCollection(
-            userId: userId.value,
-            collectionId: collectionId.value,
-          ));
+  }) => _guard(
+    () => _ds.deactivateCollection(
+      userId: userId.value,
+      collectionId: collectionId.value,
+    ),
+  );
 
   @override
   Future<Collection> createCollection({
     required UserId userId,
     required Collection collection,
-  }) =>
-      _guard(() async {
-        final row = CollectionMapper.toRow(collection)
-          ..['created_by'] = userId.value;
-        final created = await _ds.createCollection(row);
-        final newId = created['id'] as String;
+  }) => _guard(() async {
+    final row = CollectionMapper.toRow(collection)
+      ..['created_by'] = userId.value;
+    final created = await _ds.createCollection(row);
+    final newId = created['id'] as String;
 
-        // Lie les habitudes choisies dans la table de jonction.
-        await _ds.linkHabits(
-          collectionId: newId,
-          habitIds: collection.habitIds.map((h) => h.value).toList(),
-        );
+    // Lie les habitudes choisies dans la table de jonction.
+    await _ds.linkHabits(
+      collectionId: newId,
+      habitIds: collection.habitIds.map((h) => h.value).toList(),
+    );
 
-        // Recompose l'entité persistée à partir de la row créée + habitIds
-        // d'origine (la jonction vient d'être écrite).
-        return CollectionMapper.fromRow({
-          ...created,
-          'collection_habits': collection.habitIds
-              .map((h) => {'habit_id': h.value})
-              .toList(),
-          'user_collections': const <dynamic>[],
-        });
-      });
+    // Recompose l'entité persistée à partir de la row créée + habitIds
+    // d'origine (la jonction vient d'être écrite).
+    return CollectionMapper.fromRow({
+      ...created,
+      'collection_habits': collection.habitIds
+          .map((h) => {'habit_id': h.value})
+          .toList(),
+      'user_collections': const <dynamic>[],
+    });
+  });
 
   Future<T> _guard<T>(Future<T> Function() body) async {
     try {
@@ -81,8 +81,7 @@ class CollectionRepositoryImpl implements CollectionRepository {
     } on CollectionFailure {
       rethrow;
     } on sb.PostgrestException catch (e) {
-      throw CollectionFailure.database(
-          message: '${e.code ?? ''} ${e.message}');
+      throw CollectionFailure.database(message: '${e.code ?? ''} ${e.message}');
     } catch (e) {
       throw _translate(e);
     }

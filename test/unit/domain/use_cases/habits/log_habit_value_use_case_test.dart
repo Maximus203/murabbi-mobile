@@ -44,18 +44,22 @@ void main() {
       expect(log.status, HabitLogStatus.onTime);
     });
 
-    test('actualValue > targetValue → targetReached = true (dépassé)', () async {
-      await useCase.call(
-        habitId: habitId,
-        date: date,
-        actualValue: 7,
-        targetValue: 5,
-      );
-      final log =
-          verify(() => repo.logHabit(captureAny())).captured.first as HabitLog;
-      expect(log.targetReached, isTrue);
-      expect(log.actualValue, 7);
-    });
+    test(
+      'actualValue > targetValue → targetReached = true (dépassé)',
+      () async {
+        await useCase.call(
+          habitId: habitId,
+          date: date,
+          actualValue: 7,
+          targetValue: 5,
+        );
+        final log =
+            verify(() => repo.logHabit(captureAny())).captured.first
+                as HabitLog;
+        expect(log.targetReached, isTrue);
+        expect(log.actualValue, 7);
+      },
+    );
 
     test('actualValue < targetValue → targetReached = false', () async {
       await useCase.call(
@@ -109,10 +113,14 @@ void main() {
       final log =
           verify(() => repo.logHabit(captureAny())).captured.first as HabitLog;
       expect(log.loggedAt, isNotNull);
-      expect(log.loggedAt!.isAfter(before.subtract(const Duration(seconds: 1))),
-          isTrue);
       expect(
-          log.loggedAt!.isBefore(after.add(const Duration(seconds: 1))), isTrue);
+        log.loggedAt!.isAfter(before.subtract(const Duration(seconds: 1))),
+        isTrue,
+      );
+      expect(
+        log.loggedAt!.isBefore(after.add(const Duration(seconds: 1))),
+        isTrue,
+      );
     });
 
     test('habitId et date transmis intacts', () async {

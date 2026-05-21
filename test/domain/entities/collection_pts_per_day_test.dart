@@ -9,26 +9,26 @@ import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 
 Habit _habit(String id, int pts) => Habit(
-      id: HabitId(id),
-      name: NonEmptyString('Habit $id'),
-      categoryId: CategoryId('cat-1'),
-      frequencyType: HabitFrequencyType.daily,
-      frequency: 1,
-      activeDays: const {1, 2, 3, 4, 5, 6, 7},
-      points: HabitPoints(pts),
-      isSystem: false,
-      target: const HabitTarget.none(),
-      subtasks: const [],
-    );
+  id: HabitId(id),
+  name: NonEmptyString('Habit $id'),
+  categoryId: CategoryId('cat-1'),
+  frequencyType: HabitFrequencyType.daily,
+  frequency: 1,
+  activeDays: const {1, 2, 3, 4, 5, 6, 7},
+  points: HabitPoints(pts),
+  isSystem: false,
+  target: const HabitTarget.none(),
+  subtasks: const [],
+);
 
 Collection _collection(List<String> habitIds) => Collection(
-      id: CollectionId('col-1'),
-      name: NonEmptyString('Test Collection'),
-      description: NonEmptyString('Desc'),
-      habitIds: habitIds.map(HabitId.new).toList(),
-      isSystem: false,
-      isActive: false,
-    );
+  id: CollectionId('col-1'),
+  name: NonEmptyString('Test Collection'),
+  description: NonEmptyString('Desc'),
+  habitIds: habitIds.map(HabitId.new).toList(),
+  isSystem: false,
+  isActive: false,
+);
 
 void main() {
   group('Collection.ptsPerDay', () {

@@ -21,7 +21,9 @@ final activateCollectionUseCaseProvider = Provider<ActivateCollectionUseCase>((
 
 final deactivateCollectionUseCaseProvider =
     Provider<DeactivateCollectionUseCase>((ref) {
-      return DeactivateCollectionUseCase(ref.watch(collectionRepositoryProvider));
+      return DeactivateCollectionUseCase(
+        ref.watch(collectionRepositoryProvider),
+      );
     });
 
 final createCollectionUseCaseProvider = Provider<CreateCollectionUseCase>((

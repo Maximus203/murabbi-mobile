@@ -84,10 +84,7 @@ class HabitTimerNotifier extends FamilyNotifier<HabitTimerState, Duration> {
         status: HabitTimerStatus.completed,
       );
     } else {
-      state = state.copyWith(
-        elapsed: next,
-        status: HabitTimerStatus.running,
-      );
+      state = state.copyWith(elapsed: next, status: HabitTimerStatus.running);
     }
   }
 
@@ -101,14 +98,11 @@ class HabitTimerNotifier extends FamilyNotifier<HabitTimerState, Duration> {
   // ignore: invalid_use_of_visible_for_testing_member
   void forceElapsedForTest(Duration value) {
     _cancelTicker();
-    state = state.copyWith(
-      elapsed: value,
-      status: HabitTimerStatus.completed,
-    );
+    state = state.copyWith(elapsed: value, status: HabitTimerStatus.completed);
   }
 }
 
 final habitTimerProvider =
     NotifierProvider.family<HabitTimerNotifier, HabitTimerState, Duration>(
-  HabitTimerNotifier.new,
-);
+      HabitTimerNotifier.new,
+    );
