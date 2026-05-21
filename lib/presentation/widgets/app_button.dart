@@ -77,22 +77,27 @@ class AppButton extends StatelessWidget {
                 ],
               ));
 
-    return Material(
-      color: spec.background,
-      shape: RoundedRectangleBorder(
-        side: spec.border == null
-            ? BorderSide.none
-            : BorderSide(color: spec.border!, width: AppBorderWidth.thin),
-        borderRadius: radius,
-      ),
-      child: InkWell(
-        onTap: _enabled ? onPressed : null,
-        borderRadius: radius,
-        child: Container(
-          height: kMinInteractiveDimension,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-          alignment: Alignment.center,
-          child: content,
+    return Semantics(
+      button: true,
+      enabled: _enabled,
+      label: label,
+      child: Material(
+        color: spec.background,
+        shape: RoundedRectangleBorder(
+          side: spec.border == null
+              ? BorderSide.none
+              : BorderSide(color: spec.border!, width: AppBorderWidth.thin),
+          borderRadius: radius,
+        ),
+        child: InkWell(
+          onTap: _enabled ? onPressed : null,
+          borderRadius: radius,
+          child: Container(
+            height: kMinInteractiveDimension,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+            alignment: Alignment.center,
+            child: content,
+          ),
         ),
       ),
     );
