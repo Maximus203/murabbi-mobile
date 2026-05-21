@@ -47,8 +47,9 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
     if (!_submitted) return null;
     final v = _emailCtrl.text.trim();
     if (v.isEmpty) return "L'email est requis";
-    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v))
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v)) {
       return "Format d'email invalide";
+    }
     return null;
   }
 

@@ -28,7 +28,7 @@ class Collection extends Equatable {
   /// Nullable — optionnel côté UI ; stocké dans `public.collections` via AR-04.
   final String? icon;
 
-  Collection({
+  const Collection({
     required this.id,
     required this.name,
     required this.description,
