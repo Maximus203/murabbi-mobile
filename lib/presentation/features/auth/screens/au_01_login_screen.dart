@@ -34,6 +34,7 @@ class Au01LoginScreen extends ConsumerStatefulWidget {
 class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  bool _submitted = false;
 
   @override
   void dispose() {
@@ -42,7 +43,24 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
     super.dispose();
   }
 
+  String? get _emailError {
+    if (!_submitted) return null;
+    final v = _emailCtrl.text.trim();
+    if (v.isEmpty) return "L'email est requis";
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v))
+      return "Format d'email invalide";
+    return null;
+  }
+
+  String? get _passwordError {
+    if (!_submitted) return null;
+    if (_passwordCtrl.text.isEmpty) return 'Le mot de passe est requis';
+    return null;
+  }
+
   Future<void> _submit() async {
+    setState(() => _submitted = true);
+    if (_emailError != null || _passwordError != null) return;
     FocusScope.of(context).unfocus();
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text;
@@ -114,6 +132,8 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       autofillHints: const [AutofillHints.email],
+                      onChanged: (_) => setState(() {}),
+                      errorText: _emailError,
                     ),
                     const SizedBox(height: AppSpacing.s4),
                     AppInput(
@@ -125,6 +145,8 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
                       textInputAction: TextInputAction.done,
                       onSubmitted: isLoading ? null : _submit,
                       autofillHints: const [AutofillHints.password],
+                      onChanged: (_) => setState(() {}),
+                      errorText: _passwordError,
                     ),
                   ],
                 ),
@@ -193,9 +215,16 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: isLoading ? null : widget.onSignUp,
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            ref
+                                .read(authNotifierProvider.notifier)
+                                .clearError();
+                            widget.onSignUp();
+                          },
                     child: Text(
-                      'Créer',
+                      'Créer un compte',
                       style: AppTypography.body.copyWith(
                         color: AppColors.accent,
                         fontWeight: FontWeight.w500,

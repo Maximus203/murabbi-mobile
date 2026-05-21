@@ -117,24 +117,18 @@ class _DetailBody extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.s6),
         if (collection.isActive)
-          AppCard(
-            child: Row(
-              children: [
-                Icon(
-                  lu(LucideIcons.circleCheck),
-                  size: 20,
-                  color: AppColors.success,
-                ),
-                const SizedBox(width: AppSpacing.s3),
-                Text(
-                  'Collection active',
-                  style: AppTypography.body.copyWith(color: AppColors.success),
-                ),
-              ],
-            ),
+          AppButton(
+            key: const Key('btn_deactivate'),
+            label: 'Désactiver la collection',
+            onPressed: isActivating
+                ? null
+                : () => ref
+                      .read(collectionsNotifierProvider.notifier)
+                      .deactivate(collection.id),
           )
         else
           AppButton(
+            key: const Key('btn_activate'),
             label: 'Activer la collection',
             onPressed: isActivating
                 ? null

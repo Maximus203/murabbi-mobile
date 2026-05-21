@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 
 void main() {
@@ -32,7 +33,7 @@ void main() {
       );
 
       // Back button présent.
-      expect(find.byIcon(LucideIcons.chevronLeft), findsOneWidget);
+      expect(find.byIcon(lu(LucideIcons.chevronLeft)), findsOneWidget);
 
       // Titre centré : centerTitle = true sur l'AppBar sous-jacent.
       final appBar = tester.widget<AppBar>(find.byType(AppBar));
@@ -52,7 +53,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byIcon(LucideIcons.chevronLeft));
+      await tester.tap(find.byIcon(lu(LucideIcons.chevronLeft)));
       expect(tapped, 1);
     });
 

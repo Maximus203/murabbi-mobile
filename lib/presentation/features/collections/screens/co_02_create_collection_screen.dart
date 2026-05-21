@@ -71,10 +71,7 @@ class _Co02CreateCollectionScreenState
     super.dispose();
   }
 
-  bool get _isValid =>
-      _nameController.text.trim().isNotEmpty &&
-      _descController.text.trim().isNotEmpty &&
-      _selected.isNotEmpty;
+  bool get _isValid => _nameController.text.trim().isNotEmpty;
 
   Future<void> _submit() async {
     setState(() => _submitted = true);
@@ -119,23 +116,22 @@ class _Co02CreateCollectionScreenState
             ),
             const SizedBox(height: AppSpacing.s5),
             AppInput(
+              key: const Key('field_name'),
               label: 'Titre',
               placeholder: 'Routine du matin',
               controller: _nameController,
               onChanged: (_) => setState(() {}),
               errorText: _submitted && _nameController.text.trim().isEmpty
-                  ? 'Titre requis'
+                  ? 'Le nom est requis.'
                   : null,
             ),
             const SizedBox(height: AppSpacing.s4),
             AppInput(
+              key: const Key('field_description'),
               label: 'Description',
               placeholder: 'À quoi sert cette collection ?',
               controller: _descController,
               onChanged: (_) => setState(() {}),
-              errorText: _submitted && _descController.text.trim().isEmpty
-                  ? 'Description requise'
-                  : null,
             ),
             const SizedBox(height: AppSpacing.s5),
 
@@ -208,18 +204,8 @@ class _Co02CreateCollectionScreenState
                 }),
               ),
             ),
-            if (_submitted && _selected.isEmpty) ...[
-              const SizedBox(height: AppSpacing.s2),
-              Text(
-                'Sélectionne au moins une habitude.',
-                style: AppTypography.caption.copyWith(color: AppColors.danger),
-              ),
-            ],
             const SizedBox(height: AppSpacing.s6),
-            AppButton(
-              label: 'Créer la collection',
-              onPressed: isSaving ? null : _submit,
-            ),
+            AppButton(label: 'Créer', onPressed: isSaving ? null : _submit),
           ],
         ),
       ),

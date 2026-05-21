@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_search_bar.dart';
 
@@ -29,7 +30,7 @@ void main() {
         _wrap(AppSearchBar(placeholder: 'Rechercher', onChanged: (_) {})),
       );
 
-      expect(find.byIcon(LucideIcons.search), findsOneWidget);
+      expect(find.byIcon(lu(LucideIcons.search)), findsOneWidget);
     });
 
     testWidgets('fond bgInput', (tester) async {
@@ -54,7 +55,7 @@ void main() {
         _wrap(AppSearchBar(placeholder: 'Rechercher', onChanged: (_) {})),
       );
 
-      expect(find.byIcon(LucideIcons.x), findsNothing);
+      expect(find.byIcon(lu(LucideIcons.x)), findsNothing);
     });
   });
 
@@ -79,7 +80,7 @@ void main() {
       await tester.enterText(find.byType(TextField), 'abc');
       await tester.pump();
 
-      expect(find.byIcon(LucideIcons.x), findsOneWidget);
+      expect(find.byIcon(lu(LucideIcons.x)), findsOneWidget);
     });
 
     testWidgets('le tap sur clear vide le champ et notifie onChanged', (
@@ -93,7 +94,7 @@ void main() {
       await tester.enterText(find.byType(TextField), 'abc');
       await tester.pump();
 
-      await tester.tap(find.byIcon(LucideIcons.x));
+      await tester.tap(find.byIcon(lu(LucideIcons.x)));
       await tester.pump();
 
       expect(
@@ -117,7 +118,7 @@ void main() {
 
       await tester.enterText(find.byType(TextField), 'abc');
       await tester.pump();
-      await tester.tap(find.byIcon(LucideIcons.x));
+      await tester.tap(find.byIcon(lu(LucideIcons.x)));
       await tester.pump();
 
       expect(cleared, 1);

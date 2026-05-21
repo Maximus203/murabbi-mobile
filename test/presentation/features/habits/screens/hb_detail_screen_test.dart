@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
@@ -156,7 +157,7 @@ void main() {
     var backed = false;
     await tester.pumpWidget(pumpable(onBack: () => backed = true));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(LucideIcons.chevronLeft));
+    await tester.tap(find.byIcon(lu(LucideIcons.chevronLeft)));
     await tester.pumpAndSettle();
     expect(backed, isTrue);
   });

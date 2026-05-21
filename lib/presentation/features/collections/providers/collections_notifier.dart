@@ -6,7 +6,7 @@ import 'package:murabbi_mobile/domain/use_cases/collections/create_collection_us
 import 'package:murabbi_mobile/domain/use_cases/collections/deactivate_collection_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/collections/get_collections_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
-import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/salat/providers/current_user_provider.dart';
 
 /// Use cases collections exposés via Riverpod (issue #6, Phase 5).
 final getCollectionsUseCaseProvider = Provider<GetCollectionsUseCase>((ref) {
@@ -37,7 +37,7 @@ final createCollectionUseCaseProvider = Provider<CreateCollectionUseCase>((
 class CollectionsNotifier extends AsyncNotifier<List<Collection>> {
   @override
   Future<List<Collection>> build() async {
-    final user = ref.watch(authNotifierProvider).valueOrNull;
+    final user = ref.watch(currentUserProvider);
     if (user == null) return const [];
     final getCollections = ref.watch(getCollectionsUseCaseProvider);
     return getCollections(user.id);
@@ -45,7 +45,7 @@ class CollectionsNotifier extends AsyncNotifier<List<Collection>> {
 
   /// Active une collection système puis recharge la liste.
   Future<void> activate(CollectionId collectionId) async {
-    final user = ref.read(authNotifierProvider).valueOrNull;
+    final user = ref.read(currentUserProvider);
     if (user == null) return;
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
@@ -59,7 +59,7 @@ class CollectionsNotifier extends AsyncNotifier<List<Collection>> {
 
   /// Désactive une collection pour l'utilisateur connecté puis recharge la liste.
   Future<void> deactivate(CollectionId collectionId) async {
-    final user = ref.read(authNotifierProvider).valueOrNull;
+    final user = ref.read(currentUserProvider);
     if (user == null) return;
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
@@ -73,7 +73,7 @@ class CollectionsNotifier extends AsyncNotifier<List<Collection>> {
 
   /// Crée une nouvelle collection utilisateur puis recharge la liste.
   Future<void> create(Collection collection) async {
-    final user = ref.read(authNotifierProvider).valueOrNull;
+    final user = ref.read(currentUserProvider);
     if (user == null) return;
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {

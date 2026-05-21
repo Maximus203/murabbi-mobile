@@ -153,7 +153,7 @@ class _AppInputState extends State<AppInput> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.label != null) ...[
-          Text(widget.label!, style: AppTypography.label),
+          Text(widget.label!.toUpperCase(), style: AppTypography.label),
           const SizedBox(height: AppSpacing.s2),
         ],
         AnimatedContainer(

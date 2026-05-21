@@ -44,6 +44,14 @@ void main() {
     weeklyRank: 2,
   );
 
+  final score3 = UserScore(
+    userId: UserId('user-uuid-003'),
+    totalPoints: 900,
+    weeklyPoints: 100,
+    currentLevel: Level.aspirant,
+    weeklyRank: 3,
+  );
+
   setUp(() {
     mockRepo = MockScoreRepository();
     registerFallbackValue(UserId('fallback'));
@@ -64,12 +72,12 @@ void main() {
   }
 
   testWidgets('affiche les scores du leaderboard', (tester) async {
-    await tester.pumpWidget(buildSut([score1, score2]));
+    await tester.pumpWidget(buildSut([score1, score2, score3]));
     await tester.pumpAndSettle();
 
-    // Les rangs
-    expect(find.text('#1'), findsOneWidget);
-    expect(find.text('#2'), findsOneWidget);
+    // Les rangs (PodiumCol affiche '$rank', pas '#$rank')
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
     // Les points
     expect(find.text('200 pts'), findsOneWidget);
     expect(find.text('150 pts'), findsOneWidget);
@@ -79,7 +87,7 @@ void main() {
     await tester.pumpWidget(buildSut([]));
     await tester.pumpAndSettle();
 
-    expect(find.text('Aucun score disponible'), findsOneWidget);
+    expect(find.text('Classement à venir'), findsOneWidget);
   });
 
   testWidgets('affiche un indicateur de chargement', (tester) async {

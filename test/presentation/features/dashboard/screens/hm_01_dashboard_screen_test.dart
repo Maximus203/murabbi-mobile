@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/prayer_times_provider.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_settings.dart';
@@ -85,7 +86,7 @@ void main() {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
 
-    expect(find.text('AS-SALĀMU ʿALAYKUM'), findsOneWidget);
+    expect(find.text('As-salāmu ʿalaykum'), findsOneWidget);
     expect(find.text('PROCHAINE PRIÈRE'), findsOneWidget);
     expect(find.text('Dhuhr'), findsOneWidget);
   });
@@ -167,6 +168,6 @@ void main() {
   testWidgets('affiche l\'icône Bell dans le header (#58)', (tester) async {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
-    expect(find.byIcon(LucideIcons.bell), findsOneWidget);
+    expect(find.byIcon(lu(LucideIcons.bell)), findsOneWidget);
   });
 }

@@ -25,7 +25,7 @@ class AppTypography {
   /// Display 42 / Geist Mono Medium / -1px tracking.
   static const TextStyle display = TextStyle(
     fontFamily: _geistMono,
-    fontSize: 48,
+    fontSize: 42,
     fontWeight: FontWeight.w500,
     letterSpacing: -1,
     color: AppColors.textPrimary,

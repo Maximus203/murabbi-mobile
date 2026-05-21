@@ -38,15 +38,7 @@ class Collection extends Equatable {
     this.coverImageUrl,
     this.primaryCategoryId,
     this.icon,
-  }) {
-    if (habitIds.isEmpty) {
-      throw ArgumentError.value(
-        habitIds,
-        'habitIds',
-        'Collection must contain at least one habit',
-      );
-    }
-  }
+  });
 
   /// Somme des points des habitudes de cette collection présentes dans [habits].
   ///
