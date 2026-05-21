@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 /// oblige Flutter à chercher la police dans le namespace du package, ce que le
 /// build WSL ne garantit pas. Ce wrapper lit uniquement le codePoint et
 /// reconstruit un IconData dans le namespace de l'app.
-IconData lu(IconData icon) => IconData(
+IconData lu(IconData icon) => IconData( // ignore: non_const_argument_for_const_parameter
   icon.codePoint,
   fontFamily: 'Lucide',
   matchTextDirection: icon.matchTextDirection,
