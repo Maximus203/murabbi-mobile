@@ -75,6 +75,11 @@ class CollectionRepositoryImpl implements CollectionRepository {
     });
   });
 
+  @override
+  Future<List<Map<String, dynamic>>> getHabitsForCollection({
+    required CollectionId collectionId,
+  }) => _guard(() => _ds.getHabitsForCollection(collectionId.value));
+
   Future<T> _guard<T>(Future<T> Function() body) async {
     try {
       return await body();

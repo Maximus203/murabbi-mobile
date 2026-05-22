@@ -105,4 +105,51 @@ void main() {
       },
     );
   });
+
+  group('CollectionRepositoryImpl.getHabitsForCollection', () {
+    // Tests couvrant la migration issue #162 : published_catalog remplace
+    // les accès directs à collection_habits (RLS révoquée).
+    test('délègue au datasource et retourne la liste de rows', () async {
+      final expected = [
+        {'habit_id': 'h-1', 'position': 1},
+        {'habit_id': 'h-2', 'position': 2},
+      ];
+      when(
+        () => mockDs.getHabitsForCollection(collectionId.value),
+      ).thenAnswer((_) async => expected);
+
+      final result = await repo.getHabitsForCollection(
+        collectionId: collectionId,
+      );
+
+      expect(result, expected);
+      verify(() => mockDs.getHabitsForCollection(collectionId.value)).called(1);
+    });
+
+    test('traduit PostgrestException en CollectionDatabaseFailure', () async {
+      when(
+        () => mockDs.getHabitsForCollection(collectionId.value),
+      ).thenThrow(const sb.PostgrestException(message: 'RLS denied'));
+
+      expect(
+        () => repo.getHabitsForCollection(collectionId: collectionId),
+        throwsA(isA<CollectionDatabaseFailure>()),
+      );
+    });
+
+    test(
+      'retourne liste vide si collection sans habits dans published_catalog',
+      () async {
+        when(
+          () => mockDs.getHabitsForCollection(collectionId.value),
+        ).thenAnswer((_) async => []);
+
+        final result = await repo.getHabitsForCollection(
+          collectionId: collectionId,
+        );
+
+        expect(result, isEmpty);
+      },
+    );
+  });
 }
