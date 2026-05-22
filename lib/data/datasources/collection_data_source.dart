@@ -27,4 +27,12 @@ abstract interface class CollectionDataSource {
     required String userId,
     required String collectionId,
   });
+
+  /// Désactive une collection pour [userId] — supprime la row
+  /// `user_collections(user_id, collection_id)` (pattern symétrique à
+  /// `activateCollection`).
+  Future<void> deactivateCollection({
+    required String userId,
+    required String collectionId,
+  });
 }

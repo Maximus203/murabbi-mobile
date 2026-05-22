@@ -117,35 +117,20 @@ class _Hb04CategoryFormScreenState
           ),
           const SizedBox(height: AppSpacing.s5),
 
-          // ── Slider points (Q-CAT-01) ──────────────────────────────────
-          // TODO(Q-CAT-01) à valider PO : la pondération « points catégorie »
-          // est-elle un multiplicateur de scoring ou un simple tri ? Tant que
-          // le PO n'a pas tranché, ce slider n'est PAS branché sur un use case
-          // réel — la valeur n'est pas persistée (cf. issue #150).
-          const Text('POINTS (À VALIDER)', style: AppTypography.label),
-          const SizedBox(height: AppSpacing.s1),
-          Text(
-            'Pondération de la catégorie : ${form.points}',
-            style: AppTypography.caption.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          Slider(
-            value: form.points.toDouble(),
-            min: 1,
-            max: 10,
-            divisions: 9,
-            activeColor: AppColors.accent,
-            label: '${form.points}',
-            onChanged: (v) => notifier.setPoints(v.round()),
-          ),
-          const SizedBox(height: AppSpacing.s4),
-
           // ── Enregistrer ───────────────────────────────────────────────
           AppButton(
             label: 'Enregistrer',
             onPressed: form.canSubmit && !_saving ? () => _save(form) : null,
-            isLoading: _saving,
+            child: _saving
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: AppBorderWidth.indicatorStroke,
+                      color: AppColors.bgSurface,
+                    ),
+                  )
+                : null,
           ),
 
           // ── Supprimer (mode édition uniquement) ───────────────────────

@@ -1,4 +1,5 @@
 import 'package:murabbi_mobile/domain/entities/collection.dart';
+import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
@@ -36,6 +37,8 @@ class CollectionMapper {
         ? 'Sans description'
         : descRaw;
 
+    final rawCatId = row['primary_category_id'] as String?;
+
     return Collection(
       id: CollectionId(row['id'] as String),
       name: NonEmptyString(row['name'] as String),
@@ -44,6 +47,8 @@ class CollectionMapper {
       isSystem: (row['is_system'] as bool?) ?? false,
       isActive: userCollections.isNotEmpty,
       coverImageUrl: row['cover_image_url'] as String?,
+      primaryCategoryId: rawCatId != null ? CategoryId(rawCatId) : null,
+      icon: row['icon'] as String?,
     );
   }
 
@@ -57,6 +62,9 @@ class CollectionMapper {
       'is_system': collection.isSystem,
       if (collection.coverImageUrl != null)
         'cover_image_url': collection.coverImageUrl,
+      if (collection.primaryCategoryId != null)
+        'primary_category_id': collection.primaryCategoryId!.value,
+      if (collection.icon != null) 'icon': collection.icon,
     };
   }
 }

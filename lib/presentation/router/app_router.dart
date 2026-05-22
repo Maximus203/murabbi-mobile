@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
-import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_01_login_screen.dart';
@@ -13,7 +12,7 @@ import 'package:murabbi_mobile/presentation/features/calendar/screens/cal_01_cal
 import 'package:murabbi_mobile/presentation/features/categories/providers/categories_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/categories/screens/hb_03_categories_list_screen.dart';
 import 'package:murabbi_mobile/presentation/features/categories/screens/hb_04_category_form_screen.dart';
-import 'package:murabbi_mobile/presentation/features/collections/screens/co_01_collections_screen.dart';
+import 'package:murabbi_mobile/presentation/features/collections/screens/co_01_collections_list_screen.dart';
 import 'package:murabbi_mobile/presentation/features/collections/screens/co_02_create_collection_screen.dart';
 import 'package:murabbi_mobile/presentation/features/collections/screens/co_detail_collection_screen.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
@@ -91,36 +90,12 @@ class _ShellScaffold extends ConsumerWidget {
     final index = _tabs.indexOf(tab);
     if (index == -1) return;
 
-    // Collections et Classement non encore implémentés (slices Phase 4 / 5).
-    if (tab == AppBottomNavTab.collections ||
-        tab == AppBottomNavTab.leaderboard) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_tabLabel(tab)} arrive bientôt.')),
-      );
-      return;
-    }
-
     // goBranch avec `initialLocation: true` si on retap le même onglet
     // → remonte en haut de l'historique de cet onglet (comportement standard).
     navigationShell.goBranch(
       index,
       initialLocation: index == navigationShell.currentIndex,
     );
-  }
-
-  static String _tabLabel(AppBottomNavTab tab) {
-    switch (tab) {
-      case AppBottomNavTab.home:
-        return 'Accueil';
-      case AppBottomNavTab.salat:
-        return 'Salat';
-      case AppBottomNavTab.habits:
-        return 'Habitudes';
-      case AppBottomNavTab.collections:
-        return 'Collections';
-      case AppBottomNavTab.leaderboard:
-        return 'Classement';
-    }
   }
 }
 
@@ -314,6 +289,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+      // ── Collections — CO-02 création / CO-DETAIL (issue #6) ───────────
+      // Déclarées hors shell ; CO-02 avant CO-DETAIL pour que `/new` matche
+      // avant `/:id`.
+      GoRoute(
+        path: AppRoutes.collectionsCreate,
+        builder: (context, _) => Co02CreateCollectionScreen(
+          onCreated: () => context.go(AppRoutes.collections),
+          onCancel: () => context.go(AppRoutes.collections),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.collectionDetailPattern,
+        builder: (context, state) => CoDetailCollectionScreen(
+          collectionId: state.pathParameters['id'] ?? '',
+          onBack: () => context.go(AppRoutes.collections),
+        ),
+      ),
+
       // ── Calendrier — CAL-01 (issue #7, Phase 6) ───────────────────────
       GoRoute(
         path: AppRoutes.calendar,
@@ -369,14 +362,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: AppRoutes.home,
                 builder: (context, _) => Consumer(
                   builder: (context, ref, _) => Hm01DashboardScreen(
-                    onTabSelected: (tab) {
-                      // La BottomNav dans _ShellScaffold gère la navigation
-                      // inter-onglets. Ce callback couvre l'éventuel tap
-                      // résiduel depuis la card dashboard (contexte hors shell).
-                      final index = _ShellScaffold._tabs.indexOf(tab);
-                      if (index == -1) return;
-                      context.go(_tabRootRoute(tab));
-                    },
                     onConfigurePrayers: () =>
                         context.go(AppRoutes.salatSettings),
                     onOpenSalat: () => context.go(AppRoutes.salat),
@@ -420,87 +405,31 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
 
-          // Branche 3 — Collections (stub — Phase 4)
+          // Branche 3 — Collections — CO-01 (issue #6)
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.collections,
-                builder: (_, _) => const _StubScreen(title: 'Collections'),
+                builder: (context, _) => Co01CollectionsListScreen(
+                  onCreate: () => context.go(AppRoutes.collectionsCreate),
+                  onOpenCollection: (id) =>
+                      context.go(AppRoutes.collectionDetail(id)),
+                ),
               ),
             ],
           ),
 
-          // Branche 4 — Classement (stub — Phase 5)
+          // Branche 4 — Classement — LB-01 (issue #6)
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.leaderboard,
-                builder: (_, _) => const _StubScreen(title: 'Classement'),
+                builder: (_, _) => const Lb01LeaderboardScreen(),
               ),
             ],
           ),
         ],
       ),
-      GoRoute(
-        path: AppRoutes.collections,
-        builder: (context, _) => Co01CollectionsScreen(
-          onCreate: () => context.go(AppRoutes.collectionsCreate),
-          onTap: (collection) =>
-              context.go(AppRoutes.collectionsDetail, extra: collection),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.collectionsCreate,
-        builder: (context, _) => Co02CreateCollectionScreen(
-          onCreated: () => context.go(AppRoutes.collections),
-          onCancel: () => context.go(AppRoutes.collections),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.collectionsDetail,
-        builder: (context, state) {
-          final collection = state.extra as Collection;
-          return CoDetailCollectionScreen(
-            collection: collection,
-            onBack: () => context.go(AppRoutes.collections),
-          );
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.leaderboard,
-        builder: (_, _) => const Lb01LeaderboardScreen(),
-      ),
     ],
   );
 });
-
-/// Route racine par onglet — utilisée pour naviguer directement via `context.go`.
-String _tabRootRoute(AppBottomNavTab tab) {
-  switch (tab) {
-    case AppBottomNavTab.home:
-      return AppRoutes.home;
-    case AppBottomNavTab.salat:
-      return AppRoutes.salat;
-    case AppBottomNavTab.habits:
-      return AppRoutes.habits;
-    case AppBottomNavTab.collections:
-      return AppRoutes.collections;
-    case AppBottomNavTab.leaderboard:
-      return AppRoutes.leaderboard;
-  }
-}
-
-/// Placeholder minimaliste pour les onglets non encore implémentés.
-/// Remplacé par la vraie feature dans les phases 4 / 5.
-class _StubScreen extends StatelessWidget {
-  final String title;
-  const _StubScreen({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Center(child: Text(title, style: const TextStyle(fontSize: 18))),
-    );
-  }
-}

@@ -60,7 +60,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // AU-01 affiche le wordmark, pas de titre texte "Connexion".
-    expect(find.byType(AppWordmark), findsOneWidget);
+    expect(find.byType(AppLogo), findsOneWidget);
     // AppInput uppercases its label (cf. Phase 1 DS).
     expect(find.text('EMAIL'), findsOneWidget);
     expect(find.text('MOT DE PASSE'), findsOneWidget);
@@ -258,7 +258,7 @@ void main() {
     await tester.pumpWidget(makeApp());
     await tester.pumpAndSettle();
 
-    expect(find.byType(AppWordmark), findsOneWidget);
+    expect(find.byType(AppLogo), findsOneWidget);
   });
 
   testWidgets('forgot/signup links call their callbacks', (tester) async {

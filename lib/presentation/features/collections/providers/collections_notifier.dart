@@ -1,61 +1,92 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/data/repositories/collection_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
+import 'package:murabbi_mobile/domain/use_cases/collections/activate_collection_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/collections/create_collection_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/collections/deactivate_collection_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/collections/get_collections_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/current_user_provider.dart';
 
-/// Provider du notifier Collections — exposé en `AsyncNotifierProvider` legacy
-/// (cf. ADR-016 : 100% providers manuels, pas de codegen `@riverpod`).
-final collectionsNotifierProvider =
-    AsyncNotifierProvider<CollectionsNotifier, List<Collection>>(
-      CollectionsNotifier.new,
-    );
+/// Use cases collections exposés via Riverpod (issue #6, Phase 5).
+final getCollectionsUseCaseProvider = Provider<GetCollectionsUseCase>((ref) {
+  return GetCollectionsUseCase(ref.watch(collectionRepositoryProvider));
+});
 
-/// Notifier gérant la liste des [Collection] de l'utilisateur courant.
-///
-/// - `build` : charge via [CollectionRepository.getCollections].
-/// - `activate` / `deactivate` : mutations optimistes avec refresh.
-/// - `create` : création et refresh.
-///
-/// Si l'utilisateur n'est pas authentifié, retourne une liste vide.
+final activateCollectionUseCaseProvider = Provider<ActivateCollectionUseCase>((
+  ref,
+) {
+  return ActivateCollectionUseCase(ref.watch(collectionRepositoryProvider));
+});
+
+final deactivateCollectionUseCaseProvider =
+    Provider<DeactivateCollectionUseCase>((ref) {
+      return DeactivateCollectionUseCase(
+        ref.watch(collectionRepositoryProvider),
+      );
+    });
+
+final createCollectionUseCaseProvider = Provider<CreateCollectionUseCase>((
+  ref,
+) {
+  return CreateCollectionUseCase(ref.watch(collectionRepositoryProvider));
+});
+
+/// Liste des collections visibles par l'utilisateur connecté — alimente
+/// CO-01. État `AsyncNotifier` pour exposer activation / création.
 class CollectionsNotifier extends AsyncNotifier<List<Collection>> {
   @override
   Future<List<Collection>> build() async {
     final user = ref.watch(currentUserProvider);
-    if (user == null) return [];
-    return ref.read(collectionRepositoryProvider).getCollections(user.id);
+    if (user == null) return const [];
+    final getCollections = ref.watch(getCollectionsUseCaseProvider);
+    return getCollections(user.id);
   }
 
-  /// Active la collection identifiée par [id] pour l'utilisateur courant.
-  Future<void> activate(CollectionId id) async {
+  /// Active une collection système puis recharge la liste.
+  Future<void> activate(CollectionId collectionId) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
-    await ref
-        .read(collectionRepositoryProvider)
-        .activateCollection(userId: user.id, collectionId: id);
-    ref.invalidateSelf();
-    await future;
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(activateCollectionUseCaseProvider)(
+        userId: user.id,
+        collectionId: collectionId,
+      );
+      return ref.read(getCollectionsUseCaseProvider)(user.id);
+    });
   }
 
-  /// Désactive la collection identifiée par [id] pour l'utilisateur courant.
-  Future<void> deactivate(CollectionId id) async {
+  /// Désactive une collection pour l'utilisateur connecté puis recharge la liste.
+  Future<void> deactivate(CollectionId collectionId) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
-    await ref
-        .read(collectionRepositoryProvider)
-        .deactivateCollection(userId: user.id, collectionId: id);
-    ref.invalidateSelf();
-    await future;
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(deactivateCollectionUseCaseProvider)(
+        userId: user.id,
+        collectionId: collectionId,
+      );
+      return ref.read(getCollectionsUseCaseProvider)(user.id);
+    });
   }
 
-  /// Crée une nouvelle [collection] pour l'utilisateur courant et rafraîchit.
+  /// Crée une nouvelle collection utilisateur puis recharge la liste.
   Future<void> create(Collection collection) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
-    await ref
-        .read(collectionRepositoryProvider)
-        .createCollection(userId: user.id, collection: collection);
-    ref.invalidateSelf();
-    await future;
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(createCollectionUseCaseProvider)(
+        userId: user.id,
+        collection: collection,
+      );
+      return ref.read(getCollectionsUseCaseProvider)(user.id);
+    });
   }
 }
+
+final collectionsNotifierProvider =
+    AsyncNotifierProvider<CollectionsNotifier, List<Collection>>(
+      CollectionsNotifier.new,
+    );

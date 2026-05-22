@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
@@ -7,18 +8,24 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_badge.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 
-/// Carte collection pour CO-01 (issue #6, Phase 5).
+/// Carte collection pour CO-01 (issue #6, Phase 5 / Q-24).
 ///
 /// Affiche le nom, la description, un badge "Système" le cas échéant, le
-/// nombre d'habitudes et le statut actif/inactif. Tap → CO-DETAIL.
+/// nombre d'habitudes, le statut actif/inactif et les pts/jour si disponibles.
+/// Tap → CO-DETAIL.
 class CollectionCard extends StatelessWidget {
   final Collection collection;
   final VoidCallback onTap;
+
+  /// Points par jour calculés côté client (Q-24). Null pendant le loading
+  /// des habitudes — la ligne est masquée dans ce cas.
+  final int? ptsPerDay;
 
   const CollectionCard({
     super.key,
     required this.collection,
     required this.onTap,
+    this.ptsPerDay,
   });
 
   @override
@@ -74,6 +81,17 @@ class CollectionCard extends StatelessWidget {
                     color: AppColors.textTertiary,
                   ),
                 ),
+                if (ptsPerDay != null) ...[
+                  const SizedBox(width: AppSpacing.s3),
+                  Icon(lu(LucideIcons.zap), size: 12, color: AppColors.accent),
+                  const SizedBox(width: AppSpacing.s1),
+                  Text(
+                    '$ptsPerDay pts/jour',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.accent,
+                    ),
+                  ),
+                ],
                 const Spacer(),
                 Text(
                   collection.isActive ? 'Active' : 'Inactive',

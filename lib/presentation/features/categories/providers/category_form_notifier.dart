@@ -17,23 +17,17 @@ class CategoryFormState extends Equatable {
   /// Nom d'icône Lucide sélectionné dans [IconSelectorGrid].
   final String icon;
 
-  /// Pondération 1-10 — slider Q-CAT-01 (non branché sur un use case réel).
-  final int points;
-
   const CategoryFormState({
     required this.name,
     required this.color,
     required this.icon,
-    required this.points,
   });
 
-  /// État initial pour une création — premier token de la palette + icône
-  /// par défaut, slider au milieu.
+  /// État initial pour une création — premier token de la palette + icône par défaut.
   factory CategoryFormState.empty() => CategoryFormState(
     name: '',
     color: AppColors.categoryPalette.first,
     icon: kCategoryIconNames.first,
-    points: 5,
   );
 
   /// Nom valide : non vide après trim et ≤ 32 caractères (HB-04 spec).
@@ -45,22 +39,16 @@ class CategoryFormState extends Equatable {
   /// Le formulaire peut être enregistré uniquement si le nom est valide.
   bool get canSubmit => isNameValid;
 
-  CategoryFormState copyWith({
-    String? name,
-    Color? color,
-    String? icon,
-    int? points,
-  }) {
+  CategoryFormState copyWith({String? name, Color? color, String? icon}) {
     return CategoryFormState(
       name: name ?? this.name,
       color: color ?? this.color,
       icon: icon ?? this.icon,
-      points: points ?? this.points,
     );
   }
 
   @override
-  List<Object?> get props => [name, color, icon, points];
+  List<Object?> get props => [name, color, icon];
 }
 
 /// Les 10 icônes Lucide proposées dans [IconSelectorGrid] (HB-04).
@@ -94,7 +82,6 @@ class CategoryFormNotifier
       name: initial.name.value,
       color: _hexToColor(initial.color.value),
       icon: initial.icon,
-      points: 5,
     );
   }
 
@@ -103,8 +90,6 @@ class CategoryFormNotifier
   void setColor(Color value) => state = state.copyWith(color: value);
 
   void setIcon(String value) => state = state.copyWith(icon: value);
-
-  void setPoints(int value) => state = state.copyWith(points: value);
 }
 
 /// Famille de providers du formulaire HB-04, paramétrée par la catégorie

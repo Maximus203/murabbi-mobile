@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:murabbi_mobile/domain/entities/habit.dart';
+import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
@@ -18,7 +20,15 @@ class Collection extends Equatable {
   /// [CollectionCoverFallback] gradient (see [BuildCollectionCoverUseCase]).
   final String? coverImageUrl;
 
-  Collection({
+  /// Catégorie principale choisie lors de la création (CO-02, Q-23).
+  /// Nullable — optionnel côté UI ; stocké dans `public.collections` via AR-04.
+  final CategoryId? primaryCategoryId;
+
+  /// Nom d'icône Lucide kebab-case choisi lors de la création (CO-02, Q-23).
+  /// Nullable — optionnel côté UI ; stocké dans `public.collections` via AR-04.
+  final String? icon;
+
+  const Collection({
     required this.id,
     required this.name,
     required this.description,
@@ -26,14 +36,19 @@ class Collection extends Equatable {
     required this.isSystem,
     required this.isActive,
     this.coverImageUrl,
-  }) {
-    if (habitIds.isEmpty) {
-      throw ArgumentError.value(
-        habitIds,
-        'habitIds',
-        'Collection must contain at least one habit',
-      );
-    }
+    this.primaryCategoryId,
+    this.icon,
+  });
+
+  /// Somme des points des habitudes de cette collection présentes dans [habits].
+  ///
+  /// Calcul client-side (Q-24) — aucune requête réseau. Les habitudes absentes
+  /// de [habits] (race condition, suppression) sont ignorées silencieusement.
+  int ptsPerDay(List<Habit> habits) {
+    final ids = habitIds.map((h) => h.value).toSet();
+    return habits
+        .where((h) => ids.contains(h.id.value))
+        .fold(0, (sum, h) => sum + h.points.value);
   }
 
   @override
@@ -45,5 +60,7 @@ class Collection extends Equatable {
     isSystem,
     isActive,
     coverImageUrl,
+    primaryCategoryId,
+    icon,
   ];
 }

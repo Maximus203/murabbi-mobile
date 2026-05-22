@@ -628,7 +628,9 @@ void main() {
       expect(coll.isActive, isFalse);
     });
 
-    test('habitIds cannot be empty', () {
+    test('habitIds can be empty (draft collection)', () {
+      // Empty habitIds allowed — CO-02 creates a collection before habits are
+      // selected (the picker is optional at creation time, Q-23 contract).
       expect(
         () => Collection(
           id: collId,
@@ -638,7 +640,7 @@ void main() {
           isSystem: true,
           isActive: false,
         ),
-        throwsArgumentError,
+        returnsNormally,
       );
     });
 

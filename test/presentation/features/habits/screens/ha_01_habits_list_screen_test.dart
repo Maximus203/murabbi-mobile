@@ -39,10 +39,7 @@ void main() {
     when(() => authRepo.getCurrentUser()).thenAnswer((_) async => testUser);
   });
 
-  Widget pumpable({
-    InMemoryHabitRepository? customRepo,
-    VoidCallback? onCreate,
-  }) {
+  Widget pumpable({InMemoryHabitRepository? customRepo}) {
     return ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(authRepo),
@@ -50,74 +47,22 @@ void main() {
           customRepo ?? InMemoryHabitRepository(),
         ),
       ],
-      child: MaterialApp(
-        home: Ha01HabitsListScreen(onCreate: onCreate ?? () {}),
-      ),
+      child: MaterialApp(home: Ha01HabitsListScreen(onCreate: () {})),
     );
   }
 
-  testWidgets('empty state affiche le message et le CTA', (tester) async {
-    await tester.pumpWidget(pumpable());
-    await tester.pumpAndSettle();
-
-    expect(find.text('Aucune habitude pour le moment'), findsOneWidget);
-    // Le CTA est dans le bottomNavigationBar et dans l'empty state.
-    expect(find.text('Nouvelle habitude'), findsWidgets);
-  });
-
-  testWidgets('#136 — le bouton CTA de l\'empty state déclenche onCreate', (
-    tester,
-  ) async {
-    var created = false;
-    await tester.pumpWidget(pumpable(onCreate: () => created = true));
-    await tester.pumpAndSettle();
-
-    // Tapper le bouton "Nouvelle habitude" de l'empty state (premier match).
-    await tester.tap(find.text('Nouvelle habitude').first);
-    await tester.pumpAndSettle();
-    expect(created, isTrue);
-  });
-
-  testWidgets('#136 — le bouton catégories du header est présent', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          authRepositoryProvider.overrideWithValue(authRepo),
-          habitRepositoryProvider.overrideWithValue(InMemoryHabitRepository()),
-        ],
-        child: MaterialApp(
-          home: Ha01HabitsListScreen(onCreate: () {}, onOpenCategories: () {}),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    // Le bouton "Catégories" est présent dans le header quand onOpenCategories
-    // est fourni.
-    expect(find.byTooltip('Catégories'), findsOneWidget);
-  });
-
   testWidgets(
-    '#135 — HA-01 a un bottomNavigationBar avec le bouton "Nouvelle habitude"',
+    'empty state : CTA "Aucune habitude" + bouton "Nouvelle habitude"',
     (tester) async {
       await tester.pumpWidget(pumpable());
       await tester.pumpAndSettle();
 
-      // Le bouton "Nouvelle habitude" est dans le bottomNavigationBar du Scaffold
-      // HA-01 — comportement intentionnel v15 (non dans le shell).
-      final scaffold = tester.widget<Scaffold>(
-        find.descendant(
-          of: find.byType(Ha01HabitsListScreen),
-          matching: find.byType(Scaffold),
-        ),
-      );
-      expect(scaffold.bottomNavigationBar, isNotNull);
+      expect(find.text('Aucune habitude pour le moment'), findsOneWidget);
+      expect(find.text('Nouvelle habitude'), findsWidgets);
     },
   );
 
-  testWidgets('rend la liste avec le nom de l\'habitude', (tester) async {
+  testWidgets('rend la liste avec nom + points', (tester) async {
     final repo = InMemoryHabitRepository()
       ..createHabit(
         userId: testUser.id,

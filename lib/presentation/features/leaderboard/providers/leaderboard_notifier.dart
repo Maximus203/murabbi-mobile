@@ -1,34 +1,50 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/data/repositories/score_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/user_score.dart';
+import 'package:murabbi_mobile/domain/use_cases/score/get_leaderboard_use_case.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/current_user_provider.dart';
 
-/// Provider du notifier Leaderboard — top 50 scores hebdomadaires.
+/// Taille de page du classement hebdomadaire (issue #6 — pagination
+/// obligatoire, aucun SELECT non borné).
+const int kLeaderboardPageSize = 50;
+
+/// Use case `GetLeaderboard` exposé via Riverpod (issue #6, Phase 5).
+final getLeaderboardUseCaseProvider = Provider<GetLeaderboardUseCase>((ref) {
+  return GetLeaderboardUseCase(ref.watch(scoreRepositoryProvider));
+});
+
+/// Classement hebdomadaire — alimente LB-01.
 ///
-/// Utilise [AsyncNotifierProvider] legacy (cf. ADR-016).
-/// Retourne une liste vide si l'utilisateur n'est pas authentifié.
+/// `AsyncNotifier` pour exposer [refresh] (pull-to-refresh). Retourne `[]`
+/// si l'utilisateur n'est pas connecté. Borné à [kLeaderboardPageSize]
+/// entrées (pagination obligatoire).
+class LeaderboardNotifier extends AsyncNotifier<List<UserScore>> {
+  @override
+  Future<List<UserScore>> build() async {
+    final user = ref.watch(currentUserProvider);
+    if (user == null) return const [];
+    return ref
+        .watch(getLeaderboardUseCaseProvider)
+        .call(limit: kLeaderboardPageSize);
+  }
+
+  /// Recharge le classement (pull-to-refresh LB-01).
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final user = ref.read(currentUserProvider);
+      if (user == null) return const [];
+      return ref
+          .read(getLeaderboardUseCaseProvider)
+          .call(limit: kLeaderboardPageSize);
+    });
+  }
+}
+
 final leaderboardNotifierProvider =
     AsyncNotifierProvider<LeaderboardNotifier, List<UserScore>>(
       LeaderboardNotifier.new,
     );
 
-/// Notifier du leaderboard hebdomadaire.
-///
-/// Charge les 50 premiers scores via [ScoreRepository.getLeaderboard].
-/// Expose [refresh] pour forcer un rechargement (pull-to-refresh).
-class LeaderboardNotifier extends AsyncNotifier<List<UserScore>> {
-  static const _limit = 50;
-
-  @override
-  Future<List<UserScore>> build() async {
-    final user = ref.watch(currentUserProvider);
-    if (user == null) return [];
-    return ref.read(scoreRepositoryProvider).getLeaderboard(limit: _limit);
-  }
-
-  /// Force un rechargement du classement.
-  Future<void> refresh() async {
-    ref.invalidateSelf();
-    await future;
-  }
-}
+/// Alias pour la compatibilité des consommateurs existants.
+final leaderboardProvider = leaderboardNotifierProvider;

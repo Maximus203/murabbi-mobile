@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
@@ -267,6 +268,6 @@ void main() {
     await tester.pumpAndSettle();
 
     // AppHeader.back utilise LucideIcons.chevronLeft
-    expect(find.byIcon(LucideIcons.chevronLeft), findsOneWidget);
+    expect(find.byIcon(lu(LucideIcons.chevronLeft)), findsOneWidget);
   });
 }

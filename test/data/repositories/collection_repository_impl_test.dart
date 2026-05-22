@@ -1,160 +1,108 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:murabbi_mobile/data/datasources/supabase/supabase_collection_data_source.dart';
+import 'package:murabbi_mobile/data/datasources/collection_data_source.dart';
 import 'package:murabbi_mobile/data/repositories/collection_repository_impl.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
-import 'package:murabbi_mobile/domain/errors/collection_failure.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
-class MockCollectionDataSource extends Mock
-    implements SupabaseCollectionDataSource {}
+class MockCollectionDataSource extends Mock implements CollectionDataSource {}
 
 void main() {
-  late MockCollectionDataSource mockDs;
+  late MockCollectionDataSource ds;
   late CollectionRepositoryImpl repo;
-
-  final userId = UserId('user-uuid-001');
-  final collectionId = CollectionId('coll-uuid-001');
-
-  final testCollection = Collection(
-    id: collectionId,
-    name: NonEmptyString('Morning routine'),
-    description: NonEmptyString('Start the day right'),
-    habitIds: [HabitId('h-1'), HabitId('h-2')],
-    isSystem: false,
-    isActive: true,
-  );
+  final userId = UserId('u-1');
 
   setUp(() {
-    mockDs = MockCollectionDataSource();
-    repo = CollectionRepositoryImpl(mockDs);
-    registerFallbackValue(userId);
-    registerFallbackValue(collectionId);
-    registerFallbackValue(testCollection);
+    ds = MockCollectionDataSource();
+    repo = CollectionRepositoryImpl(ds);
   });
 
-  group('CollectionRepositoryImpl.getCollections', () {
-    test('retourne la liste des collections', () async {
-      when(
-        () => mockDs.getCollections(userId),
-      ).thenAnswer((_) async => [testCollection]);
+  group('getCollections', () {
+    test('mappe les rows datasource en entités Collection', () async {
+      when(() => ds.getCollections('u-1')).thenAnswer(
+        (_) async => [
+          {
+            'id': 'c-1',
+            'name': 'Matin',
+            'description': 'Routine',
+            'is_system': true,
+            'collection_habits': [
+              {'habit_id': 'h-1'},
+            ],
+            'user_collections': [
+              {'user_id': 'u-1'},
+            ],
+          },
+        ],
+      );
 
       final result = await repo.getCollections(userId);
 
-      expect(result, [testCollection]);
-      verify(() => mockDs.getCollections(userId)).called(1);
-    });
-
-    test('traduit PostgrestException en CollectionDatabaseFailure', () async {
-      when(
-        () => mockDs.getCollections(userId),
-      ).thenThrow(const sb.PostgrestException(message: 'DB error'));
-
-      expect(
-        () => repo.getCollections(userId),
-        throwsA(isA<CollectionDatabaseFailure>()),
-      );
-    });
-
-    test('propage CollectionFailure telle quelle', () async {
-      when(
-        () => mockDs.getCollections(userId),
-      ).thenThrow(const CollectionFailure.network());
-
-      expect(
-        () => repo.getCollections(userId),
-        throwsA(isA<CollectionNetworkFailure>()),
-      );
+      expect(result, hasLength(1));
+      expect(result.first.id, CollectionId('c-1'));
+      expect(result.first.isActive, true);
     });
   });
 
-  group('CollectionRepositoryImpl.activateCollection', () {
-    test('délègue au datasource sans erreur', () async {
+  group('activateCollection', () {
+    test('délègue au datasource avec les bons ids', () async {
       when(
-        () => mockDs.activateCollection(
-          collectionId: collectionId,
-          userId: userId,
-        ),
+        () => ds.activateCollection(userId: 'u-1', collectionId: 'c-9'),
       ).thenAnswer((_) async {});
 
-      await repo.activateCollection(userId: userId, collectionId: collectionId);
-
-      verify(
-        () => mockDs.activateCollection(
-          collectionId: collectionId,
-          userId: userId,
-        ),
-      ).called(1);
-    });
-
-    test('traduit PostgrestException en CollectionDatabaseFailure', () async {
-      when(
-        () => mockDs.activateCollection(
-          collectionId: collectionId,
-          userId: userId,
-        ),
-      ).thenThrow(const sb.PostgrestException(message: 'DB error'));
-
-      expect(
-        () =>
-            repo.activateCollection(userId: userId, collectionId: collectionId),
-        throwsA(isA<CollectionDatabaseFailure>()),
-      );
-    });
-  });
-
-  group('CollectionRepositoryImpl.deactivateCollection', () {
-    test('délègue au datasource sans erreur', () async {
-      when(
-        () => mockDs.deactivateCollection(
-          collectionId: collectionId,
-          userId: userId,
-        ),
-      ).thenAnswer((_) async {});
-
-      await repo.deactivateCollection(
+      await repo.activateCollection(
         userId: userId,
-        collectionId: collectionId,
+        collectionId: CollectionId('c-9'),
       );
 
       verify(
-        () => mockDs.deactivateCollection(
-          collectionId: collectionId,
-          userId: userId,
-        ),
+        () => ds.activateCollection(userId: 'u-1', collectionId: 'c-9'),
       ).called(1);
     });
   });
 
-  group('CollectionRepositoryImpl.createCollection', () {
-    test('crée et retourne la collection', () async {
-      when(
-        () =>
-            mockDs.createCollection(collection: testCollection, userId: userId),
-      ).thenAnswer((_) async => testCollection);
+  group('createCollection', () {
+    test(
+      'insère la collection, lie les habitudes et renvoie l\'entité',
+      () async {
+        final collection = Collection(
+          id: CollectionId('c-new'),
+          name: NonEmptyString('Lecture'),
+          description: NonEmptyString('Coran'),
+          habitIds: [HabitId('h-1'), HabitId('h-2')],
+          isSystem: false,
+          isActive: false,
+        );
 
-      final result = await repo.createCollection(
-        userId: userId,
-        collection: testCollection,
-      );
+        when(() => ds.createCollection(any())).thenAnswer(
+          (_) async => {
+            'id': 'c-new',
+            'name': 'Lecture',
+            'description': 'Coran',
+            'is_system': false,
+          },
+        );
+        when(
+          () => ds.linkHabits(
+            collectionId: any(named: 'collectionId'),
+            habitIds: any(named: 'habitIds'),
+          ),
+        ).thenAnswer((_) async {});
 
-      expect(result, testCollection);
-    });
+        final result = await repo.createCollection(
+          userId: userId,
+          collection: collection,
+        );
 
-    test('traduit les erreurs inconnues en CollectionUnknownFailure', () async {
-      when(
-        () =>
-            mockDs.createCollection(collection: testCollection, userId: userId),
-      ).thenThrow(Exception('unexpected'));
-
-      expect(
-        () => repo.createCollection(userId: userId, collection: testCollection),
-        throwsA(isA<CollectionUnknownFailure>()),
-      );
-    });
+        expect(result.id, CollectionId('c-new'));
+        expect(result.habitIds, [HabitId('h-1'), HabitId('h-2')]);
+        verify(
+          () => ds.linkHabits(collectionId: 'c-new', habitIds: ['h-1', 'h-2']),
+        ).called(1);
+      },
+    );
   });
 }

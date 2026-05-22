@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -92,10 +93,10 @@ class _AppSearchBarState extends State<AppSearchBar> {
       ),
       child: Row(
         children: [
-          const Padding(
-            padding: EdgeInsets.only(left: AppSpacing.s3),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.s3),
             child: Icon(
-              LucideIcons.search,
+              lu(LucideIcons.search),
               size: 16,
               color: AppColors.textSecondary,
             ),
@@ -128,8 +129,8 @@ class _AppSearchBarState extends State<AppSearchBar> {
               splashRadius: 16,
               tooltip: 'Effacer la recherche',
               onPressed: _clear,
-              icon: const Icon(
-                LucideIcons.x,
+              icon: Icon(
+                lu(LucideIcons.x),
                 size: 16,
                 color: AppColors.textSecondary,
               ),

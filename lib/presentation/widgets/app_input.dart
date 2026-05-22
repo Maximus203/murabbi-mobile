@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -49,6 +50,11 @@ class AppInput extends StatefulWidget {
   /// Appelé quand l'utilisateur valide avec le clavier.
   final VoidCallback? onSubmitted;
 
+  /// Hints pour le gestionnaire de mots de passe natif du téléphone
+  /// (Google Password Manager, Samsung Pass, iCloud Keychain…).
+  /// Exemples : [AutofillHints.email], [AutofillHints.password].
+  final Iterable<String>? autofillHints;
+
   const AppInput({
     super.key,
     this.label,
@@ -63,6 +69,7 @@ class AppInput extends StatefulWidget {
     this.maxLength,
     this.textInputAction,
     this.onSubmitted,
+    this.autofillHints,
   });
 
   @override
@@ -165,7 +172,7 @@ class _AppInputState extends State<AppInput> {
                 Padding(
                   padding: const EdgeInsets.only(left: AppSpacing.s3),
                   child: Icon(
-                    widget.leadingIcon,
+                    lu(widget.leadingIcon!),
                     size: 16,
                     color: AppColors.textSecondary,
                   ),
@@ -183,6 +190,7 @@ class _AppInputState extends State<AppInput> {
                     keyboardType: widget.keyboardType,
                     enabled: widget.enabled,
                     textInputAction: widget.textInputAction,
+                    autofillHints: widget.autofillHints,
                     onChanged: (value) {
                       if (widget.maxLength != null) {
                         setState(() => _currentLength = value.length);
@@ -213,7 +221,7 @@ class _AppInputState extends State<AppInput> {
                       : 'Masquer le mot de passe',
                   onPressed: () => setState(() => _obscured = !_obscured),
                   icon: Icon(
-                    _obscured ? LucideIcons.eye : LucideIcons.eyeOff,
+                    lu(_obscured ? LucideIcons.eye : LucideIcons.eyeOff),
                     size: 16,
                     color: AppColors.textSecondary,
                   ),

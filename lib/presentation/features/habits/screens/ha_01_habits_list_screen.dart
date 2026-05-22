@@ -475,8 +475,6 @@ class _EmptyView extends StatelessWidget {
             style: AppTypography.body.copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: AppSpacing.s6),
-          AppButton(label: 'Nouvelle habitude', onPressed: onCreate),
         ],
       ),
     );

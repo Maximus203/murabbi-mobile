@@ -1,28 +1,33 @@
-import 'package:murabbi_mobile/data/datasources/supabase/supabase_score_data_source.dart';
+import 'package:murabbi_mobile/data/datasources/score_data_source.dart';
+import 'package:murabbi_mobile/data/mappers/user_score_mapper.dart';
 import 'package:murabbi_mobile/domain/entities/user_score.dart';
 import 'package:murabbi_mobile/domain/errors/score_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/score_repository.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
-/// Implémentation du [ScoreRepository] adossée à un [SupabaseScoreDataSource].
-///
-/// Responsabilités :
-/// 1. Déléguer les opérations au datasource.
-/// 2. Traduire les exceptions natives Supabase en [ScoreFailure] typées
-///    (pattern aligné sur [PrayerRepositoryImpl._guard]).
+/// Implémentation Supabase du [ScoreRepository] — délègue à un
+/// [ScoreDataSource] et passe par `UserScoreMapper`. Suit le pattern
+/// `PrayerRepositoryImpl` (#149) : les exceptions natives sont traduites
+/// en [ScoreFailure] typées, jamais laissées remonter brutes.
 class ScoreRepositoryImpl implements ScoreRepository {
-  final SupabaseScoreDataSource _ds;
+  final ScoreDataSource _ds;
 
   const ScoreRepositoryImpl(this._ds);
 
   @override
-  Future<UserScore> getUserScore(UserId userId) =>
-      _guard(() => _ds.getUserScore(userId));
+  Future<UserScore> getUserScore(UserId userId) => _guard(() async {
+    final row = await _ds.getUserScore(userId.value);
+    return UserScoreMapper.fromRow(row);
+  });
 
   @override
   Future<List<UserScore>> getLeaderboard({required int limit}) =>
-      _guard(() => _ds.getLeaderboard(limit: limit));
+      _guard(() async {
+        // Pagination obligatoire (#6) : on transmet toujours un `limit` borné.
+        final rows = await _ds.getLeaderboard(limit: limit);
+        return rows.map(UserScoreMapper.fromRow).toList(growable: false);
+      });
 
   Future<T> _guard<T>(Future<T> Function() body) async {
     try {

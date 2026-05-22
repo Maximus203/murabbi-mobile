@@ -1,143 +1,102 @@
-import 'package:murabbi_mobile/domain/entities/collection.dart';
-import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
-import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
-import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
-import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import 'package:murabbi_mobile/data/datasources/collection_data_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
-/// Contrat du datasource Collections — facilite le mock dans les tests.
-abstract interface class SupabaseCollectionDataSource {
-  Future<List<Collection>> getCollections(UserId userId);
-
-  Future<void> activateCollection({
-    required CollectionId collectionId,
-    required UserId userId,
-  });
-
-  Future<void> deactivateCollection({
-    required CollectionId collectionId,
-    required UserId userId,
-  });
-
-  Future<Collection> createCollection({
-    required Collection collection,
-    required UserId userId,
-  });
-}
-
-/// Implémentation Supabase de [SupabaseCollectionDataSource].
+/// Implémentation Supabase de [CollectionDataSource]. Wrapper thin : aucune
+/// logique métier, aucune traduction d'erreur — déléguées au repository
+/// (cf. ADR-004 datasource pattern).
 ///
-/// Table consommée : `collections`
-/// Colonnes : id (uuid), name, description, habit_ids (text[]),
-///            is_system, is_active, cover_image_url, user_id,
-///            created_at, updated_at.
+/// Tables consommées (cf. issue #6) :
+///   `collections`       — id, name, description, is_system, created_by,
+///                         cover_image_url, deleted_at, created_at
+///   `collection_habits` — collection_id, habit_id (PK composite)
+///   `user_collections`  — user_id, collection_id, activated_at
 ///
-/// RLS : l'utilisateur voit ses collections + les collections système
-/// (`is_system = true`). La vue Supabase (ou policy RLS) gère le filtre
-/// `deleted_at IS NULL` — le domain ne voit jamais les soft-deleted.
-class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
-  static const _table = 'collections';
-  static const _columns =
-      'id, name, description, habit_ids, is_system, is_active, cover_image_url';
+/// Non couvert par tests unitaires (pattern `SupabaseHabitDataSource` — la
+/// fluent API Supabase est trop fragile à mocker, couverte par les
+/// integration tests).
+class SupabaseCollectionDataSource implements CollectionDataSource {
+  static const _collections = 'collections';
+  static const _collectionHabits = 'collection_habits';
+  static const _userCollections = 'user_collections';
 
   final sb.SupabaseClient _client;
 
-  const SupabaseCollectionDataSourceImpl(this._client);
+  const SupabaseCollectionDataSource(this._client);
 
   @override
-  Future<List<Collection>> getCollections(UserId userId) async {
-    // Charge les collections de l'utilisateur + les collections système.
-    // La policy RLS Supabase filtre `deleted_at IS NULL` côté serveur.
+  Future<List<Map<String, dynamic>>> getCollections(String userId) async {
+    // Jointures imbriquées PostgREST : habitudes liées + activation user.
+    // Jointure LEFT (sans `!inner`) sur `user_collections` filtrée sur
+    // l'utilisateur → liste imbriquée non vide ⇔ collection active, vide
+    // ⇔ inactive (CO-01 affiche les deux). `deleted_at IS NULL` : contrat
+    // soft-delete.
     final rows = await _client
-        .from(_table)
-        .select(_columns)
-        .or('user_id.eq.${userId.value},is_system.eq.true')
-        .order('created_at');
+        .from(_collections)
+        .select(
+          'id, name, description, is_system, cover_image_url, created_at, '
+          'primary_category_id, icon, '
+          'collection_habits(habit_id), '
+          'user_collections(user_id)',
+        )
+        .isFilter('deleted_at', null)
+        .order('created_at', ascending: false);
+    // Filtre applicatif du scoping user : on ne garde dans
+    // `user_collections` que les rows de l'utilisateur courant pour que le
+    // mapper dérive `isActive` correctement.
+    return rows.map<Map<String, dynamic>>((r) {
+      final map = Map<String, dynamic>.from(r);
+      final uc = (map['user_collections'] as List<dynamic>?) ?? const [];
+      map['user_collections'] = uc
+          .where((e) => (e as Map)['user_id'] == userId)
+          .toList();
+      return map;
+    }).toList();
+  }
 
-    return rows
-        .map<Collection>((r) => _mapRow(Map<String, dynamic>.from(r)))
+  @override
+  Future<Map<String, dynamic>> createCollection(
+    Map<String, dynamic> row,
+  ) async {
+    final created = await _client
+        .from(_collections)
+        .insert(row)
+        .select()
+        .single();
+    return Map<String, dynamic>.from(created);
+  }
+
+  @override
+  Future<void> linkHabits({
+    required String collectionId,
+    required List<String> habitIds,
+  }) async {
+    if (habitIds.isEmpty) return;
+    final rows = habitIds
+        .map((h) => {'collection_id': collectionId, 'habit_id': h})
         .toList();
+    await _client.from(_collectionHabits).insert(rows);
   }
 
   @override
   Future<void> activateCollection({
-    required CollectionId collectionId,
-    required UserId userId,
+    required String userId,
+    required String collectionId,
   }) async {
-    await _client
-        .from(_table)
-        .update({'is_active': true})
-        .eq('id', collectionId.value)
-        .eq('user_id', userId.value);
+    await _client.from(_userCollections).upsert({
+      'user_id': userId,
+      'collection_id': collectionId,
+    }, onConflict: 'user_id,collection_id');
   }
 
   @override
   Future<void> deactivateCollection({
-    required CollectionId collectionId,
-    required UserId userId,
+    required String userId,
+    required String collectionId,
   }) async {
     await _client
-        .from(_table)
-        .update({'is_active': false})
-        .eq('id', collectionId.value)
-        .eq('user_id', userId.value);
-  }
-
-  @override
-  Future<Collection> createCollection({
-    required Collection collection,
-    required UserId userId,
-  }) async {
-    final row = await _client
-        .from(_table)
-        .insert(_toRow(collection, userId))
-        .select(_columns)
-        .single();
-
-    return _mapRow(Map<String, dynamic>.from(row));
-  }
-
-  /// Mappe une row Supabase vers [Collection].
-  Collection _mapRow(Map<String, dynamic> row) {
-    // habit_ids est stocké en JSON array côté Supabase
-    final rawIds = row['habit_ids'];
-    List<HabitId> habitIds;
-    if (rawIds is List) {
-      habitIds = rawIds.map((id) => HabitId(id.toString())).toList();
-    } else {
-      habitIds = [];
-    }
-
-    // Une collection doit avoir au moins 1 habitude — si vide (données
-    // corrompues), on insère un placeholder plutôt que de crasher.
-    if (habitIds.isEmpty) {
-      habitIds = [HabitId('placeholder')];
-    }
-
-    return Collection(
-      id: CollectionId(row['id'] as String),
-      name: NonEmptyString(row['name'] as String),
-      description: NonEmptyString(
-        (row['description'] as String?) ?? 'Collection sans description',
-      ),
-      habitIds: habitIds,
-      isSystem: row['is_system'] as bool? ?? false,
-      isActive: row['is_active'] as bool? ?? false,
-      coverImageUrl: row['cover_image_url'] as String?,
-    );
-  }
-
-  /// Sérialise une [Collection] vers une row Supabase.
-  Map<String, dynamic> _toRow(Collection c, UserId userId) {
-    return {
-      'id': c.id.value,
-      'name': c.name.value,
-      'description': c.description.value,
-      'habit_ids': c.habitIds.map((id) => id.value).toList(),
-      'is_system': c.isSystem,
-      'is_active': c.isActive,
-      'cover_image_url': c.coverImageUrl,
-      'user_id': userId.value,
-    };
+        .from(_userCollections)
+        .delete()
+        .eq('user_id', userId)
+        .eq('collection_id', collectionId);
   }
 }

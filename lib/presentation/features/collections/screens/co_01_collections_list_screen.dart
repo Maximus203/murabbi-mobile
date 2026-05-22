@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
+import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/presentation/features/collections/providers/collections_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/collections/widgets/collection_card.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -34,7 +37,7 @@ class Co01CollectionsListScreen extends ConsumerWidget {
         onPressed: onCreate,
         backgroundColor: AppColors.accent,
         foregroundColor: AppColors.bgSurface,
-        child: const Icon(LucideIcons.plus),
+        child: Icon(lu(LucideIcons.plus)),
       ),
       body: SafeArea(
         bottom: false,
@@ -51,6 +54,7 @@ class Co01CollectionsListScreen extends ConsumerWidget {
           data: (list) => _CollectionsBody(
             collections: list,
             onOpenCollection: onOpenCollection,
+            habits: ref.watch(habitsNotifierProvider).valueOrNull,
           ),
         ),
       ),
@@ -62,9 +66,13 @@ class _CollectionsBody extends StatelessWidget {
   final List<Collection> collections;
   final void Function(String) onOpenCollection;
 
+  /// Habitudes chargées — null pendant le loading, liste vide si aucune.
+  final List<Habit>? habits;
+
   const _CollectionsBody({
     required this.collections,
     required this.onOpenCollection,
+    this.habits,
   });
 
   @override
@@ -95,6 +103,7 @@ class _CollectionsBody extends StatelessWidget {
               child: CollectionCard(
                 collection: c,
                 onTap: () => onOpenCollection(c.id.value),
+                ptsPerDay: habits != null ? c.ptsPerDay(habits!) : null,
               ),
             ),
           ),
@@ -109,6 +118,7 @@ class _CollectionsBody extends StatelessWidget {
               child: CollectionCard(
                 collection: c,
                 onTap: () => onOpenCollection(c.id.value),
+                ptsPerDay: habits != null ? c.ptsPerDay(habits!) : null,
               ),
             ),
           ),

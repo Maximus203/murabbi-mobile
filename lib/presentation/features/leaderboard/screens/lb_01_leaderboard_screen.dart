@@ -1,179 +1,191 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
-import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/entities/user_score.dart';
+import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/leaderboard/providers/leaderboard_notifier.dart';
-import 'package:murabbi_mobile/presentation/features/salat/providers/current_user_provider.dart';
+import 'package:murabbi_mobile/presentation/features/leaderboard/widgets/leader_row.dart';
+import 'package:murabbi_mobile/presentation/features/leaderboard/widgets/podium_col.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 
-/// LB-01 — Classement hebdomadaire (top 50).
+/// Nombre minimal de participants pour afficher un classement (sinon empty
+/// state). TODO(Q-leaderboard-min) à valider PO — défaut raisonnable : 3.
+const int _kMinParticipants = 3;
+
+/// LB-01 — Classement hebdomadaire (issue #6, Phase 5).
 ///
-/// Affiche les [UserScore] triés par rang hebdomadaire.
-/// La ligne de l'utilisateur courant est mise en évidence.
-/// Pull-to-refresh via [RefreshIndicator].
+/// Podium top 3, liste des rangs suivants, mise en évidence du rang de
+/// l'utilisateur connecté, empty state si pas assez de participants.
 class Lb01LeaderboardScreen extends ConsumerWidget {
   const Lb01LeaderboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final leaderboard = ref.watch(leaderboardNotifierProvider);
-    final currentUser = ref.watch(currentUserProvider);
+    final leaderboard = ref.watch(leaderboardProvider);
+    final currentUser = ref.watch(authNotifierProvider).valueOrNull;
 
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
-      appBar: const AppHeader.title(title: 'Classement'),
-      body: leaderboard.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        error: (e, stackTrace) {
-          appLog.e(
-            'Lb01LeaderboardScreen render error',
-            error: e,
-            stackTrace: stackTrace,
-          );
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Erreur de chargement',
-                  style: AppTypography.h3.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.s4),
-                IconButton(
-                  icon: const Icon(LucideIcons.refreshCw),
-                  onPressed: () =>
-                      ref.read(leaderboardNotifierProvider.notifier).refresh(),
-                ),
-              ],
+      body: SafeArea(
+        bottom: false,
+        child: leaderboard.when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(
+              strokeWidth: AppBorderWidth.indicatorStroke,
             ),
-          );
-        },
-        data: (scores) {
-          if (scores.isEmpty) {
-            return Center(
-              child: Text(
-                'Aucun score disponible',
-                style: AppTypography.body.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () =>
-                ref.read(leaderboardNotifierProvider.notifier).refresh(),
-            child: ListView.separated(
-              padding: const EdgeInsets.all(AppSpacing.s4),
-              itemCount: scores.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s3),
-              itemBuilder: (_, i) => _ScoreTile(
-                score: scores[i],
-                isCurrentUser:
-                    currentUser != null && scores[i].userId == currentUser.id,
-              ),
-            ),
-          );
-        },
+          ),
+          error: (e, st) {
+            appLog.e('Lb01 leaderboard error', error: e, stackTrace: st);
+            return const _LeaderboardError();
+          },
+          data: (scores) => _LeaderboardBody(
+            scores: scores,
+            currentUserId: currentUser?.id.value,
+          ),
+        ),
       ),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// Sous-widgets privés
-// ---------------------------------------------------------------------------
+class _LeaderboardBody extends StatelessWidget {
+  final List<UserScore> scores;
+  final String? currentUserId;
 
-class _ScoreTile extends StatelessWidget {
-  final UserScore score;
-  final bool isCurrentUser;
-
-  const _ScoreTile({required this.score, required this.isCurrentUser});
+  const _LeaderboardBody({required this.scores, required this.currentUserId});
 
   @override
   Widget build(BuildContext context) {
-    final rank = score.weeklyRank;
-    final isTop3 = rank <= 3;
+    if (scores.length < _kMinParticipants) {
+      return const _LeaderboardEmpty();
+    }
 
-    return AppCard(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s4,
-        vertical: AppSpacing.s3,
+    // Les scores sont déjà triés par rang (vue weekly_leaderboard).
+    final podium = scores.take(3).toList();
+    final rest = scores.skip(3).toList();
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s5,
+        AppSpacing.s4,
+        AppSpacing.s5,
+        AppSpacing.s8,
       ),
-      child: Row(
-        children: [
-          // Rang
-          SizedBox(
-            width: 36,
-            child: Text(
-              '#$rank',
-              style: (isTop3 ? AppTypography.h2 : AppTypography.body).copyWith(
-                color: isTop3 ? AppColors.accent : AppColors.textSecondary,
-                fontWeight: isTop3 ? FontWeight.w700 : FontWeight.w400,
-              ),
-              textAlign: TextAlign.center,
+      children: [
+        const AppHeader.title(title: 'Classement'),
+        const SizedBox(height: AppSpacing.s3),
+        Text(
+          'Cette semaine',
+          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: AppSpacing.s5),
+        _Podium(podium: podium),
+        const SizedBox(height: AppSpacing.s6),
+        ...rest.map(
+          (s) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.s2),
+            child: LeaderRow(
+              score: s,
+              initials: _initials(s.userId.value),
+              isCurrentUser: s.userId.value == currentUserId,
             ),
           ),
-          const SizedBox(width: AppSpacing.s3),
-          // Avatar niveau
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: isCurrentUser
-                  ? AppColors.accent.withValues(alpha: 0.12)
-                  : AppColors.bgInput,
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-            ),
-            child: Center(
-              child: Text(
-                _levelEmoji(score.currentLevel),
-                style: const TextStyle(fontSize: 18),
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s3),
-          // Identifiant anonymisé (userId tronqué V1 — pseudo sera ajouté V2)
-          Expanded(
-            child: Text(
-              isCurrentUser
-                  ? 'Toi'
-                  : 'Utilisateur ${score.userId.value.substring(0, 6)}…',
-              style: AppTypography.body.copyWith(
-                color: isCurrentUser ? AppColors.accent : AppColors.textPrimary,
-                fontWeight: isCurrentUser ? FontWeight.w600 : FontWeight.w400,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s3),
-          // Points hebdo
-          Text(
-            '${score.weeklyPoints} pts',
-            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
-          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Podium top 3 — ordre visuel 2-1-3 (le 1er au centre, surélevé).
+class _Podium extends StatelessWidget {
+  final List<UserScore> podium;
+  const _Podium({required this.podium});
+
+  @override
+  Widget build(BuildContext context) {
+    // podium est trié par rang : [1er, 2e, 3e]. Ordre d'affichage : 2-1-3.
+    final ordered = <UserScore>[
+      if (podium.length > 1) podium[1],
+      podium[0],
+      if (podium.length > 2) podium[2],
+    ];
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (final s in ordered) ...[
+          PodiumCol(score: s, initials: _initials(s.userId.value)),
+          const SizedBox(width: AppSpacing.s4),
         ],
+      ],
+    );
+  }
+}
+
+/// Initiales d'affichage dérivées de l'identifiant utilisateur.
+///
+/// TODO(Q-leaderboard-pseudo) à valider PO — la vue `weekly_leaderboard`
+/// n'expose pas le pseudo ; on dérive 2 caractères de l'`user_id`. À
+/// remplacer par les vraies initiales du pseudo quand la vue les exposera.
+String _initials(String userId) {
+  final cleaned = userId.replaceAll('-', '');
+  if (cleaned.length < 2) return cleaned.toUpperCase().padRight(2, '·');
+  return cleaned.substring(0, 2).toUpperCase();
+}
+
+class _LeaderboardEmpty extends StatelessWidget {
+  const _LeaderboardEmpty();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.s6),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              lu(LucideIcons.trophy),
+              size: 48,
+              color: AppColors.textTertiary,
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            const Text('Classement à venir', style: AppTypography.h3),
+            const SizedBox(height: AppSpacing.s2),
+            Text(
+              'Pas encore assez de participants cette semaine. '
+              'Continue tes habitudes pour apparaître ici.',
+              textAlign: TextAlign.center,
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
 
-  String _levelEmoji(Level level) {
-    return switch (level) {
-      Level.aspirant => '🌱',
-      Level.murid => '📖',
-      Level.salik => '⭐',
-      Level.mujahid => '🔥',
-      Level.wali => '💎',
-      Level.murabbi => '👑',
-    };
+class _LeaderboardError extends StatelessWidget {
+  const _LeaderboardError();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.all(AppSpacing.s6),
+      child: Center(
+        child: Text(
+          'Une erreur est survenue.\nMerci de réessayer plus tard.',
+          textAlign: TextAlign.center,
+          style: AppTypography.body,
+        ),
+      ),
+    );
   }
 }

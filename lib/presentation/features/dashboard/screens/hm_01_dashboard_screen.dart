@@ -2,46 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
-import 'package:murabbi_mobile/domain/entities/habit.dart';
-import 'package:murabbi_mobile/domain/entities/habit_schedule.dart';
-import 'package:murabbi_mobile/domain/entities/habit_target.dart';
-import 'package:murabbi_mobile/presentation/common/app_video_player.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_ticker_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/user_score_provider.dart';
+import 'package:murabbi_mobile/presentation/features/dashboard/widgets/dashboard_score_card.dart';
+import 'package:murabbi_mobile/presentation/features/dashboard/widgets/dashboard_stats_grid.dart';
 import 'package:murabbi_mobile/presentation/features/gamification/providers/level_up_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/gamification/screens/level_up_screen.dart';
-import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
-import 'package:murabbi_mobile/presentation/theme/app_media.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_dialog.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_progress_ring.dart';
-import 'package:murabbi_mobile/services/video_service.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 
 // ignore: prefer_final_fields
 
-/// HM-01 — Écran d'accueil Murabbi (v1.5).
+/// HM-01 — Écran d'accueil Murabbi (slice 3.A).
 ///
 /// Agrège : salutation, date du jour (grégorienne + hijri), prochaine prière,
-/// score card avec [AppProgressRing], section habitudes avec micro-rows,
-/// carte Niyyah vidéo et indicateur de série globale.
+/// placeholders habitudes / niyyah / streak (slices à venir 3.D/3.E/scoring),
+/// et barre de navigation principale.
 class Hm01DashboardScreen extends ConsumerWidget {
-  final ValueChanged<AppBottomNavTab> onTabSelected;
   final VoidCallback onConfigurePrayers;
   final VoidCallback onOpenSalat;
   final VoidCallback? onSignOut;
 
   const Hm01DashboardScreen({
     super.key,
-    required this.onTabSelected,
     required this.onConfigurePrayers,
     required this.onOpenSalat,
     this.onSignOut,
@@ -67,10 +60,6 @@ class Hm01DashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
-      bottomNavigationBar: AppBottomNav(
-        active: AppBottomNavTab.home,
-        onTabSelected: onTabSelected,
-      ),
       body: Stack(
         children: [
           SafeArea(
@@ -139,9 +128,6 @@ class _DashboardBody extends ConsumerWidget {
       color: AppColors.accent,
       onRefresh: () async {
         ref.invalidate(dashboardNotifierProvider);
-        // #145 : rafraîchit aussi la liste d'habitudes — une habitude créée
-        // depuis HA-02 doit apparaître dans « Habitudes du jour ».
-        await ref.read(habitsNotifierProvider.notifier).refresh();
         await ref.read(dashboardNotifierProvider.future);
       },
       child: ListView(
@@ -153,9 +139,6 @@ class _DashboardBody extends ConsumerWidget {
         ),
         children: [
           // ── En-tête ────────────────────────────────────────────────
-          // #128 : le bouton cloche notification (stub `onPressed: null`)
-          // a été retiré — fausse affordance. Il sera réintroduit avec la
-          // navigation Notifications réelle (Phase 5).
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -163,13 +146,10 @@ class _DashboardBody extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // D-30 : salutation en label/accent UPPERCASE — convention AppTypography.label.
-                    // #132 : ʿ (ayn, U+02BF) rendu □ sur certaines plateformes —
-                    // remplacé par une apostrophe ASCII. Les macrons (ā/ī/ū)
-                    // sont conservés (couverts par la police).
+                    // D-30 : salutation en body/accent — plus visible
                     Text(
-                      "AS-SALĀMU 'ALAYKUM",
-                      style: AppTypography.label.copyWith(
+                      'As-salāmu ʿalaykum',
+                      style: AppTypography.body.copyWith(
                         color: AppColors.accent,
                       ),
                     ),
@@ -185,9 +165,26 @@ class _DashboardBody extends ConsumerWidget {
                   ],
                 ),
               ),
+              Semantics(
+                label: 'Notifications',
+                button: true,
+                child: IconButton(
+                  onPressed:
+                      null, // stub — navigation Notifications à venir (Phase 5)
+                  icon: Icon(
+                    lu(LucideIcons.bell),
+                    size: 22,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.s6),
+
+          // ── Score & niveau (issue #6) ──────────────────────────────
+          const _ScoreSection(),
+          const SizedBox(height: AppSpacing.s4),
 
           // ── Prochaine prière ───────────────────────────────────────
           _NextPrayerCard(
@@ -197,15 +194,7 @@ class _DashboardBody extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s4),
 
-          // ── Score & Série ──────────────────────────────────────────
-          _ScoreStreakCard(data: data),
-          const SizedBox(height: AppSpacing.s3),
-
-          // ── Habitudes du jour ──────────────────────────────────────
-          const _HabitsCard(),
-          const SizedBox(height: AppSpacing.s3),
-
-          // ── Niyyah vidéo ───────────────────────────────────────────
+          // ── Niyyah du jour ─────────────────────────────────────────
           const _NiyyahCard(),
 
           // D-25 : confirmation avant déconnexion via AppDialog DS.
@@ -219,7 +208,7 @@ class _DashboardBody extends ConsumerWidget {
                 builder: (ctx) => AppDialog(
                   title: 'Se déconnecter ?',
                   body:
-                      "Tu devras te reconnecter pour accéder à l'application.",
+                      "Vous devrez vous reconnecter pour accéder à l'application.",
                   confirmLabel: 'Se déconnecter',
                   cancelLabel: 'Annuler',
                   isDangerous: true,
@@ -260,21 +249,18 @@ class _DashboardBody extends ConsumerWidget {
     'samedi',
     'dimanche',
   ];
-  // #132 : ʿ (ayn, U+02BF) remplacé par apostrophe ASCII — rendu □ sur
-  // certaines plateformes. Les macrons (ā/ī/ū) sont conservés (couverts par
-  // la police). Ḥ conservé pour Dhul-Ḥijjah.
   static const _hijriMonths = [
     'Muharram',
     'Safar',
-    "Rabī' al-Awwal",
-    "Rabī' al-Thānī",
+    'Rabīʿ al-Awwal',
+    'Rabīʿ al-Thānī',
     'Jumādā al-Ūlā',
     'Jumādā al-Ākhira',
     'Rajab',
-    "Sha'bān",
+    'Shaʿbān',
     'Ramadan',
     'Shawwāl',
-    "Dhul-Qa'dah",
+    'Dhul-Qaʿdah',
     'Dhul-Ḥijjah',
   ];
 
@@ -290,6 +276,60 @@ class _DashboardBody extends ConsumerWidget {
         '${hijri.hDay} ${_hijriMonths[hijri.hMonth - 1]} ${hijri.hYear}';
 
     return '$gregorian · $hijriStr';
+  }
+}
+
+/// Section score du dashboard : score card + grille de stats (issue #6).
+///
+/// Consume [userScoreProvider] de façon isolée pour que son chargement /
+/// erreur ne fasse pas vaciller le reste du dashboard.
+class _ScoreSection extends ConsumerWidget {
+  const _ScoreSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scoreAsync = ref.watch(userScoreProvider);
+    return scoreAsync.when(
+      loading: () => const _ScoreCardSkeleton(),
+      error: (e, st) {
+        appLog.w('userScoreProvider error', error: e, stackTrace: st);
+        return const SizedBox.shrink();
+      },
+      data: (score) {
+        if (score == null) return const SizedBox.shrink();
+        return Column(
+          children: [
+            DashboardScoreCard(score: score),
+            const SizedBox(height: AppSpacing.s3),
+            DashboardStatsGrid(
+              streakDays: 0,
+              salatLabel: '—',
+              habitsLabel: '—',
+              weeklyRank: score.weeklyRank,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Skeleton sobre pendant le chargement du score (pas de spinner intrusif).
+class _ScoreCardSkeleton extends StatelessWidget {
+  const _ScoreCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const AppCard(
+      child: SizedBox(
+        height: 88,
+        child: Center(
+          child: CircularProgressIndicator(
+            strokeWidth: AppBorderWidth.indicatorStroke,
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -319,10 +359,10 @@ class _NextPrayerCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Configure tes prières', style: AppTypography.h3),
+            const Text('Configurez vos prières', style: AppTypography.h3),
             const SizedBox(height: AppSpacing.s2),
             Text(
-              'Indique ta position et ta méthode pour afficher les '
+              'Indiquez votre position et votre méthode pour afficher les '
               'horaires précis.',
               style: AppTypography.body.copyWith(
                 color: AppColors.textSecondary,
@@ -454,335 +494,50 @@ class _RemainingLabel extends ConsumerWidget {
 
 /// Card "Niyyah du jour" avec fond vidéo + overlay dégradé (issue #79).
 ///
-/// La vidéo [AppMedia.niyyahVideoKey] est servie depuis Supabase Storage
-/// (ADR-017 : vidéo in-app, disponible après authentification).
-/// Elle tourne en boucle muette. Le texte est superposé en bas-gauche
-/// via un dégradé noir semi-transparent.
-class _NiyyahCard extends ConsumerWidget {
+/// La vidéo `01.mp4` tourne en boucle muette. Le texte est superposé
+/// en bas-gauche via un dégradé noir semi-transparent.
+class _NiyyahCard extends StatelessWidget {
   const _NiyyahCard();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final videoUrl = ref
-        .read(videoServiceProvider)
-        .getRemoteVideoUrl(AppMedia.niyyahVideoKey);
-
-    return AppVideoPlayer(
-      url: videoUrl,
-      height: 120,
+  Widget build(BuildContext context) {
+    return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.card),
-      overlay: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.transparent,
-              Colors.black.withValues(alpha: 0.55),
-            ],
+      child: AppVideoBackground(
+        assetPath: 'assets/media/01.mp4',
+        height: 120,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        overlay: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.transparent,
+                Colors.black.withValues(alpha: 0.55),
+              ],
+            ),
           ),
-        ),
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        alignment: Alignment.bottomLeft,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Niyyah du jour',
-              style: AppTypography.h3.copyWith(color: AppColors.bgSurface),
-            ),
-            const SizedBox(height: AppSpacing.s1),
-            Text(
-              'Je fais cela pour plaire à Allah.',
-              style: AppTypography.body.copyWith(
-                color: AppColors.bgSurface.withValues(alpha: 0.85),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Carte Habitudes du jour — affiche les micro-rows depuis [habitsNotifierProvider].
-///
-/// Limite l'affichage à 5 habitudes avec un lien "Voir tout" si la liste
-/// dépasse ce seuil.
-class _HabitsCard extends ConsumerWidget {
-  static const int _maxVisible = 5;
-
-  const _HabitsCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final habitsAsync = ref.watch(habitsNotifierProvider);
-
-    return habitsAsync.when(
-      loading: () => AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context, null),
-            const SizedBox(height: AppSpacing.s3),
-            const SizedBox(
-              height: 40,
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: AppBorderWidth.indicatorStroke,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      error: (e, st) => AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context, null),
-            const SizedBox(height: AppSpacing.s2),
-            Text(
-              'Impossible de charger les habitudes.',
-              style: AppTypography.body.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-      data: (allHabits) {
-        // #145 : ne garder que les habitudes dues aujourd'hui. Une habitude
-        // `daily` créée le jour même est due le jour même et doit donc
-        // apparaître ici (cf. HabitSchedule.isDueOn).
-        final today = DateTime.now();
-        final habits = habitsDueOn(allHabits, today);
-        final visible = habits.take(_maxVisible).toList();
-        final hasMore = habits.length > _maxVisible;
-        return AppCard(
+          padding: const EdgeInsets.all(AppSpacing.s4),
+          alignment: Alignment.bottomLeft,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(context, habits.length),
-              if (habits.isEmpty) ...[
-                const SizedBox(height: AppSpacing.s2),
-                Text(
-                  "Aucune habitude configurée pour aujourd'hui.",
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+              Text(
+                'Niyyah du jour',
+                style: AppTypography.h3.copyWith(color: AppColors.bgSurface),
+              ),
+              const SizedBox(height: AppSpacing.s1),
+              Text(
+                'Je fais cela pour plaire à Allah.',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.bgSurface.withValues(alpha: 0.85),
                 ),
-              ] else ...[
-                const SizedBox(height: AppSpacing.s3),
-                ...visible.map(
-                  (h) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.s2),
-                    child: _HabitMicroRow(habit: h),
-                  ),
-                ),
-                if (hasMore) ...[
-                  const SizedBox(height: AppSpacing.s1),
-                  GestureDetector(
-                    // TODO Phase 3 : naviguer vers HA-01 via onTabSelected
-                    onTap: () {},
-                    child: Text(
-                      'Voir tout',
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.accent,
-                        decoration: TextDecoration.underline,
-                        decorationColor: AppColors.accent,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+              ),
             ],
           ),
-        );
-      },
-    );
-  }
-
-  /// Ligne d'en-tête : label "HABITUDES DU JOUR" + compteur "N/9" Mono.
-  Widget _buildHeader(BuildContext context, int? count) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text('Habitudes du jour', style: AppTypography.h3),
-        if (count != null)
-          Text(
-            // Compteur "N/9" — le dénominateur total visible (9 = exemple mock).
-            // Phase 4 brancher le total réel via ScoringService.
-            '$count',
-            style: AppTypography.mono.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-/// Ligne compacte représentant une habitude sur le dashboard.
-///
-/// Composition : dot catégorie 6px · nom de l'habitude · objectif (caption Mono).
-class _HabitMicroRow extends StatelessWidget {
-  final Habit habit;
-
-  const _HabitMicroRow({required this.habit});
-
-  /// Retourne la couleur du dot depuis les tokens AppColors selon l'id catégorie.
-  static Color _dotColor(String categoryId) {
-    return switch (categoryId) {
-      'cat-religion' => AppColors.categoryReligion,
-      'cat-sport' => AppColors.categorySport,
-      'cat-sante' => AppColors.categorySante,
-      'cat-mental' => AppColors.categoryMental,
-      'cat-social' => AppColors.categorySocial,
-      _ => AppColors.textTertiary,
-    };
-  }
-
-  /// Libellé de l'objectif : "X unité" pour [HabitTargetValue] /
-  /// [HabitTargetTimed], vide pour [HabitTargetNone].
-  static String _targetLabel(HabitTarget target) {
-    return switch (target) {
-      HabitTargetValue(:final value, :final unit, :final customLabel) =>
-        '${value.value} ${customLabel ?? unit.name}',
-      HabitTargetTimed(:final value, :final unit) =>
-        '${value.value} ${unit.name}',
-      HabitTargetNone() => '',
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final dot = _dotColor(habit.categoryId.value);
-    final targetLabel = _targetLabel(habit.target);
-
-    return Row(
-      children: [
-        // Dot catégorie 6px
-        Container(
-          width: 6,
-          height: 6,
-          decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
         ),
-        const SizedBox(width: AppSpacing.s2),
-        // Nom de l'habitude
-        Expanded(
-          child: Text(
-            habit.name.value,
-            style: AppTypography.body,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        if (targetLabel.isNotEmpty) ...[
-          const SizedBox(width: AppSpacing.s2),
-          Text(
-            targetLabel,
-            style: AppTypography.mono.copyWith(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-/// Card score + série globale — slice 5.F.
-///
-/// Affiche les points hebdomadaires, le niveau courant et la série globale.
-/// Si aucun score n'est encore disponible, affiche des tirets.
-class _ScoreStreakCard extends StatelessWidget {
-  final DashboardState data;
-
-  const _ScoreStreakCard({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final level = data.currentLevel;
-    final weekly = data.weeklyPoints;
-    final streak = data.globalStreak;
-
-    return AppCard(
-      child: Row(
-        children: [
-          Expanded(
-            child: _StatItem(
-              icon: LucideIcons.star,
-              label: 'Pts hebdo',
-              value: weekly == 0 ? '—' : '$weekly',
-            ),
-          ),
-          Container(width: 0.5, height: 32, color: AppColors.borderDefault),
-          Expanded(
-            child: _StatItem(
-              icon: LucideIcons.flame,
-              label: 'Série',
-              value: streak == 0 ? '—' : '${streak}j',
-            ),
-          ),
-          Container(width: 0.5, height: 32, color: AppColors.borderDefault),
-          Expanded(
-            child: _StatItem(
-              icon: LucideIcons.award,
-              label: 'Niveau',
-              value: _levelLabel(level),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static String _levelLabel(dynamic level) {
-    return switch (level.toString().split('.').last) {
-      'aspirant' => 'Aspirant',
-      'murid' => 'Murid',
-      'salik' => 'Salik',
-      'mujahid' => 'Mujahid',
-      'wali' => 'Wali',
-      'murabbi' => 'Murabbi',
-      _ => '—',
-    };
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _StatItem({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: AppColors.accent),
-          const SizedBox(height: AppSpacing.s1),
-          Text(value, style: AppTypography.h3, textAlign: TextAlign.center),
-          Text(
-            label,
-            style: AppTypography.caption.copyWith(
-              color: AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }

@@ -126,9 +126,17 @@ class AuthRepositoryImpl implements AuthRepository {
         msg.contains('invalid credentials')) {
       return AuthFailure.invalidCredentials(message: error.toString());
     }
+    // Supabase renvoie "Email not confirmed" si l'utilisateur n'a pas validé
+    // son email. On mappe sur invalidCredentials pour que l'UI l'invite à
+    // vérifier sa boîte mail (message distinct via AuthErrorBanner).
+    if (msg.contains('email not confirmed')) {
+      return AuthFailure.invalidCredentials(message: error.toString());
+    }
     if (msg.contains('socketexception') ||
         msg.contains('failed host lookup') ||
         msg.contains('network is unreachable') ||
+        msg.contains('connection refused') ||
+        msg.contains('network error') ||
         msg.contains('rate_limit') ||
         msg.contains('rate limit')) {
       return AuthFailure.network(message: error.toString());

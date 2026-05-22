@@ -1,86 +1,59 @@
-import 'package:murabbi_mobile/domain/entities/level.dart';
-import 'package:murabbi_mobile/domain/entities/user_score.dart';
-import 'package:murabbi_mobile/domain/errors/score_failure.dart';
-import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import 'package:murabbi_mobile/data/datasources/score_data_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
-/// Contrat du datasource Score — facilite le mock dans les tests.
-abstract interface class SupabaseScoreDataSource {
-  /// Charge le score de l'utilisateur depuis la vue `user_scores`.
-  Future<UserScore> getUserScore(UserId userId);
-
-  /// Charge le classement global (top [limit] utilisateurs).
-  Future<List<UserScore>> getLeaderboard({required int limit});
-}
-
-/// Implémentation Supabase de [SupabaseScoreDataSource].
+/// Implémentation Supabase de [ScoreDataSource]. Wrapper thin : aucune
+/// logique métier, aucune traduction d'erreur — déléguées au repository.
 ///
-/// Table consommée : `user_scores`
-/// Colonnes réelles (migration 20260426000000_initial_mobile_schema.sql) :
-///   user_id uuid, total_score int, weekly_score int, level int (1-6).
+/// Sources consommées (cf. issue #6) :
+///   `users`              — id, total_points
+///   `weekly_leaderboard` — vue : user_id, weekly_score, rank
 ///
-/// Note : `weekly_rank` n'existe pas dans le schéma DB. La position dans
-/// le leaderboard est dérivée de l'index de la row dans le résultat ordonné.
-/// Pour un accès par user_id unique (`getUserScore`), weeklyRank = 9999
-/// (sentinelle "inconnu"). Sera affiné par un RPC de ranking si le besoin
-/// s'en fait sentir (cf. Q-26).
-///
-/// Note : non couvert par tests unitaires (la fluent API Supabase est trop
-/// fragile à mocker — pattern aligné sur `SupabaseSalatDataSource`).
-/// Sera couvert par les integration tests Slice 5.B+.
-class SupabaseScoreDataSourceImpl implements SupabaseScoreDataSource {
-  static const _table = 'user_scores';
-  static const _columns = 'user_id, total_score, weekly_score, level';
+/// Non couvert par tests unitaires (pattern `SupabaseHabitDataSource` — la
+/// fluent API Supabase est trop fragile à mocker).
+class SupabaseScoreDataSource implements ScoreDataSource {
+  static const _users = 'users';
+  static const _leaderboard = 'weekly_leaderboard';
 
   final sb.SupabaseClient _client;
 
-  const SupabaseScoreDataSourceImpl(this._client);
+  const SupabaseScoreDataSource(this._client);
 
   @override
-  Future<UserScore> getUserScore(UserId userId) async {
-    final row = await _client
-        .from(_table)
-        .select(_columns)
-        .eq('user_id', userId.value)
-        .maybeSingle();
+  Future<Map<String, dynamic>> getUserScore(String userId) async {
+    final userRow = await _client
+        .from(_users)
+        .select('id, total_points')
+        .eq('id', userId)
+        .single();
 
-    if (row == null) {
-      throw const ScoreFailure.notFound(message: 'user_scores row absent');
+    // La row de classement peut être absente (utilisateur sans événement
+    // cette semaine) → on retombe sur des défauts côté mapper.
+    final lbRows = await _client
+        .from(_leaderboard)
+        .select('user_id, weekly_score, rank')
+        .eq('user_id', userId)
+        .limit(1);
+
+    final merged = Map<String, dynamic>.from(userRow);
+    if (lbRows.isNotEmpty) {
+      merged.addAll(Map<String, dynamic>.from(lbRows.first));
     }
-
-    // weeklyRank inconnu pour un accès unitaire — sentinelle 9999.
-    return _mapRow(row, rank: 9999);
+    return merged;
   }
 
   @override
-  Future<List<UserScore>> getLeaderboard({required int limit}) async {
+  Future<List<Map<String, dynamic>>> getLeaderboard({
+    required int limit,
+    int offset = 0,
+  }) async {
+    // Pagination obligatoire (#6) : `range` borne toujours la requête.
     final rows = await _client
-        .from(_table)
-        .select(_columns)
-        .order('total_score', ascending: false)
-        .limit(limit);
-
-    // Le rang hebdomadaire est dérivé de la position dans le résultat
-    // (ordonné par total_score desc) faute de colonne weekly_rank en DB.
+        .from(_leaderboard)
+        .select('user_id, weekly_score, rank')
+        .order('rank', ascending: true)
+        .range(offset, offset + limit - 1);
     return rows
-        .asMap()
-        .entries
-        .map<UserScore>(
-          (e) => _mapRow(Map<String, dynamic>.from(e.value), rank: e.key + 1),
-        )
+        .map<Map<String, dynamic>>((r) => Map<String, dynamic>.from(r))
         .toList();
-  }
-
-  /// Mappe une row Supabase (Map) vers [UserScore].
-  ///
-  /// [rank] : position dans le leaderboard (1-based) ou 9999 si inconnu.
-  UserScore _mapRow(Map<String, dynamic> row, {required int rank}) {
-    return UserScore(
-      userId: UserId(row['user_id'] as String),
-      totalPoints: row['total_score'] as int,
-      weeklyPoints: row['weekly_score'] as int? ?? 0,
-      currentLevel: Level.fromInt(row['level'] as int),
-      weeklyRank: rank,
-    );
   }
 }

@@ -17,7 +17,6 @@ import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_filter_chips.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 
 /// SA-01 — Écran "Aujourd'hui" Salat (slice 3.C.3).
@@ -48,8 +47,11 @@ class Sa01TodayScreen extends ConsumerWidget {
       backgroundColor: AppColors.bgPrimary,
       appBar: const AppHeader.title(title: "Aujourd'hui"),
       body: state.when(
-        // D-28 : skeleton list à la place du spinner seul pendant le chargement.
-        loading: () => const _SkeletonLoadingView(),
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            strokeWidth: AppBorderWidth.indicatorStroke,
+          ),
+        ),
         error: (e, stackTrace) {
           if (e is PrayerSettingsNotConfiguredFailure) {
             return _NotConfiguredView(onConfigure: onConfigureSettings);
@@ -341,13 +343,13 @@ class _NotConfiguredView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'Configure tes prières',
+            'Configurez vos prières',
             style: AppTypography.h2,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.s3),
           const Text(
-            'Indique ta position et ta méthode de calcul pour afficher '
+            'Indiquez votre position et votre méthode de calcul pour afficher '
             'les horaires précis.',
             style: AppTypography.body,
             textAlign: TextAlign.center,
@@ -356,21 +358,6 @@ class _NotConfiguredView extends StatelessWidget {
           AppButton(label: 'Configurer les prières', onPressed: onConfigure),
         ],
       ),
-    );
-  }
-}
-
-/// D-28 — Vue squelette SA-01 : 5 AppSkeletonCard simulant les lignes prières.
-class _SkeletonLoadingView extends StatelessWidget {
-  const _SkeletonLoadingView();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const EdgeInsets.all(AppSpacing.s4),
-      itemCount: 5,
-      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s3),
-      itemBuilder: (_, _) => const AppSkeletonCard(lineCount: 2),
     );
   }
 }

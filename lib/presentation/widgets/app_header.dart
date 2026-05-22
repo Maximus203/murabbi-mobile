@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -70,8 +71,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           ? IconButton(
               onPressed: onBack,
               splashRadius: 18,
-              icon: const Icon(
-                LucideIcons.chevronLeft,
+              icon: Icon(
+                lu(LucideIcons.chevronLeft),
                 size: 20,
                 color: AppColors.textPrimary,
               ),

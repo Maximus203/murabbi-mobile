@@ -49,16 +49,18 @@ abstract class AppRoutes {
   static String categoryEdit(String id) => '/categories/$id/edit';
   static const categoryEditPattern = '/categories/:id/edit';
 
-  /// Collections — CO-01 liste (slice 5.D).
+  /// Collections — CO-01 liste (issue #6, Phase 5).
   static const collections = '/collections';
 
-  /// Collections — CO-02 création (slice 5.D).
-  static const collectionsCreate = '/collections/create';
+  /// Collections — CO-02 création (issue #6, Phase 5).
+  static const collectionsCreate = '/collections/new';
 
-  /// Collections — CO-DETAIL (slice 5.D). `extra` = [Collection].
-  static const collectionsDetail = '/collections/detail';
+  /// Collections — CO-DETAIL détail (issue #6, Phase 5). Chemin dynamique :
+  /// `/collections/<id>`.
+  static String collectionDetail(String id) => '/collections/$id';
+  static const collectionDetailPattern = '/collections/:id';
 
-  /// Leaderboard — LB-01 (slice 5.E).
+  /// Classement — LB-01 (issue #6, Phase 5).
   static const leaderboard = '/leaderboard';
 
   /// Paramètres — ST-01 (issue #7, Phase 6).

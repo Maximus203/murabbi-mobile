@@ -5,6 +5,7 @@ import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/use_cases/habits/delete_habit_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/habits/get_habit_stats_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/habits/log_habit_value_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_stats.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
@@ -18,6 +19,10 @@ final deleteHabitUseCaseProvider = Provider<DeleteHabitUseCase>((ref) {
 
 final getHabitStatsUseCaseProvider = Provider<GetHabitStatsUseCase>((ref) {
   return const GetHabitStatsUseCase();
+});
+
+final logHabitValueUseCaseProvider = Provider<LogHabitValueUseCase>((ref) {
+  return LogHabitValueUseCase(ref.watch(habitRepositoryProvider));
 });
 
 /// État de l'écran détail habitude HB-DETAIL.
