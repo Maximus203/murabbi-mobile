@@ -1,3 +1,4 @@
+import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/score_data_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
@@ -16,10 +17,17 @@ class SupabaseScoreDataSource implements ScoreDataSource {
 
   final sb.SupabaseClient _client;
 
-  const SupabaseScoreDataSource(this._client);
+  /// Wrapper JWT auto-refresh (BUG-001, #190).
+  final SupabaseClientWrapper _wrapper;
+
+  const SupabaseScoreDataSource(
+    this._client, {
+    required SupabaseClientWrapper wrapper,
+  }) : _wrapper = wrapper;
 
   @override
   Future<Map<String, dynamic>> getUserScore(String userId) async {
+    await _wrapper.ensureFreshSession();
     final userRow = await _client
         .from(_users)
         .select('id, total_points')
@@ -46,6 +54,7 @@ class SupabaseScoreDataSource implements ScoreDataSource {
     required int limit,
     int offset = 0,
   }) async {
+    await _wrapper.ensureFreshSession();
     // Pagination obligatoire (#6) : `range` borne toujours la requête.
     final rows = await _client
         .from(_leaderboard)

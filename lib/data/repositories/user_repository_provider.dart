@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_client_provider.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_user_data_source.dart';
 import 'package:murabbi_mobile/data/datasources/user_data_source.dart';
@@ -7,7 +8,10 @@ import 'package:murabbi_mobile/domain/repositories/user_repository.dart';
 
 /// Provider Riverpod du datasource User (ST-02 — écriture profil).
 final userDataSourceProvider = Provider<UserDataSource>((ref) {
-  return SupabaseUserDataSource(ref.watch(supabaseClientProvider));
+  return SupabaseUserDataSource(
+    ref.watch(supabaseClientProvider),
+    wrapper: ref.watch(supabaseClientWrapperProvider),
+  );
 });
 
 /// Provider Riverpod du `UserRepository`. La couche presentation consomme

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/score_data_source.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_client_provider.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_score_data_source.dart';
@@ -7,7 +8,10 @@ import 'package:murabbi_mobile/domain/repositories/score_repository.dart';
 
 /// Provider Riverpod du datasource Score (issue #6, Phase 5).
 final scoreDataSourceProvider = Provider<ScoreDataSource>((ref) {
-  return SupabaseScoreDataSource(ref.watch(supabaseClientProvider));
+  return SupabaseScoreDataSource(
+    ref.watch(supabaseClientProvider),
+    wrapper: ref.watch(supabaseClientWrapperProvider),
+  );
 });
 
 /// Provider Riverpod du `ScoreRepository`. La couche presentation consomme

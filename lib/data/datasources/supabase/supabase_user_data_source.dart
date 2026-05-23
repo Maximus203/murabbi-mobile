@@ -1,3 +1,4 @@
+import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_auth_data_source.dart';
 import 'package:murabbi_mobile/data/datasources/user_data_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
@@ -13,13 +14,20 @@ class SupabaseUserDataSource implements UserDataSource {
 
   final sb.SupabaseClient _client;
 
-  const SupabaseUserDataSource(this._client);
+  /// Wrapper JWT auto-refresh (BUG-001, #190).
+  final SupabaseClientWrapper _wrapper;
+
+  const SupabaseUserDataSource(
+    this._client, {
+    required SupabaseClientWrapper wrapper,
+  }) : _wrapper = wrapper;
 
   @override
   Future<Map<String, dynamic>> updatePseudo({
     required String userId,
     required String pseudo,
   }) async {
+    await _wrapper.ensureFreshSession();
     final row = await _client
         .from(_users)
         .update({'pseudo': pseudo})

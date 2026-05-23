@@ -1,3 +1,4 @@
+import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
@@ -74,10 +75,17 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
 
   final sb.SupabaseClient _client;
 
-  const SupabaseCollectionDataSourceImpl(this._client);
+  /// Wrapper JWT auto-refresh (BUG-001, #190).
+  final SupabaseClientWrapper _wrapper;
+
+  const SupabaseCollectionDataSourceImpl(
+    this._client, {
+    required SupabaseClientWrapper wrapper,
+  }) : _wrapper = wrapper;
 
   @override
   Future<List<Collection>> getCollections(UserId userId) async {
+    await _wrapper.ensureFreshSession();
     // Charge les collections de l'utilisateur + les collections système.
     // La policy RLS Supabase filtre `deleted_at IS NULL` côté serveur.
     final rows = await _client
@@ -95,6 +103,7 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
   Future<List<Map<String, dynamic>>> getHabitsForCollection(
     String collectionId,
   ) async {
+    await _wrapper.ensureFreshSession();
     // Lit depuis `published_catalog` — remplace l'accès direct à
     // `collection_habits` révoqué par RLS (migration issue #162).
     final data = await _client
@@ -110,6 +119,7 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
     required CollectionId collectionId,
     required UserId userId,
   }) async {
+    await _wrapper.ensureFreshSession();
     await _client
         .from(collectionsTable)
         .update({'is_active': true})
@@ -122,6 +132,7 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
     required CollectionId collectionId,
     required UserId userId,
   }) async {
+    await _wrapper.ensureFreshSession();
     await _client
         .from(collectionsTable)
         .update({'is_active': false})
@@ -134,6 +145,7 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
     required Collection collection,
     required UserId userId,
   }) async {
+    await _wrapper.ensureFreshSession();
     final row = await _client
         .from(collectionsTable)
         .insert(_toRow(collection, userId))

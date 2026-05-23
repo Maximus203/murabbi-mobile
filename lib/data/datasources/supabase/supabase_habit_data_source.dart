@@ -1,3 +1,4 @@
+import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/habit_data_source.dart';
 import 'package:murabbi_mobile/domain/errors/habit_failure.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
@@ -34,10 +35,18 @@ class SupabaseHabitDataSource implements HabitDataSource {
 
   final sb.SupabaseClient _client;
 
-  const SupabaseHabitDataSource(this._client);
+  /// Wrapper JWT auto-refresh (BUG-001, #190) — appelé en tête de chaque
+  /// méthode publique pour garantir un token frais avant toute requête.
+  final SupabaseClientWrapper _wrapper;
+
+  const SupabaseHabitDataSource(
+    this._client, {
+    required SupabaseClientWrapper wrapper,
+  }) : _wrapper = wrapper;
 
   @override
   Future<List<Map<String, dynamic>>> getHabits(String userId) async {
+    await _wrapper.ensureFreshSession();
     final rows = await _client
         .from(_habits)
         .select()
@@ -50,12 +59,14 @@ class SupabaseHabitDataSource implements HabitDataSource {
 
   @override
   Future<Map<String, dynamic>> createHabit(Map<String, dynamic> row) async {
+    await _wrapper.ensureFreshSession();
     final created = await _client.from(_habits).insert(row).select().single();
     return Map<String, dynamic>.from(created);
   }
 
   @override
   Future<Map<String, dynamic>> updateHabit(Map<String, dynamic> row) async {
+    await _wrapper.ensureFreshSession();
     final updated = await _client
         .from(_habits)
         .update(row)
@@ -67,11 +78,13 @@ class SupabaseHabitDataSource implements HabitDataSource {
 
   @override
   Future<void> deleteHabit(String habitId) async {
+    await _wrapper.ensureFreshSession();
     await _client.from(_habits).delete().eq('id', habitId);
   }
 
   @override
   Future<void> upsertHabitLog(Map<String, dynamic> row) async {
+    await _wrapper.ensureFreshSession();
     await _client.from(_habitLogs).upsert(row, onConflict: 'habit_id,date');
   }
 
@@ -81,6 +94,7 @@ class SupabaseHabitDataSource implements HabitDataSource {
     required String from,
     required String to,
   }) async {
+    await _wrapper.ensureFreshSession();
     final rows = await _client
         .from(_habitLogs)
         .select()
@@ -105,6 +119,7 @@ class SupabaseHabitDataSource implements HabitDataSource {
     required DateTime date,
     required String status,
   }) async {
+    await _wrapper.ensureFreshSession();
     final y = date.year.toString().padLeft(4, '0');
     final m = date.month.toString().padLeft(2, '0');
     final d = date.day.toString().padLeft(2, '0');
@@ -137,6 +152,7 @@ class SupabaseHabitDataSource implements HabitDataSource {
   Future<List<Map<String, dynamic>>> getHabitsForCollection(
     String collectionId,
   ) async {
+    await _wrapper.ensureFreshSession();
     final rows = await _client
         .from('collection_habits')
         .select('habits(*)')
