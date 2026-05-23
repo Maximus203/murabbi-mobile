@@ -120,7 +120,8 @@ class Occurrence extends Equatable {
   final ValidationSource? validationSource;
 
   /// Payload libre sérialisé en JSON (titre/body précalculés, deeplink, etc.).
-  final Map<String, String> payload;
+  /// Stocké sous forme de chaîne JSON pour compatibilité SQLite/Supabase (BUG-004).
+  final String? payloadJson;
 
   /// Timezone du device au moment de la planification (audit DST cf. ADR-018
   /// §3.5).
@@ -145,7 +146,7 @@ class Occurrence extends Equatable {
     this.firedAt,
     this.actedAt,
     this.validationSource,
-    this.payload = const {},
+    this.payloadJson,
     this.deviceTimezone,
   }) : assert(
          snoozeCount >= 0 && snoozeCount <= 2,
@@ -165,6 +166,21 @@ class Occurrence extends Equatable {
   /// déclenchée juste avant `scheduledAt` (latence OS + clic utilisateur).
   static const Duration onTimeLead = Duration(seconds: 60);
 
+  /// Retourne `true` si l'occurrence est encore dans la grace window à [now].
+  ///
+  /// La grace window se termine à minuit local strict (ADR-018 §10 Q-OPEN-B).
+  bool isWithinWindow(DateTime now) => now.toUtc().isBefore(windowEndsAt.toUtc());
+
+  /// Retourne `true` si l'occurrence est validable (encore active et dans
+  /// la fenêtre + 24h — cf. ADR-018 §10 Q-OPEN-C).
+  bool isValidatable(DateTime now) {
+    final utcNow = now.toUtc();
+    final extendedEnd = windowEndsAt.toUtc().add(lateCatchupGrace);
+    return utcNow.isBefore(extendedEnd) &&
+        status != OccurrenceStatus.done &&
+        status != OccurrenceStatus.cancelled;
+  }
+
   Occurrence copyWith({
     OccurrenceStatus? status,
     OccurrenceOutcome? outcome,
@@ -173,7 +189,7 @@ class Occurrence extends Equatable {
     DateTime? firedAt,
     DateTime? actedAt,
     ValidationSource? validationSource,
-    Map<String, String>? payload,
+    String? payloadJson,
     String? deviceTimezone,
     DateTime? updatedAt,
   }) {
@@ -191,7 +207,7 @@ class Occurrence extends Equatable {
       firedAt: firedAt ?? this.firedAt,
       actedAt: actedAt ?? this.actedAt,
       validationSource: validationSource ?? this.validationSource,
-      payload: payload ?? this.payload,
+      payloadJson: payloadJson ?? this.payloadJson,
       deviceTimezone: deviceTimezone ?? this.deviceTimezone,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -213,7 +229,7 @@ class Occurrence extends Equatable {
     firedAt,
     actedAt,
     validationSource,
-    payload,
+    payloadJson,
     deviceTimezone,
     createdAt,
     updatedAt,
