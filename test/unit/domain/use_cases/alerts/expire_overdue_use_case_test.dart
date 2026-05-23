@@ -46,47 +46,49 @@ void main() {
   });
 
   group('ExpireOverdueOccurrencesUseCase —', () {
-    test('passe les occurrences overdue actives en missed + outcome=missed',
-        () async {
-      final yesterdayEnd = DateTime.utc(2026, 5, 22, 23, 59, 59);
-      final overdue = [
-        makeOcc(
-          id: 'a',
-          status: OccurrenceStatus.pending,
-          windowEndsAt: yesterdayEnd,
-        ),
-        makeOcc(
-          id: 'b',
-          status: OccurrenceStatus.fired,
-          windowEndsAt: yesterdayEnd,
-        ),
-        makeOcc(
-          id: 'c',
-          status: OccurrenceStatus.snoozed,
-          windowEndsAt: yesterdayEnd,
-          snoozeCount: 1,
-        ),
-      ];
-      final now = DateTime.utc(2026, 5, 23, 0, 5);
+    test(
+      'passe les occurrences overdue actives en missed + outcome=missed',
+      () async {
+        final yesterdayEnd = DateTime.utc(2026, 5, 22, 23, 59, 59);
+        final overdue = [
+          makeOcc(
+            id: 'a',
+            status: OccurrenceStatus.pending,
+            windowEndsAt: yesterdayEnd,
+          ),
+          makeOcc(
+            id: 'b',
+            status: OccurrenceStatus.fired,
+            windowEndsAt: yesterdayEnd,
+          ),
+          makeOcc(
+            id: 'c',
+            status: OccurrenceStatus.snoozed,
+            windowEndsAt: yesterdayEnd,
+            snoozeCount: 1,
+          ),
+        ];
+        final now = DateTime.utc(2026, 5, 23, 0, 5);
 
-      when(
-        () => repo.findOverdueActive(now),
-      ).thenAnswer((_) async => overdue);
+        when(
+          () => repo.findOverdueActive(now),
+        ).thenAnswer((_) async => overdue);
 
-      final count = await useCase.call(now: now);
+        final count = await useCase.call(now: now);
 
-      expect(count, 3);
-      final saved =
-          verify(() => repo.saveAll(captureAny())).captured.first
-              as List<Occurrence>;
-      expect(saved, hasLength(3));
-      for (final occ in saved) {
-        expect(occ.status, OccurrenceStatus.missed);
-        expect(occ.outcome, OccurrenceOutcome.missed);
-        expect(occ.validationSource, ValidationSource.autoExpire);
-        expect(occ.actedAt, now);
-      }
-    });
+        expect(count, 3);
+        final saved =
+            verify(() => repo.saveAll(captureAny())).captured.first
+                as List<Occurrence>;
+        expect(saved, hasLength(3));
+        for (final occ in saved) {
+          expect(occ.status, OccurrenceStatus.missed);
+          expect(occ.outcome, OccurrenceOutcome.missed);
+          expect(occ.validationSource, ValidationSource.autoExpire);
+          expect(occ.actedAt, now);
+        }
+      },
+    );
 
     test('retourne 0 si aucune occurrence overdue', () async {
       final now = DateTime.utc(2026, 5, 23, 0, 5);

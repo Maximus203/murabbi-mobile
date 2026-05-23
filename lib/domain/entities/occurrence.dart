@@ -50,11 +50,7 @@ enum OccurrenceStatus {
 ///   (rattrapage J+1). L'utilisateur perd les points de streak mais gagne
 ///   les points de complétion.
 /// - `missed` : non validée avant `windowEndsAt + 24h` → archived
-enum OccurrenceOutcome {
-  onTime,
-  late,
-  missed,
-}
+enum OccurrenceOutcome { onTime, late, missed }
 
 /// Origine de l'action de validation (utilisée pour audit + scoring).
 enum ValidationSource {

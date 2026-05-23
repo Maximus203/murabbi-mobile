@@ -40,9 +40,7 @@ void main() {
     );
   }
 
-  Occurrence makePrayer({
-    OccurrenceStatus status = OccurrenceStatus.fired,
-  }) {
+  Occurrence makePrayer({OccurrenceStatus status = OccurrenceStatus.fired}) {
     final now = DateTime.utc(2026, 5, 23, 7);
     return Occurrence(
       id: 'occ-prayer-001',
@@ -83,9 +81,7 @@ void main() {
 
   group('ValidateOccurrenceUseCase — outcomes', () {
     test('valide dans la grace window → outcome onTime', () async {
-      when(
-        () => repo.findById('occ-001'),
-      ).thenAnswer((_) async => makeHabit());
+      when(() => repo.findById('occ-001')).thenAnswer((_) async => makeHabit());
 
       final result = await useCase.call(
         occurrenceId: 'occ-001',
@@ -100,9 +96,7 @@ void main() {
     test('valide à 60s avant scheduledAt → outcome onTime', () async {
       // Tolérance ADR-018 §4.3 implicite : un tap utilisateur juste avant
       // l'heure (clic anticipé) reste onTime.
-      when(
-        () => repo.findById('occ-001'),
-      ).thenAnswer((_) async => makeHabit());
+      when(() => repo.findById('occ-001')).thenAnswer((_) async => makeHabit());
 
       final result = await useCase.call(
         occurrenceId: 'occ-001',
@@ -151,25 +145,28 @@ void main() {
   });
 
   group('ValidateOccurrenceUseCase — règles métier', () {
-    test('occurrence déjà finalisée (done) → AlreadyFinalizedFailure', () async {
-      when(() => repo.findById('occ-001')).thenAnswer(
-        (_) async => makeHabit(status: OccurrenceStatus.done),
-      );
+    test(
+      'occurrence déjà finalisée (done) → AlreadyFinalizedFailure',
+      () async {
+        when(
+          () => repo.findById('occ-001'),
+        ).thenAnswer((_) async => makeHabit(status: OccurrenceStatus.done));
 
-      expect(
-        () => useCase.call(
-          occurrenceId: 'occ-001',
-          source: ValidationSource.notificationAction,
-          now: DateTime.utc(2026, 5, 23, 8, 5),
-        ),
-        throwsA(isA<OccurrenceAlreadyFinalizedFailure>()),
-      );
-    });
+        expect(
+          () => useCase.call(
+            occurrenceId: 'occ-001',
+            source: ValidationSource.notificationAction,
+            now: DateTime.utc(2026, 5, 23, 8, 5),
+          ),
+          throwsA(isA<OccurrenceAlreadyFinalizedFailure>()),
+        );
+      },
+    );
 
     test('occurrence missed (terminal) → AlreadyFinalizedFailure', () async {
-      when(() => repo.findById('occ-001')).thenAnswer(
-        (_) async => makeHabit(status: OccurrenceStatus.missed),
-      );
+      when(
+        () => repo.findById('occ-001'),
+      ).thenAnswer((_) async => makeHabit(status: OccurrenceStatus.missed));
 
       expect(
         () => useCase.call(
@@ -194,30 +191,30 @@ void main() {
       );
     });
 
-    test('dismissed → done (validation manuelle dashboard, ADR-018 §4.2)',
-        () async {
-      // dismissed n'est PAS un état finalisé : l'utilisateur peut revalider
-      // depuis le dashboard tant qu'on est dans la window de rattrapage.
-      when(() => repo.findById('occ-001')).thenAnswer(
-        (_) async => makeHabit(status: OccurrenceStatus.dismissed),
-      );
+    test(
+      'dismissed → done (validation manuelle dashboard, ADR-018 §4.2)',
+      () async {
+        // dismissed n'est PAS un état finalisé : l'utilisateur peut revalider
+        // depuis le dashboard tant qu'on est dans la window de rattrapage.
+        when(() => repo.findById('occ-001')).thenAnswer(
+          (_) async => makeHabit(status: OccurrenceStatus.dismissed),
+        );
 
-      final result = await useCase.call(
-        occurrenceId: 'occ-001',
-        source: ValidationSource.app,
-        now: DateTime.utc(2026, 5, 23, 14),
-      );
+        final result = await useCase.call(
+          occurrenceId: 'occ-001',
+          source: ValidationSource.app,
+          now: DateTime.utc(2026, 5, 23, 14),
+        );
 
-      expect(result.status, OccurrenceStatus.done);
-      expect(result.outcome, OccurrenceOutcome.onTime);
-    });
+        expect(result.status, OccurrenceStatus.done);
+        expect(result.outcome, OccurrenceOutcome.onTime);
+      },
+    );
   });
 
   group('ValidateOccurrenceUseCase — persistance', () {
     test('persiste validationSource et actedAt', () async {
-      when(
-        () => repo.findById('occ-001'),
-      ).thenAnswer((_) async => makeHabit());
+      when(() => repo.findById('occ-001')).thenAnswer((_) async => makeHabit());
 
       final now = DateTime.utc(2026, 5, 23, 8, 5);
       await useCase.call(
@@ -237,14 +234,9 @@ void main() {
     test('utilise DateTime.now() si paramètre `now` non fourni', () async {
       // On vérifie juste que l'appel ne throw pas et que le save est appelé
       // (le now interne dépend de l'horloge système).
-      when(
-        () => repo.findById('occ-001'),
-      ).thenAnswer((_) async => makeHabit());
+      when(() => repo.findById('occ-001')).thenAnswer((_) async => makeHabit());
 
-      await useCase.call(
-        occurrenceId: 'occ-001',
-        source: ValidationSource.app,
-      );
+      await useCase.call(occurrenceId: 'occ-001', source: ValidationSource.app);
 
       verify(() => repo.save(any())).called(1);
     });

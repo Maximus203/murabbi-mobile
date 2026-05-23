@@ -73,29 +73,31 @@ void main() {
   });
 
   group('SnoozeOccurrenceUseCase — happy path', () {
-    test('1er snooze : snoozeCount 0→1, status=snoozed, nextFireAt=now+30min',
-        () async {
-      when(
-        () => repo.findById('occ-001'),
-      ).thenAnswer((_) async => makeHabit());
+    test(
+      '1er snooze : snoozeCount 0→1, status=snoozed, nextFireAt=now+30min',
+      () async {
+        when(
+          () => repo.findById('occ-001'),
+        ).thenAnswer((_) async => makeHabit());
 
-      final now = DateTime.utc(2026, 5, 23, 8, 5);
-      final result = await useCase.call(occurrenceId: 'occ-001', now: now);
+        final now = DateTime.utc(2026, 5, 23, 8, 5);
+        final result = await useCase.call(occurrenceId: 'occ-001', now: now);
 
-      expect(result.snoozeCount, 1);
-      expect(result.status, OccurrenceStatus.snoozed);
-      expect(result.nextFireAt, now.add(Occurrence.snoozeDuration));
-      expect(
-        result.scheduledAt,
-        scheduledAt,
-        reason: 'scheduledAt original ne doit pas bouger (calc onTime/late)',
-      );
-    });
+        expect(result.snoozeCount, 1);
+        expect(result.status, OccurrenceStatus.snoozed);
+        expect(result.nextFireAt, now.add(Occurrence.snoozeDuration));
+        expect(
+          result.scheduledAt,
+          scheduledAt,
+          reason: 'scheduledAt original ne doit pas bouger (calc onTime/late)',
+        );
+      },
+    );
 
     test('2ème snooze : snoozeCount 1→2 autorisé', () async {
-      when(() => repo.findById('occ-001')).thenAnswer(
-        (_) async => makeHabit(snoozeCount: 1),
-      );
+      when(
+        () => repo.findById('occ-001'),
+      ).thenAnswer((_) async => makeHabit(snoozeCount: 1));
 
       final now = DateTime.utc(2026, 5, 23, 8, 40);
       final result = await useCase.call(occurrenceId: 'occ-001', now: now);
@@ -107,9 +109,9 @@ void main() {
 
   group('SnoozeOccurrenceUseCase — règles métier', () {
     test('3ème snooze (count déjà à 2) → MaxSnoozesReachedFailure', () async {
-      when(() => repo.findById('occ-001')).thenAnswer(
-        (_) async => makeHabit(snoozeCount: 2),
-      );
+      when(
+        () => repo.findById('occ-001'),
+      ).thenAnswer((_) async => makeHabit(snoozeCount: 2));
 
       expect(
         () => useCase.call(
@@ -120,20 +122,22 @@ void main() {
       );
     });
 
-    test('snooze sur prière → PrayerSnoozeForbiddenFailure (BUG-004)',
-        () async {
-      when(
-        () => repo.findById('occ-prayer-001'),
-      ).thenAnswer((_) async => makePrayer());
+    test(
+      'snooze sur prière → PrayerSnoozeForbiddenFailure (BUG-004)',
+      () async {
+        when(
+          () => repo.findById('occ-prayer-001'),
+        ).thenAnswer((_) async => makePrayer());
 
-      expect(
-        () => useCase.call(
-          occurrenceId: 'occ-prayer-001',
-          now: DateTime.utc(2026, 5, 23, 8, 5),
-        ),
-        throwsA(isA<OccurrencePrayerSnoozeForbiddenFailure>()),
-      );
-    });
+        expect(
+          () => useCase.call(
+            occurrenceId: 'occ-prayer-001',
+            now: DateTime.utc(2026, 5, 23, 8, 5),
+          ),
+          throwsA(isA<OccurrencePrayerSnoozeForbiddenFailure>()),
+        );
+      },
+    );
 
     test('occurrence introuvable → NotFoundFailure', () async {
       when(() => repo.findById('inconnu')).thenAnswer((_) async => null);
@@ -164,9 +168,7 @@ void main() {
 
   group('SnoozeOccurrenceUseCase — persistance', () {
     test('save() est appelé avec la version mise à jour', () async {
-      when(
-        () => repo.findById('occ-001'),
-      ).thenAnswer((_) async => makeHabit());
+      when(() => repo.findById('occ-001')).thenAnswer((_) async => makeHabit());
 
       final now = DateTime.utc(2026, 5, 23, 8, 5);
       await useCase.call(occurrenceId: 'occ-001', now: now);
@@ -179,9 +181,7 @@ void main() {
     });
 
     test('utilise DateTime.now() si paramètre `now` non fourni', () async {
-      when(
-        () => repo.findById('occ-001'),
-      ).thenAnswer((_) async => makeHabit());
+      when(() => repo.findById('occ-001')).thenAnswer((_) async => makeHabit());
 
       await useCase.call(occurrenceId: 'occ-001');
 
