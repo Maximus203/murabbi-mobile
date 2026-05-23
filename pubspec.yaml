@@ -80,8 +80,9 @@ dependencies:
   # Isolés dans lib/core/utils/timezone_utils.dart — cf. ADR-018 §timezone.
   flutter_timezone: ^3.0.0
 
-  # Connectivity — BUG-002. Détection réseau pour l'offline queue.
-  # Isolé dans lib/services/offline/ — jamais importé depuis presentation.
+  # Statut connectivité réseau (issue #195 — M11 offline indicator + BUG-002 offline queue).
+  # Import isolé dans `lib/services/connectivity/` — aucune autre couche ne
+  # doit importer cette lib directement (cf. patterns ADR-013/014).
   connectivity_plus: ^6.1.4
 
 dev_dependencies:

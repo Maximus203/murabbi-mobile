@@ -32,6 +32,8 @@ import 'package:murabbi_mobile/presentation/features/settings/screens/st_03_dele
 import 'package:murabbi_mobile/presentation/features/splash/screens/splash_screen.dart';
 import 'package:murabbi_mobile/presentation/router/auth_redirect.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
+import 'package:murabbi_mobile/presentation/widgets/offline_banner.dart';
+import 'package:murabbi_mobile/services/connectivity/connectivity_service.dart';
 
 /// Pont Riverpod → Listenable pour le `refreshListenable` de GoRouter :
 /// chaque fois que l'état d'auth ou d'onboarding change, on notifie le
@@ -68,6 +70,9 @@ class _ShellScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeTab = _tabs[navigationShell.currentIndex];
+    // Bannière offline (issue #195 — M11). On assume online par défaut
+    // tant que le 1er ping n'a pas répondu pour éviter un flash.
+    final isOnline = ref.watch(connectivityProvider).valueOrNull ?? true;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -77,8 +82,14 @@ class _ShellScaffold extends ConsumerWidget {
         active: activeTab,
         onTabSelected: (tab) => _onTabSelected(context, ref, tab),
       ),
-      // Le body est le Navigator de l'onglet courant maintenu par go_router.
-      body: navigationShell,
+      // Le body est le Navigator de l'onglet courant maintenu par go_router,
+      // précédé de la bannière offline si l'appareil est déconnecté.
+      body: Column(
+        children: [
+          if (!isOnline) const SafeArea(bottom: false, child: OfflineBanner()),
+          Expanded(child: navigationShell),
+        ],
+      ),
     );
   }
 
