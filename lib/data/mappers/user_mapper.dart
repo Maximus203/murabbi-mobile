@@ -32,6 +32,7 @@ class UserMapper {
     final emailConfirmedAtRaw = authUser['email_confirmed_at'];
 
     final pseudo = profile['pseudo'];
+    final pseudoFullRaw = profile['pseudo_full'];
     final levelRaw = profile['level'];
     final currentStreakRaw = profile['current_streak'];
     final completionRateRaw = profile['completion_rate'];
@@ -86,6 +87,15 @@ class UserMapper {
       emailConfirmedAt = DateTime.parse(emailConfirmedAtRaw);
     }
 
+    // Issue #168 / admin#125 — `pseudo_full` est une colonne GENERATED
+    // STORED côté Postgres ; en lecture on la projette telle quelle. Si
+    // la colonne est absente (rows pré-migration) ou null, on retombe sur
+    // null et `User.displayPseudo` reprend `pseudo` brut.
+    String? pseudoFull;
+    if (pseudoFullRaw is String && pseudoFullRaw.isNotEmpty) {
+      pseudoFull = pseudoFullRaw;
+    }
+
     return User(
       id: UserId(id),
       pseudo: Pseudonym(pseudo),
@@ -95,6 +105,7 @@ class UserMapper {
       currentStreak: currentStreakRaw,
       completionRate: completionRateRaw.toDouble(),
       emailConfirmedAt: emailConfirmedAt,
+      pseudoFull: pseudoFull,
     );
   }
 }

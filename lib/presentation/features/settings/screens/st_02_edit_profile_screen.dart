@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
-import 'package:murabbi_mobile/presentation/features/settings/providers/edit_profile_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_input.dart';
 
-/// ST-02 — Modifier le profil (issue #7, Phase 6).
+/// ST-02 — Profil (lecture seule depuis l'issue #168).
 ///
-/// Avatar + lien "Changer la photo" (placeholder v2), champ pseudo public
-/// éditable, email verrouillé. Sauvegarde avec feedback.
-class St02EditProfileScreen extends ConsumerStatefulWidget {
+/// **Évolution #168** : avec la migration admin#125 (`pseudo_full` =
+/// `pseudo#XXXX` immuable, suffixe CSPRNG, RPC `update_user_pseudo`
+/// neutralisée côté serveur), il n'existe plus aucun chemin légitime
+/// pour modifier son pseudo depuis le mobile. Cet écran devient une vue
+/// de consultation : avatar, pseudo canonique, email verrouillé.
+///
+/// Le nom de classe `St02EditProfileScreen` est conservé pour ne pas
+/// casser le routeur ; un futur PR pourra le renommer en
+/// `St02ProfileScreen` une fois les call-sites migrés.
+class St02EditProfileScreen extends ConsumerWidget {
   /// Retour vers ST-01.
   final VoidCallback onBack;
 
-  /// Profil enregistré avec succès.
+  /// Callback historique « profil enregistré » — plus jamais déclenché
+  /// (lecture seule). Conservé pour compatibilité de signature.
   final VoidCallback onSaved;
 
   const St02EditProfileScreen({
@@ -28,70 +32,17 @@ class St02EditProfileScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<St02EditProfileScreen> createState() =>
-      _St02EditProfileScreenState();
-}
-
-class _St02EditProfileScreenState extends ConsumerState<St02EditProfileScreen> {
-  final TextEditingController _pseudoCtrl = TextEditingController();
-  String? _error;
-
-  /// `true` une fois le champ pré-rempli avec le pseudo courant — évite
-  /// d'écraser une saisie en cours si l'auth state se rafraîchit.
-  bool _prefilled = false;
-
-  @override
-  void dispose() {
-    _pseudoCtrl.dispose();
-    super.dispose();
-  }
-
-  bool get _isValidPseudo {
-    final trimmed = _pseudoCtrl.text.trim();
-    if (trimmed.isEmpty) return false;
-    try {
-      Pseudonym(trimmed);
-      return true;
-    } on ArgumentError {
-      return false;
-    }
-  }
-
-  Future<void> _save() async {
-    setState(() => _error = null);
-    final ok = await ref
-        .read(editProfileNotifierProvider.notifier)
-        .save(_pseudoCtrl.text);
-    if (!mounted) return;
-    if (ok) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Profil mis à jour.')));
-      widget.onSaved();
-    } else {
-      setState(() => _error = 'Impossible d\'enregistrer. Réessaie.');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authNotifierProvider).valueOrNull;
-    // Pré-remplissage initial du pseudo dès que l'utilisateur est chargé.
-    if (!_prefilled && user != null) {
-      _pseudoCtrl.text = user.pseudo.value;
-      _prefilled = true;
-    }
-    final saving = ref.watch(editProfileNotifierProvider).isLoading;
+    final displayPseudo = user?.displayPseudo ?? '—';
+    final email = user?.email.value ?? '—';
     final initial = (user?.pseudo.value ?? '?').isEmpty
         ? '?'
         : (user?.pseudo.value ?? '?').characters.first.toUpperCase();
 
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
-      appBar: AppHeader.back(
-        title: 'Modifier le profil',
-        onBack: widget.onBack,
-      ),
+      appBar: AppHeader.back(title: 'Profil', onBack: onBack),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.s5),
         children: [
@@ -113,45 +64,74 @@ class _St02EditProfileScreenState extends ConsumerState<St02EditProfileScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.s3),
-                Text(
-                  'Changer la photo',
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textTertiary,
-                  ),
-                ),
+                const SizedBox(height: AppSpacing.s4),
+                Text(displayPseudo, style: AppTypography.h2),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.s6),
-          AppInput(
-            label: 'Pseudo (public)',
-            placeholder: 'Ton pseudo',
-            controller: _pseudoCtrl,
-            maxLength: Pseudonym.maxLength,
-            errorText: _error,
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          AppInput(
-            label: 'Email',
-            controller: TextEditingController(text: user?.email.value ?? ''),
-            enabled: false,
-          ),
+          _ReadOnlyField(label: 'Pseudo (public)', value: displayPseudo),
           const SizedBox(height: AppSpacing.s2),
           Text(
-            'L\'email est verrouillé et ne peut pas être modifié.',
+            // Issue #168 — le suffixe `#XXXX` est tiré par CSPRNG côté
+            // admin et figé pour la durée de vie du compte (admin#125).
+            'Le pseudo et son suffixe sont définitifs et identifient ton '
+            'compte de manière unique.',
             style: AppTypography.caption.copyWith(
               color: AppColors.textTertiary,
             ),
           ),
-          const SizedBox(height: AppSpacing.s8),
-          AppButton(
-            label: saving ? 'Enregistrement…' : 'Enregistrer',
-            onPressed: (saving || !_isValidPseudo) ? null : _save,
+          const SizedBox(height: AppSpacing.s5),
+          _ReadOnlyField(label: 'Email', value: email),
+          const SizedBox(height: AppSpacing.s2),
+          Text(
+            "L'email est verrouillé et ne peut pas être modifié.",
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textTertiary,
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Champ affiché en lecture seule (style cohérent avec `AppInput` désactivé
+/// mais sans dépendre d'un `TextEditingController` — évite toute affordance
+/// de saisie pour le lecteur d'écran).
+class _ReadOnlyField extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _ReadOnlyField({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: AppSpacing.s1),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s4,
+            vertical: AppSpacing.s3,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.bgInput,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.borderEmphasis),
+          ),
+          child: Text(
+            value,
+            style: AppTypography.body.copyWith(color: AppColors.textPrimary),
+          ),
+        ),
+      ],
     );
   }
 }

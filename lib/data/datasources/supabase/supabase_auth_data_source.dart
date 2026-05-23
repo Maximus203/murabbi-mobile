@@ -30,7 +30,7 @@ class SupabaseAuthDataSource implements AuthDataSource {
   /// `id` est volontairement absent — il vient déjà de `authUser.id`.
   /// `total_points` est volontairement absent — SoT = `user_scores.total_score`.
   static const String profileColumns =
-      'pseudo, email, level, current_streak, '
+      'pseudo, pseudo_full, email, level, current_streak, '
       'completion_rate, deletion_requested_at';
 
   final sb.SupabaseClient _client;
@@ -86,6 +86,10 @@ class SupabaseAuthDataSource implements AuthDataSource {
       user,
       profileOverride: {
         'pseudo': payload['pseudo'],
+        // `pseudo_full` est null tant que le trigger SECURITY DEFINER admin
+        // n'a pas projeté la row complète. La prochaine lecture (auth
+        // refresh, getCurrentUser) ramènera la valeur générée par Postgres.
+        'pseudo_full': null,
         'email': payload['email'],
         'level': payload['level'],
         'current_streak': payload['current_streak'],

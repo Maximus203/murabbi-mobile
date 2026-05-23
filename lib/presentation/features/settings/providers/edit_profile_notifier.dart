@@ -5,7 +5,12 @@ import 'package:murabbi_mobile/domain/use_cases/auth/update_profile_use_case.dar
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 
 /// Provider du use case d'édition de profil — surchargeable en test.
+///
+/// **DEPRECATED (issue #168)** : plus utilisé par la presentation depuis
+/// le passage en lecture seule de ST-02. Conservé pour les tests existants.
+// ignore: deprecated_member_use_from_same_package
 final updateProfileUseCaseProvider = Provider<UpdateProfileUseCase>((ref) {
+  // ignore: deprecated_member_use_from_same_package
   return UpdateProfileUseCase(ref.watch(userRepositoryProvider));
 });
 
