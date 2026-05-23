@@ -247,9 +247,9 @@ void main() {
     test('occurrence déjà done → retourne sans ré-écrire', () async {
       // Idempotence : si l'occurrence est déjà `done`, le use case la retourne
       // telle quelle sans rappeler repository.save (BUG-003).
-      when(() => repo.findById('occ-001')).thenAnswer(
-        (_) async => makeHabit(status: OccurrenceStatus.done),
-      );
+      when(
+        () => repo.findById('occ-001'),
+      ).thenAnswer((_) async => makeHabit(status: OccurrenceStatus.done));
 
       final result = await useCase.call(
         occurrenceId: 'occ-001',
@@ -338,27 +338,24 @@ void main() {
   });
 
   group('ValidateOccurrenceUseCase — timezone UTC (BUG-004)', () {
-    test(
-      'validate_before_midnight_utc3_is_not_too_late — '
-      '20h UTC = 23h Nairobi est encore dans la window',
-      () async {
-        when(
-          () => repo.findById('occ-tz3-001'),
-        ).thenAnswer((_) async => makeHabitNairobi());
+    test('validate_before_midnight_utc3_is_not_too_late — '
+        '20h UTC = 23h Nairobi est encore dans la window', () async {
+      when(
+        () => repo.findById('occ-tz3-001'),
+      ).thenAnswer((_) async => makeHabitNairobi());
 
-        // 20h UTC = 23h Nairobi → encore avant minuit Nairobi (21h UTC)
-        final now = DateTime.utc(2025, 5, 23, 20, 0);
-        final result = await useCase.call(
-          occurrenceId: 'occ-tz3-001',
-          source: ValidationSource.notificationAction,
-          now: now,
-        );
+      // 20h UTC = 23h Nairobi → encore avant minuit Nairobi (21h UTC)
+      final now = DateTime.utc(2025, 5, 23, 20, 0);
+      final result = await useCase.call(
+        occurrenceId: 'occ-tz3-001',
+        source: ValidationSource.notificationAction,
+        now: now,
+      );
 
-        expect(result.status, OccurrenceStatus.done);
-        expect(result.outcome, OccurrenceOutcome.onTime);
-        verify(() => repo.save(any())).called(1);
-      },
-    );
+      expect(result.status, OccurrenceStatus.done);
+      expect(result.outcome, OccurrenceOutcome.onTime);
+      verify(() => repo.save(any())).called(1);
+    });
 
     test(
       'midnight_cutoff_uses_local_not_utc — '
@@ -382,46 +379,40 @@ void main() {
       },
     );
 
-    test(
-      'utc_plus_3_log_at_23h30_counts_as_ontime — '
-      '20h30 UTC = 23h30 Nairobi encore dans la window',
-      () async {
-        when(
-          () => repo.findById('occ-tz3-001'),
-        ).thenAnswer((_) async => makeHabitNairobi());
+    test('utc_plus_3_log_at_23h30_counts_as_ontime — '
+        '20h30 UTC = 23h30 Nairobi encore dans la window', () async {
+      when(
+        () => repo.findById('occ-tz3-001'),
+      ).thenAnswer((_) async => makeHabitNairobi());
 
-        // 20h30 UTC = 23h30 Nairobi → encore avant 21h UTC (windowEndsAt)
-        final now = DateTime.utc(2025, 5, 23, 20, 30);
-        final result = await useCase.call(
+      // 20h30 UTC = 23h30 Nairobi → encore avant 21h UTC (windowEndsAt)
+      final now = DateTime.utc(2025, 5, 23, 20, 30);
+      final result = await useCase.call(
+        occurrenceId: 'occ-tz3-001',
+        source: ValidationSource.notificationAction,
+        now: now,
+      );
+
+      expect(result.outcome, OccurrenceOutcome.onTime);
+    });
+
+    test('occurrence_expired_beyond_24h_throws — '
+        'au-delà de window+24h la validation est bloquée', () async {
+      when(
+        () => repo.findById('occ-tz3-001'),
+      ).thenAnswer((_) async => makeHabitNairobi());
+
+      // windowEndsAt = 21h UTC le 23 → +24h = 21h UTC le 24 → on est à 21h01 le 24
+      final now = DateTime.utc(2025, 5, 24, 21, 1);
+      expect(
+        () => useCase.call(
           occurrenceId: 'occ-tz3-001',
-          source: ValidationSource.notificationAction,
+          source: ValidationSource.catchup,
           now: now,
-        );
-
-        expect(result.outcome, OccurrenceOutcome.onTime);
-      },
-    );
-
-    test(
-      'occurrence_expired_beyond_24h_throws — '
-      'au-delà de window+24h la validation est bloquée',
-      () async {
-        when(
-          () => repo.findById('occ-tz3-001'),
-        ).thenAnswer((_) async => makeHabitNairobi());
-
-        // windowEndsAt = 21h UTC le 23 → +24h = 21h UTC le 24 → on est à 21h01 le 24
-        final now = DateTime.utc(2025, 5, 24, 21, 1);
-        expect(
-          () => useCase.call(
-            occurrenceId: 'occ-tz3-001',
-            source: ValidationSource.catchup,
-            now: now,
-          ),
-          throwsA(isA<OccurrenceTooLateForCatchupFailure>()),
-        );
-      },
-    );
+        ),
+        throwsA(isA<OccurrenceTooLateForCatchupFailure>()),
+      );
+    });
   });
 
   group('ValidateOccurrenceUseCase — prière (CDC §13)', () {
