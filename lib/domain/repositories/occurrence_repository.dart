@@ -31,9 +31,24 @@ abstract interface class OccurrenceRepository {
   /// Utilisé par [ExpireOverdueOccurrencesUseCase] pour le batch d'expiration.
   Future<List<Occurrence>> findOverdueActive(DateTime now);
 
+  /// Retourne toutes les occurrences en attente (pending ou snoozed) pour
+  /// un habit donné. Utilisé par `cancelAllForHabit` (BUG-002).
+  Future<List<Occurrence>> findPendingForHabit(String habitId);
+
+  /// Retourne toutes les occurrences actives dont `windowEndsAt` est antérieur
+  /// à [now] (tous types, tous utilisateurs).
+  ///
+  /// Alias sémantique de [findOverdueActive] — utilisé par
+  /// `MarkMissedOccurrencesUseCase`.
+  Future<List<Occurrence>> findExpiredBefore(DateTime now);
+
   /// Persiste une liste d'occurrences en une transaction (utilisé par le batch
-  /// d'expiration). Implémentation doit être atomique.
+  /// d'expiration). L'implémentation doit être atomique.
   Future<void> saveAll(List<Occurrence> occurrences);
+
+  /// Supprime les occurrences archivées (done/dismissed/missed/cancelled)
+  /// antérieures à [before] (garbage collection — cf. ADR-018 §5.5).
+  Future<void> deleteArchivedBefore(DateTime before);
 
   // -----------------------------------------------------------------------
   // API feed habitudes (MOB-007)

@@ -1,6 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/habit_occurrence.dart';
+import 'package:murabbi_mobile/domain/entities/occurrence.dart';
 import 'package:murabbi_mobile/domain/repositories/occurrence_repository.dart';
+import 'package:murabbi_mobile/domain/use_cases/alerts/validate_occurrence_use_case.dart';
+
+// ─── Provider du repository ──────────────────────────────────────────────────
 
 /// Provider du repository d'occurrences — injectable en test via override.
 ///
@@ -12,6 +17,8 @@ final occurrenceRepositoryProvider = Provider<OccurrenceRepository>((ref) {
     'or in test with ProviderContainer(overrides: [...])',
   );
 });
+
+// ─── Providers feed habitudes (MOB-007) ─────────────────────────────────────
 
 /// Occurrences du jour courant pour l'utilisateur connecté.
 ///
@@ -75,3 +82,84 @@ class ValidateOccurrenceNotifier extends AsyncNotifier<void> {
     });
   }
 }
+
+// ─── Provider use case — anti-double-tap (BUG-003) ───────────────────────────
+
+/// Provider du [ValidateOccurrenceUseCase] — injectable pour les tests.
+final validateOccurrenceUseCaseProvider = Provider<ValidateOccurrenceUseCase>((
+  ref,
+) {
+  return ValidateOccurrenceUseCase(ref.read(occurrenceRepositoryProvider));
+});
+
+/// État d'une validation d'occurrence en cours.
+///
+/// Utilise un `AsyncNotifier` familial (un provider par `occurrenceId`) pour
+/// que chaque bouton « Valider » ait son propre état de chargement, sans
+/// affecter les autres.
+///
+/// Implémente le guard anti-double-tap (BUG-003) :
+/// - Si [state] est `AsyncLoading` → les appels suivants à [validate] sont
+///   silencieusement ignorés.
+/// - L'idempotency côté domaine est garantie par [ValidateOccurrenceUseCase]
+///   (retourne l'occurrence `done` sans ré-écrire si déjà validée).
+class OccurrenceValidationNotifier
+    extends AutoDisposeFamilyAsyncNotifier<Occurrence?, String> {
+  @override
+  Future<Occurrence?> build(String occurrenceId) async {
+    // État initial : null (aucune validation en cours)
+    return null;
+  }
+
+  /// Valide l'occurrence identifiée par [occurrenceId] (la clé du provider).
+  ///
+  /// [source] désigne l'origine de l'action (notification tap, app, etc.).
+  /// No-op si l'état courant est déjà [AsyncLoading] (guard BUG-003).
+  Future<void> validate({
+    ValidationSource source = ValidationSource.app,
+  }) async {
+    // Guard : ignore les taps multiples pendant un appel en cours.
+    if (state.isLoading) {
+      appLog.d(
+        'OccurrenceValidationNotifier: ignored tap while loading '
+        '(occurrenceId=$arg)',
+      );
+      return;
+    }
+
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      return ref
+          .read(validateOccurrenceUseCaseProvider)
+          .call(occurrenceId: arg, source: source);
+    });
+
+    if (state.hasError) {
+      appLog.e(
+        'OccurrenceValidationNotifier: validation failed',
+        error: state.error,
+        stackTrace: state.stackTrace,
+      );
+    }
+  }
+}
+
+/// Provider familial — un état par [occurrenceId].
+///
+/// Usage :
+/// ```dart
+/// // Dans un widget :
+/// final validationState = ref.watch(
+///   occurrenceValidationNotifierProvider(occurrence.id),
+/// );
+/// final isLoading = validationState.isLoading;
+///
+/// // Pour valider :
+/// ref.read(
+///   occurrenceValidationNotifierProvider(occurrence.id).notifier,
+/// ).validate(source: ValidationSource.notificationAction);
+/// ```
+final occurrenceValidationNotifierProvider = AsyncNotifierProvider.autoDispose
+    .family<OccurrenceValidationNotifier, Occurrence?, String>(
+      OccurrenceValidationNotifier.new,
+    );

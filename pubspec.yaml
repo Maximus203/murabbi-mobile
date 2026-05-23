@@ -70,6 +70,15 @@ dependencies:
   # Lecture vidéo en boucle muette (fonds d'écran décoratifs) — issues #69 #71 #72 #79.
   video_player: ^2.9.2
 
+  # Timezone IANA — BUG-004. `flutter_timezone` lit le nom IANA du device
+  # (Android/iOS). `timezone` est déclaré plus haut (ligne timezone: ^0.9.4).
+  # Isolés dans lib/core/utils/timezone_utils.dart — cf. ADR-018 §timezone.
+  flutter_timezone: ^3.0.0
+
+  # Connectivity — BUG-002. Détection réseau pour l'offline queue.
+  # Isolé dans lib/services/offline/ — jamais importé depuis presentation.
+  connectivity_plus: ^6.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

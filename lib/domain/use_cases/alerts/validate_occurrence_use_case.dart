@@ -5,13 +5,18 @@ import 'package:murabbi_mobile/domain/repositories/occurrence_repository.dart';
 /// Valide une occurrence (action `done` utilisateur).
 ///
 /// Règles métier (ADR-018 §4.3 + Q-OPEN-C §10) :
-/// - `now <= scheduledAt - 60s` (anticipé) → `onTime`
-/// - `now <= windowEndsAt`               → `onTime`
+/// - Idempotence (BUG-003) : si l'occurrence est déjà `done`, retourne
+///   immédiatement sans ré-écrire.
+/// - `now <= scheduledAt - 60s` (anticipé) OU `now <= windowEndsAt` → `onTime`
 /// - `now <= windowEndsAt + 24h`         → `late` (rattrapage J+1)
 /// - `now >  windowEndsAt + 24h`         → throw `tooLateForCatchup`
 ///
+/// La comparaison est faite en UTC — [windowEndsAt] est stocké en UTC
+/// (ADR-018 §3.5). [Occurrence.deviceTimezone] sert aux appelants qui
+/// recalculent [windowEndsAt] depuis le timezone device (BUG-004).
+///
 /// Idempotence : refuse de valider une occurrence déjà finalisée
-/// (`done` / `missed` / `cancelled`). `dismissed` reste re-validable via
+/// (`missed` / `cancelled`). `dismissed` reste re-validable via
 /// dashboard (ADR-018 §4.2).
 class ValidateOccurrenceUseCase {
   final OccurrenceRepository _repository;
@@ -28,6 +33,12 @@ class ValidateOccurrenceUseCase {
       throw OccurrenceFailure.notFound(
         message: 'Occurrence $occurrenceId introuvable',
       );
+    }
+
+    // ── Idempotence (BUG-003) ────────────────────────────────────────────────
+    // Si l'occurrence est déjà `done`, retourne sans ré-écrire.
+    if (occ.status == OccurrenceStatus.done) {
+      return occ;
     }
 
     if (occ.status.isFinalized) {
@@ -57,7 +68,7 @@ class ValidateOccurrenceUseCase {
       firedAt: occ.firedAt,
       actedAt: at,
       validationSource: source,
-      payload: occ.payload,
+      payloadJson: occ.payloadJson,
       deviceTimezone: occ.deviceTimezone,
       createdAt: occ.createdAt,
       updatedAt: at,
@@ -70,14 +81,17 @@ class ValidateOccurrenceUseCase {
   OccurrenceOutcome _resolveOutcome(Occurrence occ, DateTime now) {
     // onTime : tap anticipé (≤ 60s avant scheduledAt) OU dans la grace
     // window. Cf. ADR-018 §4.3.
-    final onTimeStart = occ.scheduledAt.subtract(Occurrence.onTimeLead);
-    if (!now.isBefore(onTimeStart) && !now.isAfter(occ.windowEndsAt)) {
+    // La comparaison est faite en UTC (BUG-004 : windowEndsAt déjà en UTC).
+    final onTimeStart = occ.scheduledAt.toUtc().subtract(Occurrence.onTimeLead);
+    final windowEnd = occ.windowEndsAt.toUtc();
+    final utcNow = now.toUtc();
+    if (!utcNow.isBefore(onTimeStart) && !utcNow.isAfter(windowEnd)) {
       return OccurrenceOutcome.onTime;
     }
 
     // late : rattrapage J+1 (Q-OPEN-C §10).
-    final lateCutoff = occ.windowEndsAt.add(Occurrence.lateCatchupGrace);
-    if (!now.isAfter(lateCutoff)) {
+    final lateCutoff = windowEnd.add(Occurrence.lateCatchupGrace);
+    if (!utcNow.isAfter(lateCutoff)) {
       return OccurrenceOutcome.late;
     }
 
