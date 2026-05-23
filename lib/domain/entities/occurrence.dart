@@ -23,6 +23,10 @@ enum OccurrenceSource {
 /// - `cancelled` : source supprimée (habit deleted, prière désactivée)
 /// - `pendingPermissionDenied` : planifiée alors que la permission OS est
 ///   refusée. Sera replanifiée si la permission est accordée plus tard.
+/// - `awaitingValidation` : alias fonctionnel pour le feed du dashboard
+///   (MOB-007) — correspond à [fired] ou [acknowledged] dans la fenêtre
+///   active. Utilisé par [awaitingValidationProvider] pour filtrer les
+///   occurrences affichables.
 enum OccurrenceStatus {
   pending,
   fired,
@@ -32,7 +36,8 @@ enum OccurrenceStatus {
   dismissed,
   missed,
   cancelled,
-  pendingPermissionDenied;
+  pendingPermissionDenied,
+  awaitingValidation;
 
   /// États terminaux : aucune action utilisateur ne peut plus les modifier
   /// (sauf `dismissed` → `done` via validation manuelle dashboard, traité

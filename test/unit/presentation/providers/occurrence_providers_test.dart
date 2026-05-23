@@ -195,21 +195,20 @@ void main() {
     ).thenAnswer((_) async => [doneOccurrence]);
 
     final container = makeContainer();
-    // Premier fetch.
+
+    // Premier fetch — 1 appel repo.
     await container.read(todayOccurrencesProvider.future);
 
-    final callsBefore = verify(
-      () => occurrenceRepo.getTodayOccurrences(),
-    ).callCount;
-
+    // Valide → invalide le provider.
     await container
         .read(validateOccurrenceNotifierProvider.notifier)
         .validate('occ-001', userId: 'user-001');
 
-    // Un nouveau fetch doit avoir été déclenché après invalidation.
+    // Deuxième fetch après invalidation — 1 appel repo supplémentaire.
     await container.read(todayOccurrencesProvider.future);
 
-    verify(() => occurrenceRepo.getTodayOccurrences()).called(greaterThan(callsBefore));
+    // Au total : 2 appels (premier fetch + re-fetch post-invalidation).
+    verify(() => occurrenceRepo.getTodayOccurrences()).called(2);
   });
 
   // ------------------------------------------------------------------

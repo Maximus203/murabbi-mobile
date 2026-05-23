@@ -1,24 +1,67 @@
+import 'package:murabbi_mobile/domain/entities/habit_occurrence.dart';
 import 'package:murabbi_mobile/domain/entities/occurrence.dart';
 
-/// Interface du repository d'occurrences (ADR-018 §4.2).
+/// Contrat de persistance des occurrences (prières + habitudes).
 ///
-/// L'implémentation concrète (Drift local, optionnellement Supabase) est
-/// livrée par MOB-007. Les use cases du système d'alertes consomment
-/// uniquement cette interface.
-abstract class OccurrenceRepository {
-  /// Retourne l'occurrence par id ou `null` si introuvable.
+/// Cette interface est intentionnellement large pour couvrir les deux
+/// ensembles de use cases :
+/// - **Alertes generiques (ADR-018 §4.2)** : [findById], [save],
+///   [findOverdueActive], [saveAll] — utilisés par les use cases du système
+///   d'alertes unifié (MOB-002, MOB-003).
+/// - **Feed habitudes (MOB-007)** : [getTodayOccurrences],
+///   [validateOccurrence], [snoozeOccurrence], [expireOverdueOccurrences] —
+///   utilisés par les providers Riverpod du dashboard.
+///
+/// L'implémentation concrète (`OccurrenceRepositoryImpl`) les câble sur la
+/// même table Supabase `occurrences` (cf. ADR-018 §3.1).
+abstract interface class OccurrenceRepository {
+  // -----------------------------------------------------------------------
+  // API système d'alertes générique (MOB-002 / MOB-003)
+  // -----------------------------------------------------------------------
+
+  /// Retourne l'occurrence par [id] ou `null` si introuvable.
   Future<Occurrence?> findById(String id);
 
   /// Persiste une occurrence (upsert sur PK `id`).
   Future<void> save(Occurrence occurrence);
 
-  /// Retourne les occurrences dont `windowEndsAt < now` et dont le `status`
+  /// Retourne les occurrences dont `windowEndsAt < now` et dont le [status]
   /// est encore actif (pending / fired / snoozed / acknowledged).
   ///
-  /// Utilisé par `ExpireOverdueOccurrencesUseCase` pour le batch d'expiration.
+  /// Utilisé par [ExpireOverdueOccurrencesUseCase] pour le batch d'expiration.
   Future<List<Occurrence>> findOverdueActive(DateTime now);
 
   /// Persiste une liste d'occurrences en une transaction (utilisé par le batch
   /// d'expiration). Implémentation doit être atomique.
   Future<void> saveAll(List<Occurrence> occurrences);
+
+  // -----------------------------------------------------------------------
+  // API feed habitudes (MOB-007)
+  // -----------------------------------------------------------------------
+
+  /// Retourne toutes les occurrences dont [HabitOccurrence.scheduledAt]
+  /// tombe dans la journée locale courante.
+  Future<List<HabitOccurrence>> getTodayOccurrences();
+
+  /// Valide une occurrence (action `done`).
+  ///
+  /// Met à jour [HabitOccurrence.status] → [OccurrenceStatus.done]
+  /// et horodate [HabitOccurrence.actedAt].
+  Future<void> validateOccurrence({
+    required String occurrenceId,
+    required String userId,
+  });
+
+  /// Snooze une occurrence (+30 min, max 2 reports).
+  ///
+  /// Met à jour [HabitOccurrence.status] → [OccurrenceStatus.snoozed],
+  /// incrémente [HabitOccurrence.snoozeCount], pose [HabitOccurrence.snoozedUntil].
+  Future<void> snoozeOccurrence({
+    required String occurrenceId,
+    required String userId,
+  });
+
+  /// Marque toutes les occurrences dépassées (windowEndsAt < now)
+  /// en [OccurrenceStatus.missed]. Retourne le nombre d'occurrences expirées.
+  Future<int> expireOverdueOccurrences();
 }
