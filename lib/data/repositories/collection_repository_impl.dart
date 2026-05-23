@@ -29,10 +29,7 @@ class CollectionRepositoryImpl implements CollectionRepository {
     required UserId userId,
     required CollectionId collectionId,
   }) => _guard(
-    () => _ds.activateCollection(
-      collectionId: collectionId,
-      userId: userId,
-    ),
+    () => _ds.activateCollection(collectionId: collectionId, userId: userId),
   );
 
   @override
@@ -40,10 +37,7 @@ class CollectionRepositoryImpl implements CollectionRepository {
     required UserId userId,
     required CollectionId collectionId,
   }) => _guard(
-    () => _ds.deactivateCollection(
-      collectionId: collectionId,
-      userId: userId,
-    ),
+    () => _ds.deactivateCollection(collectionId: collectionId, userId: userId),
   );
 
   @override
@@ -51,10 +45,7 @@ class CollectionRepositoryImpl implements CollectionRepository {
     required UserId userId,
     required Collection collection,
   }) => _guard(
-    () => _ds.createCollection(
-      collection: collection,
-      userId: userId,
-    ),
+    () => _ds.createCollection(collection: collection, userId: userId),
   );
 
   @override

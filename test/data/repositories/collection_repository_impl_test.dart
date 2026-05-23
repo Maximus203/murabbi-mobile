@@ -54,22 +54,13 @@ void main() {
   group('activateCollection', () {
     test('délègue au datasource avec les bons ids', () async {
       when(
-        () => ds.activateCollection(
-          collectionId: collectionId,
-          userId: userId,
-        ),
+        () => ds.activateCollection(collectionId: collectionId, userId: userId),
       ).thenAnswer((_) async {});
 
-      await repo.activateCollection(
-        userId: userId,
-        collectionId: collectionId,
-      );
+      await repo.activateCollection(userId: userId, collectionId: collectionId);
 
       verify(
-        () => ds.activateCollection(
-          collectionId: collectionId,
-          userId: userId,
-        ),
+        () => ds.activateCollection(collectionId: collectionId, userId: userId),
       ).called(1);
     });
   });

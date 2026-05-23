@@ -8,7 +8,9 @@ import 'package:murabbi_mobile/domain/repositories/collection_repository.dart';
 ///
 /// Retourne la nouvelle interface [SupabaseCollectionDataSource] qui expose
 /// directement des entités domain (migration issue #162 — published_catalog).
-final collectionDataSourceProvider = Provider<SupabaseCollectionDataSource>((ref) {
+final collectionDataSourceProvider = Provider<SupabaseCollectionDataSource>((
+  ref,
+) {
   return SupabaseCollectionDataSourceImpl(ref.watch(supabaseClientProvider));
 });
 
