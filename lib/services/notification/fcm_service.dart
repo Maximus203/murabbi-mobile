@@ -47,10 +47,7 @@ abstract class SecureTokenStorage {
 /// Abstraction sur la persistance du token FCM côté backend.
 abstract class FcmTokenRepository {
   /// Persiste le token FCM de l'utilisateur dans Supabase.
-  Future<void> updateFcmToken({
-    required String userId,
-    required String token,
-  });
+  Future<void> updateFcmToken({required String userId, required String token});
 }
 
 /// Service d'intégration FCM pour les notifications admin broadcast.
@@ -87,10 +84,10 @@ class FcmService {
     required SecureTokenStorage storage,
     required FcmTokenRepository tokenRepository,
     Logger? logger,
-  })  : _messaging = messaging,
-        _storage = storage,
-        _tokenRepository = tokenRepository,
-        _logger = logger ?? Logger();
+  }) : _messaging = messaging,
+       _storage = storage,
+       _tokenRepository = tokenRepository,
+       _logger = logger ?? Logger();
 
   /// Initialise FCM : demande permission, stocke le token initial.
   ///

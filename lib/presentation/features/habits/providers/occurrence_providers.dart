@@ -49,8 +49,8 @@ final awaitingValidationProvider = Provider<List<HabitOccurrence>>((ref) {
 /// un re-fetch et mettre à jour le badge count.
 final validateOccurrenceNotifierProvider =
     AsyncNotifierProvider<ValidateOccurrenceNotifier, void>(
-  ValidateOccurrenceNotifier.new,
-);
+      ValidateOccurrenceNotifier.new,
+    );
 
 /// Notifier gérant la validation d'une occurrence habitude.
 ///
@@ -67,10 +67,9 @@ class ValidateOccurrenceNotifier extends AsyncNotifier<void> {
   Future<void> validate(String occurrenceId, {required String userId}) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await ref.read(occurrenceRepositoryProvider).validateOccurrence(
-        occurrenceId: occurrenceId,
-        userId: userId,
-      );
+      await ref
+          .read(occurrenceRepositoryProvider)
+          .validateOccurrence(occurrenceId: occurrenceId, userId: userId);
       // Invalide le feed pour déclencher un re-fetch.
       ref.invalidate(todayOccurrencesProvider);
     });

@@ -7,10 +7,7 @@ import 'package:logger/logger.dart';
 /// L'implémentation test utilise un mock (cf. MOB-005 tests).
 abstract class WorkManagerRunner {
   /// Initialise WorkManager avec le callback dispatcher top-level.
-  Future<void> initialize(
-    Function callbackDispatcher, {
-    bool isInDebugMode,
-  });
+  Future<void> initialize(Function callbackDispatcher, {bool isInDebugMode});
 
   /// Enregistre une tâche périodique.
   Future<void> registerPeriodicTask(
@@ -74,20 +71,17 @@ class WorkManagerDispatcher {
     required ExpireOverdueOccurrencesUseCase expireOverdueUseCase,
     required NotificationRescheduler notificationRescheduler,
     Logger? logger,
-  })  : _runner = runner,
-        _scheduleOccurrencesUseCase = scheduleOccurrencesUseCase,
-        _expireOverdueUseCase = expireOverdueUseCase,
-        _notificationRescheduler = notificationRescheduler,
-        _logger = logger ?? Logger();
+  }) : _runner = runner,
+       _scheduleOccurrencesUseCase = scheduleOccurrencesUseCase,
+       _expireOverdueUseCase = expireOverdueUseCase,
+       _notificationRescheduler = notificationRescheduler,
+       _logger = logger ?? Logger();
 
   /// Initialise WorkManager avec le callback dispatcher natif.
   ///
   /// À appeler une seule fois au démarrage de l'app (dans `main()`).
   Future<void> initialize() async {
-    await _runner.initialize(
-      callbackDispatcher,
-      isInDebugMode: false,
-    );
+    await _runner.initialize(callbackDispatcher, isInDebugMode: false);
     _logger.i('WorkManagerDispatcher: initialized');
   }
 
@@ -122,10 +116,7 @@ class WorkManagerDispatcher {
 
   /// Enregistre la replanification des notifications au reboot.
   Future<void> registerBootReschedule() async {
-    await _runner.registerOneOffTask(
-      kTaskBootReschedule,
-      kTaskBootReschedule,
-    );
+    await _runner.registerOneOffTask(kTaskBootReschedule, kTaskBootReschedule);
     _logger.i('WorkManagerDispatcher: boot reschedule registered');
   }
 

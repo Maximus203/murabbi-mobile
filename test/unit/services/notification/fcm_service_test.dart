@@ -26,24 +26,16 @@ void main() {
     storage = _MockSecureTokenStorage();
     tokenRepo = _MockFcmTokenRepository();
 
-    when(
-      () => messaging.requestPermission(),
-    ).thenAnswer((_) async {});
-    when(
-      () => messaging.getToken(),
-    ).thenAnswer((_) async => fakeToken);
+    when(() => messaging.requestPermission()).thenAnswer((_) async {});
+    when(() => messaging.getToken()).thenAnswer((_) async => fakeToken);
     when(
       () => messaging.onTokenRefresh,
     ).thenAnswer((_) => const Stream<String>.empty());
     when(
       () => messaging.onMessage,
     ).thenAnswer((_) => const Stream<FcmMessage>.empty());
-    when(
-      () => storage.writeToken(any()),
-    ).thenAnswer((_) async {});
-    when(
-      () => storage.readToken(),
-    ).thenAnswer((_) async => fakeToken);
+    when(() => storage.writeToken(any())).thenAnswer((_) async {});
+    when(() => storage.readToken()).thenAnswer((_) async => fakeToken);
     when(
       () => tokenRepo.updateFcmToken(
         userId: any(named: 'userId'),
@@ -92,13 +84,11 @@ void main() {
   // Test 4 — foregroundMessages stream émet les messages reçus
   // ------------------------------------------------------------------
   test('foreground_message_emitted_on_receive', () async {
-    final msg = FcmMessage(
+    const msg = FcmMessage(
       messageId: 'msg-001',
       data: {'type': 'global_broadcast', 'title': 'Test'},
     );
-    when(
-      () => messaging.onMessage,
-    ).thenAnswer((_) => Stream.value(msg));
+    when(() => messaging.onMessage).thenAnswer((_) => Stream.value(msg));
 
     final received = await sut.foregroundMessages.first;
 
@@ -111,7 +101,7 @@ void main() {
   test('background_handler_logs_message', () async {
     // Le background handler est une top-level function — on vérifie
     // qu'elle s'exécute sans lever d'exception avec un message valide.
-    final msg = FcmMessage(messageId: 'bg-msg-001', data: {});
+    const msg = FcmMessage(messageId: 'bg-msg-001', data: {});
 
     // Doit compléter sans exception.
     await expectLater(
@@ -131,7 +121,7 @@ void main() {
     await sut.initialize(userId: userId);
 
     // Attend la propagation du stream.
-    await Future.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
 
     verify(
       () => tokenRepo.updateFcmToken(userId: userId, token: 'new-fcm-token'),
@@ -142,7 +132,7 @@ void main() {
   // Test 7 — type inconnu → log warning, pas de crash
   // ------------------------------------------------------------------
   test('unknown_notification_type_logged_and_ignored', () async {
-    final msg = FcmMessage(
+    const msg = FcmMessage(
       messageId: 'msg-unknown',
       data: {'type': 'totally_unknown_type'},
     );

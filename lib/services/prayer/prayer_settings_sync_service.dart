@@ -20,8 +20,8 @@ class PrayerSettingsSyncService {
   PrayerSettingsSyncService({
     required PrayerUserSettingsRepository repository,
     Logger? logger,
-  })  : _repository = repository,
-        _logger = logger ?? Logger();
+  }) : _repository = repository,
+       _logger = logger ?? Logger();
 
   /// Charge les settings pour [userId].
   ///
@@ -34,9 +34,7 @@ class PrayerSettingsSyncService {
     final local = await _repository.loadLocal(userId);
 
     if (local != null && _isFresh(local)) {
-      _logger.d(
-        'PrayerSettingsSyncService: cache hit (userId=$userId)',
-      );
+      _logger.d('PrayerSettingsSyncService: cache hit (userId=$userId)');
       return local;
     }
 
@@ -77,16 +75,12 @@ class PrayerSettingsSyncService {
   Future<void> saveSettings(String userId, PrayerUserSettings settings) async {
     // Écriture locale immédiate.
     await _repository.saveLocal(settings);
-    _logger.d(
-      'PrayerSettingsSyncService: local write OK (userId=$userId)',
-    );
+    _logger.d('PrayerSettingsSyncService: local write OK (userId=$userId)');
 
     // Push remote (best-effort).
     try {
       await _repository.upsertRemote(settings);
-      _logger.d(
-        'PrayerSettingsSyncService: remote upsert OK (userId=$userId)',
-      );
+      _logger.d('PrayerSettingsSyncService: remote upsert OK (userId=$userId)');
     } catch (e, st) {
       _logger.w(
         'PrayerSettingsSyncService: remote upsert failed — '

@@ -30,7 +30,8 @@ void main() {
     rescheduler = _MockNotificationRescheduler();
 
     when(
-      () => runner.initialize(any(), isInDebugMode: any(named: 'isInDebugMode')),
+      () =>
+          runner.initialize(any(), isInDebugMode: any(named: 'isInDebugMode')),
     ).thenAnswer((_) async {});
     when(
       () => runner.registerPeriodicTask(
@@ -62,7 +63,8 @@ void main() {
     await sut.initialize();
 
     verify(
-      () => runner.initialize(any(), isInDebugMode: any(named: 'isInDebugMode')),
+      () =>
+          runner.initialize(any(), isInDebugMode: any(named: 'isInDebugMode')),
     ).called(1);
   });
 
@@ -142,9 +144,7 @@ void main() {
   // Test 8 — exception dans handleTask → log error, retourne false
   // ------------------------------------------------------------------
   test('dispatcher_logs_error_on_failure', () async {
-    when(
-      () => scheduleUseCase.call(),
-    ).thenThrow(Exception('Supabase down'));
+    when(() => scheduleUseCase.call()).thenThrow(Exception('Supabase down'));
 
     final result = await sut.handleTask(
       WorkManagerDispatcher.kTaskDailyOccurrenceRefresh,

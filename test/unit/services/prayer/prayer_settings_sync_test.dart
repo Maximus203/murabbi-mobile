@@ -61,9 +61,7 @@ void main() {
 
   setUpAll(() {
     // Enregistrement du fallback pour les matchers generics de mocktail.
-    registerFallbackValue(
-      PrayerUserSettings.defaults(userId: 'fallback'),
-    );
+    registerFallbackValue(PrayerUserSettings.defaults(userId: 'fallback'));
   });
 
   setUp(() {
@@ -92,12 +90,8 @@ void main() {
     final stale = makeStale();
     final remote = makeRemote();
     when(() => repo.loadLocal(userId)).thenAnswer((_) async => stale);
-    when(
-      () => repo.fetchRemote(userId),
-    ).thenAnswer((_) async => remote);
-    when(
-      () => repo.saveLocal(any()),
-    ).thenAnswer((_) async {});
+    when(() => repo.fetchRemote(userId)).thenAnswer((_) async => remote);
+    when(() => repo.saveLocal(any())).thenAnswer((_) async {});
 
     final result = await sut.loadSettings(userId);
 
@@ -111,9 +105,7 @@ void main() {
   test('save_writes_local_immediately', () async {
     final fresh = makeFresh();
     when(() => repo.saveLocal(any())).thenAnswer((_) async {});
-    when(
-      () => repo.upsertRemote(any()),
-    ).thenAnswer((_) async {});
+    when(() => repo.upsertRemote(any())).thenAnswer((_) async {});
 
     await sut.saveSettings(userId, fresh);
 
@@ -126,9 +118,7 @@ void main() {
   test('save_pushes_to_supabase', () async {
     final fresh = makeFresh();
     when(() => repo.saveLocal(any())).thenAnswer((_) async {});
-    when(
-      () => repo.upsertRemote(any()),
-    ).thenAnswer((_) async {});
+    when(() => repo.upsertRemote(any())).thenAnswer((_) async {});
 
     await sut.saveSettings(userId, fresh);
 
@@ -140,12 +130,8 @@ void main() {
   // ------------------------------------------------------------------
   test('sync_remote_wins_on_conflict', () async {
     final remote = makeRemote();
-    when(
-      () => repo.fetchRemote(userId),
-    ).thenAnswer((_) async => remote);
-    when(
-      () => repo.saveLocal(any()),
-    ).thenAnswer((_) async {});
+    when(() => repo.fetchRemote(userId)).thenAnswer((_) async => remote);
+    when(() => repo.saveLocal(any())).thenAnswer((_) async {});
 
     final result = await sut.syncFromRemote(userId);
 
@@ -158,9 +144,7 @@ void main() {
   // ------------------------------------------------------------------
   test('load_offline_returns_cached', () async {
     final stale = makeStale();
-    when(
-      () => repo.loadLocal(userId),
-    ).thenAnswer((_) async => stale);
+    when(() => repo.loadLocal(userId)).thenAnswer((_) async => stale);
     when(() => repo.fetchRemote(userId)).thenThrow(Exception('Network error'));
 
     // Doit retourner le cache stale sans lever d'exception.
@@ -174,9 +158,7 @@ void main() {
   // ------------------------------------------------------------------
   test('default_settings_created_if_none', () async {
     when(() => repo.loadLocal(userId)).thenAnswer((_) async => null);
-    when(
-      () => repo.fetchRemote(userId),
-    ).thenAnswer((_) async => null);
+    when(() => repo.fetchRemote(userId)).thenAnswer((_) async => null);
 
     final result = await sut.loadSettings(userId);
 

@@ -13,8 +13,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 ///
 /// **Règle d'import** : seule cette classe (data layer) peut importer
 /// `supabase_flutter` — jamais `domain/` ni `presentation/` (cf. ADR-001).
-class PrayerUserSettingsRepositoryImpl
-    implements PrayerUserSettingsRepository {
+class PrayerUserSettingsRepositoryImpl implements PrayerUserSettingsRepository {
   final FlutterSecureStorage _secureStorage;
   final SupabaseClient _supabase;
   final Logger _logger;
@@ -26,9 +25,9 @@ class PrayerUserSettingsRepositoryImpl
     required FlutterSecureStorage secureStorage,
     required SupabaseClient supabase,
     Logger? logger,
-  })  : _secureStorage = secureStorage,
-        _supabase = supabase,
-        _logger = logger ?? Logger();
+  }) : _secureStorage = secureStorage,
+       _supabase = supabase,
+       _logger = logger ?? Logger();
 
   String _storageKey(String userId) => '$_storageKeyPrefix$userId';
 
@@ -52,10 +51,7 @@ class PrayerUserSettingsRepositoryImpl
   @override
   Future<void> saveLocal(PrayerUserSettings settings) async {
     final json = jsonEncode(settings.toJson());
-    await _secureStorage.write(
-      key: _storageKey(settings.userId),
-      value: json,
-    );
+    await _secureStorage.write(key: _storageKey(settings.userId), value: json);
   }
 
   @override
@@ -81,10 +77,9 @@ class PrayerUserSettingsRepositoryImpl
   @override
   Future<void> upsertRemote(PrayerUserSettings settings) async {
     try {
-      await _supabase.from(_tableName).upsert(
-        settings.toJson(),
-        onConflict: 'user_id',
-      );
+      await _supabase
+          .from(_tableName)
+          .upsert(settings.toJson(), onConflict: 'user_id');
     } on PostgrestException catch (e) {
       _logger.e(
         'PrayerUserSettingsRepositoryImpl: remote upsert failed',

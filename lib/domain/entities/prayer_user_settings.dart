@@ -34,10 +34,7 @@ enum PrayerCalculationMethod {
 }
 
 /// Madhab pour le calcul d'Asr — wrapping de [v.Madhab].
-enum PrayerMadhab {
-  shafi,
-  hanafi,
-}
+enum PrayerMadhab { shafi, hanafi }
 
 /// Règle hautes latitudes — wrapping de [v.HighLatitudeRule].
 enum PrayerHighLatitudeRule {
@@ -47,13 +44,7 @@ enum PrayerHighLatitudeRule {
 }
 
 /// Identifiant d'une prière nominale — les 5 prières obligatoires.
-enum PrayerName {
-  fajr,
-  dhuhr,
-  asr,
-  maghrib,
-  isha,
-}
+enum PrayerName { fajr, dhuhr, asr, maghrib, isha }
 
 /// Préférences de prière utilisateur enrichies — méthode de calcul, madhab,
 /// timezone, haute latitude, ajustements par prière.
@@ -170,9 +161,7 @@ class PrayerUserSettings extends Equatable {
       calculationMethod: PrayerCalculationMethod.values.byName(
         json['calculation_method'] as String? ?? 'muslimWorldLeague',
       ),
-      madhab: PrayerMadhab.values.byName(
-        json['madhab'] as String? ?? 'shafi',
-      ),
+      madhab: PrayerMadhab.values.byName(json['madhab'] as String? ?? 'shafi'),
       highLatitudeRule: PrayerHighLatitudeRule.values.byName(
         json['high_latitude_rule'] as String? ?? 'middleOfTheNight',
       ),

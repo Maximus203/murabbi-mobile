@@ -66,9 +66,7 @@ void main() {
   setUp(() {
     occurrenceRepo = _MockOccurrenceRepository();
 
-    when(
-      () => occurrenceRepo.getTodayOccurrences(),
-    ).thenAnswer(
+    when(() => occurrenceRepo.getTodayOccurrences()).thenAnswer(
       (_) async => [pendingOccurrence, doneOccurrence, snoozedOccurrence],
     );
   });
@@ -131,7 +129,10 @@ void main() {
 
     // Seuls pending (occ-001) et snoozed (occ-003) sont awaitingValidation.
     expect(awaiting.length, 2);
-    expect(awaiting.every((o) => o.status == OccurrenceStatus.awaitingValidation), isTrue);
+    expect(
+      awaiting.every((o) => o.status == OccurrenceStatus.awaitingValidation),
+      isTrue,
+    );
   });
 
   // ------------------------------------------------------------------
@@ -159,15 +160,15 @@ void main() {
         occurrenceId: any(named: 'occurrenceId'),
         userId: any(named: 'userId'),
       ),
-    ).thenAnswer(
-      (_) => Future.delayed(const Duration(milliseconds: 50)),
-    );
+    ).thenAnswer((_) => Future.delayed(const Duration(milliseconds: 50)));
     when(
       () => occurrenceRepo.getTodayOccurrences(),
     ).thenAnswer((_) async => [doneOccurrence]);
 
     final container = makeContainer();
-    final notifier = container.read(validateOccurrenceNotifierProvider.notifier);
+    final notifier = container.read(
+      validateOccurrenceNotifierProvider.notifier,
+    );
 
     final future = notifier.validate('occ-001', userId: 'user-001');
 
