@@ -4,18 +4,42 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/collection_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
+import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/repositories/collection_repository.dart';
+import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/collections/screens/co_02_create_collection_screen.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/current_user_provider.dart';
 
 class MockCollectionRepository extends Mock implements CollectionRepository {}
+
+/// Stub de HabitsNotifier pour isoler les tests CO-02 de l'auth réelle.
+/// Retourne une liste fixe de [List<Habit>] sans toucher à authNotifierProvider.
+class _StubHabitsNotifier extends AsyncNotifier<List<Habit>> {
+  final List<Habit> _habits;
+  _StubHabitsNotifier(this._habits);
+
+  @override
+  Future<List<Habit>> build() async => _habits;
+}
+
+/// Habitude factice pour les tests de sélection.
+final _kMockHabit = Habit(
+  id: HabitId('habit-test-1'),
+  name: NonEmptyString('Habitude test'),
+  categoryId: CategoryId('cat-test'),
+  frequencyType: HabitFrequencyType.daily,
+  frequency: 1,
+  activeDays: {1},
+  isSystem: false,
+);
 
 void main() {
   late MockCollectionRepository mockRepo;
@@ -44,11 +68,18 @@ void main() {
     );
   });
 
-  Widget buildSut({VoidCallback? onCreated, VoidCallback? onCancel}) {
+  Widget buildSut({
+    VoidCallback? onCreated,
+    VoidCallback? onCancel,
+    List<Habit> habits = const [],
+  }) {
     return ProviderScope(
       overrides: [
         currentUserProvider.overrideWithValue(testUser),
         collectionRepositoryProvider.overrideWithValue(mockRepo),
+        // Stub habitsNotifierProvider pour éviter la dépendance sur authNotifierProvider
+        // qui n'est pas initialisé dans l'environnement de test.
+        habitsNotifierProvider.overrideWith(() => _StubHabitsNotifier(habits)),
       ],
       child: MaterialApp(
         home: Co02CreateCollectionScreen(
@@ -59,12 +90,12 @@ void main() {
     );
   }
 
-  testWidgets('affiche les champs titre et description', (tester) async {
+  testWidgets('affiche les champs nom et description', (tester) async {
     await tester.pumpWidget(buildSut());
     await tester.pumpAndSettle();
-    // Les champs sont trouvés via leur label/placeholder
-    expect(find.text('Titre'), findsOneWidget);
-    expect(find.text('Description'), findsOneWidget);
+    // Trouvés via key sémantique — robuste au toUpperCase() du label AppInput.
+    expect(find.byKey(const Key('field_name')), findsOneWidget);
+    expect(find.byKey(const Key('field_description')), findsOneWidget);
   });
 
   testWidgets('erreur si titre vide à la soumission', (tester) async {
@@ -90,21 +121,33 @@ void main() {
         id: CollectionId('new-coll'),
         name: NonEmptyString('Test'),
         description: NonEmptyString('Desc'),
-        habitIds: [HabitId('placeholder')],
+        habitIds: [HabitId('habit-test-1')],
         isSystem: false,
         isActive: false,
       ),
     );
 
-    // getCollections est appelé par le notifier après create
+    // getCollections est appelé par CollectionsNotifier.build() après create
     when(() => mockRepo.getCollections(any())).thenAnswer((_) async => []);
 
     var created = false;
-    await tester.pumpWidget(buildSut(onCreated: () => created = true));
+    await tester.pumpWidget(
+      buildSut(
+        onCreated: () => created = true,
+        // On passe 1 habitude factice pour que _isValid puisse être true.
+        habits: [_kMockHabit],
+      ),
+    );
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField).first, 'Test');
-    await tester.enterText(find.byType(TextField).last, 'Desc');
+    // Remplir le titre et la description via les keys sémantiques
+    await tester.enterText(find.byKey(const Key('field_name')), 'Test');
+    await tester.enterText(find.byKey(const Key('field_description')), 'Desc');
+
+    // Sélectionner l'habitude factice dans la grille _HabitPicker
+    await tester.tap(find.text('Habitude test'));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('Créer la collection'));
     await tester.pumpAndSettle();
 

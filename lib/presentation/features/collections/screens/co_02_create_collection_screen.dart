@@ -137,6 +137,7 @@ class _Co02CreateCollectionScreenState
 
             // ── Titre ─────────────────────────────────────────────────────
             AppInput(
+              key: const Key('field_name'),
               label: 'Titre',
               placeholder: 'Routine du matin',
               controller: _nameController,
@@ -149,6 +150,7 @@ class _Co02CreateCollectionScreenState
 
             // ── Description ───────────────────────────────────────────────
             AppInput(
+              key: const Key('field_description'),
               label: 'Description',
               placeholder: 'À quoi sert cette collection ?',
               controller: _descController,
