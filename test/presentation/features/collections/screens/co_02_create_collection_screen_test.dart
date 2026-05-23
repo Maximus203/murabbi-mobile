@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/collection_repository_provider.dart';
+import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
@@ -14,20 +15,61 @@ import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/categories/providers/categories_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/collections/providers/collections_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/collections/screens/co_02_create_collection_screen.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/current_user_provider.dart';
 
 class MockCollectionRepository extends Mock implements CollectionRepository {}
 
-/// Stub de HabitsNotifier pour isoler les tests CO-02 de l'auth réelle.
-/// Retourne une liste fixe de [List<Habit>] sans toucher à authNotifierProvider.
-class _StubHabitsNotifier extends AsyncNotifier<List<Habit>> {
+/// Stub AuthNotifier — retourne immédiatement [testUser] sans appel Supabase.
+class _StubAuthNotifier extends AuthNotifier {
+  final User _user;
+  _StubAuthNotifier(this._user);
+
+  @override
+  Future<User?> build() async => _user;
+}
+
+/// Stub HabitsNotifier — retourne une liste fixe sans dépendance Supabase.
+/// Doit étendre [HabitsNotifier] pour satisfaire le type de [habitsNotifierProvider].
+class _StubHabitsNotifier extends HabitsNotifier {
   final List<Habit> _habits;
   _StubHabitsNotifier(this._habits);
 
   @override
   Future<List<Habit>> build() async => _habits;
+}
+
+/// Stub CategoriesNotifier — retourne une liste vide sans dépendance Supabase.
+/// Doit étendre [CategoriesNotifier] pour satisfaire le type du provider.
+class _StubCategoriesNotifier extends CategoriesNotifier {
+  @override
+  Future<List<Category>> build() async => const [];
+}
+
+/// Stub CollectionsNotifier — délègue uniquement `create()` au vrai repo
+/// (via [collectionRepositoryProvider] surchargé) sans nécessiter Supabase.
+class _StubCollectionsNotifier extends CollectionsNotifier {
+  final User _user;
+  _StubCollectionsNotifier(this._user);
+
+  @override
+  Future<List<Collection>> build() async => const [];
+
+  @override
+  Future<void> create(Collection collection) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(createCollectionUseCaseProvider)(
+        userId: _user.id,
+        collection: collection,
+      );
+      return const <Collection>[];
+    });
+  }
 }
 
 /// Habitude factice pour les tests de sélection.
@@ -75,11 +117,18 @@ void main() {
   }) {
     return ProviderScope(
       overrides: [
+        // Fournit user + auth sans passer par Supabase.
         currentUserProvider.overrideWithValue(testUser),
-        collectionRepositoryProvider.overrideWithValue(mockRepo),
-        // Stub habitsNotifierProvider pour éviter la dépendance sur authNotifierProvider
-        // qui n'est pas initialisé dans l'environnement de test.
+        authNotifierProvider.overrideWith(() => _StubAuthNotifier(testUser)),
+        // Isole les listes de données de l'infrastructure Supabase.
         habitsNotifierProvider.overrideWith(() => _StubHabitsNotifier(habits)),
+        categoriesNotifierProvider.overrideWith(
+          () => _StubCategoriesNotifier(),
+        ),
+        collectionsNotifierProvider.overrideWith(
+          () => _StubCollectionsNotifier(testUser),
+        ),
+        collectionRepositoryProvider.overrideWithValue(mockRepo),
       ],
       child: MaterialApp(
         home: Co02CreateCollectionScreen(
@@ -90,12 +139,12 @@ void main() {
     );
   }
 
-  testWidgets('affiche les champs nom et description', (tester) async {
+  testWidgets('affiche les champs titre et description', (tester) async {
     await tester.pumpWidget(buildSut());
-    await tester.pumpAndSettle();
-    // Trouvés via key sémantique — robuste au toUpperCase() du label AppInput.
-    expect(find.byKey(const Key('field_name')), findsOneWidget);
-    expect(find.byKey(const Key('field_description')), findsOneWidget);
+    await tester.pump();
+    // AppInput.label est rendu en majuscules (label!.toUpperCase()) — cf. app_input.dart:156.
+    expect(find.text('TITRE'), findsOneWidget);
+    expect(find.text('DESCRIPTION'), findsOneWidget);
   });
 
   testWidgets('erreur si titre vide à la soumission', (tester) async {
@@ -127,24 +176,20 @@ void main() {
       ),
     );
 
-    // getCollections est appelé par CollectionsNotifier.build() après create
-    when(() => mockRepo.getCollections(any())).thenAnswer((_) async => []);
-
     var created = false;
     await tester.pumpWidget(
       buildSut(
         onCreated: () => created = true,
-        // On passe 1 habitude factice pour que _isValid puisse être true.
+        // Fournit 1 habitude pour satisfaire la validation _selected.isNotEmpty.
         habits: [_kMockHabit],
       ),
     );
     await tester.pumpAndSettle();
 
-    // Remplir le titre et la description via les keys sémantiques
-    await tester.enterText(find.byKey(const Key('field_name')), 'Test');
-    await tester.enterText(find.byKey(const Key('field_description')), 'Desc');
+    await tester.enterText(find.byType(TextField).first, 'Test');
+    await tester.enterText(find.byType(TextField).last, 'Desc');
 
-    // Sélectionner l'habitude factice dans la grille _HabitPicker
+    // Sélectionner l'habitude factice dans le _HabitPicker.
     await tester.tap(find.text('Habitude test'));
     await tester.pumpAndSettle();
 
