@@ -256,6 +256,50 @@ void main() {
       expect(saved.status, OccurrenceStatus.done);
     });
 
+    test(
+      'clears nextFireAt on validate post-snooze to prevent re-notification',
+      () async {
+        // Quand une occurrence est snoozée, `nextFireAt` est défini pour le
+        // reschedule local. Si l'utilisateur la valide ensuite, le
+        // scheduler ne doit plus fire la notif → `nextFireAt` doit être
+        // remis à null dans la donnée sauvegardée.
+        final now = DateTime.utc(2026, 5, 23, 7);
+        final snoozedOcc = Occurrence(
+          id: 'occ-001',
+          source: OccurrenceSource.habit,
+          sourceId: 'habit-001',
+          userId: 'user-001',
+          scheduledAt: scheduledAt,
+          windowEndsAt: windowEndsAt,
+          status: OccurrenceStatus.snoozed,
+          snoozeCount: 1,
+          nextFireAt: DateTime.utc(2026, 5, 23, 8, 30),
+          createdAt: now,
+          updatedAt: now,
+        );
+        when(
+          () => repo.findById('occ-001'),
+        ).thenAnswer((_) async => snoozedOcc);
+
+        await useCase.call(
+          occurrenceId: 'occ-001',
+          source: ValidationSource.notificationAction,
+          now: DateTime.utc(2026, 5, 23, 8, 35),
+        );
+
+        final saved =
+            verify(() => repo.save(captureAny())).captured.first as Occurrence;
+        expect(saved.status, OccurrenceStatus.done);
+        expect(
+          saved.nextFireAt,
+          isNull,
+          reason:
+              'nextFireAt doit être null après validation pour empêcher '
+              'la re-notification (PR #194 P2).',
+        );
+      },
+    );
+
     test('utilise DateTime.now() si paramètre `now` non fourni', () async {
       // On vérifie juste que l'appel ne throw pas et que le save est appelé
       // (le now interne dépend de l'horloge système).
