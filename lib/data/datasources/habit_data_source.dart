@@ -22,7 +22,24 @@ abstract interface class HabitDataSource {
 
   /// Insert ou update une row `habit_logs`, conflit résolu sur la contrainte
   /// `unique (habit_id, date)`.
+  ///
+  /// @deprecated Remplacé par [toggleHabitLog] (RPC — #164). Conservé pour
+  /// [logHabit] (logging v1.5 avec champs étendus).
   Future<void> upsertHabitLog(Map<String, dynamic> row);
+
+  /// Appelle la RPC Supabase `toggle_habit_log` pour créer/mettre à jour un
+  /// log d'habitude (#164).
+  ///
+  /// La RPC impose deux règles de validation :
+  /// - Date future → lance [HabitFutureLogNotAllowedFailure]
+  /// - Rétrodatation > 8 jours → lance [HabitBackdateTooOldFailure]
+  ///
+  /// Retourne la row persistée sous forme de map brute.
+  Future<Map<String, dynamic>> toggleHabitLog({
+    required String habitId,
+    required DateTime date,
+    required String status,
+  });
 
   /// Renvoie les rows `habit_logs` d'une habitude entre [from] et [to]
   /// inclus (format ISO `YYYY-MM-DD`), triées par `date`.
@@ -31,4 +48,9 @@ abstract interface class HabitDataSource {
     required String from,
     required String to,
   });
+
+  /// Renvoie les rows `habits` liées à une collection via `collection_habits`.
+  Future<List<Map<String, dynamic>>> getHabitsForCollection(
+    String collectionId,
+  );
 }

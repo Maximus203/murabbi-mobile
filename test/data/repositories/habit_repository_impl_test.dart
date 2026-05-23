@@ -5,6 +5,7 @@ import 'package:murabbi_mobile/data/mappers/habit_mapper.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_impl.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
+import 'package:murabbi_mobile/domain/errors/habit_failure.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
@@ -94,21 +95,106 @@ void main() {
     });
   });
 
-  group('toggleHabitLog', () {
-    test('upserts a habit_logs row with the given status', () async {
-      when(() => ds.upsertHabitLog(any())).thenAnswer((_) async {});
-      await repo.toggleHabitLog(
-        habitId: HabitId('habit-1'),
-        date: DateTime.utc(2026, 5, 9),
-        status: HabitLogStatus.onTime,
+  group('toggleHabitLog — via RPC (#164)', () {
+    test(
+      '#164 toggle réussi → délègue à ds.toggleHabitLog et retourne',
+      () async {
+        when(
+          () => ds.toggleHabitLog(
+            habitId: 'habit-1',
+            date: DateTime.utc(2026, 5, 9),
+            status: 'ontime',
+          ),
+        ).thenAnswer(
+          (_) async => {'habit_id': 'habit-1', 'date': '2026-05-09'},
+        );
+
+        await repo.toggleHabitLog(
+          habitId: HabitId('habit-1'),
+          date: DateTime.utc(2026, 5, 9),
+          status: HabitLogStatus.onTime,
+        );
+
+        verify(
+          () => ds.toggleHabitLog(
+            habitId: 'habit-1',
+            date: DateTime.utc(2026, 5, 9),
+            status: 'ontime',
+          ),
+        ).called(1);
+      },
+    );
+
+    test(
+      '#164 HabitFutureLogNotAllowedFailure propagée telle quelle',
+      () async {
+        when(
+          () => ds.toggleHabitLog(
+            habitId: any(named: 'habitId'),
+            date: any(named: 'date'),
+            status: any(named: 'status'),
+          ),
+        ).thenThrow(
+          const HabitFailure.futureLogNotAllowed(
+            message: 'Impossible de logger une date future',
+          ),
+        );
+
+        expect(
+          () => repo.toggleHabitLog(
+            habitId: HabitId('habit-1'),
+            date: DateTime.utc(2099, 1, 1),
+            status: HabitLogStatus.onTime,
+          ),
+          throwsA(isA<HabitFutureLogNotAllowedFailure>()),
+        );
+      },
+    );
+
+    test('#164 HabitBackdateTooOldFailure propagée telle quelle', () async {
+      when(
+        () => ds.toggleHabitLog(
+          habitId: any(named: 'habitId'),
+          date: any(named: 'date'),
+          status: any(named: 'status'),
+        ),
+      ).thenThrow(
+        const HabitFailure.backdateTooOld(
+          message: 'Rétrodatation limitée à 8 jours',
+        ),
       );
-      final captured =
-          verify(() => ds.upsertHabitLog(captureAny())).captured.single
-              as Map<String, dynamic>;
-      expect(captured['habit_id'], 'habit-1');
-      expect(captured['date'], '2026-05-09');
-      expect(captured['status'], 'ontime');
+
+      expect(
+        () => repo.toggleHabitLog(
+          habitId: HabitId('habit-1'),
+          date: DateTime.utc(2020, 1, 1),
+          status: HabitLogStatus.onTime,
+        ),
+        throwsA(isA<HabitBackdateTooOldFailure>()),
+      );
     });
+
+    test(
+      '#164 ancien appel upsertHabitLog absent — méthode toggleHabitLog utilisée',
+      () async {
+        // Vérifie que upsertHabitLog n'est PAS appelé lors d'un toggleHabitLog.
+        when(
+          () => ds.toggleHabitLog(
+            habitId: any(named: 'habitId'),
+            date: any(named: 'date'),
+            status: any(named: 'status'),
+          ),
+        ).thenAnswer((_) async => {});
+
+        await repo.toggleHabitLog(
+          habitId: HabitId('habit-1'),
+          date: DateTime.utc(2026, 5, 9),
+          status: HabitLogStatus.onTime,
+        );
+
+        verifyNever(() => ds.upsertHabitLog(any()));
+      },
+    );
   });
 
   group('logHabit', () {

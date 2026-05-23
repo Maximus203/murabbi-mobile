@@ -53,14 +53,34 @@ class HabitRepositoryImpl implements HabitRepository {
     return _ds.deleteHabit(habitId.value);
   }
 
+  /// #164 — Délègue à la RPC `toggle_habit_log` via [HabitDataSource].
+  ///
+  /// Les [HabitFailure] levées par le datasource (date future,
+  /// rétrodatation > 8 jours, erreur DB) remontent telles quelles vers la
+  /// couche presentation — aucune traduction supplémentaire ici.
   @override
   Future<void> toggleHabitLog({
     required HabitId habitId,
     required DateTime date,
     required HabitLogStatus status,
-  }) {
-    final log = HabitLog(habitId: habitId, date: date, status: status);
-    return _ds.upsertHabitLog(HabitLogMapper.toRow(log));
+  }) async {
+    await _ds.toggleHabitLog(
+      habitId: habitId.value,
+      date: date,
+      status: _statusToSql(status),
+    );
+  }
+
+  /// Convertit [HabitLogStatus] en valeur SQL (snake_case de l'enum).
+  static String _statusToSql(HabitLogStatus status) {
+    switch (status) {
+      case HabitLogStatus.onTime:
+        return 'ontime';
+      case HabitLogStatus.late:
+        return 'late';
+      case HabitLogStatus.missed:
+        return 'missed';
+    }
   }
 
   @override
