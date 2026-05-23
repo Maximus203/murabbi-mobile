@@ -5,6 +5,7 @@ import 'package:murabbi_mobile/data/datasources/category_data_source.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_category_data_source.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_client_provider.dart';
 import 'package:murabbi_mobile/data/repositories/category_repository_impl.dart';
+import 'package:murabbi_mobile/data/repositories/current_user_id_resolver_provider.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart'
     show kUseInMemoryHabitRepository;
 import 'package:murabbi_mobile/data/repositories/in_memory_habit_repository.dart';
@@ -27,5 +28,8 @@ final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
   if (kUseInMemoryHabitRepository) {
     return InMemoryCategoryRepository();
   }
-  return CategoryRepositoryImpl(ref.watch(categoryDataSourceProvider));
+  return CategoryRepositoryImpl(
+    ref.watch(categoryDataSourceProvider),
+    currentUserIdResolver: ref.watch(currentUserIdResolverProvider),
+  );
 });

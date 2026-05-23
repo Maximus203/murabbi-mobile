@@ -1,3 +1,5 @@
+import 'package:murabbi_mobile/core/network/current_user_id_resolver.dart';
+import 'package:murabbi_mobile/core/utils/ownership_guard.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_collection_data_source.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/errors/collection_failure.dart';
@@ -15,38 +17,61 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 ///
 /// Le contrat de soft-delete (`deleted_at IS NULL`) est appliqué par la
 /// policy RLS Supabase côté serveur — le datasource ne filtre pas côté client.
-class CollectionRepositoryImpl implements CollectionRepository {
+class CollectionRepositoryImpl
+    with OwnershipGuard
+    implements CollectionRepository {
   final SupabaseCollectionDataSource _ds;
 
-  const CollectionRepositoryImpl(this._ds);
+  /// Resolver d'`userId` courant (issue #202 / M3) — utilisé par
+  /// [OwnershipGuard] pour valider l'ownership avant tout appel réseau.
+  final CurrentUserIdResolver _currentUserIdResolver;
+
+  const CollectionRepositoryImpl(
+    this._ds, {
+    required CurrentUserIdResolver currentUserIdResolver,
+  }) : _currentUserIdResolver = currentUserIdResolver;
+
+  Future<void> _guardOwnership(UserId userId) async {
+    final currentId = await _currentUserIdResolver.currentUserId();
+    assertOwnership(
+      requestedId: userId.value,
+      currentId: currentId,
+      failureIfMismatch: const CollectionFailure.unauthorized(),
+    );
+  }
 
   @override
-  Future<List<Collection>> getCollections(UserId userId) =>
-      _guard(() => _ds.getCollections(userId));
+  Future<List<Collection>> getCollections(UserId userId) => _guard(() async {
+    await _guardOwnership(userId);
+    return _ds.getCollections(userId);
+  });
 
   @override
   Future<void> activateCollection({
     required UserId userId,
     required CollectionId collectionId,
-  }) => _guard(
-    () => _ds.activateCollection(collectionId: collectionId, userId: userId),
-  );
+  }) => _guard(() async {
+    await _guardOwnership(userId);
+    return _ds.activateCollection(collectionId: collectionId, userId: userId);
+  });
 
   @override
   Future<void> deactivateCollection({
     required UserId userId,
     required CollectionId collectionId,
-  }) => _guard(
-    () => _ds.deactivateCollection(collectionId: collectionId, userId: userId),
-  );
+  }) => _guard(() async {
+    await _guardOwnership(userId);
+    return _ds.deactivateCollection(collectionId: collectionId, userId: userId);
+  });
 
   @override
   Future<Collection> createCollection({
     required UserId userId,
     required Collection collection,
-  }) => _guard(
-    () => _ds.createCollection(collection: collection, userId: userId),
-  );
+  }) => _guard(() async {
+    await _guardOwnership(userId);
+    return _ds.createCollection(collection: collection, userId: userId);
+  });
 
   @override
   Future<List<Map<String, dynamic>>> getHabitsForCollection({

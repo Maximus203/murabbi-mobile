@@ -4,6 +4,7 @@ import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/habit_data_source.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_client_provider.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_habit_data_source.dart';
+import 'package:murabbi_mobile/data/repositories/current_user_id_resolver_provider.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_impl.dart';
 import 'package:murabbi_mobile/data/repositories/in_memory_habit_repository.dart';
 import 'package:murabbi_mobile/domain/repositories/habit_repository.dart';
@@ -31,5 +32,8 @@ final habitRepositoryProvider = Provider<HabitRepository>((ref) {
   if (kUseInMemoryHabitRepository) {
     return InMemoryHabitRepository();
   }
-  return HabitRepositoryImpl(ref.watch(habitDataSourceProvider));
+  return HabitRepositoryImpl(
+    ref.watch(habitDataSourceProvider),
+    currentUserIdResolver: ref.watch(currentUserIdResolverProvider),
+  );
 });

@@ -17,6 +17,12 @@ sealed class CollectionFailure extends Equatable implements Exception {
   const factory CollectionFailure.unknown({String? message}) =
       CollectionUnknownFailure;
 
+  /// Défense en profondeur : `userId` demandé ≠ utilisateur authentifié
+  /// (cf. issue #202 / M3). Levée avant tout appel réseau — la RLS
+  /// Supabase reste la protection finale.
+  const factory CollectionFailure.unauthorized({String? message}) =
+      CollectionUnauthorizedFailure;
+
   @override
   List<Object?> get props => [runtimeType, message];
 
@@ -38,4 +44,8 @@ class CollectionNotFoundFailure extends CollectionFailure {
 
 class CollectionUnknownFailure extends CollectionFailure {
   const CollectionUnknownFailure({super.message}) : super._();
+}
+
+class CollectionUnauthorizedFailure extends CollectionFailure {
+  const CollectionUnauthorizedFailure({super.message}) : super._();
 }

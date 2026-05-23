@@ -1,9 +1,12 @@
+import 'package:murabbi_mobile/core/network/current_user_id_resolver.dart';
+import 'package:murabbi_mobile/core/utils/ownership_guard.dart';
 import 'package:murabbi_mobile/data/datasources/habit_data_source.dart';
 import 'package:murabbi_mobile/data/mappers/habit_log_mapper.dart';
 import 'package:murabbi_mobile/data/mappers/habit_mapper.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/entities/habit_subtask.dart';
+import 'package:murabbi_mobile/domain/errors/habit_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/habit_repository.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_subtask_id.dart';
@@ -21,13 +24,31 @@ import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 /// Note : les sous-tâches (`HabitSubtask`) ne sont pas encore branchées sur
 /// Supabase dans cette slice (#149) — méthodes `*Subtask*` non implémentées,
 /// couvertes par une issue ultérieure.
-class HabitRepositoryImpl implements HabitRepository {
+class HabitRepositoryImpl with OwnershipGuard implements HabitRepository {
   final HabitDataSource _ds;
 
-  const HabitRepositoryImpl(this._ds);
+  /// Resolver d'`userId` courant (issue #202 / M3) — utilisé par
+  /// [OwnershipGuard] pour vérifier qu'un repository n'est jamais appelé
+  /// avec un `userId` étranger à la session.
+  final CurrentUserIdResolver _currentUserIdResolver;
+
+  const HabitRepositoryImpl(
+    this._ds, {
+    required CurrentUserIdResolver currentUserIdResolver,
+  }) : _currentUserIdResolver = currentUserIdResolver;
+
+  Future<void> _guardOwnership(UserId userId) async {
+    final currentId = await _currentUserIdResolver.currentUserId();
+    assertOwnership(
+      requestedId: userId.value,
+      currentId: currentId,
+      failureIfMismatch: const HabitFailure.unauthorized(),
+    );
+  }
 
   @override
   Future<List<Habit>> getHabits(UserId userId) async {
+    await _guardOwnership(userId);
     final rows = await _ds.getHabits(userId.value);
     return rows.map(HabitMapper.fromRow).toList(growable: false);
   }
@@ -37,6 +58,7 @@ class HabitRepositoryImpl implements HabitRepository {
     required UserId userId,
     required Habit habit,
   }) async {
+    await _guardOwnership(userId);
     final row = HabitMapper.toRow(habit)..['user_id'] = userId.value;
     final created = await _ds.createHabit(row);
     return HabitMapper.fromRow(created);
