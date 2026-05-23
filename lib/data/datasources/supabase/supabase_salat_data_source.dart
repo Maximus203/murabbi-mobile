@@ -1,3 +1,4 @@
+import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/salat_data_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
@@ -18,13 +19,20 @@ class SupabaseSalatDataSource implements SalatDataSource {
 
   final sb.SupabaseClient _client;
 
-  const SupabaseSalatDataSource(this._client);
+  /// Wrapper JWT auto-refresh (BUG-001, #190).
+  final SupabaseClientWrapper _wrapper;
+
+  const SupabaseSalatDataSource(
+    this._client, {
+    required SupabaseClientWrapper wrapper,
+  }) : _wrapper = wrapper;
 
   @override
   Future<Map<String, dynamic>?> getPrayerDay({
     required String userId,
     required String day,
   }) async {
+    await _wrapper.ensureFreshSession();
     final row = await _client
         .from(_table)
         .select(_columns)
@@ -37,6 +45,7 @@ class SupabaseSalatDataSource implements SalatDataSource {
 
   @override
   Future<void> upsertPrayerDay(Map<String, dynamic> row) async {
+    await _wrapper.ensureFreshSession();
     await _client.from(_table).upsert(row, onConflict: 'user_id,day');
   }
 
@@ -46,6 +55,7 @@ class SupabaseSalatDataSource implements SalatDataSource {
     required String from,
     required String to,
   }) async {
+    await _wrapper.ensureFreshSession();
     final rows = await _client
         .from(_table)
         .select(_columns)

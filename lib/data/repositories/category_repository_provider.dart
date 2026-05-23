@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/category_data_source.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_category_data_source.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_client_provider.dart';
@@ -11,7 +12,10 @@ import 'package:murabbi_mobile/domain/repositories/category_repository.dart';
 
 /// Provider Riverpod du datasource Categories (issue #149).
 final categoryDataSourceProvider = Provider<CategoryDataSource>((ref) {
-  return SupabaseCategoryDataSource(ref.watch(supabaseClientProvider));
+  return SupabaseCategoryDataSource(
+    ref.watch(supabaseClientProvider),
+    wrapper: ref.watch(supabaseClientWrapperProvider),
+  );
 });
 
 /// Provider Riverpod du `CategoryRepository`.

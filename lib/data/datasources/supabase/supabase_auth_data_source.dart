@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/auth_data_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
@@ -35,7 +36,18 @@ class SupabaseAuthDataSource implements AuthDataSource {
 
   final sb.SupabaseClient _client;
 
-  const SupabaseAuthDataSource(this._client);
+  /// Wrapper JWT auto-refresh (BUG-001, #190). Utilisé uniquement par les
+  /// méthodes "PostgREST authentifiées" de ce datasource — soit aujourd'hui
+  /// `deleteAccount` (UPDATE sur `public.users`). Les méthodes `auth.*`
+  /// elles-mêmes (signIn, signUp, signOut, refreshSession, OAuth, …) NE
+  /// l'appellent PAS : chicken-and-egg, soit pas de session, soit refresh
+  /// déjà en cours via le SDK Supabase.
+  final SupabaseClientWrapper _wrapper;
+
+  const SupabaseAuthDataSource(
+    this._client, {
+    required SupabaseClientWrapper wrapper,
+  }) : _wrapper = wrapper;
 
   @override
   Future<AuthMaps> signInWithPassword({
@@ -153,6 +165,8 @@ class SupabaseAuthDataSource implements AuthDataSource {
 
   @override
   Future<void> deleteAccount(String userId) async {
+    // #190 — JWT refresh AVANT le PostgREST UPDATE authentifié.
+    await _wrapper.ensureFreshSession();
     // Soft-delete (ADR-011) : flag deletion_requested_at + signOut. Le
     // hard-delete cascade RGPD est exécuté par un job batch admin (J+30).
     await _client

@@ -1,3 +1,4 @@
+import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/category_data_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
@@ -16,10 +17,17 @@ class SupabaseCategoryDataSource implements CategoryDataSource {
 
   final sb.SupabaseClient _client;
 
-  const SupabaseCategoryDataSource(this._client);
+  /// Wrapper JWT auto-refresh (BUG-001, #190).
+  final SupabaseClientWrapper _wrapper;
+
+  const SupabaseCategoryDataSource(
+    this._client, {
+    required SupabaseClientWrapper wrapper,
+  }) : _wrapper = wrapper;
 
   @override
   Future<List<Map<String, dynamic>>> getCategories(String userId) async {
+    await _wrapper.ensureFreshSession();
     final rows = await _client
         .from(_table)
         .select()
@@ -32,12 +40,14 @@ class SupabaseCategoryDataSource implements CategoryDataSource {
 
   @override
   Future<Map<String, dynamic>> createCategory(Map<String, dynamic> row) async {
+    await _wrapper.ensureFreshSession();
     final created = await _client.from(_table).insert(row).select().single();
     return Map<String, dynamic>.from(created);
   }
 
   @override
   Future<Map<String, dynamic>> updateCategory(Map<String, dynamic> row) async {
+    await _wrapper.ensureFreshSession();
     final updated = await _client
         .from(_table)
         .update(row)
@@ -49,6 +59,7 @@ class SupabaseCategoryDataSource implements CategoryDataSource {
 
   @override
   Future<void> deleteCategory(String categoryId) async {
+    await _wrapper.ensureFreshSession();
     await _client.from(_table).delete().eq('id', categoryId);
   }
 }

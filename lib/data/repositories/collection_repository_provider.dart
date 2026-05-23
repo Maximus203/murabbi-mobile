@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_client_provider.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_collection_data_source.dart';
 import 'package:murabbi_mobile/data/repositories/collection_repository_impl.dart';
@@ -11,7 +12,10 @@ import 'package:murabbi_mobile/domain/repositories/collection_repository.dart';
 final collectionDataSourceProvider = Provider<SupabaseCollectionDataSource>((
   ref,
 ) {
-  return SupabaseCollectionDataSourceImpl(ref.watch(supabaseClientProvider));
+  return SupabaseCollectionDataSourceImpl(
+    ref.watch(supabaseClientProvider),
+    wrapper: ref.watch(supabaseClientWrapperProvider),
+  );
 });
 
 /// Provider Riverpod du `CollectionRepository`. La couche presentation
