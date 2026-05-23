@@ -59,20 +59,22 @@ void main() {
     );
   }
 
-  testWidgets('affiche les champs nom et description', (tester) async {
+  testWidgets('affiche les champs titre et description', (tester) async {
     await tester.pumpWidget(buildSut());
-    expect(find.byKey(const Key('field_name')), findsOneWidget);
-    expect(find.byKey(const Key('field_description')), findsOneWidget);
+    await tester.pumpAndSettle();
+    // Les champs sont trouvés via leur label/placeholder
+    expect(find.text('Titre'), findsOneWidget);
+    expect(find.text('Description'), findsOneWidget);
   });
 
-  testWidgets('erreur si nom vide à la soumission', (tester) async {
+  testWidgets('erreur si titre vide à la soumission', (tester) async {
     await tester.pumpWidget(buildSut());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Créer'));
+    await tester.tap(find.text('Créer la collection'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Le nom est requis.'), findsOneWidget);
+    expect(find.text('Titre requis'), findsOneWidget);
   });
 
   testWidgets('appelle createCollection et onCreated si formulaire valide', (
@@ -101,9 +103,9 @@ void main() {
     await tester.pumpWidget(buildSut(onCreated: () => created = true));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byKey(const Key('field_name')), 'Test');
-    await tester.enterText(find.byKey(const Key('field_description')), 'Desc');
-    await tester.tap(find.text('Créer'));
+    await tester.enterText(find.byType(TextField).first, 'Test');
+    await tester.enterText(find.byType(TextField).last, 'Desc');
+    await tester.tap(find.text('Créer la collection'));
     await tester.pumpAndSettle();
 
     expect(created, isTrue);

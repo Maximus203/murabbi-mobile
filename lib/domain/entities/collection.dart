@@ -32,7 +32,7 @@ class Collection extends Equatable {
   /// migration admin. Le formulaire CO-02 expose le sélecteur d'icône.
   final String? icon;
 
-  Collection({
+  const Collection({
     required this.id,
     required this.name,
     required this.description,
@@ -42,15 +42,7 @@ class Collection extends Equatable {
     this.coverImageUrl,
     this.primaryCategoryId,
     this.icon,
-  }) {
-    if (habitIds.isEmpty) {
-      throw ArgumentError.value(
-        habitIds,
-        'habitIds',
-        'Collection must contain at least one habit',
-      );
-    }
-  }
+  });
 
   /// Points quotidiens estimés de la collection (Q-24 — calcul client).
   ///
