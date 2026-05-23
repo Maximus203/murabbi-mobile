@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/errors/failure_message.dart';
 import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
@@ -7,8 +8,10 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 
 /// Bandeau d'erreur typé partagé entre les écrans Auth (AU-01/02/03/04).
 ///
-/// Switch exhaustif sur le sealed [AuthFailure] — toute nouvelle variante doit
-/// être ajoutée ici (et donc dans toutes les surfaces UI).
+/// Le mapping `Failure → message FR` est centralisé dans [FailureMessage]
+/// depuis #201 (M9). Ce widget ne fait plus que présenter la décoration
+/// (icône + couleur + radius) ; toute nouvelle variante d'`AuthFailure`
+/// doit être ajoutée dans [FailureMessage._fromAuth].
 class AuthErrorBanner extends StatelessWidget {
   final Object? failure;
   const AuthErrorBanner({super.key, required this.failure});
@@ -48,26 +51,13 @@ class AuthErrorBanner extends StatelessWidget {
     );
   }
 
-  /// Mapping FR exhaustif sur le sealed [AuthFailure].
-  /// `Object?` toléré pour absorber `state.error` non typé d'Riverpod.
+  /// Libellé FR pour le contexte Auth. Délègue à [FailureMessage.from] pour
+  /// tout `AuthFailure` ; les objets non-AuthFailure (et `null`) retombent
+  /// sur le fallback historique du banner, formulé pour le contexte Auth
+  /// ("Erreur inattendue. Réessaie dans un instant.").
   static String messageFor(Object? f) {
-    if (f is! AuthFailure) {
-      return 'Erreur inattendue. Réessaie dans un instant.';
-    }
-    return switch (f) {
-      // "email not confirmed" → message distinct qui invite à valider l'inbox.
-      InvalidCredentialsFailure(message: final msg)
-          when msg != null &&
-              msg.toLowerCase().contains('email not confirmed') =>
-        'Confirmez votre adresse email avant de vous connecter.',
-      InvalidCredentialsFailure() => 'Email ou mot de passe incorrect.',
-      EmailAlreadyInUseFailure() => 'Cet email est déjà utilisé.',
-      WeakPasswordFailure() =>
-        'Mot de passe trop faible (8 caractères minimum).',
-      NetworkFailure() => 'Connexion impossible — vérifie ta connexion.',
-      AccountDeletedFailure() =>
-        'Ce compte a été supprimé. Contacte le support pour le restaurer.',
-      UnknownAuthFailure() => 'Erreur inattendue. Réessaie dans un instant.',
-    };
+    const authFallback = 'Erreur inattendue. Réessaie dans un instant.';
+    if (f is! AuthFailure) return authFallback;
+    return FailureMessage.from(f);
   }
 }
