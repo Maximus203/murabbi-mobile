@@ -98,6 +98,21 @@ void main() {
       expect(target.unit, TargetUnit.custom);
       expect(target.customLabel, 'séances');
     });
+
+    // ── #163 : points nullable ────────────────────────────────────────────────
+
+    test('#163 fromRow avec points null → habit.points == null', () {
+      final row = baseRow()..['points'] = null;
+      final habit = HabitMapper.fromRow(row);
+      // habitude utilisateur : points non fixés, doit être null
+      expect(habit.points, isNull);
+    });
+
+    test('#163 fromRow avec points = 5 → habit.points == HabitPoints(5)', () {
+      final row = baseRow()..['points'] = 5;
+      final habit = HabitMapper.fromRow(row);
+      expect(habit.points, HabitPoints(5));
+    });
   });
 
   group('HabitMapper.toRow', () {
@@ -133,5 +148,45 @@ void main() {
       expect(out['range_start'], '06:00');
       expect(out['range_end'], '09:30');
     });
+
+    // ── #163 : toRow ne doit pas envoyer 'points': null ──────────────────────
+
+    test(
+      "#163 toRow habitude user (points null) → clé 'points' absente du map",
+      () {
+        // Habitude utilisateur : is_system=false, points non fixés
+        final habit = Habit(
+          id: HabitId('habit-user'),
+          name: NonEmptyString('Ma routine'),
+          categoryId: CategoryId('cat-1'),
+          frequencyType: HabitFrequencyType.daily,
+          frequency: 1,
+          activeDays: const {1, 2, 3, 4, 5, 6, 7},
+          points: null,
+          isSystem: false,
+        );
+        final row = HabitMapper.toRow(habit);
+        // La clé 'points' ne doit PAS figurer dans la map (ne pas envoyer null)
+        expect(row.containsKey('points'), isFalse);
+      },
+    );
+
+    test(
+      "#163 toRow habitude système (points: HabitPoints(3)) → 'points': 3",
+      () {
+        final habit = Habit(
+          id: HabitId('habit-sys'),
+          name: NonEmptyString('Habitude système'),
+          categoryId: CategoryId('cat-1'),
+          frequencyType: HabitFrequencyType.daily,
+          frequency: 1,
+          activeDays: const {1},
+          points: HabitPoints(3),
+          isSystem: true,
+        );
+        final row = HabitMapper.toRow(habit);
+        expect(row['points'], 3);
+      },
+    );
   });
 }

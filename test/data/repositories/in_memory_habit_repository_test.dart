@@ -53,7 +53,7 @@ void main() {
       await repo.updateHabit(updated);
       final list = await repo.getHabits(userId);
       expect(list.first.name.value, 'Renamed');
-      expect(list.first.points.value, 5);
+      expect(list.first.points?.value, 5);
     });
 
     test('deleteHabit removes from list', () async {

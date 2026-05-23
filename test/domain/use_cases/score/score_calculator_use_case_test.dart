@@ -14,9 +14,10 @@ import 'package:murabbi_mobile/domain/value_objects/target_unit.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_value.dart';
 
 // Constructeur d'habitude de test — évite la répétition du boilerplate.
+// [points] est nullable : null simule une habitude user sans points fixés.
 Habit _makeHabit({
   String id = 'h-1',
-  int points = 5,
+  int? points = 5,
   HabitTarget target = const HabitTarget.none(),
   List<HabitSubtask> subtasks = const [],
   bool subtasksAllRequired = false,
@@ -28,7 +29,7 @@ Habit _makeHabit({
     frequencyType: HabitFrequencyType.daily,
     frequency: 1,
     activeDays: {1, 2, 3, 4, 5, 6, 7},
-    points: HabitPoints(points),
+    points: points != null ? HabitPoints(points) : null,
     isSystem: false,
     target: target,
     subtasks: subtasks,
@@ -428,4 +429,28 @@ void main() {
       });
     },
   );
+
+  // ── #163 : fallback scoring quand points == null ──────────────────────────
+
+  group('ScoreCalculatorUseCase.forHabit — fallback quand points == null', () {
+    test('points null + onTime → 0 (pas de points fixés)', () {
+      // Habitude user sans points spécifiés : le scoring retourne 0
+      // (pas de catégorie injectée dans l'entité Habit pour le fallback).
+      final habit = _makeHabit(points: null);
+      final log = _makeLog(status: HabitLogStatus.onTime);
+      expect(calc.forHabit(habit, log), 0);
+    });
+
+    test('points null + late → latePoints (1)', () {
+      final habit = _makeHabit(points: null);
+      final log = _makeLog(status: HabitLogStatus.late);
+      expect(calc.forHabit(habit, log), 1);
+    });
+
+    test('points null + missed → 0', () {
+      final habit = _makeHabit(points: null);
+      final log = _makeLog(status: HabitLogStatus.missed);
+      expect(calc.forHabit(habit, log), 0);
+    });
+  });
 }

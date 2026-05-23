@@ -45,7 +45,7 @@ class HabitMapper {
       activeDays:
           activeDaysRaw?.map((e) => e as int).toSet() ??
           const {1, 2, 3, 4, 5, 6, 7},
-      points: HabitPoints(row['points'] as int),
+      points: row['points'] != null ? HabitPoints(row['points'] as int) : null,
       isSystem: (row['is_system'] as bool?) ?? false,
       target: _targetFromRow(row),
       subtasksAllRequired: (row['subtasks_required'] as bool?) ?? false,
@@ -53,9 +53,14 @@ class HabitMapper {
   }
 
   /// Entité domain → SQL row (sans `subtasks`, persistés séparément).
+  ///
+  /// La clé `'points'` est omise si `habit.points == null` (habitude user sans
+  /// points fixés) — on n'envoie pas `null` au backend pour éviter d'écraser
+  /// une valeur existante ou de violer une contrainte NOT NULL côté admin
+  /// (#163, companion admin #113).
   static Map<String, dynamic> toRow(Habit habit) {
     final target = habit.target;
-    return {
+    final row = <String, dynamic>{
       'id': habit.id.value,
       'name': habit.name.value,
       'category_id': habit.categoryId.value,
@@ -65,7 +70,6 @@ class HabitMapper {
       'range_start': _timeToSql(habit.rangeStart),
       'range_end': _timeToSql(habit.rangeEnd),
       'active_days': habit.activeDays.toList()..sort(),
-      'points': habit.points.value,
       'is_system': habit.isSystem,
       'target_value': switch (target) {
         HabitTargetNone() => null,
@@ -84,6 +88,11 @@ class HabitMapper {
       'has_timer': target.hasTimer,
       'subtasks_required': habit.subtasksAllRequired,
     };
+    // #163 : n'envoyer la clé 'points' que si elle est non-null.
+    if (habit.points != null) {
+      row['points'] = habit.points!.value;
+    }
+    return row;
   }
 
   static HabitTarget _targetFromRow(Map<String, dynamic> row) {

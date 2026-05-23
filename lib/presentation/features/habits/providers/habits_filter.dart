@@ -122,7 +122,11 @@ class HabitsFilter {
               a.name.value.toLowerCase().compareTo(b.name.value.toLowerCase()),
         );
       case HabitSortBy.points:
-        habits.sort((a, b) => b.points.value.compareTo(a.points.value));
+        // #163 : points nullable — les habitudes sans points sont triées en
+        // dernier (valeur 0 pour le tri, pas de crash).
+        habits.sort(
+          (a, b) => (b.points?.value ?? 0).compareTo(a.points?.value ?? 0),
+        );
       case HabitSortBy.category:
         habits.sort((a, b) => a.categoryId.value.compareTo(b.categoryId.value));
       case HabitSortBy.createdAt:

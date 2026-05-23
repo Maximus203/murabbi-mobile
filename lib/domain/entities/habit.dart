@@ -38,7 +38,13 @@ class Habit extends Equatable {
   final TimeOfDayValue? rangeEnd;
 
   final Set<int> activeDays;
-  final HabitPoints points;
+
+  /// Points attribués à la complétion de l'habitude.
+  ///
+  /// `null` pour les habitudes utilisateur (`is_system = false`) qui n'ont pas
+  /// de points fixés — le scoring utilise alors `category.pointsPerCompletion`
+  /// comme fallback (cf. #163, ADR-006).
+  final HabitPoints? points;
   final bool isSystem;
 
   /// Objectif chiffré et/ou timer (composition v1.5, ADR-008).
@@ -62,7 +68,7 @@ class Habit extends Equatable {
     required this.frequencyType,
     required this.frequency,
     required this.activeDays,
-    required this.points,
+    this.points,
     required this.isSystem,
     this.monthlyDay,
     this.rangeStart,
@@ -155,7 +161,7 @@ class Habit extends Equatable {
     rangeStart,
     rangeEnd,
     activeDays,
-    points,
+    points, // nullable : null = habitude user sans points fixés (#163)
     isSystem,
     target,
     subtasks,

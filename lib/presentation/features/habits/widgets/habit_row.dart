@@ -146,20 +146,22 @@ class HabitRow extends StatelessWidget {
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s2,
-                vertical: AppSpacing.s1,
+            // #163 : points nullable — on n'affiche le badge que si défini.
+            if (habit.points != null)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s2,
+                  vertical: AppSpacing.s1,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
+                ),
+                child: Text(
+                  '+${habit.points!.value} pts',
+                  style: AppTypography.label.copyWith(color: AppColors.accent),
+                ),
               ),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-              ),
-              child: Text(
-                '+${habit.points.value} pts',
-                style: AppTypography.label.copyWith(color: AppColors.accent),
-              ),
-            ),
           ],
         ),
       ),
