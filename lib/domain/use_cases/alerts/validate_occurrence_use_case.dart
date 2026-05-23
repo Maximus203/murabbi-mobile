@@ -39,11 +39,27 @@ class ValidateOccurrenceUseCase {
     final at = now ?? DateTime.now().toUtc();
     final outcome = _resolveOutcome(occ, at);
 
-    final updated = occ.copyWith(
+    // On reconstruit l'entité plutôt que d'utiliser `copyWith` : ce dernier
+    // utilise `??` et ne permet pas de remettre `nextFireAt` à `null`.
+    // Forcer `nextFireAt = null` est requis pour empêcher le scheduler local
+    // de re-fire la notif après validation d'une occurrence snoozée
+    // (cf. PR #194 review P2 + ADR-018 §4.2).
+    final updated = Occurrence(
+      id: occ.id,
+      source: occ.source,
+      sourceId: occ.sourceId,
+      userId: occ.userId,
+      scheduledAt: occ.scheduledAt,
+      windowEndsAt: occ.windowEndsAt,
       status: OccurrenceStatus.done,
       outcome: outcome,
-      validationSource: source,
+      snoozeCount: occ.snoozeCount,
+      firedAt: occ.firedAt,
       actedAt: at,
+      validationSource: source,
+      payload: occ.payload,
+      deviceTimezone: occ.deviceTimezone,
+      createdAt: occ.createdAt,
       updatedAt: at,
     );
 
