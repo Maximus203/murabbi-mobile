@@ -1,9 +1,14 @@
 import 'package:murabbi_mobile/data/datasources/habit_data_source.dart';
+import 'package:murabbi_mobile/domain/errors/habit_failure.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
-/// Implémentation Supabase de [HabitDataSource]. Wrapper thin : aucune
-/// logique métier, aucune traduction d'erreur — celles-ci sont faites dans
-/// `HabitRepositoryImpl` (cf. ADR-004 datasource pattern).
+/// Implémentation Supabase de [HabitDataSource].
+///
+/// Wrapper thin : les erreurs RPC sémantiques (`FUTURE_LOG_NOT_ALLOWED`,
+/// `BACKDATE_TOO_OLD`) sont traduites en [HabitFailure] dans [toggleHabitLog]
+/// car le datasource est le seul niveau à accéder à [sb.PostgrestException].
+/// Toutes les autres méthodes laissent remonter les exceptions brutes vers
+/// [HabitRepositoryImpl] (cf. ADR-004).
 ///
 /// Schémas consommés (cf. `murabbi-admin/supabase/migrations/`) :
 ///   `habits`     — id, user_id, name, category_id, frequency_type,
@@ -13,7 +18,12 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 ///                  subtasks_required, created_at
 ///   `habit_logs` — habit_id, date, status, actual_value, target_reached,
 ///                  subtasks_completed, duration_seconds, opened_at,
-///                  logged_at — contrainte unique (habit_id, date)
+///                  logged_at
+///
+/// RPC consommée (#164) :
+///   `toggle_habit_log(p_habit_id, p_day, p_status)` — crée ou met à jour
+///   un log. Lance `FUTURE_LOG_NOT_ALLOWED` ou `BACKDATE_TOO_OLD` si les
+///   règles temporelles sont violées.
 ///
 /// Non couvert par tests unitaires (pattern `SupabaseSalatDataSource` — la
 /// fluent API Supabase est trop fragile à mocker, couverte par les
@@ -80,6 +90,61 @@ class SupabaseHabitDataSource implements HabitDataSource {
         .order('date');
     return rows
         .map<Map<String, dynamic>>((r) => Map<String, dynamic>.from(r))
+        .toList();
+  }
+
+  /// #164 — Appelle la RPC `toggle_habit_log`.
+  ///
+  /// Traduit les erreurs RPC sémantiques en [HabitFailure] typées :
+  /// - `FUTURE_LOG_NOT_ALLOWED` → [HabitFutureLogNotAllowedFailure]
+  /// - `BACKDATE_TOO_OLD` → [HabitBackdateTooOldFailure]
+  /// - Autres [sb.PostgrestException] → [HabitDatabaseFailure]
+  @override
+  Future<Map<String, dynamic>> toggleHabitLog({
+    required String habitId,
+    required DateTime date,
+    required String status,
+  }) async {
+    final y = date.year.toString().padLeft(4, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    try {
+      final result = await _client.rpc<Map<String, dynamic>>(
+        'toggle_habit_log',
+        params: {
+          'p_habit_id': habitId,
+          'p_day': '$y-$m-$d',
+          'p_status': status,
+        },
+      );
+      return Map<String, dynamic>.from(result);
+    } on sb.PostgrestException catch (e) {
+      if (e.message.contains('FUTURE_LOG_NOT_ALLOWED')) {
+        throw const HabitFailure.futureLogNotAllowed(
+          message: 'Impossible de logger une date future',
+        );
+      }
+      if (e.message.contains('BACKDATE_TOO_OLD')) {
+        throw const HabitFailure.backdateTooOld(
+          message: 'Rétrodatation limitée à 8 jours',
+        );
+      }
+      throw HabitFailure.database(message: '${e.message} (${e.code})');
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getHabitsForCollection(
+    String collectionId,
+  ) async {
+    final rows = await _client
+        .from('collection_habits')
+        .select('habits(*)')
+        .eq('collection_id', collectionId);
+    return rows
+        .map<Map<String, dynamic>>(
+          (r) => Map<String, dynamic>.from(r['habits'] as Map),
+        )
         .toList();
   }
 }
