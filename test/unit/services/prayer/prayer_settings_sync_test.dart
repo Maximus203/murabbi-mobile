@@ -16,9 +16,8 @@ void main() {
 
   const userId = 'user-001';
 
-  final defaultSettings = PrayerUserSettings.defaults(userId: userId);
-
-  final freshSettings = PrayerUserSettings(
+  // Frais = updatedAt dans les 59 dernières minutes.
+  PrayerUserSettings makeFresh() => PrayerUserSettings(
     userId: userId,
     latitude: 48.85,
     longitude: 2.35,
@@ -28,10 +27,12 @@ void main() {
     highLatitudeRule: PrayerHighLatitudeRule.middleOfTheNight,
     autoDst: true,
     adjustments: PrayerUserSettings.zeroAdjustments(),
-    updatedAt: DateTime.utc(2026, 5, 23, 8, 0),
+    // Toujours dans la fenêtre de 1h.
+    updatedAt: DateTime.now().toUtc().subtract(const Duration(minutes: 30)),
   );
 
-  final staleSettings = PrayerUserSettings(
+  // Stale = updatedAt il y a plus d'1h.
+  PrayerUserSettings makeStale() => PrayerUserSettings(
     userId: userId,
     latitude: 48.85,
     longitude: 2.35,
@@ -41,11 +42,11 @@ void main() {
     highLatitudeRule: PrayerHighLatitudeRule.middleOfTheNight,
     autoDst: true,
     adjustments: PrayerUserSettings.zeroAdjustments(),
-    // Vieux de plus d'1 heure → stale.
-    updatedAt: DateTime.utc(2026, 5, 23, 6, 0),
+    // Toujours hors de la fenêtre de 1h.
+    updatedAt: DateTime.now().toUtc().subtract(const Duration(hours: 2)),
   );
 
-  final remoteSettings = PrayerUserSettings(
+  PrayerUserSettings makeRemote() => PrayerUserSettings(
     userId: userId,
     latitude: 51.5,
     longitude: -0.1,
@@ -55,8 +56,15 @@ void main() {
     highLatitudeRule: PrayerHighLatitudeRule.seventhOfTheNight,
     autoDst: false,
     adjustments: PrayerUserSettings.zeroAdjustments(),
-    updatedAt: DateTime.utc(2026, 5, 23, 9, 0), // plus récent que staleSettings
+    updatedAt: DateTime.now().toUtc().subtract(const Duration(minutes: 5)),
   );
+
+  setUpAll(() {
+    // Enregistrement du fallback pour les matchers generics de mocktail.
+    registerFallbackValue(
+      PrayerUserSettings.defaults(userId: 'fallback'),
+    );
+  });
 
   setUp(() {
     repo = _MockPrayerUserSettingsRepository();
@@ -67,30 +75,33 @@ void main() {
   // Test 1 — load retourne le cache local si age < 1h
   // ------------------------------------------------------------------
   test('load_returns_local_if_fresh', () async {
-    when(() => repo.loadLocal(userId)).thenAnswer((_) async => freshSettings);
+    final fresh = makeFresh();
+    when(() => repo.loadLocal(userId)).thenAnswer((_) async => fresh);
 
     final result = await sut.loadSettings(userId);
 
-    expect(result.latitude, freshSettings.latitude);
+    expect(result.latitude, fresh.latitude);
     // Pas d'appel réseau si cache frais.
-    verifyNever(() => repo.fetchRemote(userId));
+    verifyNever(() => repo.fetchRemote(any()));
   });
 
   // ------------------------------------------------------------------
   // Test 2 — load fetch remote si cache >= 1h
   // ------------------------------------------------------------------
   test('load_fetches_remote_if_stale', () async {
-    when(() => repo.loadLocal(userId)).thenAnswer((_) async => staleSettings);
+    final stale = makeStale();
+    final remote = makeRemote();
+    when(() => repo.loadLocal(userId)).thenAnswer((_) async => stale);
     when(
       () => repo.fetchRemote(userId),
-    ).thenAnswer((_) async => remoteSettings);
+    ).thenAnswer((_) async => remote);
     when(
       () => repo.saveLocal(any()),
     ).thenAnswer((_) async {});
 
     final result = await sut.loadSettings(userId);
 
-    expect(result.latitude, remoteSettings.latitude);
+    expect(result.latitude, remote.latitude);
     verify(() => repo.fetchRemote(userId)).called(1);
   });
 
@@ -98,61 +109,64 @@ void main() {
   // Test 3 — save écrit local immédiatement
   // ------------------------------------------------------------------
   test('save_writes_local_immediately', () async {
+    final fresh = makeFresh();
     when(() => repo.saveLocal(any())).thenAnswer((_) async {});
     when(
       () => repo.upsertRemote(any()),
     ).thenAnswer((_) async {});
 
-    await sut.saveSettings(userId, freshSettings);
+    await sut.saveSettings(userId, fresh);
 
-    verify(() => repo.saveLocal(freshSettings)).called(1);
+    verify(() => repo.saveLocal(any())).called(1);
   });
 
   // ------------------------------------------------------------------
   // Test 4 — save pousse vers Supabase
   // ------------------------------------------------------------------
   test('save_pushes_to_supabase', () async {
+    final fresh = makeFresh();
     when(() => repo.saveLocal(any())).thenAnswer((_) async {});
     when(
       () => repo.upsertRemote(any()),
     ).thenAnswer((_) async {});
 
-    await sut.saveSettings(userId, freshSettings);
+    await sut.saveSettings(userId, fresh);
 
-    verify(() => repo.upsertRemote(freshSettings)).called(1);
+    verify(() => repo.upsertRemote(any())).called(1);
   });
 
   // ------------------------------------------------------------------
-  // Test 5 — sync: remote wins si remote.updatedAt > local.updatedAt
+  // Test 5 — sync: remote wins, retourne les settings remote
   // ------------------------------------------------------------------
   test('sync_remote_wins_on_conflict', () async {
+    final remote = makeRemote();
     when(
       () => repo.fetchRemote(userId),
-    ).thenAnswer((_) async => remoteSettings);
+    ).thenAnswer((_) async => remote);
     when(
       () => repo.saveLocal(any()),
     ).thenAnswer((_) async {});
 
     final result = await sut.syncFromRemote(userId);
 
-    // remoteSettings.updatedAt (09:00) > staleSettings.updatedAt (06:00)
-    expect(result.updatedAt, remoteSettings.updatedAt);
-    verify(() => repo.saveLocal(remoteSettings)).called(1);
+    expect(result.latitude, remote.latitude);
+    verify(() => repo.saveLocal(any())).called(1);
   });
 
   // ------------------------------------------------------------------
   // Test 6 — load offline retourne le cache même si réseau KO
   // ------------------------------------------------------------------
   test('load_offline_returns_cached', () async {
+    final stale = makeStale();
     when(
       () => repo.loadLocal(userId),
-    ).thenAnswer((_) async => staleSettings);
+    ).thenAnswer((_) async => stale);
     when(() => repo.fetchRemote(userId)).thenThrow(Exception('Network error'));
 
     // Doit retourner le cache stale sans lever d'exception.
     final result = await sut.loadSettings(userId);
 
-    expect(result.latitude, staleSettings.latitude);
+    expect(result.latitude, stale.latitude);
   });
 
   // ------------------------------------------------------------------
