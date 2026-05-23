@@ -10,6 +10,12 @@ import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_dialog.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 
+// Issue #168 — `pseudo` est désormais immuable côté serveur (admin#125 :
+// la RPC `update_user_pseudo` lève `PSEUDO_IMMUTABLE`). Côté UI, on a
+// retiré toute affordance d'édition du pseudo (carte profil non tappable,
+// section "Compte" retirée). Le callback `onEditProfile` du constructeur
+// est conservé pour rétro-compatibilité du routeur mais n'est plus câblé.
+
 /// ST-01 — Écran Paramètres (issue #7, Phase 6).
 ///
 /// Card profil (avatar initiale, pseudo, email, niveau) + sections
@@ -19,7 +25,9 @@ class St01SettingsScreen extends ConsumerWidget {
   /// Retour vers l'écran précédent (dashboard).
   final VoidCallback onBack;
 
-  /// Ouvre ST-02 — modification du profil.
+  /// Ouvre ST-02 — désormais écran lecture seule (#168). Conservé pour
+  /// rétro-compatibilité du routeur mais l'écran ST-01 ne déclenche plus
+  /// cette navigation.
   final VoidCallback onEditProfile;
 
   /// Ouvre ST-03 — suppression de compte.
@@ -46,18 +54,10 @@ class St01SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.s4),
         children: [
-          if (user != null) _ProfileCard(user: user, onTap: onEditProfile),
+          // Issue #168 — la carte profil n'est plus tappable (pseudo
+          // immuable côté serveur, plus rien à éditer en self-service).
+          if (user != null) _ProfileCard(user: user),
           const SizedBox(height: AppSpacing.s5),
-          _Section(
-            title: 'Compte',
-            tiles: [
-              _SettingsTile(
-                icon: LucideIcons.userPen,
-                label: 'Modifier le profil',
-                onTap: onEditProfile,
-              ),
-            ],
-          ),
           const _Section(
             title: 'Pratique',
             tiles: [
@@ -125,21 +125,21 @@ class St01SettingsScreen extends ConsumerWidget {
   }
 }
 
-/// Carte profil : avatar initiale, pseudo, email, niveau.
+/// Carte profil : avatar initiale, pseudo (`pseudo#XXXX` via
+/// [User.displayPseudo]), email, niveau. Issue #168 — non tappable.
 class _ProfileCard extends StatelessWidget {
   final User user;
-  final VoidCallback onTap;
 
-  const _ProfileCard({required this.user, required this.onTap});
+  const _ProfileCard({required this.user});
 
   @override
   Widget build(BuildContext context) {
+    // L'avatar reste dérivé du pseudo brut (sans le suffixe #XXXX).
     final initial = user.pseudo.value.isEmpty
         ? '?'
         : user.pseudo.value.characters.first.toUpperCase();
 
     return AppCard(
-      onTap: onTap,
       child: Row(
         children: [
           Container(
@@ -160,7 +160,7 @@ class _ProfileCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user.pseudo.value, style: AppTypography.h3),
+                Text(user.displayPseudo, style: AppTypography.h3),
                 const SizedBox(height: AppSpacing.s1),
                 Text(
                   user.email.value,
@@ -175,11 +175,6 @@ class _ProfileCard extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          const Icon(
-            LucideIcons.chevronRight,
-            size: 20,
-            color: AppColors.textTertiary,
           ),
         ],
       ),

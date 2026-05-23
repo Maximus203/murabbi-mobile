@@ -4,10 +4,16 @@ import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 
 /// ST-02 — Modification du profil utilisateur.
 ///
-/// Seul le pseudo public est éditable (l'email est verrouillé côté UI).
-/// La validation (longueur 1..30, caractères interdits) est portée par le
-/// value object [Pseudonym] — toute saisie invalide lève `ArgumentError`
-/// avant d'atteindre le repository.
+/// **DEPRECATED (issue #168 / admin#125)** : le pseudo est désormais
+/// immuable côté serveur (la RPC `update_user_pseudo` lève
+/// `PSEUDO_IMMUTABLE`). Plus aucun appelant côté `presentation` n'invoque
+/// ce use case. Conservé temporairement pour préserver les tests existants
+/// et permettre une suppression chirurgicale dans un PR de nettoyage
+/// dédié.
+@Deprecated(
+  'Pseudo immuable depuis admin#125 (issue #168). À supprimer dans un PR '
+  'de nettoyage dédié — plus aucun call-site présentation.',
+)
 class UpdateProfileUseCase {
   final UserRepository _repository;
 

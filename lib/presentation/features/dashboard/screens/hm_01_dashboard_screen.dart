@@ -44,7 +44,9 @@ class Hm01DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboard = ref.watch(dashboardNotifierProvider);
     final user = ref.watch(authNotifierProvider).valueOrNull;
-    final pseudo = user?.pseudo.value ?? 'Murabbi';
+    // Issue #168 — affichage canonique `pseudo#XXXX` (fallback `pseudo`
+    // brut tant que la migration admin#125 n'a pas projeté pseudo_full).
+    final pseudo = user?.displayPseudo ?? 'Murabbi';
 
     // LEVEL-UP (issue #7) : à chaque nouvelle valeur de score total, on
     // alimente le notifier qui détecte le franchissement d'un palier.
