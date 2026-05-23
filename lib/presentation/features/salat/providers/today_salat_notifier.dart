@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/core/extensions/ref_score_invalidation.dart';
+import 'package:murabbi_mobile/core/utils/action_serializer.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_day.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_times.dart';
@@ -15,6 +16,10 @@ import 'package:murabbi_mobile/presentation/features/salat/providers/today_salat
 /// - `error(PrayerFailure.settingsNotConfigured)` → l'UI doit rediriger vers SA-02
 /// - `error(...)` → autre erreur réseau / database
 class TodaySalatNotifier extends AsyncNotifier<TodaySalatState> {
+  /// Sérialiseur d'appels concurrents (issue #198 / M4) — un double-tap
+  /// rapide sur un bouton ne produit qu'une seule mutation `markPrayer`.
+  final ActionSerializer _serializer = ActionSerializer();
+
   @override
   Future<TodaySalatState> build() async {
     final user = ref.watch(currentUserProvider);
@@ -49,25 +54,27 @@ class TodaySalatNotifier extends AsyncNotifier<TodaySalatState> {
     required String prayerName,
     required PrayerStatus status,
   }) async {
-    final current = state.valueOrNull;
-    if (current == null) return;
+    await _serializer.run<void>(() async {
+      final current = state.valueOrNull;
+      if (current == null) return;
 
-    final user = ref.read(currentUserProvider);
-    if (user == null) return;
+      final user = ref.read(currentUserProvider);
+      if (user == null) return;
 
-    final markUseCase = ref.read(markPrayerUseCaseProvider);
-    final getTodayPrayers = ref.read(getTodayPrayersUseCaseProvider);
+      final markUseCase = ref.read(markPrayerUseCaseProvider);
+      final getTodayPrayers = ref.read(getTodayPrayersUseCaseProvider);
 
-    state = const AsyncValue<TodaySalatState>.loading();
-    state = await AsyncValue.guard(() async {
-      await markUseCase(
-        userId: user.id,
-        date: current.date,
-        prayerName: prayerName,
-        status: status,
-      );
-      final fresh = await getTodayPrayers(user.id);
-      return current.copyWith(prayerDay: fresh);
+      state = const AsyncValue<TodaySalatState>.loading();
+      state = await AsyncValue.guard(() async {
+        await markUseCase(
+          userId: user.id,
+          date: current.date,
+          prayerName: prayerName,
+          status: status,
+        );
+        final fresh = await getTodayPrayers(user.id);
+        return current.copyWith(prayerDay: fresh);
+      });
     });
     // Issue #196 (M6) : invalide le score dashboard après log de prière.
     if (state.hasValue) {

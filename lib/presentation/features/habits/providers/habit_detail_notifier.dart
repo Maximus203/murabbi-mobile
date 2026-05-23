@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/core/extensions/ref_score_invalidation.dart';
+import 'package:murabbi_mobile/core/utils/action_serializer.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
@@ -59,6 +60,10 @@ class HabitDetailNotifier
   /// Fenêtre d'historique chargée pour le calcul des stats / heatmap.
   static const int _windowDays = 30;
 
+  /// Sérialiseur d'appels concurrents (issue #198 / M4) — protège
+  /// `deleteHabit` d'un double-tap rapide sur le bouton de suppression.
+  final ActionSerializer _serializer = ActionSerializer();
+
   late String _habitId;
 
   @override
@@ -102,10 +107,12 @@ class HabitDetailNotifier
   /// Supprime l'habitude courante via [DeleteHabitUseCase] puis invalide la
   /// liste HA-01 pour qu'elle se rafraîchisse.
   Future<void> deleteHabit() async {
-    await ref.read(deleteHabitUseCaseProvider).call(HabitId(_habitId));
-    ref.invalidate(habitsNotifierProvider);
-    // Issue #196 (M6) : la suppression peut impacter le total de points.
-    ref.invalidateScoreCache();
+    await _serializer.run<void>(() async {
+      await ref.read(deleteHabitUseCaseProvider).call(HabitId(_habitId));
+      ref.invalidate(habitsNotifierProvider);
+      // Issue #196 (M6) : la suppression peut impacter le total de points.
+      ref.invalidateScoreCache();
+    });
   }
 
   /// Recharge habitude + stats (après un log par exemple).

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/core/extensions/ref_score_invalidation.dart';
+import 'package:murabbi_mobile/core/utils/action_serializer.dart';
 import 'package:murabbi_mobile/data/repositories/prayer_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_day.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
@@ -63,6 +64,10 @@ final prayerDetailNotifierProvider =
 
 class PrayerDetailNotifier
     extends FamilyAsyncNotifier<PrayerDetailState, String> {
+  /// Sérialiseur d'appels concurrents (issue #198 / M4) — un double-tap
+  /// rapide sur la grille SL-DETAIL ne produit qu'une seule mutation.
+  final ActionSerializer _serializer = ActionSerializer();
+
   @override
   Future<PrayerDetailState> build(String prayerName) async {
     final user = ref.watch(currentUserProvider);
@@ -117,30 +122,32 @@ class PrayerDetailNotifier
     required DateTime dayUtc,
     required PrayerStatus status,
   }) async {
-    final current = state.valueOrNull;
-    if (current == null) return;
-    final user = ref.read(currentUserProvider);
-    if (user == null) return;
+    await _serializer.run<void>(() async {
+      final current = state.valueOrNull;
+      if (current == null) return;
+      final user = ref.read(currentUserProvider);
+      if (user == null) return;
 
-    // 1. Mise à jour optimiste — l'UI répond immédiatement.
-    final optimistic = _updateLocalState(current, dayUtc, status);
-    state = AsyncValue.data(optimistic);
+      // 1. Mise à jour optimiste — l'UI répond immédiatement.
+      final optimistic = _updateLocalState(current, dayUtc, status);
+      state = AsyncValue.data(optimistic);
 
-    // 2. Persistence en background.
-    try {
-      final markUseCase = ref.read(markPrayerUseCaseProvider);
-      await markUseCase(
-        userId: user.id,
-        date: dayUtc,
-        prayerName: current.prayerName,
-        status: status,
-      );
-      // Issue #196 (M6) : invalide le score dashboard après log de prière.
-      ref.invalidateScoreCache();
-    } catch (_) {
-      // 3. Rollback si erreur réseau / serveur.
-      state = AsyncValue.data(current);
-    }
+      // 2. Persistence en background.
+      try {
+        final markUseCase = ref.read(markPrayerUseCaseProvider);
+        await markUseCase(
+          userId: user.id,
+          date: dayUtc,
+          prayerName: current.prayerName,
+          status: status,
+        );
+        // Issue #196 (M6) : invalide le score dashboard après log de prière.
+        ref.invalidateScoreCache();
+      } catch (_) {
+        // 3. Rollback si erreur réseau / serveur.
+        state = AsyncValue.data(current);
+      }
+    });
   }
 
   /// Applique le changement de [status] pour [dayUtc] localement, sans I/O.

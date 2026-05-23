@@ -126,6 +126,13 @@ void main() {
         'Action non autorisée. Reconnecte-toi.',
       );
     });
+
+    test('duplicate (M4 — UNIQUE violation)', () {
+      expect(
+        FailureMessage.from(const HabitFailure.duplicate()),
+        "L'habitude a déjà été validée.",
+      );
+    });
   });
 
   group('FailureMessage.from — CollectionFailure', () {
