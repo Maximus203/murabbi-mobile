@@ -4,32 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/services/notification/fcm_service.dart';
 
-/// Abstraction pour Firebase Messaging — isole le plugin natif des tests.
-abstract class FirebaseMessagingAdapter {
-  Future<void> requestPermission();
-  Future<String?> getToken();
-  Stream<String> get onTokenRefresh;
-  Stream<FcmMessage> get onMessage;
-}
-
-/// DTO minimal représentant un message FCM dans les tests.
-class FcmMessage {
-  final String? messageId;
-  final Map<String, dynamic> data;
-  const FcmMessage({this.messageId, this.data = const {}});
-}
-
-/// Abstraction pour le stockage sécurisé du token.
-abstract class SecureTokenStorage {
-  Future<void> writeToken(String token);
-  Future<String?> readToken();
-}
-
-/// Abstraction pour la sync du token en base.
-abstract class FcmTokenRepository {
-  Future<void> updateFcmToken({required String userId, required String token});
-}
-
+/// Mocks des interfaces définies dans fcm_service.dart.
 class _MockFirebaseMessagingAdapter extends Mock
     implements FirebaseMessagingAdapter {}
 
