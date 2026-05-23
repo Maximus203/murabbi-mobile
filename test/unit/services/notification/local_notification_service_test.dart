@@ -25,12 +25,14 @@ void main() {
     platform = _MockPlatform();
     service = LocalNotificationService(platform: platform);
 
-    when(() => platform.initialize(onActionReceived: any(named: 'onActionReceived')))
-        .thenAnswer((_) async {});
+    when(
+      () =>
+          platform.initialize(onActionReceived: any(named: 'onActionReceived')),
+    ).thenAnswer((_) async {});
     when(() => platform.requestPermission()).thenAnswer((_) async => true);
-    when(() => platform.permissionStatus()).thenAnswer(
-      (_) async => NotificationPermissionStatus.granted,
-    );
+    when(
+      () => platform.permissionStatus(),
+    ).thenAnswer((_) async => NotificationPermissionStatus.granted);
     when(() => platform.schedule(any())).thenAnswer((_) async {});
     when(() => platform.cancel(any())).thenAnswer((_) async {});
     when(() => platform.cancelAll()).thenAnswer((_) async {});
@@ -47,7 +49,8 @@ void main() {
       scheduledAt: scheduledAt ?? DateTime.utc(2026, 5, 23, 8),
       title: 'Lecture Coran',
       body: '15 min — page 42',
-      actions: actions ??
+      actions:
+          actions ??
           const [
             NotificationActionId.done,
             NotificationActionId.later,
@@ -64,10 +67,7 @@ void main() {
       scheduledAt: DateTime.utc(2026, 5, 23, 13, 30),
       title: 'Dhuhr',
       body: 'La fenêtre de prière s\'ouvre',
-      actions: const [
-        NotificationActionId.done,
-        NotificationActionId.dismiss,
-      ],
+      actions: const [NotificationActionId.done, NotificationActionId.dismiss],
       payload: const {'sourceId': 'dhuhr'},
     );
   }
@@ -100,9 +100,9 @@ void main() {
     });
 
     test('permissionStatus() délègue au platform', () async {
-      when(() => platform.permissionStatus()).thenAnswer(
-        (_) async => NotificationPermissionStatus.denied,
-      );
+      when(
+        () => platform.permissionStatus(),
+      ).thenAnswer((_) async => NotificationPermissionStatus.denied);
 
       final status = await service.permissionStatus();
 
@@ -223,7 +223,9 @@ void main() {
     test(
       'notificationId reste dans la plage int32 (compat iOS/Android)',
       () async {
-        await service.schedule(habitSpec(occurrenceId: 'a-very-long-uuid-string-${'x' * 100}'));
+        await service.schedule(
+          habitSpec(occurrenceId: 'a-very-long-uuid-string-${'x' * 100}'),
+        );
 
         final req =
             verify(() => platform.schedule(captureAny())).captured.first
@@ -235,8 +237,7 @@ void main() {
   });
 
   group('LocalNotificationService — cancel', () {
-    test('cancel() délègue au platform avec le notificationId hashé',
-        () async {
+    test('cancel() délègue au platform avec le notificationId hashé', () async {
       // On planifie d'abord pour connaître le hash utilisé.
       await service.schedule(habitSpec(occurrenceId: 'occ-cancel'));
       final scheduled =
@@ -279,93 +280,87 @@ void main() {
       await sub2.cancel();
     });
 
-    test(
-      'reçoit un évènement quand le platform invoque le callback',
-      () async {
-        late void Function(NotificationAction) capturedCallback;
-        when(
-          () => platform.initialize(
-            onActionReceived: any(named: 'onActionReceived'),
-          ),
-        ).thenAnswer((invocation) async {
-          capturedCallback = invocation
-                  .namedArguments[const Symbol('onActionReceived')]
-              as void Function(NotificationAction);
-        });
+    test('reçoit un évènement quand le platform invoque le callback', () async {
+      late void Function(NotificationAction) capturedCallback;
+      when(
+        () => platform.initialize(
+          onActionReceived: any(named: 'onActionReceived'),
+        ),
+      ).thenAnswer((invocation) async {
+        capturedCallback =
+            invocation.namedArguments[const Symbol('onActionReceived')]
+                as void Function(NotificationAction);
+      });
 
-        await service.initialize();
+      await service.initialize();
 
-        final events = <NotificationAction>[];
-        final sub = service.actionStream.listen(events.add);
+      final events = <NotificationAction>[];
+      final sub = service.actionStream.listen(events.add);
 
-        final received = NotificationAction(
-          occurrenceId: 'occ-001',
+      final received = NotificationAction(
+        occurrenceId: 'occ-001',
+        actionId: NotificationActionId.done,
+        receivedAt: DateTime.utc(2026, 5, 23, 8, 5),
+        payload: const {'sourceId': 'habit-001'},
+      );
+      capturedCallback(received);
+
+      await Future<void>.delayed(Duration.zero);
+      expect(events, hasLength(1));
+      expect(events.first.occurrenceId, 'occ-001');
+      expect(events.first.actionId, NotificationActionId.done);
+
+      await sub.cancel();
+    });
+
+    test('émet les 3 actions done/later/dismiss correctement', () async {
+      late void Function(NotificationAction) capturedCallback;
+      when(
+        () => platform.initialize(
+          onActionReceived: any(named: 'onActionReceived'),
+        ),
+      ).thenAnswer((invocation) async {
+        capturedCallback =
+            invocation.namedArguments[const Symbol('onActionReceived')]
+                as void Function(NotificationAction);
+      });
+
+      await service.initialize();
+
+      final events = <NotificationActionId>[];
+      final sub = service.actionStream.listen((a) => events.add(a.actionId));
+
+      final now = DateTime.utc(2026, 5, 23, 8, 5);
+      capturedCallback(
+        NotificationAction(
+          occurrenceId: 'a',
           actionId: NotificationActionId.done,
-          receivedAt: DateTime.utc(2026, 5, 23, 8, 5),
-          payload: const {'sourceId': 'habit-001'},
-        );
-        capturedCallback(received);
+          receivedAt: now,
+        ),
+      );
+      capturedCallback(
+        NotificationAction(
+          occurrenceId: 'b',
+          actionId: NotificationActionId.later,
+          receivedAt: now,
+        ),
+      );
+      capturedCallback(
+        NotificationAction(
+          occurrenceId: 'c',
+          actionId: NotificationActionId.dismiss,
+          receivedAt: now,
+        ),
+      );
 
-        await Future<void>.delayed(Duration.zero);
-        expect(events, hasLength(1));
-        expect(events.first.occurrenceId, 'occ-001');
-        expect(events.first.actionId, NotificationActionId.done);
+      await Future<void>.delayed(Duration.zero);
+      expect(events, [
+        NotificationActionId.done,
+        NotificationActionId.later,
+        NotificationActionId.dismiss,
+      ]);
 
-        await sub.cancel();
-      },
-    );
-
-    test(
-      'émet les 3 actions done/later/dismiss correctement',
-      () async {
-        late void Function(NotificationAction) capturedCallback;
-        when(
-          () => platform.initialize(
-            onActionReceived: any(named: 'onActionReceived'),
-          ),
-        ).thenAnswer((invocation) async {
-          capturedCallback = invocation
-                  .namedArguments[const Symbol('onActionReceived')]
-              as void Function(NotificationAction);
-        });
-
-        await service.initialize();
-
-        final events = <NotificationActionId>[];
-        final sub = service.actionStream.listen((a) => events.add(a.actionId));
-
-        final now = DateTime.utc(2026, 5, 23, 8, 5);
-        capturedCallback(
-          NotificationAction(
-            occurrenceId: 'a',
-            actionId: NotificationActionId.done,
-            receivedAt: now,
-          ),
-        );
-        capturedCallback(
-          NotificationAction(
-            occurrenceId: 'b',
-            actionId: NotificationActionId.later,
-            receivedAt: now,
-          ),
-        );
-        capturedCallback(
-          NotificationAction(
-            occurrenceId: 'c',
-            actionId: NotificationActionId.dismiss,
-            receivedAt: now,
-          ),
-        );
-
-        await Future<void>.delayed(Duration.zero);
-        expect(events, [
-          NotificationActionId.done,
-          NotificationActionId.later,
-          NotificationActionId.dismiss,
-        ]);
-
-        await sub.cancel();
-      },
-    );
+      await sub.cancel();
+    });
   });
 }
