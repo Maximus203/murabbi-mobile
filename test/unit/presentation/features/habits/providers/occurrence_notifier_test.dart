@@ -54,7 +54,7 @@ void main() {
     registerFallbackValue(_occurrence());
   });
 
-  ProviderContainer _container() {
+  ProviderContainer makeContainer() {
     return ProviderContainer(
       overrides: [
         validateOccurrenceUseCaseProvider.overrideWithValue(mockUseCase),
@@ -64,83 +64,84 @@ void main() {
 
   // ── Idempotency guard (BUG-003) ───────────────────────────────────────────
 
-  test(
-    'validate_notifier_ignores_call_while_loading — '
-    'second appel ignoré pendant AsyncLoading',
-    () async {
-      final occ = _occurrence();
-      // Le use case est lent (simulé par Completer)
-      final completer = Completer<ValidateOccurrenceResult>();
-      when(
-        () => mockUseCase.call(occurrence: any(named: 'occurrence'), now: any(named: 'now')),
-      ).thenAnswer((_) => completer.future);
+  test('validate_notifier_ignores_call_while_loading — '
+      'second appel ignoré pendant AsyncLoading', () async {
+    final occ = _occurrence();
+    // Le use case est lent (simulé par Completer)
+    final completer = Completer<ValidateOccurrenceResult>();
+    when(
+      () => mockUseCase.call(
+        occurrence: any(named: 'occurrence'),
+        now: any(named: 'now'),
+      ),
+    ).thenAnswer((_) => completer.future);
 
-      final container = _container();
-      addTearDown(container.dispose);
+    final container = makeContainer();
+    addTearDown(container.dispose);
 
-      final notifier = container.read(
-        occurrenceValidationNotifierProvider('occ-001').notifier,
-      );
-      // Attendre que build() termine (état initial null)
-      await container.read(occurrenceValidationNotifierProvider('occ-001').future);
+    final notifier = container.read(
+      occurrenceValidationNotifierProvider('occ-001').notifier,
+    );
+    // Attendre que build() termine (état initial null)
+    await container.read(
+      occurrenceValidationNotifierProvider('occ-001').future,
+    );
 
-      // Premier appel — démarre le chargement
-      final firstCall = notifier.validate(occ);
+    // Premier appel — démarre le chargement
+    final firstCall = notifier.validate(occ);
 
-      // Second appel pendant loading — doit être ignoré (no-op)
-      await notifier.validate(occ);
+    // Second appel pendant loading — doit être ignoré (no-op)
+    await notifier.validate(occ);
 
-      // On complète le premier appel
-      completer.complete(_successResult(occ));
-      await firstCall;
+    // On complète le premier appel
+    completer.complete(_successResult(occ));
+    await firstCall;
 
-      // Le use case n'a été appelé qu'une seule fois
-      verify(
-        () => mockUseCase.call(
-          occurrence: any(named: 'occurrence'),
-          now: any(named: 'now'),
-        ),
-      ).called(1);
-    },
-  );
+    // Le use case n'a été appelé qu'une seule fois
+    verify(
+      () => mockUseCase.call(
+        occurrence: any(named: 'occurrence'),
+        now: any(named: 'now'),
+      ),
+    ).called(1);
+  });
 
-  test(
-    'rapid_taps_result_in_single_rpc_call — '
-    '3 taps rapides → 1 seul appel use case',
-    () async {
-      final occ = _occurrence();
-      final completer = Completer<ValidateOccurrenceResult>();
-      when(
-        () => mockUseCase.call(
-          occurrence: any(named: 'occurrence'),
-          now: any(named: 'now'),
-        ),
-      ).thenAnswer((_) => completer.future);
+  test('rapid_taps_result_in_single_rpc_call — '
+      '3 taps rapides → 1 seul appel use case', () async {
+    final occ = _occurrence();
+    final completer = Completer<ValidateOccurrenceResult>();
+    when(
+      () => mockUseCase.call(
+        occurrence: any(named: 'occurrence'),
+        now: any(named: 'now'),
+      ),
+    ).thenAnswer((_) => completer.future);
 
-      final container = _container();
-      addTearDown(container.dispose);
-      final notifier = container.read(
-        occurrenceValidationNotifierProvider('occ-001').notifier,
-      );
-      // Attendre que build() termine
-      await container.read(occurrenceValidationNotifierProvider('occ-001').future);
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(
+      occurrenceValidationNotifierProvider('occ-001').notifier,
+    );
+    // Attendre que build() termine
+    await container.read(
+      occurrenceValidationNotifierProvider('occ-001').future,
+    );
 
-      // 3 appels quasi-simultanés : seul le premier passe
-      notifier.validate(occ); // ignore: unawaited_futures
-      notifier.validate(occ); // ignore: unawaited_futures
-      notifier.validate(occ); // ignore: unawaited_futures
+    // 3 appels quasi-simultanés : seul le premier passe
+    notifier.validate(occ); // ignore: unawaited_futures
+    notifier.validate(occ); // ignore: unawaited_futures
+    notifier.validate(occ); // ignore: unawaited_futures
 
-      completer.complete(_successResult(occ));
-      await Future<void>.delayed(Duration.zero); // laisse la queue s'exécuter
+    completer.complete(_successResult(occ));
+    await Future<void>.delayed(Duration.zero); // laisse la queue s'exécuter
 
-      verify(
-        () => mockUseCase.call(
-          occurrence: any(named: 'occurrence'),
-          now: any(named: 'now'),
-        ),
-      ).called(1);
-    },
-  );
+    verify(
+      () => mockUseCase.call(
+        occurrence: any(named: 'occurrence'),
+        now: any(named: 'now'),
+      ),
+    ).called(1);
+  });
 
   test(
     'already_finalized_response_handled_gracefully — '
@@ -154,13 +155,15 @@ void main() {
         ),
       ).thenThrow(OccurrenceAlreadyCancelledException('occ-001'));
 
-      final container = _container();
+      final container = makeContainer();
       addTearDown(container.dispose);
       final notifier = container.read(
         occurrenceValidationNotifierProvider('occ-001').notifier,
       );
       // Attendre que build() termine
-      await container.read(occurrenceValidationNotifierProvider('occ-001').future);
+      await container.read(
+        occurrenceValidationNotifierProvider('occ-001').future,
+      );
 
       await notifier.validate(occ);
 
@@ -171,78 +174,76 @@ void main() {
     },
   );
 
-  test(
-    'idempotency_key_consistent_for_same_occurrence — '
-    'appel success → état = AsyncData(done)',
-    () async {
-      final occ = _occurrence();
-      when(
-        () => mockUseCase.call(
-          occurrence: any(named: 'occurrence'),
-          now: any(named: 'now'),
-        ),
-      ).thenAnswer((_) async => _successResult(occ));
+  test('idempotency_key_consistent_for_same_occurrence — '
+      'appel success → état = AsyncData(done)', () async {
+    final occ = _occurrence();
+    when(
+      () => mockUseCase.call(
+        occurrence: any(named: 'occurrence'),
+        now: any(named: 'now'),
+      ),
+    ).thenAnswer((_) async => _successResult(occ));
 
-      final container = _container();
-      addTearDown(container.dispose);
-      final notifier = container.read(
-        occurrenceValidationNotifierProvider('occ-001').notifier,
-      );
-      // Attendre que build() termine
-      await container.read(occurrenceValidationNotifierProvider('occ-001').future);
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(
+      occurrenceValidationNotifierProvider('occ-001').notifier,
+    );
+    // Attendre que build() termine
+    await container.read(
+      occurrenceValidationNotifierProvider('occ-001').future,
+    );
 
-      await notifier.validate(occ);
+    await notifier.validate(occ);
 
-      final state = container.read(
-        occurrenceValidationNotifierProvider('occ-001'),
-      );
-      expect(state.hasValue, isTrue);
-      expect(state.value!.occurrence.status, OccurrenceStatus.done);
-    },
-  );
+    final state = container.read(
+      occurrenceValidationNotifierProvider('occ-001'),
+    );
+    expect(state.hasValue, isTrue);
+    expect(state.value!.occurrence.status, OccurrenceStatus.done);
+  });
 
-  test(
-    'validate_notifier_state_transitions — '
-    'null → loading → data(done)',
-    () async {
-      final occ = _occurrence();
-      final completer = Completer<ValidateOccurrenceResult>();
-      when(
-        () => mockUseCase.call(
-          occurrence: any(named: 'occurrence'),
-          now: any(named: 'now'),
-        ),
-      ).thenAnswer((_) => completer.future);
+  test('validate_notifier_state_transitions — '
+      'null → loading → data(done)', () async {
+    final occ = _occurrence();
+    final completer = Completer<ValidateOccurrenceResult>();
+    when(
+      () => mockUseCase.call(
+        occurrence: any(named: 'occurrence'),
+        now: any(named: 'now'),
+      ),
+    ).thenAnswer((_) => completer.future);
 
-      final container = _container();
-      addTearDown(container.dispose);
+    final container = makeContainer();
+    addTearDown(container.dispose);
 
-      final states = <AsyncValue<ValidateOccurrenceResult?>>[];
-      container.listen(
-        occurrenceValidationNotifierProvider('occ-001'),
-        (_, next) => states.add(next),
-        fireImmediately: true,
-      );
+    final states = <AsyncValue<ValidateOccurrenceResult?>>[];
+    container.listen(
+      occurrenceValidationNotifierProvider('occ-001'),
+      (_, next) => states.add(next),
+      fireImmediately: true,
+    );
 
-      // Attendre build() avant la validation
-      await container.read(occurrenceValidationNotifierProvider('occ-001').future);
+    // Attendre build() avant la validation
+    await container.read(
+      occurrenceValidationNotifierProvider('occ-001').future,
+    );
 
-      final notifier = container.read(
-        occurrenceValidationNotifierProvider('occ-001').notifier,
-      );
-      final validating = notifier.validate(occ);
-      // Doit être en loading
-      await Future<void>.delayed(Duration.zero);
+    final notifier = container.read(
+      occurrenceValidationNotifierProvider('occ-001').notifier,
+    );
+    final validating = notifier.validate(occ);
+    // Doit être en loading
+    await Future<void>.delayed(Duration.zero);
 
-      completer.complete(_successResult(occ));
-      await validating;
+    completer.complete(_successResult(occ));
+    await validating;
 
-      // Séquence : build initial (AsyncData null) → loading → data(done)
-      final hasDoneState = states.any(
-        (s) => s.valueOrNull?.occurrence.status == OccurrenceStatus.done,
-      );
-      expect(hasDoneState, isTrue);
-      expect(states.any((s) => s.isLoading), isTrue);
-    },
-  );
+    // Séquence : build initial (AsyncData null) → loading → data(done)
+    final hasDoneState = states.any(
+      (s) => s.valueOrNull?.occurrence.status == OccurrenceStatus.done,
+    );
+    expect(hasDoneState, isTrue);
+    expect(states.any((s) => s.isLoading), isTrue);
+  });
 }

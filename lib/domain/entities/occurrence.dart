@@ -169,7 +169,8 @@ class Occurrence extends Equatable {
   /// Retourne `true` si l'occurrence est encore dans la grace window à [now].
   ///
   /// La grace window se termine à minuit local strict (ADR-018 §10 Q-OPEN-B).
-  bool isWithinWindow(DateTime now) => now.toUtc().isBefore(windowEndsAt.toUtc());
+  bool isWithinWindow(DateTime now) =>
+      now.toUtc().isBefore(windowEndsAt.toUtc());
 
   /// Retourne `true` si l'occurrence est validable (encore active et dans
   /// la fenêtre + 24h — cf. ADR-018 §10 Q-OPEN-C).

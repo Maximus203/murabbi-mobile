@@ -37,9 +37,7 @@ abstract final class TZHelper {
     final location = tz.getLocation(ianaZone);
     final tzA = tz.TZDateTime.from(a.toUtc(), location);
     final tzB = tz.TZDateTime.from(b.toUtc(), location);
-    return tzA.year == tzB.year &&
-        tzA.month == tzB.month &&
-        tzA.day == tzB.day;
+    return tzA.year == tzB.year && tzA.month == tzB.month && tzA.day == tzB.day;
   }
 
   /// Retourne la **date locale** (sans composante heure) correspondant à
