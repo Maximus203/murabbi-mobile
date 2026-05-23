@@ -4,32 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/services/background/workmanager_dispatcher.dart';
 
-/// Contrat minimal qu'un runner WorkManager expose pour les tests.
-abstract class WorkManagerRunner {
-  Future<void> initialize(Function callbackDispatcher, {bool isInDebugMode});
-  Future<void> registerPeriodicTask(
-    String uniqueName,
-    String taskName, {
-    Duration? frequency,
-    Duration? flexInterval,
-  });
-  Future<void> registerOneOffTask(String uniqueName, String taskName);
-}
-
+/// Mocks des interfaces définies dans workmanager_dispatcher.dart.
 class _MockWorkManagerRunner extends Mock implements WorkManagerRunner {}
-
-/// Stub pour les use cases invoqués par le dispatcher.
-abstract class ScheduleOccurrencesUseCase {
-  Future<void> call();
-}
-
-abstract class ExpireOverdueOccurrencesUseCase {
-  Future<void> call();
-}
-
-abstract class NotificationRescheduler {
-  Future<void> rescheduleAll();
-}
 
 class _MockScheduleOccurrences extends Mock
     implements ScheduleOccurrencesUseCase {}
