@@ -1,13 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:murabbi_mobile/data/datasources/collection_data_source.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_client_provider.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_collection_data_source.dart';
 import 'package:murabbi_mobile/data/repositories/collection_repository_impl.dart';
 import 'package:murabbi_mobile/domain/repositories/collection_repository.dart';
 
 /// Provider Riverpod du datasource Collections (issue #6, Phase 5).
-final collectionDataSourceProvider = Provider<CollectionDataSource>((ref) {
-  return SupabaseCollectionDataSource(ref.watch(supabaseClientProvider));
+///
+/// Retourne la nouvelle interface [SupabaseCollectionDataSource] qui expose
+/// directement des entités domain (migration issue #162 — published_catalog).
+final collectionDataSourceProvider = Provider<SupabaseCollectionDataSource>((
+  ref,
+) {
+  return SupabaseCollectionDataSourceImpl(ref.watch(supabaseClientProvider));
 });
 
 /// Provider Riverpod du `CollectionRepository`. La couche presentation

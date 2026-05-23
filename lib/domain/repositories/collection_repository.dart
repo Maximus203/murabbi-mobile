@@ -54,4 +54,16 @@ abstract interface class CollectionRepository {
     required UserId userId,
     required CollectionId collectionId,
   });
+
+  /// Retourne les rows de habits pour une collection depuis `published_catalog`.
+  ///
+  /// Chaque row contient au minimum `habit_id` (String) et `position` (int).
+  /// Les rows sont triées par `position ASC`.
+  ///
+  /// Remplace tout accès direct à `collection_habits` — révoqué suite à la
+  /// migration RLS issue #162. La view `published_catalog` est la seule
+  /// source de vérité pour les associations collection ↔ habit côté mobile.
+  Future<List<Map<String, dynamic>>> getHabitsForCollection({
+    required CollectionId collectionId,
+  });
 }
