@@ -37,8 +37,13 @@ void main() {
         // colonne de `public.users` (cf. PR #29). La SoT du score cumulé
         // est `user_scores.total_score` (table séparée), lue par un futur
         // `UserScoreRepository`.
+        // Issue #168 / admin#125 — `pseudo_full` est une colonne GENERATED
+        // ALWAYS AS STORED côté Postgres (`pseudo || '#' || pseudo_suffix`).
+        // On la lit (SELECT) mais on ne l'écrit JAMAIS (INSERT/UPDATE
+        // seraient rejetés par le serveur).
         const expected = {
           'pseudo',
+          'pseudo_full',
           'email',
           'level',
           'current_streak',
@@ -72,6 +77,23 @@ void main() {
               'PR #29 regression — total_points is NOT a column of '
               'public.users. Source of truth = user_scores.total_score.',
         );
+      },
+    );
+
+    test(
+      'signUpInsertPayload NEVER contains pseudo_full or pseudo_suffix (#168)',
+      () {
+        // Issue #168 / admin#125 — `pseudo_full` est GENERATED STORED
+        // (Postgres calcule la valeur), `pseudo_suffix` est rempli par un
+        // trigger SECURITY DEFINER côté admin. Les écrire depuis le mobile
+        // serait rejeté (cannot insert into generated column / RLS).
+        final payload = SupabaseAuthDataSource.buildSignUpInsertPayload(
+          userId: '11111111-1111-1111-1111-111111111111',
+          email: 'cherif@example.com',
+          displayName: 'Cherif',
+        );
+        expect(payload.containsKey('pseudo_full'), isFalse);
+        expect(payload.containsKey('pseudo_suffix'), isFalse);
       },
     );
 

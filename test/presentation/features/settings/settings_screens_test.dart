@@ -115,8 +115,11 @@ void main() {
     });
   });
 
-  group('ST-02 edit profile screen', () {
-    testWidgets('prefills the pseudo field with the current pseudo', (
+  group('ST-02 profile screen (issue #168 — read-only)', () {
+    // Le pseudo est désormais immuable côté serveur (admin#125 :
+    // `update_user_pseudo` lève `PSEUDO_IMMUTABLE`). Côté mobile, on
+    // supprime tout chemin d'édition : ni TextField, ni bouton Save.
+    testWidgets('shows pseudo_full and email read-only, no edit affordance', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -124,30 +127,24 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Cherif'), findsOneWidget);
+      // Email visible (verrouillé comme avant).
       expect(find.text('cherif@example.com'), findsOneWidget);
+      // Le pseudo s'affiche en lecture seule — pas de TextField éditable.
+      expect(find.byType(TextField), findsNothing);
+      // Plus de bouton "Enregistrer".
+      expect(find.text('Enregistrer'), findsNothing);
     });
 
-    testWidgets('saving delegates to the use case and calls onSaved', (
-      tester,
-    ) async {
+    testWidgets('never invokes UpdateProfileUseCase', (tester) async {
       final useCase = _FakeUpdateProfileUseCase();
-      var saved = false;
       await tester.pumpWidget(
         wrap(
-          St02EditProfileScreen(onBack: () {}, onSaved: () => saved = true),
+          St02EditProfileScreen(onBack: () {}, onSaved: () {}),
           overrides: [updateProfileUseCaseProvider.overrideWithValue(useCase)],
         ),
       );
       await tester.pumpAndSettle();
-
-      await tester.enterText(find.byType(TextField).first, 'NouveauNom');
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Enregistrer'));
-      await tester.pumpAndSettle();
-
-      expect(useCase.called, isTrue);
-      expect(saved, isTrue);
+      expect(useCase.called, isFalse);
     });
   });
 
