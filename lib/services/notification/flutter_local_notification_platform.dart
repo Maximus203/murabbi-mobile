@@ -23,8 +23,11 @@ class FlutterLocalNotificationPlatform implements NotificationPlatform {
   final Logger _logger;
 
   /// Channel Android dédié aux alertes habitudes + prière (ADR-018 §4.1).
+  ///
+  /// V1 : un seul channel unifié. Un channel `prayer_alerts` distinct
+  /// (priorité / son spécifique) pourra être ajouté dans MOB-006 si la
+  /// granularité par catégorie devient un besoin produit.
   static const String channelIdHabit = 'habit_alerts';
-  static const String channelIdPrayer = 'prayer_alerts';
 
   /// Catégorie iOS unique — les actions affichées dépendent du payload.
   static const String iosCategoryHabit = 'habit_alert';

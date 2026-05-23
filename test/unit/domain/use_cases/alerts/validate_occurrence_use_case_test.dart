@@ -191,30 +191,27 @@ void main() {
       );
     });
 
-    test(
-      'accepts acknowledged status as valid input (snooze followed by '
-      'validation, ADR-018 §4.2)',
-      () async {
-        // `acknowledged` est un état transitoire (user a tapé le body sans
-        // action explicite). L'occurrence reste actionnable : un appel
-        // ultérieur à validate doit aboutir à `done`, sans
-        // AlreadyFinalizedFailure. Ce test verrouille cette intention pour
-        // éviter une régression future qui ajouterait `acknowledged` à
-        // `isFinalized`.
-        when(() => repo.findById('occ-001')).thenAnswer(
-          (_) async => makeHabit(status: OccurrenceStatus.acknowledged),
-        );
+    test('accepts acknowledged status as valid input (snooze followed by '
+        'validation, ADR-018 §4.2)', () async {
+      // `acknowledged` est un état transitoire (user a tapé le body sans
+      // action explicite). L'occurrence reste actionnable : un appel
+      // ultérieur à validate doit aboutir à `done`, sans
+      // AlreadyFinalizedFailure. Ce test verrouille cette intention pour
+      // éviter une régression future qui ajouterait `acknowledged` à
+      // `isFinalized`.
+      when(() => repo.findById('occ-001')).thenAnswer(
+        (_) async => makeHabit(status: OccurrenceStatus.acknowledged),
+      );
 
-        final result = await useCase.call(
-          occurrenceId: 'occ-001',
-          source: ValidationSource.app,
-          now: DateTime.utc(2026, 5, 23, 8, 5),
-        );
+      final result = await useCase.call(
+        occurrenceId: 'occ-001',
+        source: ValidationSource.app,
+        now: DateTime.utc(2026, 5, 23, 8, 5),
+      );
 
-        expect(result.status, OccurrenceStatus.done);
-        expect(result.outcome, OccurrenceOutcome.onTime);
-      },
-    );
+      expect(result.status, OccurrenceStatus.done);
+      expect(result.outcome, OccurrenceOutcome.onTime);
+    });
 
     test(
       'dismissed → done (validation manuelle dashboard, ADR-018 §4.2)',
