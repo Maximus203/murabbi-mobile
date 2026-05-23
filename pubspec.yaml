@@ -24,6 +24,10 @@ dependencies:
   # Secure storage
   flutter_secure_storage: ^9.2.4
 
+  # Push notifications Firebase (FCM v1 — issue #174)
+  firebase_core: ^2.30.0
+  firebase_messaging: ^14.9.0
+
   # Local notifications (timer v1.5 — Q-15a, spec v1.5 § 3.5/§ 7)
   flutter_local_notifications: ^17.2.3
 
