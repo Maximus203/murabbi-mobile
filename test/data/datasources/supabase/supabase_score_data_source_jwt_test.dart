@@ -1,6 +1,11 @@
 // Tests #190 — SupabaseScoreDataSource appelle ensureFreshSession()
 // en tête de chaque méthode publique. Voir
 // `supabase_habit_data_source_jwt_test.dart` pour la stratégie générale.
+//
+// Couvre aussi #199 (M10) : `getUserScore` route via RPC `get_user_score`,
+// mais le test n'a pas besoin d'observer l'appel RPC — il vérifie seulement
+// que l'ordre est respecté (wrapper d'abord, aucune interaction client
+// avant `ensureFreshSession()` succès).
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

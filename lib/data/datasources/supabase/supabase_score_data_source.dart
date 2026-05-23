@@ -6,14 +6,21 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 /// logique métier, aucune traduction d'erreur — déléguées au repository.
 ///
 /// Sources consommées (cf. issue #6) :
-///   `users`              — id, total_points
+///   `users`              — id, total_points (via RPC `get_user_score`)
 ///   `weekly_leaderboard` — vue : user_id, weekly_score, rank
 ///
+/// Lecture atomique du score utilisateur via RPC `get_user_score(p_user_id)`
+/// (issue #199, M10) — un seul aller-retour réseau dans une transaction
+/// Postgres, élimine la fenêtre de lecture incohérente entre `users` et
+/// `weekly_leaderboard`. La migration SQL vit dans `murabbi-admin/supabase/`.
+///
 /// Non couvert par tests unitaires (pattern `SupabaseHabitDataSource` — la
-/// fluent API Supabase est trop fragile à mocker).
+/// fluent API Supabase est trop fragile à mocker). Garanties par :
+///   - `UserScoreMapper` : correctness du mapping (tests unitaires complets).
+///   - `*_jwt_test.dart` : ordering `ensureFreshSession()` first (#190).
 class SupabaseScoreDataSource implements ScoreDataSource {
-  static const _users = 'users';
   static const _leaderboard = 'weekly_leaderboard';
+  static const _rpcGetUserScore = 'get_user_score';
 
   final sb.SupabaseClient _client;
 
@@ -28,25 +35,14 @@ class SupabaseScoreDataSource implements ScoreDataSource {
   @override
   Future<Map<String, dynamic>> getUserScore(String userId) async {
     await _wrapper.ensureFreshSession();
-    final userRow = await _client
-        .from(_users)
-        .select('id, total_points')
-        .eq('id', userId)
+    // RPC atomique #199 — single round-trip, lecture cohérente users +
+    // weekly_leaderboard dans une même transaction Postgres.
+    // `.single()` retourne PostgrestMap (= Map<String, dynamic>) — on copie
+    // pour produire une map mutable, conforme au contrat du datasource.
+    final row = await _client
+        .rpc<dynamic>(_rpcGetUserScore, params: {'p_user_id': userId})
         .single();
-
-    // La row de classement peut être absente (utilisateur sans événement
-    // cette semaine) → on retombe sur des défauts côté mapper.
-    final lbRows = await _client
-        .from(_leaderboard)
-        .select('user_id, weekly_score, rank')
-        .eq('user_id', userId)
-        .limit(1);
-
-    final merged = Map<String, dynamic>.from(userRow);
-    if (lbRows.isNotEmpty) {
-      merged.addAll(Map<String, dynamic>.from(lbRows.first));
-    }
-    return merged;
+    return Map<String, dynamic>.from(row);
   }
 
   @override
