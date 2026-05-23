@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/core/extensions/ref_score_invalidation.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/use_cases/habits/toggle_habit_log_use_case.dart';
@@ -37,6 +38,8 @@ class TodayHabitStatusesNotifier
       await ref
           .read(toggleHabitLogUseCaseProvider)
           .call(habitId: habitId, date: _logDate(), currentStatus: previous);
+      // Issue #196 (M6) : invalide le score dashboard après mutation réussie.
+      ref.invalidateScoreCache();
     } catch (e, st) {
       // 3. Rollback — restaure l'état précédent et propage l'erreur.
       appLog.e('toggleHabitLog failed', error: e, stackTrace: st);

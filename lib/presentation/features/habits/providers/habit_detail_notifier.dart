@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/core/extensions/ref_score_invalidation.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
@@ -103,12 +104,16 @@ class HabitDetailNotifier
   Future<void> deleteHabit() async {
     await ref.read(deleteHabitUseCaseProvider).call(HabitId(_habitId));
     ref.invalidate(habitsNotifierProvider);
+    // Issue #196 (M6) : la suppression peut impacter le total de points.
+    ref.invalidateScoreCache();
   }
 
   /// Recharge habitude + stats (après un log par exemple).
   Future<void> refreshStats() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _load(_habitId));
+    // Issue #196 (M6) : refreshStats est appelé après un log → score périmé.
+    ref.invalidateScoreCache();
   }
 
   /// Résout l'userId courant — les routes habits sont gardées par
