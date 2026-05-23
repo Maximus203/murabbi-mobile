@@ -20,15 +20,19 @@ class Collection extends Equatable {
   /// [CollectionCoverFallback] gradient (see [BuildCollectionCoverUseCase]).
   final String? coverImageUrl;
 
-  /// Catégorie principale choisie lors de la création (CO-02, Q-23).
-  /// Nullable — optionnel côté UI ; stocké dans `public.collections` via AR-04.
+  /// Catégorie principale de la collection (Q-23 — AR-04, migration admin).
+  ///
+  /// Nullable jusqu'à ce que la colonne `primary_category_id` soit ajoutée
+  /// dans Supabase. Le formulaire CO-02 permet de la sélectionner.
   final CategoryId? primaryCategoryId;
 
-  /// Nom d'icône Lucide kebab-case choisi lors de la création (CO-02, Q-23).
-  /// Nullable — optionnel côté UI ; stocké dans `public.collections` via AR-04.
+  /// Icône Lucide de la collection (Q-23 — AR-04, migration admin).
+  ///
+  /// Nom kebab-case (ex. `'sun'`, `'book-open'`). Nullable jusqu'à la
+  /// migration admin. Le formulaire CO-02 expose le sélecteur d'icône.
   final String? icon;
 
-  const Collection({
+  Collection({
     required this.id,
     required this.name,
     required this.description,
@@ -38,17 +42,27 @@ class Collection extends Equatable {
     this.coverImageUrl,
     this.primaryCategoryId,
     this.icon,
-  });
+  }) {
+    if (habitIds.isEmpty) {
+      throw ArgumentError.value(
+        habitIds,
+        'habitIds',
+        'Collection must contain at least one habit',
+      );
+    }
+  }
 
-  /// Somme des points des habitudes de cette collection présentes dans [habits].
+  /// Points quotidiens estimés de la collection (Q-24 — calcul client).
   ///
-  /// Calcul client-side (Q-24) — aucune requête réseau. Les habitudes absentes
-  /// de [habits] (race condition, suppression) sont ignorées silencieusement.
+  /// Somme de [Habit.points] pour chaque habitude dont l'id figure dans
+  /// [habitIds]. Les habitudes non trouvées dans [habits] sont ignorées
+  /// (cas race condition ou habitude supprimée).
   int ptsPerDay(List<Habit> habits) {
     final ids = habitIds.map((h) => h.value).toSet();
     return habits
         .where((h) => ids.contains(h.id.value))
-        .fold(0, (sum, h) => sum + h.points.value);
+        // #163 : points nullable — habitude user sans points contribue 0.
+        .fold(0, (sum, h) => sum + (h.points?.value ?? 0));
   }
 
   @override

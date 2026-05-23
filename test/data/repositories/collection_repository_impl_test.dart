@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/datasources/collection_data_source.dart';
+import 'package:murabbi_mobile/data/datasources/habit_data_source.dart';
 import 'package:murabbi_mobile/data/repositories/collection_repository_impl.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
@@ -10,14 +11,18 @@ import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 class MockCollectionDataSource extends Mock implements CollectionDataSource {}
 
+class MockHabitDataSource extends Mock implements HabitDataSource {}
+
 void main() {
   late MockCollectionDataSource ds;
+  late MockHabitDataSource habitDs;
   late CollectionRepositoryImpl repo;
   final userId = UserId('u-1');
 
   setUp(() {
     ds = MockCollectionDataSource();
-    repo = CollectionRepositoryImpl(ds);
+    habitDs = MockHabitDataSource();
+    repo = CollectionRepositoryImpl(ds, habitDs);
   });
 
   group('getCollections', () {
@@ -52,6 +57,10 @@ void main() {
       when(
         () => ds.activateCollection(userId: 'u-1', collectionId: 'c-9'),
       ).thenAnswer((_) async {});
+      // _duplicateHabitsForUser est appelé après activation : stub minimal.
+      when(
+        () => habitDs.getHabitsForCollection('c-9'),
+      ).thenAnswer((_) async => []);
 
       await repo.activateCollection(
         userId: userId,

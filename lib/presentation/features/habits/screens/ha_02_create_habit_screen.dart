@@ -93,7 +93,8 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
     _activeDays = h != null && h.frequencyType == HabitFrequencyType.weekly
         ? Set.of(h.activeDays)
         : <int>{};
-    _points = h?.points.value ?? 3;
+    // #163 : points nullable — fallback UI à 3 si non défini.
+    _points = h?.points?.value ?? 3;
   }
 
   @override

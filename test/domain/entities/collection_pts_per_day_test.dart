@@ -1,30 +1,29 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
-import 'package:murabbi_mobile/domain/entities/habit_target.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 
-Habit _habit(String id, int pts) => Habit(
+/// Helpers — construction minimale d'un Habit avec des points donnés.
+/// [points] = null simule une habitude user sans points fixés (#163).
+Habit _habit(String id, int? points) => Habit(
   id: HabitId(id),
   name: NonEmptyString('Habit $id'),
   categoryId: CategoryId('cat-1'),
   frequencyType: HabitFrequencyType.daily,
   frequency: 1,
-  activeDays: const {1, 2, 3, 4, 5, 6, 7},
-  points: HabitPoints(pts),
+  activeDays: const {1},
+  points: points != null ? HabitPoints(points) : null,
   isSystem: false,
-  target: const HabitTarget.none(),
-  subtasks: const [],
 );
 
 Collection _collection(List<String> habitIds) => Collection(
   id: CollectionId('col-1'),
-  name: NonEmptyString('Test Collection'),
-  description: NonEmptyString('Desc'),
+  name: NonEmptyString('Test collection'),
+  description: NonEmptyString('desc'),
   habitIds: habitIds.map(HabitId.new).toList(),
   isSystem: false,
   isActive: false,
@@ -32,39 +31,48 @@ Collection _collection(List<String> habitIds) => Collection(
 
 void main() {
   group('Collection.ptsPerDay', () {
-    test('somme correcte de 3 habitudes incluses', () {
-      final habits = [_habit('h1', 3), _habit('h2', 5), _habit('h3', 7)];
-      final collection = _collection(['h1', 'h2', 'h3']);
-      expect(collection.ptsPerDay(habits), 15);
+    test('sums points of all matching habits', () {
+      final col = _collection(['h1', 'h2', 'h3']);
+      final habits = [_habit('h1', 10), _habit('h2', 5), _habit('h3', 3)];
+      expect(col.ptsPerDay(habits), 18);
     });
 
-    test('retourne 0 si la liste d\'habitudes est vide', () {
-      final collection = _collection(['h1']);
-      expect(collection.ptsPerDay([]), 0);
+    test('returns 0 when habits list is empty', () {
+      final col = _collection(['h1']);
+      expect(col.ptsPerDay([]), 0);
     });
 
-    test('ignore les habitudes non référencées par la collection', () {
-      final habits = [_habit('h1', 4), _habit('h2', 6), _habit('h99', 8)];
-      final collection = _collection(['h1', 'h2']);
-      expect(collection.ptsPerDay(habits), 10);
+    test('ignores habits not referenced by the collection', () {
+      final col = _collection(['h1']);
+      final habits = [_habit('h1', 10), _habit('h2', 7)];
+      expect(col.ptsPerDay(habits), 10);
     });
 
-    test('ignore les habitIds absents de la liste (race/suppression)', () {
+    test('ignores collection habitIds not present in the habits list', () {
+      // Race condition : habitude supprimée mais collection pas encore mise à jour.
+      final col = _collection(['h1', 'h-deleted']);
       final habits = [_habit('h1', 10)];
-      final collection = _collection(['h1', 'h-deleted']);
-      expect(collection.ptsPerDay(habits), 10);
+      expect(col.ptsPerDay(habits), 10);
     });
 
-    test('retourne 0 si aucune habitude de la collection n\'est présente', () {
-      final habits = [_habit('hX', 5)];
-      final collection = _collection(['h1', 'h2']);
-      expect(collection.ptsPerDay(habits), 0);
+    test('returns 0 when no collection habit is present in the list', () {
+      final col = _collection(['h-missing']);
+      final habits = [_habit('h1', 10)];
+      expect(col.ptsPerDay(habits), 0);
     });
 
-    test('cas nominal à 1 habitude', () {
-      final habits = [_habit('h1', 7)];
-      final collection = _collection(['h1']);
-      expect(collection.ptsPerDay(habits), 7);
+    test('handles single habit correctly', () {
+      final col = _collection(['h1']);
+      final habits = [_habit('h1', 8)];
+      expect(col.ptsPerDay(habits), 8);
+    });
+
+    // #163 : habitude user sans points (null) → compte 0 dans ptsPerDay
+    test('#163 habitude user (points null) contribue 0 à ptsPerDay', () {
+      final col = _collection(['h1', 'h2']);
+      final habits = [_habit('h1', 5), _habit('h2', null)];
+      // h1=5 + h2=0 (null → 0 par fallback)
+      expect(col.ptsPerDay(habits), 5);
     });
   });
 }

@@ -36,7 +36,8 @@ class ScoreCalculatorUseCase {
     }
     switch (log.status) {
       case HabitLogStatus.onTime:
-        return habit.points.value;
+        // #163 : fallback à 0 si points == null (habitude user sans points).
+        return habit.points?.value ?? 0;
       case HabitLogStatus.late:
         return ScoringConstants.habitLatePoints;
       case HabitLogStatus.missed:
