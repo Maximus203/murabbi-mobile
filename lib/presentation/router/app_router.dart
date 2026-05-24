@@ -411,6 +411,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   onOpenCategories: () => context.go(AppRoutes.categories),
                   onEditHabit: (id) => context.go(AppRoutes.habitEdit(id)),
                   onOpenHabit: (id) => context.go(AppRoutes.habitDetail(id)),
+                  onOpenCollections: () => context.go(AppRoutes.collections),
                 ),
               ),
             ],

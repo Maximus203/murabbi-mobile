@@ -109,4 +109,32 @@ void main() {
     await tester.pumpAndSettle();
     expect(created, isTrue);
   });
+
+  testWidgets(
+    'empty state : bouton "Voir les collections" appelle onOpenCollections',
+    (tester) async {
+      var opened = false;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authRepositoryProvider.overrideWithValue(authRepo),
+            habitRepositoryProvider.overrideWithValue(
+              InMemoryHabitRepository(),
+            ),
+          ],
+          child: MaterialApp(
+            home: Ha01HabitsListScreen(
+              onCreate: () {},
+              onOpenCollections: () => opened = true,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Voir les collections'), findsOneWidget);
+      await tester.tap(find.text('Voir les collections'));
+      expect(opened, isTrue);
+    },
+  );
 }

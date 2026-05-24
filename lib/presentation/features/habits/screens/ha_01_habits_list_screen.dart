@@ -43,12 +43,17 @@ class Ha01HabitsListScreen extends ConsumerStatefulWidget {
   /// `null`, le tap sur la ligne est inerte.
   final ValueChanged<String>? onOpenHabit;
 
+  /// Navigue vers CO-01 (Collections). Affiché dans l'empty state pour
+  /// inviter l'utilisateur à activer une collection pré-configurée.
+  final VoidCallback? onOpenCollections;
+
   const Ha01HabitsListScreen({
     super.key,
     required this.onCreate,
     this.onOpenCategories,
     this.onEditHabit,
     this.onOpenHabit,
+    this.onOpenCollections,
   });
 
   @override
@@ -114,7 +119,12 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
           );
         },
         data: (list) {
-          if (list.isEmpty) return _EmptyView(onCreate: widget.onCreate);
+          if (list.isEmpty) {
+            return _EmptyView(
+              onCreate: widget.onCreate,
+              onOpenCollections: widget.onOpenCollections,
+            );
+          }
 
           // Recherche + filtre statut + tri (issue #94) appliqués via le
           // provider dédié — `HabitsNotifier` n'est jamais retouché.
@@ -438,7 +448,14 @@ class _HabitTile extends ConsumerWidget {
 /// Empty state HA-01 — #77 : icône Lucide évocatrice dans un container DS.
 class _EmptyView extends StatelessWidget {
   final VoidCallback onCreate;
-  const _EmptyView({required this.onCreate});
+
+  /// Navigue vers CO-01 si fourni (issue #6). Null → bouton masqué.
+  final VoidCallback? onOpenCollections;
+
+  const _EmptyView({
+    required this.onCreate,
+    this.onOpenCollections,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -475,6 +492,14 @@ class _EmptyView extends StatelessWidget {
             style: AppTypography.body.copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
+          if (onOpenCollections != null) ...[
+            const SizedBox(height: AppSpacing.s4),
+            AppButton(
+              label: 'Voir les collections',
+              variant: AppButtonVariant.secondary,
+              onPressed: onOpenCollections,
+            ),
+          ],
         ],
       ),
     );
