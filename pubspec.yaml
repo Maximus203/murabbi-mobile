@@ -85,6 +85,19 @@ dependencies:
   # doit importer cette lib directement (cf. patterns ADR-013/014).
   connectivity_plus: ^6.1.4
 
+  # Persistance SQLite de la sync queue offline (M2 — issue #200).
+  # Choix sqflite plutôt que drift (cf. ADR-016) : pas de codegen,
+  # utilise le SQLite natif Android/iOS, compatible Dart 3.x sans build_runner.
+  # Import isolé dans `lib/data/local/` — aucune autre couche ne doit
+  # importer sqflite directement.
+  sqflite: ^2.4.1
+  path: ^1.9.0
+
+  # Génération d'identifiants UUID v4 pour les PendingSyncItem (M2).
+  # Déclaré explicitement pour satisfaire `depend_on_referenced_packages`
+  # (déjà transitif via supabase_flutter).
+  uuid: ^4.5.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -99,6 +112,12 @@ dev_dependencies:
 
   # Tests
   mocktail: ^1.0.4
+
+  # Tests sqflite en dehors de Flutter (desktop/CI — M2 issue #200).
+  # sqflite_common_ffi expose la même API sqflite mais utilise FFI
+  # au lieu des channels Flutter → fonctionne dans les tests unitaires
+  # dart test sans device.
+  sqflite_common_ffi: ^2.3.4
 
   # Fast-forward virtuel des Timer.periodic dans les tests
   # (cf. test/presentation/features/dashboard/providers/dashboard_ticker_provider_test.dart
