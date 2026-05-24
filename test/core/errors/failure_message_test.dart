@@ -119,6 +119,13 @@ void main() {
         'Connexion impossible — vérifie ta connexion.',
       );
     });
+
+    test('unauthorized (M3 — OwnershipGuard)', () {
+      expect(
+        FailureMessage.from(const HabitFailure.unauthorized()),
+        'Action non autorisée. Reconnecte-toi.',
+      );
+    });
   });
 
   group('FailureMessage.from — CollectionFailure', () {
@@ -147,6 +154,13 @@ void main() {
       expect(
         FailureMessage.from(const CollectionFailure.unknown()),
         'Une erreur inattendue est survenue.',
+      );
+    });
+
+    test('unauthorized (M3 — OwnershipGuard)', () {
+      expect(
+        FailureMessage.from(const CollectionFailure.unauthorized()),
+        'Action non autorisée. Reconnecte-toi.',
       );
     });
   });

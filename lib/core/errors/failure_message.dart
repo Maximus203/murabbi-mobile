@@ -66,6 +66,7 @@ class FailureMessage {
       'Cette date est trop ancienne pour être validée (limite 8 jours).',
     HabitDatabaseFailure() => "Erreur lors de la mise à jour de l'habitude.",
     HabitNetworkFailure() => 'Connexion impossible — vérifie ta connexion.',
+    HabitUnauthorizedFailure() => 'Action non autorisée. Reconnecte-toi.',
   };
 
   static String _fromCollection(CollectionFailure f) => switch (f) {
@@ -75,6 +76,7 @@ class FailureMessage {
       'Erreur lors de la récupération des collections.',
     CollectionNotFoundFailure() => 'Collection introuvable.',
     CollectionUnknownFailure() => _fallback,
+    CollectionUnauthorizedFailure() => 'Action non autorisée. Reconnecte-toi.',
   };
 
   static String _fromPrayer(PrayerFailure f) => switch (f) {
