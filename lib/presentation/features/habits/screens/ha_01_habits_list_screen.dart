@@ -452,10 +452,7 @@ class _EmptyView extends StatelessWidget {
   /// Navigue vers CO-01 si fourni (issue #6). Null → bouton masqué.
   final VoidCallback? onOpenCollections;
 
-  const _EmptyView({
-    required this.onCreate,
-    this.onOpenCollections,
-  });
+  const _EmptyView({required this.onCreate, this.onOpenCollections});
 
   @override
   Widget build(BuildContext context) {
