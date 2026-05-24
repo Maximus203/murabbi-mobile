@@ -67,6 +67,7 @@ class FailureMessage {
     HabitDatabaseFailure() => "Erreur lors de la mise à jour de l'habitude.",
     HabitNetworkFailure() => 'Connexion impossible — vérifie ta connexion.',
     HabitUnauthorizedFailure() => 'Action non autorisée. Reconnecte-toi.',
+    HabitDuplicateFailure() => "L'habitude a déjà été validée.",
   };
 
   static String _fromCollection(CollectionFailure f) => switch (f) {

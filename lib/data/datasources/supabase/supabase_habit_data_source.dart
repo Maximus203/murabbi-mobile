@@ -85,7 +85,13 @@ class SupabaseHabitDataSource implements HabitDataSource {
   @override
   Future<void> upsertHabitLog(Map<String, dynamic> row) async {
     await _wrapper.ensureFreshSession();
-    await _client.from(_habitLogs).upsert(row, onConflict: 'habit_id,date');
+    try {
+      await _client.from(_habitLogs).upsert(row, onConflict: 'habit_id,date');
+    } on sb.PostgrestException catch (e) {
+      // Issue #198 (M4) : la contrainte UNIQUE (habit_id, logged_date)
+      // côté Supabase peut lever code 23505 sur double-tap concurrent.
+      throw mapHabitPostgrestException(e);
+    }
   }
 
   @override
@@ -134,17 +140,7 @@ class SupabaseHabitDataSource implements HabitDataSource {
       );
       return Map<String, dynamic>.from(result);
     } on sb.PostgrestException catch (e) {
-      if (e.message.contains('FUTURE_LOG_NOT_ALLOWED')) {
-        throw const HabitFailure.futureLogNotAllowed(
-          message: 'Impossible de logger une date future',
-        );
-      }
-      if (e.message.contains('BACKDATE_TOO_OLD')) {
-        throw const HabitFailure.backdateTooOld(
-          message: 'Rétrodatation limitée à 8 jours',
-        );
-      }
-      throw HabitFailure.database(message: '${e.message} (${e.code})');
+      throw mapHabitPostgrestException(e);
     }
   }
 
@@ -163,4 +159,31 @@ class SupabaseHabitDataSource implements HabitDataSource {
         )
         .toList();
   }
+}
+
+/// Traduit une [sb.PostgrestException] en [HabitFailure] typée.
+///
+/// Codes Postgres reconnus :
+/// - `23505` (unique_violation) → [HabitFailure.duplicate] (cf. issue #198 / M4)
+///
+/// Marqueurs sémantiques RPC `toggle_habit_log` (cf. #164) :
+/// - `FUTURE_LOG_NOT_ALLOWED` dans le message → [HabitFailure.futureLogNotAllowed]
+/// - `BACKDATE_TOO_OLD` dans le message → [HabitFailure.backdateTooOld]
+///
+/// Sinon → [HabitFailure.database] (message + code transportés pour debug).
+HabitFailure mapHabitPostgrestException(sb.PostgrestException e) {
+  if (e.code == '23505') {
+    return HabitFailure.duplicate(message: '${e.message} (${e.code})');
+  }
+  if (e.message.contains('FUTURE_LOG_NOT_ALLOWED')) {
+    return const HabitFailure.futureLogNotAllowed(
+      message: 'Impossible de logger une date future',
+    );
+  }
+  if (e.message.contains('BACKDATE_TOO_OLD')) {
+    return const HabitFailure.backdateTooOld(
+      message: 'Rétrodatation limitée à 8 jours',
+    );
+  }
+  return HabitFailure.database(message: '${e.message} (${e.code})');
 }

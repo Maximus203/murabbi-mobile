@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
@@ -17,6 +19,24 @@ class _FailingRepo extends InMemoryHabitRepository {
     required HabitLogStatus status,
   }) async {
     if (shouldThrow) throw StateError('boom — Supabase down');
+  }
+}
+
+/// Repo dont `toggleHabitLog` est bloqué tant qu'on n'a pas complété le
+/// completer — sert à observer l'effet du sérialiseur sur les appels
+/// concurrents (#198 / M4).
+class _BlockingRepo extends InMemoryHabitRepository {
+  final Completer<void> gate = Completer<void>();
+  int callCount = 0;
+
+  @override
+  Future<void> toggleHabitLog({
+    required HabitId habitId,
+    required DateTime date,
+    required HabitLogStatus status,
+  }) async {
+    callCount++;
+    await gate.future;
   }
 }
 
@@ -84,6 +104,29 @@ void main() {
       );
     },
   );
+
+  test('sérialisation : un double-tap ne produit qu\'un seul appel repo '
+      '(issue #198 / M4)', () async {
+    final repo = _BlockingRepo();
+    final c = makeContainer(repo);
+    final notifier = c.read(todayHabitStatusesProvider.notifier);
+
+    // Premier toggle → entre dans le repo, attend la gate.
+    final first = notifier.toggle(habitId);
+    // Donne à microtask un tour pour que le serializer prenne le verrou.
+    await Future<void>.delayed(Duration.zero);
+    expect(repo.callCount, 1);
+
+    // Second toggle pendant que le premier est en vol → ignoré.
+    final second = notifier.toggle(habitId);
+    await second;
+    expect(repo.callCount, 1, reason: 'le second appel doit être ignoré');
+
+    // Libère le premier appel.
+    repo.gate.complete();
+    await first;
+    expect(repo.callCount, 1);
+  });
 
   test('rollback depuis null : la clé est retirée si le repo throw', () async {
     final repo = _FailingRepo()..shouldThrow = true;

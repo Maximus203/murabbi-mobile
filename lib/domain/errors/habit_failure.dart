@@ -33,6 +33,16 @@ sealed class HabitFailure extends Equatable implements Exception {
   const factory HabitFailure.unauthorized({String? message}) =
       HabitUnauthorizedFailure;
 
+  /// Doublon de log (UNIQUE violation côté base — code Postgres `23505`).
+  ///
+  /// Cf. issue #198 (M4) : un double-tap sur "Valider habitude" produit
+  /// deux requêtes concurrentes. La contrainte UNIQUE `(habit_id,
+  /// logged_date)` côté Supabase garantit l'idempotence — le datasource
+  /// traduit le code `23505` en [HabitDuplicateFailure] pour que l'UI
+  /// puisse traiter le doublon comme un no-op et non comme une erreur.
+  const factory HabitFailure.duplicate({String? message}) =
+      HabitDuplicateFailure;
+
   @override
   List<Object?> get props => [runtimeType, message];
 
@@ -58,4 +68,8 @@ class HabitNetworkFailure extends HabitFailure {
 
 class HabitUnauthorizedFailure extends HabitFailure {
   const HabitUnauthorizedFailure({super.message}) : super._();
+}
+
+class HabitDuplicateFailure extends HabitFailure {
+  const HabitDuplicateFailure({super.message}) : super._();
 }
