@@ -30,10 +30,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
       case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions are not supported for this platform.',
-        );
-      default:
+      case TargetPlatform.fuchsia:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
         );
