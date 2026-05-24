@@ -28,6 +28,7 @@ void main() {
         HabitBackdateTooOldFailure() => 'backdate',
         HabitDatabaseFailure() => 'database',
         HabitNetworkFailure() => 'network',
+        HabitUnauthorizedFailure() => 'unauthorized',
         HabitDuplicateFailure() => 'duplicate',
       };
       expect(result, 'duplicate');
