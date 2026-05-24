@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/core/extensions/ref_score_invalidation.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_day.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_times.dart';
@@ -68,6 +69,10 @@ class TodaySalatNotifier extends AsyncNotifier<TodaySalatState> {
       final fresh = await getTodayPrayers(user.id);
       return current.copyWith(prayerDay: fresh);
     });
+    // Issue #196 (M6) : invalide le score dashboard après log de prière.
+    if (state.hasValue) {
+      ref.invalidateScoreCache();
+    }
   }
 }
 

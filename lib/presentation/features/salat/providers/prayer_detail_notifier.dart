@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/core/extensions/ref_score_invalidation.dart';
 import 'package:murabbi_mobile/data/repositories/prayer_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_day.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
@@ -134,6 +135,8 @@ class PrayerDetailNotifier
         prayerName: current.prayerName,
         status: status,
       );
+      // Issue #196 (M6) : invalide le score dashboard après log de prière.
+      ref.invalidateScoreCache();
     } catch (_) {
       // 3. Rollback si erreur réseau / serveur.
       state = AsyncValue.data(current);
