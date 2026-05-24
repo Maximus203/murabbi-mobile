@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:murabbi_mobile/core/network/current_user_id_resolver.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_collection_data_source.dart';
 import 'package:murabbi_mobile/data/repositories/collection_repository_impl.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
@@ -12,6 +13,13 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 class MockSupabaseCollectionDataSource extends Mock
     implements SupabaseCollectionDataSource {}
+
+class _StubResolver implements CurrentUserIdResolver {
+  _StubResolver(this.id);
+  String? id;
+  @override
+  Future<String?> currentUserId() async => id;
+}
 
 Collection _collection({
   String id = 'c-1',
@@ -30,13 +38,19 @@ Collection _collection({
 
 void main() {
   late MockSupabaseCollectionDataSource ds;
+  late _StubResolver resolver;
   late CollectionRepositoryImpl repo;
   final userId = UserId('u-1');
   final collectionId = CollectionId('c-1');
 
+  setUpAll(() {
+    registerFallbackValue(UserId('fallback'));
+  });
+
   setUp(() {
     ds = MockSupabaseCollectionDataSource();
-    repo = CollectionRepositoryImpl(ds);
+    resolver = _StubResolver('u-1');
+    repo = CollectionRepositoryImpl(ds, currentUserIdResolver: resolver);
   });
 
   group('getCollections', () {
@@ -130,5 +144,25 @@ void main() {
         expect(result, isEmpty);
       },
     );
+  });
+
+  group('OwnershipGuard (issue #202 / M3)', () {
+    test('getCollections avec userId != currentUser lève '
+        'CollectionFailure.unauthorized avant tout appel datasource', () async {
+      resolver.id = 'autre-user';
+      await expectLater(
+        repo.getCollections(userId),
+        throwsA(isA<CollectionUnauthorizedFailure>()),
+      );
+      verifyNever(() => ds.getCollections(any()));
+    });
+
+    test('session expirée (currentId == null) → unauthorized', () async {
+      resolver.id = null;
+      await expectLater(
+        repo.getCollections(userId),
+        throwsA(isA<CollectionUnauthorizedFailure>()),
+      );
+    });
   });
 }

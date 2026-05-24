@@ -27,6 +27,12 @@ sealed class HabitFailure extends Equatable implements Exception {
   /// Réseau indisponible / DNS échoué / timeout.
   const factory HabitFailure.network({String? message}) = HabitNetworkFailure;
 
+  /// Défense en profondeur : `userId` demandé ≠ utilisateur authentifié
+  /// (cf. issue #202 / M3). Levée avant tout appel réseau — la RLS
+  /// Supabase reste la protection finale.
+  const factory HabitFailure.unauthorized({String? message}) =
+      HabitUnauthorizedFailure;
+
   @override
   List<Object?> get props => [runtimeType, message];
 
@@ -48,4 +54,8 @@ class HabitDatabaseFailure extends HabitFailure {
 
 class HabitNetworkFailure extends HabitFailure {
   const HabitNetworkFailure({super.message}) : super._();
+}
+
+class HabitUnauthorizedFailure extends HabitFailure {
+  const HabitUnauthorizedFailure({super.message}) : super._();
 }

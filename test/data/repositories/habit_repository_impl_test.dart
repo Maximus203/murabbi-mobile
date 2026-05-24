@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:murabbi_mobile/core/network/current_user_id_resolver.dart';
 import 'package:murabbi_mobile/data/datasources/habit_data_source.dart';
 import 'package:murabbi_mobile/data/mappers/habit_mapper.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_impl.dart';
@@ -14,8 +15,16 @@ import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 class _MockHabitDataSource extends Mock implements HabitDataSource {}
 
+class _StubResolver implements CurrentUserIdResolver {
+  _StubResolver(this.id);
+  String? id;
+  @override
+  Future<String?> currentUserId() async => id;
+}
+
 void main() {
   late _MockHabitDataSource ds;
+  late _StubResolver resolver;
   late HabitRepositoryImpl repo;
 
   const userIdValue = '11111111-1111-1111-1111-111111111111';
@@ -37,7 +46,8 @@ void main() {
 
   setUp(() {
     ds = _MockHabitDataSource();
-    repo = HabitRepositoryImpl(ds);
+    resolver = _StubResolver(userIdValue);
+    repo = HabitRepositoryImpl(ds, currentUserIdResolver: resolver);
   });
 
   group('getHabits', () {
@@ -216,6 +226,39 @@ void main() {
       expect(captured['actual_value'], 12);
       expect(captured['target_reached'], true);
       expect(captured['duration_seconds'], 600);
+    });
+  });
+
+  group('OwnershipGuard (issue #202 / M3)', () {
+    test(
+      'getHabits avec userId != currentUser lève HabitFailure.unauthorized() '
+      'avant tout appel datasource',
+      () async {
+        resolver.id = 'autre-user';
+        await expectLater(
+          repo.getHabits(UserId(userIdValue)),
+          throwsA(isA<HabitUnauthorizedFailure>()),
+        );
+        verifyNever(() => ds.getHabits(any()));
+      },
+    );
+
+    test('createHabit avec userId != currentUser lève unauthorized avant appel '
+        'datasource', () async {
+      resolver.id = 'autre-user';
+      await expectLater(
+        repo.createHabit(userId: UserId(userIdValue), habit: habitFixture()),
+        throwsA(isA<HabitUnauthorizedFailure>()),
+      );
+      verifyNever(() => ds.createHabit(any()));
+    });
+
+    test('session expirée (currentId == null) → unauthorized', () async {
+      resolver.id = null;
+      await expectLater(
+        repo.getHabits(UserId(userIdValue)),
+        throwsA(isA<HabitUnauthorizedFailure>()),
+      );
     });
   });
 
