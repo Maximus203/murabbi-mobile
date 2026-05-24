@@ -1,8 +1,8 @@
-# Q-20 — FCM : credentials Firebase manquants (MOB-006)
+# Q-20 — FCM : credentials Firebase — projet créé, service account à finaliser
 
 **Date** : 2026-05-23
 **Issue** : #174 (MOB-006)
-**Statut** : À valider par le PO
+**Statut** : Partiellement résolu — action manuelle Cherif requise
 
 ---
 
@@ -12,61 +12,71 @@ MOB-006 implémente le service FCM (`lib/services/notification/fcm_service.dart`
 avec une architecture injectable qui isole le plugin natif `firebase_messaging`
 des couches domain et test. L'implémentation est complète et testée (8/8 tests verts).
 
-Cependant, **la connexion native Firebase n'est pas encore branchée** car les
-fichiers de credentials suivants ne sont pas disponibles dans le repo :
-
-- `android/app/google-services.json` — projet Firebase Android
-- `ios/Runner/GoogleService-Info.plist` — projet Firebase iOS
-- `lib/core/firebase_options.dart` — généré par `flutterfire configure`
-
-Ces fichiers sont gitignorés (cf. `.gitignore`) par sécurité.
-
 ---
 
-## Question
+## Statut actuel (2026-05-23)
 
-Cherif, peux-tu fournir ou créer le projet Firebase pour Murabbi ?
+Le projet Firebase **`murabbi-90798`** a été créé via la console Firebase.
 
-Si le projet Firebase n'existe pas encore :
+### Ce qui est fait
+
+- [x] Projet Firebase créé : `murabbi-90798` (GCM Sender ID : `61286833902`)
+- [x] App Android enregistrée : `com.murabbi.murabbi` (App ID : `1:61286833902:android:bc1df280dfec8d4d8e1dff`)
+- [x] App iOS enregistrée : `com.murabbi.murabbi` (App ID : `1:61286833902:ios:4c4b42f5d5602b788e1dff`)
+- [x] `android/app/google-services.json` — présent sur le device, gitignored
+- [x] `ios/Runner/GoogleService-Info.plist` — présent sur le device, gitignored
+- [x] FCM v1 API activée
+- [x] `firebase_core: ^2.30.0` et `firebase_messaging: ^14.9.0` ajoutés à `pubspec.yaml`
+
+### Ce qui reste — ACTION MANUELLE CHERIF REQUISE
+
+Deux clés de service account orphelines ont été créées lors de la session de
+configuration et doivent être supprimées puis remplacées par une clé valide.
+
+**Étape 1 — Supprimer les clés orphelines**
+
+Ouvre : https://console.cloud.google.com/iam-admin/serviceaccounts?project=murabbi-90798
+
+→ Clique sur `firebase-adminsdk-fbsvc@murabbi-90798.iam.gserviceaccount.com`
+→ Onglet **Clés**
+→ Supprime les deux clés orphelines (private key jamais récupérée) :
+  - `66c22874c0600731f2e9fbc41f0a36de04a70b4f`
+  - `d4283ad02f819201ff281ce10efca9cbe74f058d`
+
+**Étape 2 — Créer une nouvelle clé JSON**
+
+→ Toujours dans l'onglet **Clés** → **Ajouter une clé** → **JSON**
+→ Télécharge le fichier (c'est la seule et unique occasion de récupérer le private key)
+→ Ce fichier JSON est nécessaire pour que Supabase s'authentifie auprès de FCM v1
+
+**Étape 3 — Configurer Supabase Push Notifications**
+
+→ Dashboard Supabase → **Project Settings** → **Auth** → **Push Notifications**
+→ Colle le contenu JSON complet de la clé de service account dans le champ FCM
+
+**Étape 4 — Générer `firebase_options.dart` et committer**
+
+Ce fichier est commitable (aucun secret — contient uniquement les app IDs publics).
 
 ```bash
-# 1. Installer Firebase CLI (si pas déjà fait)
-npm install -g firebase-tools
+# Prérequis
 dart pub global activate flutterfire_cli
+firebase login   # s'authentifier avec le compte Google propriétaire de murabbi-90798
 
-# 2. Se connecter
-firebase login
-
-# 3. Créer le projet Firebase
-firebase projects:create murabbi-mobile
-
-# 4. Générer les fichiers de config Flutter
-flutterfire configure --project=murabbi-mobile
+# Génération (depuis la racine de murabbi-mobile)
+flutterfire configure --project=murabbi-90798
 # → génère lib/core/firebase_options.dart
-# → génère android/app/google-services.json
-# → génère ios/Runner/GoogleService-Info.plist
 ```
 
-Les deux fichiers de credentials (`google-services.json`, `GoogleService-Info.plist`)
-doivent rester **hors du repo** (gitignored). Seul `firebase_options.dart`
-est commitable (il ne contient pas de secret, cf. documentation FlutterFire).
+Puis committer `lib/core/firebase_options.dart` et fermer Q-20.
 
 ---
 
 ## Impact sur la livraison
 
 - MOB-006 côté Dart : complet et testé (8/8 tests verts).
-- La connexion native (background handler réel, initialisation Firebase) :
-  bloquée sur la fourniture de ces credentials.
-- Le reste de la Vague 3 G4 (MOB-004, MOB-005, MOB-007) n'est pas bloqué.
+- Connexion native Firebase (initialisation au démarrage, background handler) :
+  bloquée sur `firebase_options.dart` + configuration Supabase push.
+- `pubspec.yaml` à jour avec `firebase_core` et `firebase_messaging`.
 
----
-
-## Ma recommandation
-
-Tu crées le projet Firebase (gratuit pour Murabbi en V1 avec le Spark plan),
-tu génères les fichiers et tu me fournis `firebase_options.dart` par un canal
-sécurisé. Je complète la connexion native en 30 min.
-
-**Bloquant ?** Non pour la PR draft — oui pour le déploiement store.
-Je continue avec l'option stub documentée et je marque `[WAITING Q-20]`.
+**Bloquant pour le déploiement store — non bloquant pour le développement local.**

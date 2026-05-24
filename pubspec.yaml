@@ -24,6 +24,11 @@ dependencies:
   # Secure storage
   flutter_secure_storage: ^9.2.4
 
+  # Push notifications Firebase (FCM v1 — issue #174)
+  # Upgraded to v3/v15 for compatibility with geolocator ^13 (web ^1.0.0 conflict).
+  firebase_core: ^3.6.0
+  firebase_messaging: ^15.1.0
+
   # Local notifications (timer v1.5 — Q-15a, spec v1.5 § 3.5/§ 7)
   flutter_local_notifications: ^17.2.3
 
