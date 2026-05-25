@@ -9,11 +9,13 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_unit.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_value.dart';
 import 'package:murabbi_mobile/domain/value_objects/time_of_day_value.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import '../../helpers/test_uuids.dart';
 
 void main() {
   Map<String, dynamic> baseRow() => {
     'id': kHabitIdAlpha,
+    'user_id': kUserIdAlpha,
     'name': 'Lire le Coran',
     'category_id': kCategoryIdReligion,
     'frequency_type': 'daily',
@@ -158,6 +160,7 @@ void main() {
         // Habitude utilisateur : is_system=false, points non fixés
         final habit = Habit(
           id: HabitId('habit-user'),
+          userId: UserId(kUserIdAlpha),
           name: NonEmptyString('Ma routine'),
           categoryId: CategoryId(kCategoryIdAlpha),
           frequencyType: HabitFrequencyType.daily,
@@ -177,6 +180,7 @@ void main() {
       () {
         final habit = Habit(
           id: HabitId('habit-sys'),
+          userId: UserId(kUserIdAlpha),
           name: NonEmptyString('Habitude système'),
           categoryId: CategoryId(kCategoryIdAlpha),
           frequencyType: HabitFrequencyType.daily,

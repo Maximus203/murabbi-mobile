@@ -93,7 +93,9 @@ class CategoriesNotifier extends AsyncNotifier<List<Category>> {
     }
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await ref.read(deleteCategoryUseCaseProvider).call(categoryId);
+      await ref
+          .read(deleteCategoryUseCaseProvider)
+          .call(categoryId, _resolveUserId());
       return ref.read(getCategoriesUseCaseProvider).call(_resolveUserId());
     });
   }

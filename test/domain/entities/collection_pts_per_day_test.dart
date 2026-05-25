@@ -6,11 +6,13 @@ import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 /// Helpers — construction minimale d'un Habit avec des points donnés.
 /// [points] = null simule une habitude user sans points fixés (#163).
 Habit _habit(String id, int? points) => Habit(
   id: HabitId(id),
+  userId: UserId('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
   name: NonEmptyString('Habit $id'),
   categoryId: CategoryId('cat-1'),
   frequencyType: HabitFrequencyType.daily,

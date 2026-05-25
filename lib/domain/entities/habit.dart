@@ -6,6 +6,7 @@ import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/time_of_day_value.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 /// Mode de récurrence d'une habitude.
 ///
@@ -21,6 +22,7 @@ enum HabitFrequencyType { daily, perDay, perWeek, weekly, monthly, custom }
 
 class Habit extends Equatable {
   final HabitId id;
+  final UserId userId;
   final NonEmptyString name;
   final CategoryId categoryId;
   final HabitFrequencyType frequencyType;
@@ -63,6 +65,7 @@ class Habit extends Equatable {
 
   Habit({
     required this.id,
+    required this.userId,
     required this.name,
     required this.categoryId,
     required this.frequencyType,
@@ -153,6 +156,7 @@ class Habit extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    userId,
     name,
     categoryId,
     frequencyType,

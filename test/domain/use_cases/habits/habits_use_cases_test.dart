@@ -24,6 +24,7 @@ void main() {
 
   final testHabit = Habit(
     id: HabitId(kHabitIdAlpha),
+    userId: UserId(kUserIdAlpha),
     name: NonEmptyString('Morning run'),
     categoryId: CategoryId(kCategoryIdAlpha),
     frequencyType: HabitFrequencyType.perWeek,
@@ -100,12 +101,15 @@ void main() {
 
     setUp(() => useCase = DeleteHabitUseCase(mockRepo));
 
-    test('calls repository.deleteHabit with habitId', () async {
-      when(() => mockRepo.deleteHabit(habitId)).thenAnswer((_) async {});
+    test('calls repository.deleteHabit with habitId and userId', () async {
+      final userId = UserId(kUserIdAlpha);
+      when(
+        () => mockRepo.deleteHabit(habitId, userId),
+      ).thenAnswer((_) async {});
 
-      await useCase(habitId);
+      await useCase(habitId, userId);
 
-      verify(() => mockRepo.deleteHabit(habitId)).called(1);
+      verify(() => mockRepo.deleteHabit(habitId, userId)).called(1);
     });
   });
 

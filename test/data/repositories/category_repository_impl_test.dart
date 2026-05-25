@@ -95,21 +95,20 @@ void main() {
   group('deleteCategory', () {
     test('delegates to the datasource', () async {
       when(() => ds.deleteCategory('cat-x')).thenAnswer((_) async {});
-      await repo.deleteCategory(CategoryId('cat-x'));
+      await repo.deleteCategory(CategoryId('cat-x'), UserId(userIdValue));
       verify(() => ds.deleteCategory('cat-x')).called(1);
     });
   });
 
   group('getCategoryBySlug', () {
     test('returns category matching slug', () async {
-      when(() => ds.getCategories(userIdValue)).thenAnswer(
-        (_) async => [
-          {
-            ...CategoryMapper.toRow(categoryFixture(id: 'uuid-001')),
-            'slug': 'religion',
-          },
-          CategoryMapper.toRow(categoryFixture(id: 'cat-x')),
-        ],
+      when(
+        () => ds.getCategoryBySlug(userIdValue, 'religion'),
+      ).thenAnswer(
+        (_) async => {
+          ...CategoryMapper.toRow(categoryFixture(id: 'uuid-001')),
+          'slug': 'religion',
+        },
       );
       final cat = await repo.getCategoryBySlug(UserId(userIdValue), 'religion');
       expect(cat.slug, 'religion');
@@ -117,8 +116,8 @@ void main() {
 
     test('throws CategoryFailure.notFound when slug is absent', () async {
       when(
-        () => ds.getCategories(userIdValue),
-      ).thenAnswer((_) async => [CategoryMapper.toRow(categoryFixture())]);
+        () => ds.getCategoryBySlug(userIdValue, 'unknown-slug'),
+      ).thenAnswer((_) async => null);
       await expectLater(
         repo.getCategoryBySlug(UserId(userIdValue), 'unknown-slug'),
         throwsA(isA<CategoryNotFoundFailure>()),

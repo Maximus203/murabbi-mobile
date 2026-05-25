@@ -68,6 +68,7 @@ void main() {
         userId: testUser.id,
         habit: Habit(
           id: HabitId('h1'),
+          userId: UserId('user-001'),
           name: NonEmptyString('Lecture Coran'),
           categoryId: CategoryId('cat-religion'),
           frequencyType: HabitFrequencyType.daily,

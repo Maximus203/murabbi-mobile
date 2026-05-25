@@ -9,7 +9,7 @@ abstract interface class HabitRepository {
   Future<List<Habit>> getHabits(UserId userId);
   Future<Habit> createHabit({required UserId userId, required Habit habit});
   Future<Habit> updateHabit(Habit habit);
-  Future<void> deleteHabit(HabitId habitId);
+  Future<void> deleteHabit(HabitId habitId, UserId userId);
 
   Future<void> toggleHabitLog({
     required HabitId habitId,

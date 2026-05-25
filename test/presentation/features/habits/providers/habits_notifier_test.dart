@@ -59,6 +59,7 @@ void main() {
 
   Habit makeHabit(String id, String name) => Habit(
     id: HabitId(id),
+    userId: UserId(kUserIdAlpha),
     name: NonEmptyString(name),
     categoryId: CategoryId(kCategoryIdReligion),
     frequencyType: HabitFrequencyType.daily,

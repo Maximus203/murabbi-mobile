@@ -7,12 +7,14 @@ import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/habits/widgets/habit_row.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 
 void main() {
   Habit makeHabit() => Habit(
     id: HabitId('h1'),
+    userId: UserId('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
     name: NonEmptyString('Lecture Coran'),
     categoryId: CategoryId('cat-religion'),
     frequencyType: HabitFrequencyType.daily,

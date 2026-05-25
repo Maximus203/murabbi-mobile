@@ -12,6 +12,7 @@ import 'package:murabbi_mobile/domain/value_objects/habit_subtask_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_unit.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_value.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 // Constructeur d'habitude de test — évite la répétition du boilerplate.
 // [points] est nullable : null simule une habitude user sans points fixés.
@@ -24,6 +25,7 @@ Habit _makeHabit({
 }) {
   return Habit(
     id: HabitId(id),
+    userId: UserId('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
     name: NonEmptyString('Test habit'),
     categoryId: CategoryId('cat-1'),
     frequencyType: HabitFrequencyType.daily,
@@ -287,6 +289,7 @@ void main() {
     setUp(() {
       habitWithSubtasks = Habit(
         id: habitId,
+        userId: UserId('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
         name: NonEmptyString('Habit avec sous-tâches'),
         categoryId: CategoryId('cat-1'),
         frequencyType: HabitFrequencyType.daily,
@@ -373,6 +376,7 @@ void main() {
       setUp(() {
         comboHabit = Habit(
           id: habitId,
+          userId: UserId('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
           name: NonEmptyString('Habit combo'),
           categoryId: CategoryId('cat-1'),
           frequencyType: HabitFrequencyType.daily,

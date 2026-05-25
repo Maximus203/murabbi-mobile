@@ -153,6 +153,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
         id:
             widget.initialHabit?.id ??
             HabitId('habit-${DateTime.now().microsecondsSinceEpoch}'),
+        userId: user.id,
         name: NonEmptyString(name),
         categoryId: catId,
         frequencyType: _frequencyType,

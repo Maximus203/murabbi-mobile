@@ -32,6 +32,7 @@ void main() {
 
   Habit habitFixture({String id = kHabitIdAlpha}) => Habit(
     id: HabitId(id),
+    userId: UserId(userIdValue),
     name: NonEmptyString('Lire le Coran'),
     categoryId: CategoryId(kCategoryIdReligion),
     frequencyType: HabitFrequencyType.daily,
@@ -101,7 +102,7 @@ void main() {
   group('deleteHabit', () {
     test('delegates to the datasource', () async {
       when(() => ds.deleteHabit(kHabitIdAlpha)).thenAnswer((_) async {});
-      await repo.deleteHabit(HabitId(kHabitIdAlpha));
+      await repo.deleteHabit(HabitId(kHabitIdAlpha), UserId(userIdValue));
       verify(() => ds.deleteHabit(kHabitIdAlpha)).called(1);
     });
   });

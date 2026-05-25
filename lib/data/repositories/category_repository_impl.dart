@@ -56,12 +56,14 @@ class CategoryRepositoryImpl with OwnershipGuard implements CategoryRepository {
 
   @override
   Future<Category> updateCategory(Category category) async {
+    if (category.userId != null) await _guardOwnership(category.userId!);
     final updated = await _ds.updateCategory(CategoryMapper.toRow(category));
     return CategoryMapper.fromRow(updated);
   }
 
   @override
-  Future<void> deleteCategory(CategoryId categoryId) {
+  Future<void> deleteCategory(CategoryId categoryId, UserId userId) async {
+    await _guardOwnership(userId);
     return _ds.deleteCategory(categoryId.value);
   }
 

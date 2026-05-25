@@ -4,6 +4,7 @@ import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_filter.dart';
 
 /// Crée une habitude de test paramétrable.
@@ -15,6 +16,7 @@ Habit _habit(
   Set<int> activeDays = const {1, 2, 3, 4, 5, 6, 7},
 }) => Habit(
   id: HabitId(id),
+  userId: UserId('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
   name: NonEmptyString(name),
   categoryId: CategoryId(categoryId),
   frequencyType: HabitFrequencyType.weekly,

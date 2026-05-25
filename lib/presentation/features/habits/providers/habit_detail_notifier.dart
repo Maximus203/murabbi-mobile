@@ -148,7 +148,9 @@ class HabitDetailNotifier
   /// liste HA-01 pour qu'elle se rafraîchisse.
   Future<void> deleteHabit() async {
     await _serializer.run<void>(() async {
-      await ref.read(deleteHabitUseCaseProvider).call(HabitId(_habitId));
+      await ref
+          .read(deleteHabitUseCaseProvider)
+          .call(HabitId(_habitId), _resolveUserId());
       ref.invalidate(habitsNotifierProvider);
       // Issue #196 (M6) : la suppression peut impacter le total de points.
       ref.invalidateScoreCache();

@@ -51,7 +51,7 @@ class InMemoryHabitRepository implements HabitRepository {
   }
 
   @override
-  Future<void> deleteHabit(HabitId habitId) async {
+  Future<void> deleteHabit(HabitId habitId, UserId userId) async {
     _habits.removeWhere((h) => h.id == habitId);
   }
 
@@ -185,7 +185,7 @@ class InMemoryCategoryRepository implements CategoryRepository {
   }
 
   @override
-  Future<void> deleteCategory(CategoryId categoryId) async {
+  Future<void> deleteCategory(CategoryId categoryId, UserId userId) async {
     _categories.removeWhere((c) => c.id == categoryId);
   }
 

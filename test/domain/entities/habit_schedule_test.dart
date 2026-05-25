@@ -5,6 +5,7 @@ import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import '../../helpers/test_uuids.dart';
 
 /// Tests de régression #145 — une habitude quotidienne doit être due le jour
@@ -18,6 +19,7 @@ void main() {
   }) {
     return Habit(
       id: HabitId(kHabitIdAlpha),
+      userId: UserId(kUserIdAlpha),
       name: NonEmptyString('Lecture'),
       categoryId: CategoryId(kCategoryIdReligion),
       frequencyType: frequencyType,
@@ -84,6 +86,7 @@ void main() {
       final daily = habit(frequencyType: HabitFrequencyType.daily);
       final weeklyMonday = Habit(
         id: HabitId(kHabitIdBeta),
+        userId: UserId(kUserIdAlpha),
         name: NonEmptyString('Sport'),
         categoryId: CategoryId(kCategoryIdSport),
         frequencyType: HabitFrequencyType.weekly,

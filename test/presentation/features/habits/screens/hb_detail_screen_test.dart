@@ -41,6 +41,7 @@ void main() {
 
   Habit makeHabit() => Habit(
     id: HabitId('h1'),
+    userId: UserId('user-001'),
     name: NonEmptyString('Lecture Coran'),
     categoryId: CategoryId('cat-religion'),
     frequencyType: HabitFrequencyType.daily,
@@ -73,7 +74,9 @@ void main() {
         to: any(named: 'to'),
       ),
     ).thenAnswer((_) async => <HabitLog>[]);
-    when(() => habitRepo.deleteHabit(any())).thenAnswer((_) async {});
+    when(
+      () => habitRepo.deleteHabit(any(), any()),
+    ).thenAnswer((_) async {});
   });
 
   Widget pumpable({

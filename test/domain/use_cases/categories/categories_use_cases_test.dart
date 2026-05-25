@@ -92,13 +92,15 @@ void main() {
 
     setUp(() => useCase = DeleteCategoryUseCase(mockRepo));
 
-    test('delegates to repository.deleteCategory', () async {
+    test('delegates to repository.deleteCategory with userId', () async {
       final categoryId = CategoryId(kCategoryIdAlpha);
-      when(() => mockRepo.deleteCategory(categoryId)).thenAnswer((_) async {});
+      when(
+        () => mockRepo.deleteCategory(categoryId, userId),
+      ).thenAnswer((_) async {});
 
-      await useCase(categoryId);
+      await useCase(categoryId, userId);
 
-      verify(() => mockRepo.deleteCategory(categoryId)).called(1);
+      verify(() => mockRepo.deleteCategory(categoryId, userId)).called(1);
     });
   });
 }

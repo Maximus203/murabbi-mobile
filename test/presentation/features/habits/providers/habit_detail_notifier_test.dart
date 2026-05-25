@@ -53,6 +53,7 @@ void main() {
 
   Habit makeHabit(String id) => Habit(
     id: HabitId(id),
+    userId: UserId('user-001'),
     name: NonEmptyString('Lecture Coran'),
     categoryId: CategoryId('cat-religion'),
     frequencyType: HabitFrequencyType.daily,
@@ -101,7 +102,9 @@ void main() {
         to: any(named: 'to'),
       ),
     ).thenAnswer((_) async => <HabitLog>[]);
-    when(() => habitRepo.deleteHabit(any())).thenAnswer((_) async {});
+    when(
+      () => habitRepo.deleteHabit(any(), any()),
+    ).thenAnswer((_) async {});
   });
 
   ProviderContainer makeContainer({
@@ -172,7 +175,7 @@ void main() {
     await container
         .read(habitDetailNotifierProvider('h1').notifier)
         .deleteHabit();
-    verify(() => habitRepo.deleteHabit(HabitId('h1'))).called(1);
+    verify(() => habitRepo.deleteHabit(HabitId('h1'), any())).called(1);
   });
 
   // ── logHabit (M2 — Optimistic UI + sync queue) ────────────────────────────

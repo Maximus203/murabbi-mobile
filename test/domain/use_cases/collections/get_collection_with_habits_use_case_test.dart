@@ -26,6 +26,7 @@ void main() {
 
   final habit1 = Habit(
     id: HabitId(kHabitIdAlpha),
+    userId: UserId(kUserIdAlpha),
     name: NonEmptyString('Habit 1'),
     categoryId: CategoryId(kCategoryIdAlpha),
     frequencyType: HabitFrequencyType.daily,
@@ -37,6 +38,7 @@ void main() {
 
   final habit2 = Habit(
     id: HabitId(kHabitIdBeta),
+    userId: UserId(kUserIdAlpha),
     name: NonEmptyString('Habit 2'),
     categoryId: CategoryId(kCategoryIdAlpha),
     frequencyType: HabitFrequencyType.daily,
@@ -91,6 +93,7 @@ void main() {
       () async {
         final habit3 = Habit(
           id: HabitId(kHabitIdGamma),
+          userId: UserId(kUserIdAlpha),
           name: NonEmptyString('Habit 3'),
           categoryId: CategoryId(kCategoryIdAlpha),
           frequencyType: HabitFrequencyType.daily,

@@ -2,6 +2,7 @@ import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 /// Mapper pur — convertit les rows `categories` Supabase en [Category] domain
 /// et inversement.
@@ -15,6 +16,7 @@ class CategoryMapper {
   static Category fromRow(Map<String, dynamic> row) {
     return Category(
       id: CategoryId(row['id'] as String),
+      userId: row['user_id'] != null ? UserId(row['user_id'] as String) : null,
       name: NonEmptyString(row['name'] as String),
       color: HexColor(row['color'] as String),
       icon: row['icon'] as String,
@@ -30,6 +32,7 @@ class CategoryMapper {
   static Map<String, dynamic> toRow(Category category) {
     return {
       'id': category.id.value,
+      if (category.userId != null) 'user_id': category.userId!.value,
       'name': category.name.value,
       'color': category.color.value,
       'icon': category.icon,

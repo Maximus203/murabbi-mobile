@@ -7,6 +7,7 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_unit.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_value.dart';
 import 'package:murabbi_mobile/domain/value_objects/time_of_day_value.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 /// Mapper pur — convertit les rows `habits` Supabase en [Habit] domain et
 /// inversement.
@@ -35,6 +36,7 @@ class HabitMapper {
 
     return Habit(
       id: HabitId(row['id'] as String),
+      userId: UserId(row['user_id'] as String),
       name: NonEmptyString(row['name'] as String),
       categoryId: CategoryId(row['category_id'] as String),
       frequencyType: _frequencyFromSql(row['frequency_type'] as String),
@@ -62,6 +64,7 @@ class HabitMapper {
     final target = habit.target;
     final row = <String, dynamic>{
       'id': habit.id.value,
+      'user_id': habit.userId.value,
       'name': habit.name.value,
       'category_id': habit.categoryId.value,
       'frequency_type': _frequencyToSql(habit.frequencyType),

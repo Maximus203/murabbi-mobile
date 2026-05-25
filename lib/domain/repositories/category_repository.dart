@@ -13,7 +13,7 @@ abstract interface class CategoryRepository {
   Future<Category> updateCategory(Category category);
 
   /// Supprime la catégorie identifiée par [categoryId].
-  Future<void> deleteCategory(CategoryId categoryId);
+  Future<void> deleteCategory(CategoryId categoryId, UserId userId);
 
   /// Retourne la catégorie système dont le [slug] correspond (ex. `"religion"`).
   ///

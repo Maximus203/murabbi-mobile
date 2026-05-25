@@ -52,6 +52,7 @@ void main() {
 
   Habit makeHabit() => Habit(
     id: HabitId('habit-edit-001'),
+    userId: UserId(kUserIdAlpha),
     name: NonEmptyString('Lecture Coran'),
     categoryId: CategoryId('cat-religion'),
     frequencyType: HabitFrequencyType.weekly,

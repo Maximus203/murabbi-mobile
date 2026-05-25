@@ -13,6 +13,7 @@ void main() {
 
   Habit makeHabit(String id, String name) => Habit(
     id: HabitId(id),
+    userId: UserId(kUserIdAlpha),
     name: NonEmptyString(name),
     categoryId: CategoryId(kCategoryIdReligion),
     frequencyType: HabitFrequencyType.daily,
@@ -43,6 +44,7 @@ void main() {
       await repo.createHabit(userId: userId, habit: h);
       final updated = Habit(
         id: HabitId('h1'),
+        userId: UserId(kUserIdAlpha),
         name: NonEmptyString('Renamed'),
         categoryId: CategoryId(kCategoryIdSport),
         frequencyType: HabitFrequencyType.daily,
@@ -61,7 +63,7 @@ void main() {
       final repo = InMemoryHabitRepository();
       await repo.createHabit(userId: userId, habit: makeHabit('h1', 'A'));
       await repo.createHabit(userId: userId, habit: makeHabit('h2', 'B'));
-      await repo.deleteHabit(HabitId('h1'));
+      await repo.deleteHabit(HabitId('h1'), userId);
       final list = await repo.getHabits(userId);
       expect(list.map((h) => h.id.value), ['h2']);
     });

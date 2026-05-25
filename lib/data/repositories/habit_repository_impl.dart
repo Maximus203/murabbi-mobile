@@ -66,12 +66,14 @@ class HabitRepositoryImpl with OwnershipGuard implements HabitRepository {
 
   @override
   Future<Habit> updateHabit(Habit habit) async {
+    await _guardOwnership(habit.userId);
     final updated = await _ds.updateHabit(HabitMapper.toRow(habit));
     return HabitMapper.fromRow(updated);
   }
 
   @override
-  Future<void> deleteHabit(HabitId habitId) {
+  Future<void> deleteHabit(HabitId habitId, UserId userId) async {
+    await _guardOwnership(userId);
     return _ds.deleteHabit(habitId.value);
   }
 

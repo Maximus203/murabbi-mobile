@@ -18,6 +18,7 @@ import 'package:murabbi_mobile/domain/value_objects/habit_subtask_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_unit.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_value.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import '../../../helpers/test_uuids.dart';
 
 void main() {
@@ -32,6 +33,7 @@ void main() {
   }) {
     return Habit(
       id: habitId,
+      userId: UserId(kUserIdAlpha),
       name: NonEmptyString('Habit'),
       categoryId: catId,
       frequencyType: HabitFrequencyType.daily,

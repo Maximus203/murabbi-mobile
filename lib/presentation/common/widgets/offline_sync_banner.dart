@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:murabbi_mobile/services/offline/offline_queue_provider.dart';
+import 'package:murabbi_mobile/services/sync/sync_service_provider.dart';
+
+/// Provider du nombre d'opérations en attente de sync — alimenté par le
+/// [SyncService.pendingCount] stream (remplace l'ancien offline_queue_provider
+/// supprimé dans Batch-6).
+final _syncPendingCountProvider = StreamProvider<int>((ref) {
+  return ref.watch(syncServiceProvider).pendingCount;
+});
 
 /// Bannière affichée en haut de l'écran quand des actions sont en attente
 /// de synchronisation réseau (BUG-002).
 ///
-/// Affiche « X action(s) en attente de sync » quand [pendingCount] > 0.
+/// Affiche « X action(s) en attente de sync » quand le compteur > 0.
 /// Disparaît automatiquement quand la queue est vide.
 ///
 /// Usage :
@@ -27,7 +34,7 @@ class OfflineSyncBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pendingAsync = ref.watch(offlinePendingCountProvider);
+    final pendingAsync = ref.watch(_syncPendingCountProvider);
 
     return pendingAsync.when(
       loading: () => const SizedBox.shrink(),

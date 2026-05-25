@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
 /// Catégorie regroupant des habitudes (Sport, Spirituel, …).
 ///
@@ -23,6 +24,11 @@ class Category extends Equatable {
   final String icon;
   final bool isSystem;
 
+  /// Identifiant de l'utilisateur propriétaire de la catégorie.
+  ///
+  /// `null` pour les catégories système (cf. ADR-009 — `is_system = true`).
+  final UserId? userId;
+
   /// Slug sémantique stable (ex. `"religion"`, `"sport"`).
   ///
   /// Non-null uniquement pour les catégories système (Q-21 — Option B).
@@ -37,9 +43,10 @@ class Category extends Equatable {
     required this.color,
     required this.icon,
     required this.isSystem,
+    this.userId,
     this.slug,
   });
 
   @override
-  List<Object?> get props => [id, name, color, icon, isSystem, slug];
+  List<Object?> get props => [id, name, color, icon, isSystem, userId, slug];
 }

@@ -9,10 +9,12 @@ import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_unit.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_value.dart';
+import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/habits/widgets/habit_timer_sheet.dart';
 
 Habit _makeHabit({String name = 'Lecture Coran'}) => Habit(
   id: HabitId('h1'),
+  userId: UserId('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
   name: NonEmptyString(name),
   categoryId: CategoryId('cat-religion'),
   frequencyType: HabitFrequencyType.daily,

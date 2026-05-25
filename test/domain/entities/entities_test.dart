@@ -67,6 +67,7 @@ void main() {
     test('creates with daily frequencyType', () {
       final habit = Habit(
         id: habitId,
+        userId: UserId(kUserIdAlpha),
         name: NonEmptyString('Dhikr'),
         categoryId: catId,
         frequencyType: HabitFrequencyType.daily,
@@ -83,6 +84,7 @@ void main() {
     test('creates with monthly frequencyType', () {
       final habit = Habit(
         id: habitId,
+        userId: UserId(kUserIdAlpha),
         name: NonEmptyString('Bilan mensuel'),
         categoryId: catId,
         frequencyType: HabitFrequencyType.monthly,
@@ -98,6 +100,7 @@ void main() {
     test('creates with custom frequencyType', () {
       final habit = Habit(
         id: habitId,
+        userId: UserId(kUserIdAlpha),
         name: NonEmptyString('Custom routine'),
         categoryId: catId,
         frequencyType: HabitFrequencyType.custom,
@@ -419,6 +422,7 @@ void main() {
     test('creates with valid fields', () {
       final habit = Habit(
         id: habitId,
+        userId: UserId(kUserIdAlpha),
         name: NonEmptyString('Morning run'),
         categoryId: catId,
         frequencyType: HabitFrequencyType.perWeek,
@@ -442,6 +446,7 @@ void main() {
     test('creates with anytime range (both null)', () {
       final habit = Habit(
         id: habitId,
+        userId: UserId(kUserIdAlpha),
         name: NonEmptyString('Anytime habit'),
         categoryId: catId,
         frequencyType: HabitFrequencyType.daily,
@@ -458,6 +463,7 @@ void main() {
       expect(
         () => Habit(
           id: habitId,
+          userId: UserId(kUserIdAlpha),
           name: NonEmptyString('Morning run'),
           categoryId: catId,
           frequencyType: HabitFrequencyType.perWeek,
@@ -476,6 +482,7 @@ void main() {
       expect(
         () => Habit(
           id: habitId,
+          userId: UserId(kUserIdAlpha),
           name: NonEmptyString('Morning run'),
           categoryId: catId,
           frequencyType: HabitFrequencyType.perWeek,
@@ -497,6 +504,7 @@ void main() {
 
     Habit buildMonthly({int? monthlyDay}) => Habit(
       id: habitId,
+      userId: UserId(kUserIdAlpha),
       name: NonEmptyString('Bilan mensuel'),
       categoryId: catId,
       frequencyType: HabitFrequencyType.monthly,
@@ -538,6 +546,7 @@ void main() {
       expect(
         () => Habit(
           id: habitId,
+          userId: UserId(kUserIdAlpha),
           name: NonEmptyString('Daily'),
           categoryId: catId,
           frequencyType: HabitFrequencyType.daily,
@@ -561,6 +570,7 @@ void main() {
       TimeOfDayValue? rangeEnd,
     }) => Habit(
       id: habitId,
+      userId: UserId(kUserIdAlpha),
       name: NonEmptyString('Run'),
       categoryId: catId,
       frequencyType: HabitFrequencyType.daily,
