@@ -108,7 +108,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return await body();
     } on AuthFailure {
       rethrow;
-    } catch (e) {
+    } catch (e, st) {
+      appLog.e('AuthRepository raw error', error: e, stackTrace: st);
       throw _translate(e);
     }
   }
