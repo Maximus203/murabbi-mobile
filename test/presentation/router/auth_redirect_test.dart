@@ -6,10 +6,11 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/router/auth_redirect.dart';
+import '../../helpers/test_uuids.dart';
 
 void main() {
   final user = User(
-    id: UserId('u-1'),
+    id: UserId(kUserIdAlpha),
     pseudo: Pseudonym('Cherif'),
     email: NonEmptyString('c@b.co'),
     createdAt: DateTime(2026),

@@ -6,14 +6,15 @@ import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../helpers/test_uuids.dart';
 
 void main() {
-  final userId = UserId('user-001');
+  final userId = UserId(kUserIdAlpha);
 
   Habit makeHabit(String id, String name) => Habit(
     id: HabitId(id),
     name: NonEmptyString(name),
-    categoryId: CategoryId('cat-religion'),
+    categoryId: CategoryId(kCategoryIdReligion),
     frequencyType: HabitFrequencyType.daily,
     frequency: 1,
     activeDays: const {1, 2, 3, 4, 5, 6, 7},
@@ -43,7 +44,7 @@ void main() {
       final updated = Habit(
         id: HabitId('h1'),
         name: NonEmptyString('Renamed'),
-        categoryId: CategoryId('cat-sport'),
+        categoryId: CategoryId(kCategoryIdSport),
         frequencyType: HabitFrequencyType.daily,
         frequency: 1,
         activeDays: const {1, 2, 3, 4, 5, 6, 7},

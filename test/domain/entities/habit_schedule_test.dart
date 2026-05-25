@@ -5,6 +5,7 @@ import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import '../../helpers/test_uuids.dart';
 
 /// Tests de régression #145 — une habitude quotidienne doit être due le jour
 /// même de sa création, et donc apparaître dans « Habitudes du jour ».
@@ -16,9 +17,9 @@ void main() {
     int frequency = 1,
   }) {
     return Habit(
-      id: HabitId('habit-1'),
+      id: HabitId(kHabitIdAlpha),
       name: NonEmptyString('Lecture'),
-      categoryId: CategoryId('cat-religion'),
+      categoryId: CategoryId(kCategoryIdReligion),
       frequencyType: frequencyType,
       frequency: frequency,
       activeDays: activeDays ?? {1, 2, 3, 4, 5, 6, 7},
@@ -82,9 +83,9 @@ void main() {
     test('ne retient que les habitudes dues le jour donné', () {
       final daily = habit(frequencyType: HabitFrequencyType.daily);
       final weeklyMonday = Habit(
-        id: HabitId('habit-2'),
+        id: HabitId(kHabitIdBeta),
         name: NonEmptyString('Sport'),
-        categoryId: CategoryId('cat-sport'),
+        categoryId: CategoryId(kCategoryIdSport),
         frequencyType: HabitFrequencyType.weekly,
         frequency: 1,
         activeDays: {1},

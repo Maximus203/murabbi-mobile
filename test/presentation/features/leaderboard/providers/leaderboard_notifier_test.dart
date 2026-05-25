@@ -12,6 +12,7 @@ import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/leaderboard/providers/leaderboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/current_user_provider.dart';
+import '../../../../helpers/test_uuids.dart';
 
 class MockScoreRepository extends Mock implements ScoreRepository {}
 
@@ -19,7 +20,7 @@ void main() {
   late MockScoreRepository mockRepo;
 
   final testUser = User(
-    id: UserId('user-uuid-001'),
+    id: UserId(kUserIdAlpha),
     email: NonEmptyString('test@test.com'),
     pseudo: Pseudonym('TestUser'),
     createdAt: DateTime(2024),
@@ -27,7 +28,7 @@ void main() {
   );
 
   final score1 = UserScore(
-    userId: UserId('user-uuid-001'),
+    userId: UserId(kUserIdAlpha),
     totalPoints: 1500,
     weeklyPoints: 200,
     currentLevel: Level.aspirant,
@@ -35,7 +36,7 @@ void main() {
   );
 
   final score2 = UserScore(
-    userId: UserId('user-uuid-002'),
+    userId: UserId(kUserIdBeta),
     totalPoints: 1200,
     weeklyPoints: 150,
     currentLevel: Level.aspirant,

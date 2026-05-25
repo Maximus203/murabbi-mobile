@@ -17,6 +17,7 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_02_create_habit_screen.dart';
+import '../../../../helpers/test_uuids.dart';
 
 class _MockAuthRepo extends Mock implements AuthRepository {}
 
@@ -42,7 +43,7 @@ void main() {
   late _MockAuthRepo authRepo;
 
   final testUser = User(
-    id: UserId('user-001'),
+    id: UserId(kUserIdAlpha),
     pseudo: Pseudonym('Cherif'),
     email: NonEmptyString('cherif@example.com'),
     createdAt: DateTime.utc(2026, 1, 1),

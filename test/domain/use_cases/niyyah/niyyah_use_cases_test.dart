@@ -6,12 +6,13 @@ import 'package:murabbi_mobile/domain/use_cases/niyyah/get_today_niyyah_use_case
 import 'package:murabbi_mobile/domain/use_cases/niyyah/set_today_niyyah_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../../helpers/test_uuids.dart';
 
 class MockNiyyahRepository extends Mock implements NiyyahRepository {}
 
 void main() {
   late MockNiyyahRepository mockRepo;
-  final userId = UserId('user-uuid-001');
+  final userId = UserId(kUserIdAlpha);
   final today = DateTime(2026, 4, 28);
 
   final testNiyyah = DailyNiyyah(

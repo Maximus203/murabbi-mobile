@@ -7,6 +7,7 @@ import 'package:murabbi_mobile/data/repositories/auth_repository_impl.dart';
 import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
+import '../../helpers/test_uuids.dart';
 
 class MockAuthDataSource extends Mock implements AuthDataSource {}
 
@@ -306,9 +307,9 @@ void main() {
     test(
       'deleteAccount forwards UUID string (soft-delete in ADR-011)',
       () async {
-        when(() => ds.deleteAccount('uid-1')).thenAnswer((_) async {});
-        await repo.deleteAccount(UserId('uid-1'));
-        verify(() => ds.deleteAccount('uid-1')).called(1);
+        when(() => ds.deleteAccount(kUserIdAlpha)).thenAnswer((_) async {});
+        await repo.deleteAccount(UserId(kUserIdAlpha));
+        verify(() => ds.deleteAccount(kUserIdAlpha)).called(1);
       },
     );
   });

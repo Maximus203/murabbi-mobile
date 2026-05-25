@@ -7,6 +7,7 @@ import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../helpers/test_uuids.dart';
 
 class _MockUserDataSource extends Mock implements UserDataSource {}
 
@@ -15,7 +16,7 @@ void main() {
   late UserRepositoryImpl repo;
 
   final user = User(
-    id: UserId('user-1'),
+    id: UserId(kUserIdAlpha),
     pseudo: Pseudonym('Nouveau'),
     email: NonEmptyString('cherif@example.com'),
     createdAt: DateTime(2026, 1, 1),
@@ -30,7 +31,7 @@ void main() {
     'updateUser persists the pseudo and returns the updated entity',
     () async {
       when(
-        () => ds.updatePseudo(userId: 'user-1', pseudo: 'Nouveau'),
+        () => ds.updatePseudo(userId: kUserIdAlpha, pseudo: 'Nouveau'),
       ).thenAnswer(
         (_) async => {
           'pseudo': 'Nouveau',
@@ -48,7 +49,7 @@ void main() {
       expect(result.pseudo.value, 'Nouveau');
       expect(result.id, user.id);
       verify(
-        () => ds.updatePseudo(userId: 'user-1', pseudo: 'Nouveau'),
+        () => ds.updatePseudo(userId: kUserIdAlpha, pseudo: 'Nouveau'),
       ).called(1);
     },
   );
@@ -57,7 +58,7 @@ void main() {
     'getUser returns null (read path delegated to AuthRepository)',
     () async {
       repo = UserRepositoryImpl(ds);
-      expect(await repo.getUser(UserId('user-1')), isNull);
+      expect(await repo.getUser(UserId(kUserIdAlpha)), isNull);
     },
   );
 }

@@ -3,12 +3,13 @@ import 'package:murabbi_mobile/data/mappers/habit_log_mapper.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_subtask_id.dart';
+import '../../helpers/test_uuids.dart';
 
 void main() {
   group('HabitLogMapper.fromRow', () {
     test('maps a minimal log with optional v1.5 columns null', () {
       final log = HabitLogMapper.fromRow({
-        'habit_id': 'habit-1',
+        'habit_id': kHabitIdAlpha,
         'date': '2026-05-09',
         'status': 'ontime',
         'actual_value': null,
@@ -18,7 +19,7 @@ void main() {
         'opened_at': null,
         'logged_at': null,
       });
-      expect(log.habitId, HabitId('habit-1'));
+      expect(log.habitId, HabitId(kHabitIdAlpha));
       expect(log.date, DateTime.utc(2026, 5, 9));
       expect(log.status, HabitLogStatus.onTime);
       expect(log.actualValue, isNull);
@@ -29,7 +30,7 @@ void main() {
 
     test('maps a full v1.5 log', () {
       final log = HabitLogMapper.fromRow({
-        'habit_id': 'habit-1',
+        'habit_id': kHabitIdAlpha,
         'date': '2026-05-09',
         'status': 'late',
         'actual_value': 12,
@@ -55,7 +56,7 @@ void main() {
   group('HabitLogMapper.toRow', () {
     test('round-trips a full v1.5 log', () {
       final log = HabitLog(
-        habitId: HabitId('habit-1'),
+        habitId: HabitId(kHabitIdAlpha),
         date: DateTime.utc(2026, 5, 9),
         status: HabitLogStatus.missed,
         actualValue: 5,
@@ -64,7 +65,7 @@ void main() {
         duration: const Duration(seconds: 600),
       );
       final row = HabitLogMapper.toRow(log);
-      expect(row['habit_id'], 'habit-1');
+      expect(row['habit_id'], kHabitIdAlpha);
       expect(row['date'], '2026-05-09');
       expect(row['status'], 'missed');
       expect(row['actual_value'], 5);
@@ -75,7 +76,7 @@ void main() {
 
     test('emits nulls for absent optional fields', () {
       final log = HabitLog(
-        habitId: HabitId('habit-1'),
+        habitId: HabitId(kHabitIdAlpha),
         date: DateTime.utc(2026, 5, 9),
         status: HabitLogStatus.onTime,
       );

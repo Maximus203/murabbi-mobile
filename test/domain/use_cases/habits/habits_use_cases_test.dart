@@ -14,17 +14,18 @@ import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/time_of_day_value.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../../helpers/test_uuids.dart';
 
 class MockHabitRepository extends Mock implements HabitRepository {}
 
 void main() {
   late MockHabitRepository mockRepo;
-  final userId = UserId('user-uuid-001');
+  final userId = UserId(kUserIdAlpha);
 
   final testHabit = Habit(
-    id: HabitId('habit-uuid-001'),
+    id: HabitId(kHabitIdAlpha),
     name: NonEmptyString('Morning run'),
-    categoryId: CategoryId('cat-uuid-001'),
+    categoryId: CategoryId(kCategoryIdAlpha),
     frequencyType: HabitFrequencyType.perWeek,
     frequency: 5,
     rangeStart: TimeOfDayValue(7, 0),
@@ -95,7 +96,7 @@ void main() {
 
   group('DeleteHabitUseCase', () {
     late DeleteHabitUseCase useCase;
-    final habitId = HabitId('habit-uuid-001');
+    final habitId = HabitId(kHabitIdAlpha);
 
     setUp(() => useCase = DeleteHabitUseCase(mockRepo));
 
@@ -110,7 +111,7 @@ void main() {
 
   group('ToggleHabitLogUseCase', () {
     late ToggleHabitLogUseCase useCase;
-    final habitId = HabitId('habit-uuid-001');
+    final habitId = HabitId(kHabitIdAlpha);
     final date = DateTime(2026, 4, 27);
 
     setUp(() => useCase = ToggleHabitLogUseCase(mockRepo));

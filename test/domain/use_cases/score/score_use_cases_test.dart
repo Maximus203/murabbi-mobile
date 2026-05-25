@@ -6,12 +6,13 @@ import 'package:murabbi_mobile/domain/repositories/score_repository.dart';
 import 'package:murabbi_mobile/domain/use_cases/score/get_leaderboard_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/score/get_user_score_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../../helpers/test_uuids.dart';
 
 class MockScoreRepository extends Mock implements ScoreRepository {}
 
 void main() {
   late MockScoreRepository mockRepo;
-  final userId = UserId('user-uuid-001');
+  final userId = UserId(kUserIdAlpha);
 
   final testScore = UserScore(
     userId: userId,

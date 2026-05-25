@@ -11,6 +11,7 @@ import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../../helpers/test_uuids.dart';
 
 class MockCollectionRepository extends Mock implements CollectionRepository {}
 
@@ -20,13 +21,13 @@ void main() {
   late MockCollectionRepository mockCollectionRepo;
   late MockHabitRepository mockHabitRepo;
 
-  final userId = UserId('user-uuid-001');
-  final collectionId = CollectionId('coll-uuid-001');
+  final userId = UserId(kUserIdAlpha);
+  final collectionId = CollectionId(kCollectionIdAlpha);
 
   final habit1 = Habit(
-    id: HabitId('h-1'),
+    id: HabitId(kHabitIdAlpha),
     name: NonEmptyString('Habit 1'),
-    categoryId: CategoryId('cat-1'),
+    categoryId: CategoryId(kCategoryIdAlpha),
     frequencyType: HabitFrequencyType.daily,
     frequency: 1,
     activeDays: {1},
@@ -35,9 +36,9 @@ void main() {
   );
 
   final habit2 = Habit(
-    id: HabitId('h-2'),
+    id: HabitId(kHabitIdBeta),
     name: NonEmptyString('Habit 2'),
-    categoryId: CategoryId('cat-1'),
+    categoryId: CategoryId(kCategoryIdAlpha),
     frequencyType: HabitFrequencyType.daily,
     frequency: 1,
     activeDays: {1},
@@ -49,7 +50,7 @@ void main() {
     id: collectionId,
     name: NonEmptyString('Morning routine'),
     description: NonEmptyString('Start the day right'),
-    habitIds: [HabitId('h-1'), HabitId('h-2')],
+    habitIds: [HabitId(kHabitIdAlpha), HabitId(kHabitIdBeta)],
     isSystem: false,
     isActive: true,
   );
@@ -89,9 +90,9 @@ void main() {
       'filtre uniquement les habitudes appartenant à la collection',
       () async {
         final habit3 = Habit(
-          id: HabitId('h-3'),
+          id: HabitId(kHabitIdGamma),
           name: NonEmptyString('Habit 3'),
-          categoryId: CategoryId('cat-1'),
+          categoryId: CategoryId(kCategoryIdAlpha),
           frequencyType: HabitFrequencyType.daily,
           frequency: 1,
           activeDays: {1},

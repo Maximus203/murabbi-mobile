@@ -14,6 +14,7 @@ import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/remembered_accounts_notifier.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../helpers/test_uuids.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -21,7 +22,7 @@ void main() {
   late MockAuthRepository repo;
 
   final testUser = User(
-    id: UserId('user-uuid-001'),
+    id: UserId(kUserIdAlpha),
     pseudo: Pseudonym('Cherif'),
     email: NonEmptyString('cherif@example.com'),
     createdAt: DateTime(2026, 1, 1),

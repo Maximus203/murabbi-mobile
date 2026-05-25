@@ -13,12 +13,13 @@ import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/collections/providers/collections_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/current_user_provider.dart';
+import '../../../../helpers/test_uuids.dart';
 
 class MockCollectionRepository extends Mock implements CollectionRepository {}
 
 void main() {
   late MockCollectionRepository mockRepo;
-  final userId = UserId('user-uuid-001');
+  final userId = UserId(kUserIdAlpha);
 
   final testUser = User(
     id: userId,
@@ -32,7 +33,7 @@ void main() {
     id: CollectionId('coll-1'),
     name: NonEmptyString('Routine matinale'),
     description: NonEmptyString('Commencer la journée'),
-    habitIds: [HabitId('h-1')],
+    habitIds: [HabitId(kHabitIdAlpha)],
     isSystem: true,
     isActive: false,
   );
@@ -41,7 +42,7 @@ void main() {
     id: CollectionId('coll-2'),
     name: NonEmptyString('Sport hebdo'),
     description: NonEmptyString('Activité physique'),
-    habitIds: [HabitId('h-2'), HabitId('h-3')],
+    habitIds: [HabitId(kHabitIdBeta), HabitId(kHabitIdGamma)],
     isSystem: false,
     isActive: true,
   );

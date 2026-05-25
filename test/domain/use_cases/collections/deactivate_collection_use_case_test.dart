@@ -4,13 +4,14 @@ import 'package:murabbi_mobile/domain/repositories/collection_repository.dart';
 import 'package:murabbi_mobile/domain/use_cases/collections/deactivate_collection_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../../helpers/test_uuids.dart';
 
 class MockCollectionRepository extends Mock implements CollectionRepository {}
 
 void main() {
   late MockCollectionRepository mockRepo;
-  final userId = UserId('user-uuid-001');
-  final collectionId = CollectionId('coll-uuid-001');
+  final userId = UserId(kUserIdAlpha);
+  final collectionId = CollectionId(kCollectionIdAlpha);
 
   setUp(() {
     mockRepo = MockCollectionRepository();

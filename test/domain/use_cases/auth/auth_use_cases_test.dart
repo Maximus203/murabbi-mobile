@@ -16,6 +16,7 @@ import 'package:murabbi_mobile/domain/use_cases/auth/watch_auth_state_use_case.d
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../../helpers/test_uuids.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -23,7 +24,7 @@ void main() {
   late MockAuthRepository mockRepo;
 
   final testUser = User(
-    id: UserId('user-uuid-001'),
+    id: UserId(kUserIdAlpha),
     pseudo: Pseudonym('Cherif'),
     email: NonEmptyString('cherif@example.com'),
     createdAt: DateTime(2026, 1, 1),
@@ -212,7 +213,7 @@ void main() {
 
   group('DeleteAccountUseCase', () {
     late DeleteAccountUseCase useCase;
-    final userId = UserId('user-uuid-001');
+    final userId = UserId(kUserIdAlpha);
 
     setUp(() => useCase = DeleteAccountUseCase(mockRepo));
 

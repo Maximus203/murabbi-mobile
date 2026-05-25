@@ -7,6 +7,7 @@ import 'package:murabbi_mobile/domain/use_cases/auth/update_profile_use_case.dar
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../../helpers/test_uuids.dart';
 
 class _MockUserRepository extends Mock implements UserRepository {}
 
@@ -15,7 +16,7 @@ void main() {
   late UpdateProfileUseCase useCase;
 
   final baseUser = User(
-    id: UserId('user-1'),
+    id: UserId(kUserIdAlpha),
     pseudo: Pseudonym('Ancien'),
     email: NonEmptyString('cherif@example.com'),
     createdAt: DateTime(2026, 1, 1),

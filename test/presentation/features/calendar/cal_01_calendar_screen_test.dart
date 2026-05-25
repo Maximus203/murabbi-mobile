@@ -20,6 +20,7 @@ import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/calendar/screens/cal_01_calendar_screen.dart';
 import 'package:murabbi_mobile/presentation/theme/app_theme.dart';
+import '../../../helpers/test_uuids.dart';
 
 class _MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -28,7 +29,7 @@ class _MockPrayerRepository extends Mock implements PrayerRepository {}
 class _MockHabitRepository extends Mock implements HabitRepository {}
 
 final _user = User(
-  id: UserId('user-1'),
+  id: UserId(kUserIdAlpha),
   pseudo: Pseudonym('Cherif'),
   email: NonEmptyString('cherif@example.com'),
   createdAt: DateTime(2026, 1, 1),
@@ -41,8 +42,8 @@ void main() {
   late _MockHabitRepository habit;
 
   setUpAll(() {
-    registerFallbackValue(UserId('user-1'));
-    registerFallbackValue(HabitId('habit-1'));
+    registerFallbackValue(UserId(kUserIdAlpha));
+    registerFallbackValue(HabitId(kHabitIdAlpha));
     registerFallbackValue(DateTime(2026));
   });
 

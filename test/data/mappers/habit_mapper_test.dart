@@ -9,12 +9,13 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_unit.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_value.dart';
 import 'package:murabbi_mobile/domain/value_objects/time_of_day_value.dart';
+import '../../helpers/test_uuids.dart';
 
 void main() {
   Map<String, dynamic> baseRow() => {
-    'id': 'habit-1',
+    'id': kHabitIdAlpha,
     'name': 'Lire le Coran',
-    'category_id': 'cat-religion',
+    'category_id': kCategoryIdReligion,
     'frequency_type': 'daily',
     'frequency': 1,
     'monthly_day': null,
@@ -34,9 +35,9 @@ void main() {
     test('maps a minimal daily habit with all optional columns null', () {
       final habit = HabitMapper.fromRow(baseRow());
 
-      expect(habit.id, HabitId('habit-1'));
+      expect(habit.id, HabitId(kHabitIdAlpha));
       expect(habit.name, NonEmptyString('Lire le Coran'));
-      expect(habit.categoryId, CategoryId('cat-religion'));
+      expect(habit.categoryId, CategoryId(kCategoryIdReligion));
       expect(habit.frequencyType, HabitFrequencyType.daily);
       expect(habit.frequency, 1);
       expect(habit.monthlyDay, isNull);
@@ -120,7 +121,7 @@ void main() {
       final habit = HabitMapper.fromRow(baseRow());
       final row = HabitMapper.toRow(habit);
       expect(row['name'], 'Lire le Coran');
-      expect(row['category_id'], 'cat-religion');
+      expect(row['category_id'], kCategoryIdReligion);
       expect(row['frequency_type'], 'daily');
       expect(row['monthly_day'], isNull);
       expect(row['range_start'], isNull);
@@ -158,7 +159,7 @@ void main() {
         final habit = Habit(
           id: HabitId('habit-user'),
           name: NonEmptyString('Ma routine'),
-          categoryId: CategoryId('cat-1'),
+          categoryId: CategoryId(kCategoryIdAlpha),
           frequencyType: HabitFrequencyType.daily,
           frequency: 1,
           activeDays: const {1, 2, 3, 4, 5, 6, 7},
@@ -177,7 +178,7 @@ void main() {
         final habit = Habit(
           id: HabitId('habit-sys'),
           name: NonEmptyString('Habitude système'),
-          categoryId: CategoryId('cat-1'),
+          categoryId: CategoryId(kCategoryIdAlpha),
           frequencyType: HabitFrequencyType.daily,
           frequency: 1,
           activeDays: const {1},

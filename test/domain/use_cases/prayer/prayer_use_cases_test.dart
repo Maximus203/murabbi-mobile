@@ -7,12 +7,13 @@ import 'package:murabbi_mobile/domain/use_cases/prayer/get_prayer_history_use_ca
 import 'package:murabbi_mobile/domain/use_cases/prayer/get_today_prayers_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/prayer/mark_prayer_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../../helpers/test_uuids.dart';
 
 class MockPrayerRepository extends Mock implements PrayerRepository {}
 
 void main() {
   late MockPrayerRepository mockRepo;
-  final userId = UserId('user-uuid-001');
+  final userId = UserId(kUserIdAlpha);
   final today = DateTime(2026, 4, 27);
 
   final testDay = PrayerDay(

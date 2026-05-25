@@ -12,6 +12,7 @@ import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../helpers/test_uuids.dart';
 
 class _MockHabitDataSource extends Mock implements HabitDataSource {}
 
@@ -29,10 +30,10 @@ void main() {
 
   const userIdValue = '11111111-1111-1111-1111-111111111111';
 
-  Habit habitFixture({String id = 'habit-1'}) => Habit(
+  Habit habitFixture({String id = kHabitIdAlpha}) => Habit(
     id: HabitId(id),
     name: NonEmptyString('Lire le Coran'),
-    categoryId: CategoryId('cat-religion'),
+    categoryId: CategoryId(kCategoryIdReligion),
     frequencyType: HabitFrequencyType.daily,
     frequency: 1,
     activeDays: const {1, 2, 3, 4, 5, 6, 7},
@@ -63,7 +64,7 @@ void main() {
       ).thenAnswer((_) async => [HabitMapper.toRow(habitFixture())]);
       final habits = await repo.getHabits(UserId(userIdValue));
       expect(habits, hasLength(1));
-      expect(habits.first.id, HabitId('habit-1'));
+      expect(habits.first.id, HabitId(kHabitIdAlpha));
     });
   });
 
@@ -77,7 +78,7 @@ void main() {
         userId: UserId(userIdValue),
         habit: habit,
       );
-      expect(created.id, HabitId('habit-1'));
+      expect(created.id, HabitId(kHabitIdAlpha));
       final captured =
           verify(() => ds.createHabit(captureAny())).captured.single
               as Map<String, dynamic>;
@@ -99,9 +100,9 @@ void main() {
 
   group('deleteHabit', () {
     test('delegates to the datasource', () async {
-      when(() => ds.deleteHabit('habit-1')).thenAnswer((_) async {});
-      await repo.deleteHabit(HabitId('habit-1'));
-      verify(() => ds.deleteHabit('habit-1')).called(1);
+      when(() => ds.deleteHabit(kHabitIdAlpha)).thenAnswer((_) async {});
+      await repo.deleteHabit(HabitId(kHabitIdAlpha));
+      verify(() => ds.deleteHabit(kHabitIdAlpha)).called(1);
     });
   });
 
@@ -111,23 +112,23 @@ void main() {
       () async {
         when(
           () => ds.toggleHabitLog(
-            habitId: 'habit-1',
+            habitId: kHabitIdAlpha,
             date: DateTime.utc(2026, 5, 9),
             status: 'ontime',
           ),
         ).thenAnswer(
-          (_) async => {'habit_id': 'habit-1', 'date': '2026-05-09'},
+          (_) async => {'habit_id': kHabitIdAlpha, 'date': '2026-05-09'},
         );
 
         await repo.toggleHabitLog(
-          habitId: HabitId('habit-1'),
+          habitId: HabitId(kHabitIdAlpha),
           date: DateTime.utc(2026, 5, 9),
           status: HabitLogStatus.onTime,
         );
 
         verify(
           () => ds.toggleHabitLog(
-            habitId: 'habit-1',
+            habitId: kHabitIdAlpha,
             date: DateTime.utc(2026, 5, 9),
             status: 'ontime',
           ),
@@ -152,7 +153,7 @@ void main() {
 
         expect(
           () => repo.toggleHabitLog(
-            habitId: HabitId('habit-1'),
+            habitId: HabitId(kHabitIdAlpha),
             date: DateTime.utc(2099, 1, 1),
             status: HabitLogStatus.onTime,
           ),
@@ -176,7 +177,7 @@ void main() {
 
       expect(
         () => repo.toggleHabitLog(
-          habitId: HabitId('habit-1'),
+          habitId: HabitId(kHabitIdAlpha),
           date: DateTime.utc(2020, 1, 1),
           status: HabitLogStatus.onTime,
         ),
@@ -197,7 +198,7 @@ void main() {
         ).thenAnswer((_) async => {});
 
         await repo.toggleHabitLog(
-          habitId: HabitId('habit-1'),
+          habitId: HabitId(kHabitIdAlpha),
           date: DateTime.utc(2026, 5, 9),
           status: HabitLogStatus.onTime,
         );
@@ -212,7 +213,7 @@ void main() {
       when(() => ds.upsertHabitLog(any())).thenAnswer((_) async {});
       await repo.logHabit(
         HabitLog(
-          habitId: HabitId('habit-1'),
+          habitId: HabitId(kHabitIdAlpha),
           date: DateTime.utc(2026, 5, 9),
           status: HabitLogStatus.late,
           actualValue: 12,
@@ -266,17 +267,17 @@ void main() {
     test('forwards the date range and maps rows', () async {
       when(
         () => ds.getLogsForHabit(
-          habitId: 'habit-1',
+          habitId: kHabitIdAlpha,
           from: '2026-05-01',
           to: '2026-05-09',
         ),
       ).thenAnswer(
         (_) async => [
-          {'habit_id': 'habit-1', 'date': '2026-05-02', 'status': 'ontime'},
+          {'habit_id': kHabitIdAlpha, 'date': '2026-05-02', 'status': 'ontime'},
         ],
       );
       final logs = await repo.getLogsForHabit(
-        habitId: HabitId('habit-1'),
+        habitId: HabitId(kHabitIdAlpha),
         from: DateTime.utc(2026, 5, 1),
         to: DateTime.utc(2026, 5, 9),
       );

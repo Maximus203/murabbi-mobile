@@ -18,6 +18,7 @@ import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
+import '../../../../helpers/test_uuids.dart';
 
 class _MockAuthRepo extends Mock implements AuthRepository {}
 
@@ -25,7 +26,7 @@ void main() {
   late _MockAuthRepo authRepo;
 
   final testUser = User(
-    id: UserId('user-001'),
+    id: UserId(kUserIdAlpha),
     pseudo: Pseudonym('Cherif'),
     email: NonEmptyString('cherif@example.com'),
     createdAt: DateTime.utc(2026, 1, 1),
@@ -59,7 +60,7 @@ void main() {
   Habit makeHabit(String id, String name) => Habit(
     id: HabitId(id),
     name: NonEmptyString(name),
-    categoryId: CategoryId('cat-religion'),
+    categoryId: CategoryId(kCategoryIdReligion),
     frequencyType: HabitFrequencyType.daily,
     frequency: 1,
     activeDays: const {1, 2, 3, 4, 5, 6, 7},

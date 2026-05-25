@@ -19,6 +19,7 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/time_of_day_value.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../helpers/test_uuids.dart';
 
 void main() {
   group('PrayerStatus enum', () {
@@ -60,8 +61,8 @@ void main() {
   });
 
   group('Habit with frequencyType', () {
-    final habitId = HabitId('habit-uuid-001');
-    final catId = CategoryId('cat-uuid-001');
+    final habitId = HabitId(kHabitIdAlpha);
+    final catId = CategoryId(kCategoryIdAlpha);
 
     test('creates with daily frequencyType', () {
       final habit = Habit(
@@ -183,7 +184,7 @@ void main() {
   });
 
   group('User entity', () {
-    final userId = UserId('user-uuid-001');
+    final userId = UserId(kUserIdAlpha);
 
     test('creates with valid fields', () {
       final now = DateTime.now();
@@ -256,14 +257,14 @@ void main() {
     test('two users with different ids are not equal', () {
       final now = DateTime.now();
       final a = User(
-        id: UserId('user-uuid-001'),
+        id: UserId(kUserIdAlpha),
         pseudo: Pseudonym('Cherif'),
         email: NonEmptyString('cherif@example.com'),
         createdAt: now,
         level: Level.aspirant,
       );
       final b = User(
-        id: UserId('user-uuid-002'),
+        id: UserId(kUserIdBeta),
         pseudo: Pseudonym('Cherif'),
         email: NonEmptyString('cherif@example.com'),
         createdAt: now,
@@ -274,7 +275,7 @@ void main() {
   });
 
   group('PrayerDay entity', () {
-    final userId = UserId('user-uuid-001');
+    final userId = UserId(kUserIdAlpha);
     final today = DateTime(2026, 4, 27);
 
     test('creates with valid fields, all prayers pending', () {
@@ -334,7 +335,7 @@ void main() {
   });
 
   group('Category entity', () {
-    final catId = CategoryId('cat-uuid-001');
+    final catId = CategoryId(kCategoryIdAlpha);
 
     test('creates with valid fields', () {
       final cat = Category(
@@ -412,8 +413,8 @@ void main() {
   });
 
   group('Habit entity', () {
-    final habitId = HabitId('habit-uuid-001');
-    final catId = CategoryId('cat-uuid-001');
+    final habitId = HabitId(kHabitIdAlpha);
+    final catId = CategoryId(kCategoryIdAlpha);
 
     test('creates with valid fields', () {
       final habit = Habit(
@@ -491,8 +492,8 @@ void main() {
   });
 
   group('Habit monthlyDay invariant', () {
-    final habitId = HabitId('habit-uuid-001');
-    final catId = CategoryId('cat-uuid-001');
+    final habitId = HabitId(kHabitIdAlpha);
+    final catId = CategoryId(kCategoryIdAlpha);
 
     Habit buildMonthly({int? monthlyDay}) => Habit(
       id: habitId,
@@ -552,8 +553,8 @@ void main() {
   });
 
   group('Habit time range invariant', () {
-    final habitId = HabitId('habit-uuid-001');
-    final catId = CategoryId('cat-uuid-001');
+    final habitId = HabitId(kHabitIdAlpha);
+    final catId = CategoryId(kCategoryIdAlpha);
 
     Habit buildWithRange({
       TimeOfDayValue? rangeStart,
@@ -622,7 +623,7 @@ void main() {
   });
 
   group('HabitLog entity', () {
-    final habitId = HabitId('habit-uuid-001');
+    final habitId = HabitId(kHabitIdAlpha);
     final date = DateTime(2026, 4, 27);
 
     test('creates with valid fields', () {
@@ -651,8 +652,8 @@ void main() {
   });
 
   group('Collection entity', () {
-    final collId = CollectionId('coll-uuid-001');
-    final habitIds = [HabitId('h-1'), HabitId('h-2')];
+    final collId = CollectionId(kCollectionIdAlpha);
+    final habitIds = [HabitId(kHabitIdAlpha), HabitId(kHabitIdBeta)];
 
     test('creates with valid fields', () {
       final coll = Collection(
@@ -761,7 +762,7 @@ void main() {
   });
 
   group('UserScore entity', () {
-    final userId = UserId('user-uuid-001');
+    final userId = UserId(kUserIdAlpha);
 
     test('creates with valid fields', () {
       final score = UserScore(
@@ -865,7 +866,7 @@ void main() {
   });
 
   group('DailyNiyyah entity', () {
-    final userId = UserId('user-uuid-001');
+    final userId = UserId(kUserIdAlpha);
     final today = DateTime(2026, 4, 28);
 
     test('creates with valid fields', () {

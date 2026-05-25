@@ -4,12 +4,13 @@ import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/repositories/habit_repository.dart';
 import 'package:murabbi_mobile/domain/use_cases/habits/toggle_habit_log_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
+import '../../../helpers/test_uuids.dart';
 
 class _MockHabitRepository extends Mock implements HabitRepository {}
 
 void main() {
   late _MockHabitRepository repo;
-  final habitId = HabitId('habit-001');
+  final habitId = HabitId(kHabitIdAlpha);
   final date = DateTime.utc(2026, 5, 17);
 
   setUpAll(() {

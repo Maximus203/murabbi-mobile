@@ -10,6 +10,7 @@ import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
+import '../../helpers/test_uuids.dart';
 
 class MockSupabaseCollectionDataSource extends Mock
     implements SupabaseCollectionDataSource {}
@@ -22,7 +23,7 @@ class _StubResolver implements CurrentUserIdResolver {
 }
 
 Collection _collection({
-  String id = 'c-1',
+  String id = kCollectionIdAlpha,
   String name = 'Matin',
   bool isSystem = false,
   bool isActive = false,
@@ -31,7 +32,7 @@ Collection _collection({
   id: CollectionId(id),
   name: NonEmptyString(name),
   description: NonEmptyString('Desc'),
-  habitIds: (habitIds ?? ['h-1']).map(HabitId.new).toList(),
+  habitIds: (habitIds ?? [kHabitIdAlpha]).map(HabitId.new).toList(),
   isSystem: isSystem,
   isActive: isActive,
 );
@@ -40,8 +41,8 @@ void main() {
   late MockSupabaseCollectionDataSource ds;
   late _StubResolver resolver;
   late CollectionRepositoryImpl repo;
-  final userId = UserId('u-1');
-  final collectionId = CollectionId('c-1');
+  final userId = UserId(kUserIdAlpha);
+  final collectionId = CollectionId(kCollectionIdAlpha);
 
   setUpAll(() {
     registerFallbackValue(UserId('fallback'));
@@ -49,7 +50,7 @@ void main() {
 
   setUp(() {
     ds = MockSupabaseCollectionDataSource();
-    resolver = _StubResolver('u-1');
+    resolver = _StubResolver(kUserIdAlpha);
     repo = CollectionRepositoryImpl(ds, currentUserIdResolver: resolver);
   });
 
@@ -81,7 +82,7 @@ void main() {
 
   group('createCollection', () {
     test('délègue au datasource et renvoie l\'entité créée', () async {
-      final collection = _collection(id: 'c-new', name: 'Lecture');
+      final collection = _collection(id: kCollectionIdBeta, name: 'Lecture');
 
       when(
         () => ds.createCollection(collection: collection, userId: userId),
@@ -92,7 +93,7 @@ void main() {
         collection: collection,
       );
 
-      expect(result.id, CollectionId('c-new'));
+      expect(result.id, CollectionId(kCollectionIdBeta));
       verify(
         () => ds.createCollection(collection: collection, userId: userId),
       ).called(1);

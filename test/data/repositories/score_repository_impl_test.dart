@@ -4,6 +4,7 @@ import 'package:murabbi_mobile/data/datasources/score_data_source.dart';
 import 'package:murabbi_mobile/data/repositories/score_repository_impl.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../helpers/test_uuids.dart';
 
 class MockScoreDataSource extends Mock implements ScoreDataSource {}
 
@@ -18,16 +19,16 @@ void main() {
 
   group('getUserScore', () {
     test('mappe la row datasource en UserScore avec niveau dérivé', () async {
-      when(() => ds.getUserScore('u-1')).thenAnswer(
+      when(() => ds.getUserScore(kUserIdAlpha)).thenAnswer(
         (_) async => {
-          'user_id': 'u-1',
+          'user_id': kUserIdAlpha,
           'total_points': 30000,
           'weekly_score': 90,
           'rank': 2,
         },
       );
 
-      final score = await repo.getUserScore(UserId('u-1'));
+      final score = await repo.getUserScore(UserId(kUserIdAlpha));
 
       expect(score.totalPoints, 30000);
       expect(score.currentLevel, Level.salik);
@@ -40,7 +41,7 @@ void main() {
       when(() => ds.getLeaderboard(limit: 20)).thenAnswer(
         (_) async => [
           {
-            'user_id': 'u-1',
+            'user_id': kUserIdAlpha,
             'total_points': 100,
             'weekly_score': 50,
             'rank': 1,

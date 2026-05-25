@@ -10,15 +10,16 @@ import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../../helpers/test_uuids.dart';
 
 class MockCategoryRepository extends Mock implements CategoryRepository {}
 
 void main() {
   late MockCategoryRepository mockRepo;
-  final userId = UserId('user-uuid-001');
+  final userId = UserId(kUserIdAlpha);
 
   final testCategory = Category(
-    id: CategoryId('cat-uuid-001'),
+    id: CategoryId(kCategoryIdAlpha),
     name: NonEmptyString('Sport'),
     color: HexColor('#4A5568'),
     icon: 'activity',
@@ -92,7 +93,7 @@ void main() {
     setUp(() => useCase = DeleteCategoryUseCase(mockRepo));
 
     test('delegates to repository.deleteCategory', () async {
-      final categoryId = CategoryId('cat-uuid-001');
+      final categoryId = CategoryId(kCategoryIdAlpha);
       when(() => mockRepo.deleteCategory(categoryId)).thenAnswer((_) async {});
 
       await useCase(categoryId);

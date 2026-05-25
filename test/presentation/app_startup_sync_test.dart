@@ -9,6 +9,7 @@ import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/app.dart';
 import 'package:murabbi_mobile/services/sync/sync_service.dart';
+import '../helpers/test_uuids.dart';
 
 class _MockSyncService extends Mock implements SyncService {}
 
@@ -20,7 +21,7 @@ class _MockSyncService extends Mock implements SyncService {}
 /// - current_streak : 0 (DEFAULT)
 /// - completion_rate : 0.0 (DEFAULT)
 final _testUser = User(
-  id: UserId('a1b2c3d4-e5f6-7890-abcd-ef1234567890'),
+  id: UserId(kUserIdAlpha),
   pseudo: Pseudonym('Ibrahim'),
   email: NonEmptyString('ibrahim@example.com'),
   createdAt: DateTime(2026, 1, 1),

@@ -13,13 +13,14 @@ import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_subtask_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
+import '../../../helpers/test_uuids.dart';
 
 class _MockHabitRepository extends Mock implements HabitRepository {}
 
 class _MockPseudonymRepository extends Mock implements PseudonymRepository {}
 
 void main() {
-  final habitId = HabitId('habit-uuid-001');
+  final habitId = HabitId(kHabitIdAlpha);
   final subtaskId = HabitSubtaskId('s-1');
   final subtask = HabitSubtask(
     id: subtaskId,

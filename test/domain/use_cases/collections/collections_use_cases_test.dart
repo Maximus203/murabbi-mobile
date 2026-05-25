@@ -9,18 +9,19 @@ import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../../helpers/test_uuids.dart';
 
 class MockCollectionRepository extends Mock implements CollectionRepository {}
 
 void main() {
   late MockCollectionRepository mockRepo;
-  final userId = UserId('user-uuid-001');
+  final userId = UserId(kUserIdAlpha);
 
   final testCollection = Collection(
-    id: CollectionId('coll-uuid-001'),
+    id: CollectionId(kCollectionIdAlpha),
     name: NonEmptyString('Morning routine'),
     description: NonEmptyString('Start the day right'),
-    habitIds: [HabitId('h-1'), HabitId('h-2')],
+    habitIds: [HabitId(kHabitIdAlpha), HabitId(kHabitIdBeta)],
     isSystem: false,
     isActive: false,
   );
@@ -72,7 +73,7 @@ void main() {
 
   group('ActivateCollectionUseCase', () {
     late ActivateCollectionUseCase useCase;
-    final collectionId = CollectionId('coll-uuid-001');
+    final collectionId = CollectionId(kCollectionIdAlpha);
 
     setUp(() => useCase = ActivateCollectionUseCase(mockRepo));
 

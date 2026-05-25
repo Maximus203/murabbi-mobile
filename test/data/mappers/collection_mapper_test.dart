@@ -4,6 +4,7 @@ import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
+import '../../helpers/test_uuids.dart';
 
 /// Mapper pur — rows Supabase `collections` + agrégation `habitIds` depuis
 /// `published_catalog` ↔ entité [Collection] (issue #162).
@@ -23,9 +24,9 @@ void main() {
         'description': 'Bien démarrer la journée',
         'is_system': true,
         'cover_image_url': 'https://cdn/x.jpg',
-        'habit_ids': ['h-1', 'h-2'],
+        'habit_ids': [kHabitIdAlpha, kHabitIdBeta],
         'user_collections': [
-          {'user_id': 'u-1'},
+          {'user_id': kUserIdAlpha},
         ],
       };
 
@@ -35,7 +36,7 @@ void main() {
       expect(c.name.value, 'Routine du matin');
       expect(c.isSystem, true);
       expect(c.isActive, true);
-      expect(c.habitIds, [HabitId('h-1'), HabitId('h-2')]);
+      expect(c.habitIds, [HabitId(kHabitIdAlpha), HabitId(kHabitIdBeta)]);
       expect(c.coverImageUrl, 'https://cdn/x.jpg');
     });
 
