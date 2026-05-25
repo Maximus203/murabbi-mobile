@@ -31,7 +31,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 /// fluent API Supabase est trop fragile à mocker, couverte par les
 /// integration tests).
 class SupabaseHabitDataSource implements HabitDataSource {
-
   final sb.SupabaseClient _client;
 
   /// Wrapper JWT auto-refresh (BUG-001, #190) — appelé en tête de chaque
@@ -59,7 +58,11 @@ class SupabaseHabitDataSource implements HabitDataSource {
   @override
   Future<Map<String, dynamic>> createHabit(Map<String, dynamic> row) async {
     await _wrapper.ensureFreshSession();
-    final created = await _client.from(SupabaseTables.habits).insert(row).select().single();
+    final created = await _client
+        .from(SupabaseTables.habits)
+        .insert(row)
+        .select()
+        .single();
     return Map<String, dynamic>.from(created);
   }
 
@@ -85,7 +88,9 @@ class SupabaseHabitDataSource implements HabitDataSource {
   Future<void> upsertHabitLog(Map<String, dynamic> row) async {
     await _wrapper.ensureFreshSession();
     try {
-      await _client.from(SupabaseTables.habitLogs).upsert(row, onConflict: 'habit_id,date');
+      await _client
+          .from(SupabaseTables.habitLogs)
+          .upsert(row, onConflict: 'habit_id,date');
     } on sb.PostgrestException catch (e) {
       // Issue #198 (M4) : la contrainte UNIQUE (habit_id, logged_date)
       // côté Supabase peut lever code 23505 sur double-tap concurrent.
@@ -162,27 +167,31 @@ class SupabaseHabitDataSource implements HabitDataSource {
 
 /// Traduit une [sb.PostgrestException] en [HabitFailure] typée.
 ///
-/// Codes Postgres reconnus :
-/// - `23505` (unique_violation) → [HabitFailure.duplicate] (cf. issue #198 / M4)
+/// Codes Postgres natifs reconnus :
+/// - `23505` (unique_violation) → [HabitFailure.duplicate] (#198 / M4)
 ///
-/// Marqueurs sémantiques RPC `toggle_habit_log` (cf. #164) :
-/// - `FUTURE_LOG_NOT_ALLOWED` dans le message → [HabitFailure.futureLogNotAllowed]
-/// - `BACKDATE_TOO_OLD` dans le message → [HabitFailure.backdateTooOld]
+/// Codes sémantiques RPC `toggle_habit_log` (migration 20260523000001).
+/// Utilise `==` et non `.contains()` — PostgreSQL pose le code exactement
+/// dans `message` via `RAISE EXCEPTION 'CODE' USING HINT = '...'` :
+/// - `FUTURE_LOG_NOT_ALLOWED` → [HabitFailure.futureLogNotAllowed]
+/// - `BACKDATE_TOO_OLD`       → [HabitFailure.backdateTooOld]
+/// - `HABIT_NOT_FOUND`        → [HabitFailure.unauthorized] (ownership raté)
+/// - `AUTH_REQUIRED`          → [HabitFailure.unauthorized]
 ///
 /// Sinon → [HabitFailure.database] (message + code transportés pour debug).
 HabitFailure mapHabitPostgrestException(sb.PostgrestException e) {
   if (e.code == '23505') {
     return HabitFailure.duplicate(message: '${e.message} (${e.code})');
   }
-  if (e.message.contains('FUTURE_LOG_NOT_ALLOWED')) {
-    return const HabitFailure.futureLogNotAllowed(
+  return switch (e.message) {
+    'FUTURE_LOG_NOT_ALLOWED' => const HabitFailure.futureLogNotAllowed(
       message: 'Impossible de logger une date future',
-    );
-  }
-  if (e.message.contains('BACKDATE_TOO_OLD')) {
-    return const HabitFailure.backdateTooOld(
+    ),
+    'BACKDATE_TOO_OLD' => const HabitFailure.backdateTooOld(
       message: 'Rétrodatation limitée à 8 jours',
-    );
-  }
-  return HabitFailure.database(message: '${e.message} (${e.code})');
+    ),
+    'HABIT_NOT_FOUND' ||
+    'AUTH_REQUIRED' => HabitFailure.unauthorized(message: e.message),
+    _ => HabitFailure.database(message: '${e.message} (${e.code})'),
+  };
 }
