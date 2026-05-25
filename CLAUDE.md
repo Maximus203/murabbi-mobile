@@ -593,6 +593,15 @@ Tu refuses de merger. Tu signales et tu corriges avant de continuer.
 - CDC complet, design briefs, wireframes admin, schéma Supabase complet, ADRs cross-cutting.
 - Demande au PO ou copie locale read-only — ces fichiers ne doivent **pas** être commités dans `murabbi-mobile/` (cf. règle racine S-11).
 
+## Schéma de base de données
+**Source de vérité unique** : `../docs/schema/database_schema.md`
+(chemin relatif depuis la racine de chaque repo)
+- Lecture seule pour les agents — ne jamais modifier sans validation PO
+- Avant tout mapping Dart ↔ SQL ou toute migration, consulter ce fichier
+- Si la version a changé depuis ta dernière session, relire intégralement
+  et mettre à jour les mappers/tests impactés
+- En cas de contradiction entre le code et ce fichier, **ce fichier a raison**
+
 ---
 
 ## 15. Build & Run
