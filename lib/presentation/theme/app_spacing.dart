@@ -109,6 +109,10 @@ class AppComponentSize {
 
   /// 88px — illustration empty state principal.
   static const double emptyStateMd = 88;
+
+  /// 108px — hauteur contractuelle d'une tuile stat du dashboard HM-01.
+  /// Garantit une hauteur identique avec ou sans sous-label.
+  static const double statTile = 108;
 }
 
 /// Largeurs de bordure — grammaire ternaire volontaire.

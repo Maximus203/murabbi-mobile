@@ -80,7 +80,7 @@ void main() {
       );
       await tester.pump(const Duration(seconds: 1));
 
-      expect(find.text('18 pts'), findsOneWidget);
+      expect(find.text('18 / 30 pts'), findsOneWidget);
       expect(find.text('Score du jour · objectif 30 pts'), findsOneWidget);
     });
 
@@ -131,7 +131,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Série'), findsOneWidget);
+      expect(find.text('STREAK'), findsOneWidget);
       expect(find.text('7 j'), findsOneWidget);
       expect(find.text('3/5'), findsOneWidget);
       expect(find.text('2/4'), findsOneWidget);

@@ -38,25 +38,25 @@ class DashboardStatsGrid extends StatelessWidget {
     final tiles = [
       _StatTile(
         icon: LucideIcons.flame,
-        label: 'Série',
+        label: 'STREAK',
         value: '$streakDays j',
         subLabel: streakSubLabel,
       ),
       _StatTile(
         icon: LucideIcons.moonStar,
-        label: 'Salat',
+        label: 'SALAT',
         value: salatLabel,
         subLabel: salatSubLabel,
       ),
       _StatTile(
         icon: LucideIcons.listChecks,
-        label: 'Habitudes',
+        label: 'HABITUDES',
         value: habitsLabel,
         subLabel: habitsSubLabel,
       ),
       _StatTile(
         icon: LucideIcons.trophy,
-        label: 'Classement',
+        label: 'CLASSEMENT',
         value: '#$weeklyRank',
         subLabel: rankSubLabel,
       ),
@@ -106,31 +106,40 @@ class _StatTile extends StatelessWidget {
     return Semantics(
       label: subLabel != null ? '$label : $value · $subLabel' : '$label : $value',
       excludeSemantics: true,
-      child: AppCard(
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 18, color: AppColors.accent),
-            const SizedBox(height: AppSpacing.s2),
-            Text(value, style: AppTypography.h3),
-            const SizedBox(height: AppSpacing.s1),
-            Text(
-              label,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textSecondary,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: AppComponentSize.statTile),
+        child: AppCard(
+          padding: const EdgeInsets.all(AppSpacing.s4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: AppIconSize.sm, color: AppColors.accent),
+                  const SizedBox(width: AppSpacing.s2),
+                  Text(
+                    label,
+                    style: AppTypography.label.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            if (subLabel != null) ...[
+              const SizedBox(height: AppSpacing.s3),
+              Text(value, style: AppTypography.h2),
               const SizedBox(height: AppSpacing.s1),
+              // Toujours rendu pour garantir une hauteur de tuile constante.
               Text(
-                subLabel!,
+                subLabel ?? '',
                 style: AppTypography.caption.copyWith(
-                  color: AppColors.accent,
+                  color: subLabel != null
+                      ? AppColors.accent
+                      : Colors.transparent,
                 ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );

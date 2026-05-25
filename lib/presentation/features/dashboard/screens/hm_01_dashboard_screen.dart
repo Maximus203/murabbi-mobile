@@ -150,7 +150,7 @@ class _DashboardBody extends ConsumerWidget {
         children: [
           // ── En-tête ────────────────────────────────────────────────
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Column(

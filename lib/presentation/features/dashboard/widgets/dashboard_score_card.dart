@@ -37,7 +37,7 @@ class DashboardScoreCard extends StatelessWidget {
     if (dailySummary != null) {
       ringProgress = dailySummary!.completionRate / 100;
       centerLabel = '${dailySummary!.completionRate.round()}%';
-      mainValue = '${dailySummary!.habitPointsToday} pts';
+      mainValue = '${dailySummary!.habitPointsToday} / ${level.dailyGoal} pts';
       subText = 'Score du jour · objectif ${level.dailyGoal} pts';
     } else {
       final progress = level.progressToNext(score.totalPoints);
