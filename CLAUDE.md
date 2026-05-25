@@ -606,8 +606,8 @@ Tu refuses de merger. Tu signales et tu corriges avant de continuer.
 
 ## 15. Build & Run
 
-> Cible : un dev qui clone le repo doit pouvoir lancer une APK release sur son
-> device en moins de 10 minutes en suivant cette section.
+> Cible : un dev qui clone le repo doit pouvoir lancer l'app sur son device
+> en moins de 5 minutes en suivant cette section.
 >
 > Périmètre : Android uniquement pour l'instant. iOS sera documenté dans une PR
 > ultérieure (nécessite une machine macOS pour valider les commandes).
@@ -619,69 +619,77 @@ Tu refuses de merger. Tu signales et tu corriges avant de continuer.
 | Flutter SDK     | `3.41.x` (Dart `3.11.x`) | `flutter --version`                   |
 | JDK             | `17` (Gradle 8.x)        | `java -version`                       |
 | Android SDK     | platform-tools + API 35  | `flutter doctor --android-licenses`   |
-| `ANDROID_HOME`  | défini                   | `echo $ANDROID_HOME` (Bash) / `echo $env:ANDROID_HOME` (PowerShell) |
+| `ANDROID_HOME`  | défini                   | `echo $env:ANDROID_HOME` (PowerShell) |
 
-La version Flutter cible est fixée par `pubspec.yaml` (`sdk: ^3.11.1`). Tout
-décalage majeur doit être tracé en ADR avant bump.
+La version Flutter cible est fixée par `pubspec.yaml` (`sdk: ^3.11.1`).
 
-Variables d'environnement Supabase à fournir au build (cf.
-[`lib/main.dart`](lib/main.dart) + [`lib/data/datasources/supabase/supabase_client_provider.dart`](lib/data/datasources/supabase/supabase_client_provider.dart)) :
+**Credentials Supabase** — créer `.env.local` à la racine (jamais commité) :
 
-- `SUPABASE_URL` — URL du projet Supabase (ex. `https://xxxx.supabase.co`)
-- `SUPABASE_ANON_KEY` — clé `anon` publique du projet
+```
+SUPABASE_URL=https://<ref>.supabase.co
+SUPABASE_ANON_KEY=<anon-key>
+```
 
-⚠ Aucune clé n'est jamais commitée (règle S-1 / §11). Si les deux variables
-sont absentes, l'app démarre quand même en mode « design » (cf. `main.dart`)
-mais toute requête Supabase échouera proprement.
+Le script de build lit automatiquement `.env.local > .env.cloud > .env`
+(priorité décroissante). Sans credentials, l'app démarre en mode silencieux
+et toute requête Supabase échoue (cf. `main.dart`).
 
-### 15.2 — Lancer en local (debug)
+### 15.2 — Script run_device.ps1 (méthode recommandée)
+
+[`scripts/run_device.ps1`](scripts/run_device.ps1) est le point d'entrée
+unique pour builder, installer et lancer l'app sur un device Android connecté.
+Il lit les credentials depuis les fichiers `.env*`, vérifie qu'un device est
+branché, et passe les `--dart-define` correctement.
+
+```powershell
+# Debug + hot-reload (usage quotidien)
+.\scripts\run_device.ps1
+
+# Release — smoke test perf avant PR
+.\scripts\run_device.ps1 -Release
+
+# Build APK + install sans garder le terminal ouvert
+.\scripts\run_device.ps1 -BuildOnly
+
+# Forcer flutter clean avant build (après changement natif ou pub get)
+.\scripts\run_device.ps1 -Clean
+
+# Multi-device : cibler un device explicite
+.\scripts\run_device.ps1 -Device <device_id>   # adb devices pour lister
+```
+
+Raccourcis disponibles en mode `flutter run` (debug) :
+- `r` — hot reload
+- `R` — hot restart
+- `q` — quitter
+
+**Comportement sur erreur** :
+- Credentials manquants → message d'aide clair + exit 1
+- Aucun device connecté → rappel des étapes (USB + débogage activé) + exit 1
+- Plusieurs devices → demande `-Device <id>` + exit 1
+
+### 15.3 — Commandes manuelles (référence / fallback)
+
+Si le script n'est pas disponible ou pour un usage ponctuel :
 
 ```bash
-# Lance l'app sur le device branché (debug, hot-reload actif)
+# Debug
 flutter run \
-  --dart-define=SUPABASE_URL=<your_supabase_url> \
-  --dart-define=SUPABASE_ANON_KEY=<your_supabase_anon_key>
-```
+  --dart-define=SUPABASE_URL=<url> \
+  --dart-define=SUPABASE_ANON_KEY=<key>
 
-Variante release (plus rapide, mais sans hot-reload) — utile pour valider
-les perf cibles du §10 :
-
-```bash
-# Profile/release sans hot-reload — bench perf, smoke run avant PR
+# Release
 flutter run --release \
-  --dart-define=SUPABASE_URL=<your_supabase_url> \
-  --dart-define=SUPABASE_ANON_KEY=<your_supabase_anon_key>
-```
+  --dart-define=SUPABASE_URL=<url> \
+  --dart-define=SUPABASE_ANON_KEY=<key>
 
-Astuce : `flutter devices` pour lister les devices/émulateurs disponibles
-et `flutter run -d <device_id>` pour cibler explicitement.
-
-### 15.3 — Build APK pour test sur device
-
-```bash
-# Build APK release universel (toutes ABIs) — pratique pour partage rapide
+# Build APK universel
 flutter build apk --release \
-  --dart-define=SUPABASE_URL=<your_supabase_url> \
-  --dart-define=SUPABASE_ANON_KEY=<your_supabase_anon_key>
-# Output : build/app/outputs/flutter-apk/app-release.apk
-```
+  --dart-define=SUPABASE_URL=<url> \
+  --dart-define=SUPABASE_ANON_KEY=<key>
+# → build/app/outputs/flutter-apk/app-release.apk
 
-Variante split par ABI (APK plus légères, à privilégier pour les devices
-réels que tu connais) :
-
-```bash
-# Build APKs séparées par ABI — 3 fichiers, ~30% plus légers à l'installation
-flutter build apk --release --split-per-abi \
-  --dart-define=SUPABASE_URL=<your_supabase_url> \
-  --dart-define=SUPABASE_ANON_KEY=<your_supabase_anon_key>
-# Output : build/app/outputs/flutter-apk/app-{armeabi-v7a,arm64-v8a,x86_64}-release.apk
-```
-
-Installation sur device branché via USB (debug activé dans les options
-développeur Android) :
-
-```bash
-# Installer l'APK sur le device USB connecté
+# Install via adb
 adb install -r build/app/outputs/flutter-apk/app-release.apk
 ```
 
