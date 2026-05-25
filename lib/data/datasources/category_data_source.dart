@@ -9,6 +9,10 @@ abstract interface class CategoryDataSource {
   /// l'utilisateur. Triées par `name`.
   Future<List<Map<String, dynamic>>> getCategories(String userId);
 
+  /// Renvoie la row `categories` correspondant au [slug] pour l'utilisateur
+  /// (catégories système incluses). Retourne `null` si introuvable.
+  Future<Map<String, dynamic>?> getCategoryBySlug(String userId, String slug);
+
   /// Insère une row `categories` et renvoie la row persistée (avec `id`).
   Future<Map<String, dynamic>> createCategory(Map<String, dynamic> row);
 

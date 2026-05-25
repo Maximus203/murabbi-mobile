@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 /// `CategoryRepositoryImpl` (cf. ADR-004 datasource pattern).
 ///
 /// Schéma `categories` consommé : `id, user_id, name, color, icon,
-/// is_system`. Les catégories système ont `user_id` NULL et `is_system`
+/// is_system, slug`. Les catégories système ont `user_id` NULL et `is_system`
 /// true ; `getCategories` les ramène en plus de celles de l'utilisateur via
 /// un filtre `or(user_id.eq.<id>, is_system.eq.true)`.
 ///
@@ -36,6 +36,21 @@ class SupabaseCategoryDataSource implements CategoryDataSource {
     return rows
         .map<Map<String, dynamic>>((r) => Map<String, dynamic>.from(r))
         .toList();
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getCategoryBySlug(
+    String userId,
+    String slug,
+  ) async {
+    await _wrapper.ensureFreshSession();
+    final row = await _client
+        .from(_table)
+        .select()
+        .or('user_id.eq.$userId,is_system.eq.true')
+        .eq('slug', slug)
+        .maybeSingle();
+    return row == null ? null : Map<String, dynamic>.from(row);
   }
 
   @override

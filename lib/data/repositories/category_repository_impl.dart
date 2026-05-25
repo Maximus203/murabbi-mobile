@@ -68,12 +68,10 @@ class CategoryRepositoryImpl with OwnershipGuard implements CategoryRepository {
   @override
   Future<Category> getCategoryBySlug(UserId userId, String slug) async {
     await _guardOwnership(userId);
-    final rows = await _ds.getCategories(userId.value);
-    final categories = rows.map(CategoryMapper.fromRow);
-    try {
-      return categories.firstWhere((c) => c.slug == slug);
-    } on StateError {
+    final row = await _ds.getCategoryBySlug(userId.value, slug);
+    if (row == null) {
       throw CategoryFailure.notFound(message: 'No category with slug "$slug"');
     }
+    return CategoryMapper.fromRow(row);
   }
 }
