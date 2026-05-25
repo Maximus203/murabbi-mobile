@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_settings.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_times.dart';
 import 'package:murabbi_mobile/domain/errors/prayer_failure.dart';
@@ -86,7 +85,7 @@ void main() {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
 
-    expect(find.text('As-salāmu ʿalaykum'), findsOneWidget);
+    expect(find.text('ASSALAMU ALAYKUM'), findsOneWidget);
     expect(find.text('PROCHAINE PRIÈRE'), findsOneWidget);
     expect(find.text('Dhuhr'), findsOneWidget);
   });
@@ -165,12 +164,12 @@ void main() {
   });
 
   testWidgets(
-    'UX-5 : icône Bell absente, avatar remplace l\'accès aux paramètres (#58)',
+    'UX-5 : icône Bell présente dans le header, avatar affiche l\'initiale (#58)',
     (tester) async {
       await tester.pumpWidget(pumpable());
       await tester.pumpAndSettle();
-      // Bell supprimé — l'avatar est désormais le point d'entrée paramètres.
-      expect(find.byIcon(lu(LucideIcons.bell)), findsNothing);
+      // Bell réintroduit dans le header (redesign HM-01).
+      expect(find.byIcon(LucideIcons.bell), findsOneWidget);
       // L'avatar circulaire affiche l'initiale (user null → '?').
       expect(find.text('?'), findsOneWidget);
     },

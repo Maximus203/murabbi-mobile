@@ -157,9 +157,9 @@ class _DashboardBody extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'As-salāmu ʿalaykum',
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.accent,
+                      'ASSALAMU ALAYKUM',
+                      style: AppTypography.label.copyWith(
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.s1),
@@ -174,6 +174,16 @@ class _DashboardBody extends ConsumerWidget {
                   ],
                 ),
               ),
+              Semantics(
+                label: 'Notifications',
+                button: true,
+                child: const Icon(
+                  LucideIcons.bell,
+                  size: 20,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s3),
               GestureDetector(
                 onTap: onOpenSettings,
                 child: Semantics(
@@ -385,9 +395,13 @@ class _StatsCard extends ConsumerWidget {
 /// Card "Intention du jour" — niyyah personnelle ou suggestion système.
 ///
 /// Fond uni beige (AppColors.bgSurface) avec label "INTENTION DU JOUR",
-/// texte de la niyyah, et icône crayon si personnalisable.
+/// texte italique entre guillemets, et icône crayon si personnalisable.
+/// Affiche le fallback même en cas d'erreur Supabase.
 class _NiyyahCard extends ConsumerWidget {
   const _NiyyahCard();
+
+  static const String _fallback =
+      'Je fais cela pour plaire à Allah.';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -395,43 +409,46 @@ class _NiyyahCard extends ConsumerWidget {
 
     return niyyahAsync.when(
       loading: () => const AppSkeletonCard(lineCount: 2),
-      error: (e, _) => const SizedBox.shrink(),
-      data: (resolved) {
-        final text = resolved?.text ?? 'Je fais cela pour plaire à Allah.';
-        final isPersonal = resolved?.isPersonal ?? false;
+      error: (e, _) => _card(text: _fallback, isPersonal: false),
+      data: (resolved) => _card(
+        text: resolved?.text ?? _fallback,
+        isPersonal: resolved?.isPersonal ?? false,
+      ),
+    );
+  }
 
-        return AppCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _card({required String text, required bool isPersonal}) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Text(
-                    'INTENTION DU JOUR',
-                    style: AppTypography.label.copyWith(
-                      color: AppColors.accent,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (isPersonal)
-                    const Icon(
-                      LucideIcons.pencil,
-                      size: 16,
-                      color: AppColors.textTertiary,
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s3),
               Text(
-                text,
-                style: AppTypography.body.copyWith(
-                  color: AppColors.textPrimary,
+                'INTENTION DU JOUR',
+                style: AppTypography.label.copyWith(
+                  color: AppColors.accent,
                 ),
               ),
+              const Spacer(),
+              if (isPersonal)
+                const Icon(
+                  LucideIcons.pencil,
+                  size: 16,
+                  color: AppColors.textTertiary,
+                ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: AppSpacing.s3),
+          Text(
+            '“$text”',
+            style: AppTypography.body.copyWith(
+              color: AppColors.textPrimary,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
