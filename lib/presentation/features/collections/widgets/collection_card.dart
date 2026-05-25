@@ -52,7 +52,7 @@ class CollectionCard extends StatelessWidget {
                 else if (collection.isActive)
                   const Icon(
                     LucideIcons.circleCheck,
-                    size: 18,
+                    size: AppIconSize.md,
                     color: AppColors.success,
                   ),
               ],
@@ -83,7 +83,7 @@ class CollectionCard extends StatelessWidget {
                 ),
                 if (ptsPerDay != null) ...[
                   const SizedBox(width: AppSpacing.s3),
-                  Icon(lu(LucideIcons.zap), size: 12, color: AppColors.accent),
+                  Icon(lu(LucideIcons.zap), size: AppIconSize.xs, color: AppColors.accent),
                   const SizedBox(width: AppSpacing.s1),
                   Text(
                     '$ptsPerDay pts/jour',

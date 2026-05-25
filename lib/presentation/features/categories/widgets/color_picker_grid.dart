@@ -57,8 +57,8 @@ class _ColorSwatch extends StatelessWidget {
         onTap: onTap,
         customBorder: const CircleBorder(),
         child: Container(
-          width: 44,
-          height: 44,
+          width: AppComponentSize.touchTarget,
+          height: AppComponentSize.touchTarget,
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
@@ -74,7 +74,7 @@ class _ColorSwatch extends StatelessWidget {
           child: isSelected
               ? const Icon(
                   LucideIcons.check,
-                  size: 20,
+                  size: AppIconSize.rg,
                   color: AppColors.bgSurface,
                 )
               : null,

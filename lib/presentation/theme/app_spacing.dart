@@ -44,6 +44,73 @@ class AppRadius {
   static const double bottomSheet = 20.0;
 }
 
+/// Tailles d'icônes — hiérarchie sémantique (DS sheet § Iconographie).
+///
+/// Chaque palier correspond à un rôle précis dans l'UI Murabbi.
+/// Toute valeur littérale hors de cette liste est interdite.
+class AppIconSize {
+  AppIconSize._();
+
+  /// 12px — badge micro.
+  static const double xs = 12;
+
+  /// 16px — icône inline (input, bouton, pill, statut salat).
+  static const double sm = 16;
+
+  /// 18px — icône support (stats, banners, glyphe).
+  static const double md = 18;
+
+  /// 20px — icône UI standard (header, tile, formulaires).
+  static const double rg = 20;
+
+  /// 22px — icône navigation (bottom nav, chevrons).
+  static const double nav = 22;
+
+  /// 28px — icône intermédiaire (logo auth, timer icon).
+  static const double semilg = 28;
+
+  /// 32px — icône décorative de section.
+  static const double lg = 32;
+
+  /// 36px — illustration empty state compact.
+  static const double xl = 36;
+
+  /// 48px — illustration empty state large.
+  static const double xxl = 48;
+}
+
+/// Tailles de composants fixes — éléments dont la dimension est contractuelle
+/// avec le DS (cellules, avatars, touch targets…).
+///
+/// À distinguer de [AppIconSize] (icônes SVG) et [AppSpacing] (espacement).
+class AppComponentSize {
+  AppComponentSize._();
+
+  /// 20px — spinner dans un bouton.
+  static const double spinnerSm = 20;
+
+  /// 32px — cellule Heatmap30.
+  static const double heatmapCell = 32;
+
+  /// 36px — petit avatar.
+  static const double avatarSm = 36;
+
+  /// 40px — conteneur icône tile.
+  static const double iconTile = 40;
+
+  /// 44px — touch target minimum a11y.
+  static const double touchTarget = 44;
+
+  /// 48px — cellule sélecteur d'icône HB-04.
+  static const double iconSelectorCell = 48;
+
+  /// 80px — illustration empty state compact.
+  static const double emptyStateSm = 80;
+
+  /// 88px — illustration empty state principal.
+  static const double emptyStateMd = 88;
+}
+
 /// Largeurs de bordure — grammaire ternaire volontaire.
 ///
 /// Décision PO Option A (issue #28) : trois épaisseurs sémantiques distinctes

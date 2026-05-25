@@ -36,7 +36,7 @@ class AuthErrorBanner extends StatelessWidget {
         children: [
           const Icon(
             LucideIcons.circleAlert,
-            size: 18,
+            size: AppIconSize.md,
             color: AppColors.danger,
           ),
           const SizedBox(width: AppSpacing.s2),

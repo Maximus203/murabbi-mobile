@@ -22,6 +22,42 @@ class AppTypography {
   /// Famille arabe — noms de prières, dhikr.
   static const String _notoArabic = 'Noto Sans Arabic';
 
+  /// Display XL 64 / Geist Mono Medium — countdown timer.
+  static const TextStyle displayXl = TextStyle(
+    fontFamily: _geistMono,
+    fontSize: 64,
+    fontWeight: FontWeight.w500,
+    letterSpacing: -1,
+    color: AppColors.textPrimary,
+  );
+
+  /// Display LG 56 / Geist Mono Medium — grand chiffre objectif.
+  static const TextStyle displayLg = TextStyle(
+    fontFamily: _geistMono,
+    fontSize: 56,
+    fontWeight: FontWeight.w500,
+    letterSpacing: -1,
+    color: AppColors.textPrimary,
+  );
+
+  /// Display MD 40 / Geist Mono Medium — affichage nombre de section.
+  static const TextStyle displayMd = TextStyle(
+    fontFamily: _geistMono,
+    fontSize: 40,
+    fontWeight: FontWeight.w500,
+    letterSpacing: -1,
+    color: AppColors.textPrimary,
+  );
+
+  /// Display SM 32 / Geist SemiBold — compteur de section.
+  static const TextStyle displaySm = TextStyle(
+    fontFamily: _geist,
+    fontSize: 32,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.5,
+    color: AppColors.textPrimary,
+  );
+
   /// Display 42 / Geist Mono Medium / -1px tracking.
   static const TextStyle display = TextStyle(
     fontFamily: _geistMono,
@@ -95,5 +131,13 @@ class AppTypography {
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
+  );
+
+  /// Micro 13 / Geist Regular — annotations fine print.
+  static const TextStyle micro = TextStyle(
+    fontFamily: _geist,
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textSecondary,
   );
 }

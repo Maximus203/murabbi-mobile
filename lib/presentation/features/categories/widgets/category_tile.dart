@@ -51,13 +51,13 @@ class CategoryTile extends StatelessWidget {
         children: [
           // Badge icône coloré.
           Container(
-            width: 40,
-            height: 40,
+            width: AppComponentSize.iconTile,
+            height: AppComponentSize.iconTile,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(AppRadius.chip),
             ),
-            child: Icon(categoryIconData(icon), size: 20, color: color),
+            child: Icon(categoryIconData(icon), size: AppIconSize.rg, color: color),
           ),
           const SizedBox(width: AppSpacing.s3),
           Expanded(
@@ -85,7 +85,7 @@ class CategoryTile extends StatelessWidget {
           if (isSystem)
             const Icon(
               LucideIcons.lock,
-              size: 16,
+              size: AppIconSize.sm,
               color: AppColors.textTertiary,
             ),
         ],

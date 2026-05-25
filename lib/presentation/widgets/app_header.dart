@@ -73,7 +73,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               splashRadius: 18,
               icon: Icon(
                 lu(LucideIcons.chevronLeft),
-                size: 20,
+                size: AppIconSize.rg,
                 color: AppColors.textPrimary,
               ),
             )

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:video_player/video_player.dart';
 
 /// Lecteur vidéo en boucle, muet, en couverture (objectFit: cover).
@@ -132,7 +133,7 @@ class _VideoPlaceholder extends StatelessWidget {
       child: Center(
         child: Icon(
           LucideIcons.image,
-          size: 32,
+          size: AppIconSize.lg,
           color: AppColors.accent.withValues(alpha: 0.45),
         ),
       ),

@@ -97,7 +97,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
             padding: const EdgeInsets.only(left: AppSpacing.s3),
             child: Icon(
               lu(LucideIcons.search),
-              size: 16,
+              size: AppIconSize.sm,
               color: AppColors.textSecondary,
             ),
           ),
@@ -131,7 +131,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
               onPressed: _clear,
               icon: Icon(
                 lu(LucideIcons.x),
-                size: 16,
+                size: AppIconSize.sm,
                 color: AppColors.textSecondary,
               ),
             ),

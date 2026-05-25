@@ -245,8 +245,7 @@ class _TimerCircle extends StatelessWidget {
             children: [
               Text(
                 _fmt(state.remaining),
-                style: AppTypography.h1.copyWith(
-                  fontSize: 64,
+                style: AppTypography.displayXl.copyWith(
                   fontWeight: FontWeight.w300,
                   letterSpacing: 2,
                 ),

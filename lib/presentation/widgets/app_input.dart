@@ -173,7 +173,7 @@ class _AppInputState extends State<AppInput> {
                   padding: const EdgeInsets.only(left: AppSpacing.s3),
                   child: Icon(
                     lu(widget.leadingIcon!),
-                    size: 16,
+                    size: AppIconSize.sm,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -222,7 +222,7 @@ class _AppInputState extends State<AppInput> {
                   onPressed: () => setState(() => _obscured = !_obscured),
                   icon: Icon(
                     lu(_obscured ? LucideIcons.eye : LucideIcons.eyeOff),
-                    size: 16,
+                    size: AppIconSize.sm,
                     color: AppColors.textSecondary,
                   ),
                 ),

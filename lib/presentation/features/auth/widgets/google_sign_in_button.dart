@@ -46,7 +46,7 @@ class GoogleSignInButton extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const _GoogleGlyph(size: 18),
+                const _GoogleGlyph(size: AppIconSize.md),
                 const SizedBox(width: AppSpacing.s3),
                 Text(
                   'Continuer avec Google',

@@ -66,8 +66,8 @@ class _IconCell extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.chip),
         child: Container(
-          width: 48,
-          height: 48,
+          width: AppComponentSize.iconSelectorCell,
+          height: AppComponentSize.iconSelectorCell,
           decoration: BoxDecoration(
             color: isSelected
                 ? accentColor.withValues(alpha: 0.16)
@@ -82,7 +82,7 @@ class _IconCell extends StatelessWidget {
           ),
           child: Icon(
             categoryIconData(name),
-            size: 22,
+            size: AppIconSize.nav,
             color: isSelected ? accentColor : AppColors.textSecondary,
           ),
         ),

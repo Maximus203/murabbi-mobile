@@ -71,8 +71,8 @@ class Heatmap30 extends StatelessWidget {
                 triggerMode: TooltipTriggerMode.longPress,
                 child: Container(
                   key: ValueKey('heatmap_cell_${day.toIso8601String()}'),
-                  width: 32,
-                  height: 32,
+                  width: AppComponentSize.heatmapCell,
+                  height: AppComponentSize.heatmapCell,
                   decoration: BoxDecoration(
                     color: cellColorFor(heatmapData[day]),
                     borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -110,8 +110,8 @@ class _LegendItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 12,
-          height: 12,
+          width: AppIconSize.xs,
+          height: AppIconSize.xs,
           decoration: BoxDecoration(
             color: Heatmap30.cellColorFor(status),
             borderRadius: BorderRadius.circular(AppRadius.chip),

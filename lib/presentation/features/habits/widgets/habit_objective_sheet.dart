@@ -109,8 +109,7 @@ class _HabitObjectiveSheetState extends State<HabitObjectiveSheet> {
               children: [
                 Text(
                   '$_value',
-                  style: AppTypography.h1.copyWith(
-                    fontSize: 56,
+                  style: AppTypography.displayLg.copyWith(
                     color: _valueColor,
                     fontWeight: FontWeight.w700,
                   ),
@@ -311,15 +310,15 @@ class _StepButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        width: 44,
-        height: 44,
+        width: AppComponentSize.touchTarget,
+        height: AppComponentSize.touchTarget,
         decoration: BoxDecoration(
           color: enabled ? AppColors.accent : AppColors.bgInput,
           shape: BoxShape.circle,
         ),
         child: Icon(
           icon,
-          size: 20,
+          size: AppIconSize.rg,
           color: enabled ? AppColors.bgSurface : AppColors.textTertiary,
         ),
       ),

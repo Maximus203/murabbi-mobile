@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
+import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 
 /// Bannière fine affichée en haut du shell quand l'appareil perd la
 /// connectivité (issue #195 — M11). Hauteur 32 px, fond
@@ -15,16 +17,15 @@ class OfflineBanner extends StatelessWidget {
       height: 32,
       width: double.infinity,
       color: AppColors.warning,
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.wifiOff, color: Colors.white, size: 16),
-          SizedBox(width: 8),
+          const Icon(LucideIcons.wifiOff, color: Colors.white, size: AppIconSize.sm),
+          const SizedBox(width: AppSpacing.s2),
           Text(
             'Hors ligne',
-            style: TextStyle(
+            style: AppTypography.micro.copyWith(
               color: Colors.white,
-              fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
           ),

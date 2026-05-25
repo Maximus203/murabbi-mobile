@@ -53,8 +53,8 @@ class AppButton extends StatelessWidget {
         child ??
         (isLoading
             ? SizedBox(
-                width: 20,
-                height: 20,
+                width: AppComponentSize.spinnerSm,
+                height: AppComponentSize.spinnerSm,
                 child: CircularProgressIndicator(
                   strokeWidth: AppBorderWidth.indicatorStroke,
                   color: spec.foreground,
@@ -68,7 +68,7 @@ class AppButton extends StatelessWidget {
                     leadingWidget!,
                     const SizedBox(width: AppSpacing.s2),
                   ] else if (leadingIcon != null) ...[
-                    Icon(lu(leadingIcon!), size: 16, color: spec.foreground),
+                    Icon(lu(leadingIcon!), size: AppIconSize.sm, color: spec.foreground),
                     const SizedBox(width: AppSpacing.s2),
                   ],
                   Text(
