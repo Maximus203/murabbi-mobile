@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
-import 'package:murabbi_mobile/data/repositories/prayer_times_provider.dart';
 import 'package:murabbi_mobile/data/repositories/score_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/user_score.dart';
 import 'package:murabbi_mobile/domain/errors/prayer_failure.dart';
@@ -9,6 +8,7 @@ import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboa
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/next_prayer.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/current_user_provider.dart';
+import 'package:murabbi_mobile/services/prayer/prayer_times_providers.dart';
 
 /// Agrégateur de l'écran HM-01 — slices 3.A + 5.F.
 ///

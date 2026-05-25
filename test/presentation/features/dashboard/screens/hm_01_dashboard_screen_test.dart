@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/core/utils/icon_utils.dart';
-import 'package:murabbi_mobile/data/repositories/prayer_times_provider.dart';
+import 'package:murabbi_mobile/services/prayer/prayer_times_providers.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_settings.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_times.dart';
 import 'package:murabbi_mobile/domain/errors/prayer_failure.dart';

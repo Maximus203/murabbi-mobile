@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/data/repositories/prayer_repository_provider.dart';
-import 'package:murabbi_mobile/data/repositories/prayer_times_provider.dart';
+import 'package:murabbi_mobile/data/repositories/prayer_settings_providers.dart';
 import 'package:murabbi_mobile/domain/use_cases/prayer/derive_default_method_from_country_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/prayer/get_prayer_settings_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/prayer/get_today_prayers_use_case.dart';
@@ -9,7 +9,7 @@ import 'package:murabbi_mobile/domain/use_cases/prayer/save_prayer_settings_use_
 
 /// Re-export du provider `getPrayerTimesUseCaseProvider` défini en slice
 /// 3.C.2 — les consumers presentation slice 3.C.3 importent un unique fichier.
-export 'package:murabbi_mobile/data/repositories/prayer_times_provider.dart'
+export 'package:murabbi_mobile/services/prayer/prayer_times_providers.dart'
     show getPrayerTimesUseCaseProvider;
 
 /// Use case providers de la feature Salat (slice 3.C.3).

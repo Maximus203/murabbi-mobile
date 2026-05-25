@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:murabbi_mobile/data/repositories/prayer_times_provider.dart'
+import 'package:murabbi_mobile/data/repositories/prayer_settings_providers.dart'
     show sharedPreferencesProvider;
 import 'package:murabbi_mobile/services/remembered_accounts_storage.dart';
 
