@@ -19,6 +19,7 @@ import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/collections/screens/co_01_collections_list_screen.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/current_user_provider.dart';
+import '../../../../helpers/test_uuids.dart';
 
 class _MockAuthRepo extends Mock implements AuthRepository {}
 
@@ -32,7 +33,7 @@ void main() {
   late _MockHabitRepo habitRepo;
 
   final testUser = User(
-    id: UserId('user-001'),
+    id: UserId(kUserIdAlpha),
     pseudo: Pseudonym('Test'),
     email: NonEmptyString('test@test.com'),
     createdAt: DateTime.utc(2026, 1, 1),
@@ -40,7 +41,7 @@ void main() {
   );
 
   final systemCollection = Collection(
-    id: CollectionId('sys-1'),
+    id: CollectionId(kCollectionIdAlpha),
     name: NonEmptyString('Routine matinale'),
     description: NonEmptyString('Commencer la journée'),
     habitIds: const [],
@@ -49,7 +50,7 @@ void main() {
   );
 
   final userCollection = Collection(
-    id: CollectionId('usr-1'),
+    id: CollectionId(kCollectionIdBeta),
     name: NonEmptyString('Sport hebdo'),
     description: NonEmptyString('Activité physique'),
     habitIds: const [],
@@ -58,9 +59,9 @@ void main() {
   );
 
   setUpAll(() {
-    registerFallbackValue(UserId('fallback'));
-    registerFallbackValue(HabitId('fallback'));
-    registerFallbackValue(CollectionId('fallback'));
+    registerFallbackValue(UserId(kUserIdAlpha));
+    registerFallbackValue(HabitId(kHabitIdAlpha));
+    registerFallbackValue(CollectionId(kCollectionIdAlpha));
     registerFallbackValue(DateTime.utc(2026, 1, 1));
   });
 
@@ -165,7 +166,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.tap(find.text('Sport hebdo'));
-      expect(opened, equals('usr-1'));
+      expect(opened, equals(kCollectionIdBeta));
     },
   );
 
