@@ -14,4 +14,10 @@ abstract interface class CategoryRepository {
 
   /// Supprime la catégorie identifiée par [categoryId].
   Future<void> deleteCategory(CategoryId categoryId);
+
+  /// Retourne la catégorie système dont le [slug] correspond (ex. `"religion"`).
+  ///
+  /// Lance [CategoryNotFoundFailure] si aucune catégorie ne porte ce slug.
+  /// Utilisé pour découpler le code mobile des UUIDs Supabase (Q-21 — Option B).
+  Future<Category> getCategoryBySlug(UserId userId, String slug);
 }

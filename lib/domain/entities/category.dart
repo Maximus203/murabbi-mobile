@@ -23,14 +23,23 @@ class Category extends Equatable {
   final String icon;
   final bool isSystem;
 
+  /// Slug sémantique stable (ex. `"religion"`, `"sport"`).
+  ///
+  /// Non-null uniquement pour les catégories système (Q-21 — Option B).
+  /// Permet de référencer une catégorie sans dépendre de son UUID Supabase,
+  /// garantissant la continuité entre le scaffold in-memory et la prod.
+  /// Null pour les catégories utilisateur.
+  final String? slug;
+
   const Category({
     required this.id,
     required this.name,
     required this.color,
     required this.icon,
     required this.isSystem,
+    this.slug,
   });
 
   @override
-  List<Object?> get props => [id, name, color, icon, isSystem];
+  List<Object?> get props => [id, name, color, icon, isSystem, slug];
 }

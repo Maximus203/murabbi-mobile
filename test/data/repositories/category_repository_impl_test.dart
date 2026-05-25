@@ -100,6 +100,32 @@ void main() {
     });
   });
 
+  group('getCategoryBySlug', () {
+    test('returns category matching slug', () async {
+      when(() => ds.getCategories(userIdValue)).thenAnswer(
+        (_) async => [
+          {
+            ...CategoryMapper.toRow(categoryFixture(id: 'uuid-001')),
+            'slug': 'religion',
+          },
+          CategoryMapper.toRow(categoryFixture(id: 'cat-x')),
+        ],
+      );
+      final cat = await repo.getCategoryBySlug(UserId(userIdValue), 'religion');
+      expect(cat.slug, 'religion');
+    });
+
+    test('throws CategoryFailure.notFound when slug is absent', () async {
+      when(
+        () => ds.getCategories(userIdValue),
+      ).thenAnswer((_) async => [CategoryMapper.toRow(categoryFixture())]);
+      await expectLater(
+        repo.getCategoryBySlug(UserId(userIdValue), 'unknown-slug'),
+        throwsA(isA<CategoryNotFoundFailure>()),
+      );
+    });
+  });
+
   group('OwnershipGuard (issue #202 / M3)', () {
     test('getCategories avec userId != currentUser lève '
         'CategoryFailure.unauthorized avant tout appel datasource', () async {

@@ -64,4 +64,16 @@ class CategoryRepositoryImpl with OwnershipGuard implements CategoryRepository {
   Future<void> deleteCategory(CategoryId categoryId) {
     return _ds.deleteCategory(categoryId.value);
   }
+
+  @override
+  Future<Category> getCategoryBySlug(UserId userId, String slug) async {
+    await _guardOwnership(userId);
+    final rows = await _ds.getCategories(userId.value);
+    final categories = rows.map(CategoryMapper.fromRow);
+    try {
+      return categories.firstWhere((c) => c.slug == slug);
+    } on StateError {
+      throw CategoryFailure.notFound(message: 'No category with slug "$slug"');
+    }
+  }
 }

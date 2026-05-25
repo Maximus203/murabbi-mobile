@@ -19,10 +19,14 @@ class CategoryMapper {
       color: HexColor(row['color'] as String),
       icon: row['icon'] as String,
       isSystem: (row['is_system'] as bool?) ?? false,
+      slug: row['slug'] as String?,
     );
   }
 
   /// Entité domain → SQL row (clés alignées sur le schéma `categories`).
+  ///
+  /// `slug` est omis de la row quand null pour éviter d'écraser la valeur
+  /// existante en base (upsert safe).
   static Map<String, dynamic> toRow(Category category) {
     return {
       'id': category.id.value,
@@ -30,6 +34,7 @@ class CategoryMapper {
       'color': category.color.value,
       'icon': category.icon,
       'is_system': category.isSystem,
+      if (category.slug != null) 'slug': category.slug,
     };
   }
 }

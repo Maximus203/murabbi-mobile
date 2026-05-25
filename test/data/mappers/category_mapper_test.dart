@@ -21,6 +21,29 @@ void main() {
       expect(cat.isSystem, true);
     });
 
+    test('maps slug when present', () {
+      final cat = CategoryMapper.fromRow({
+        'id': 'uuid-001',
+        'name': 'Religion',
+        'color': '#3A6B8C',
+        'icon': 'moon-star',
+        'is_system': true,
+        'slug': 'religion',
+      });
+      expect(cat.slug, 'religion');
+    });
+
+    test('slug is null when absent from row', () {
+      final cat = CategoryMapper.fromRow({
+        'id': 'cat-x',
+        'name': 'Custom',
+        'color': '#ABCDEF',
+        'icon': 'star',
+        'is_system': false,
+      });
+      expect(cat.slug, isNull);
+    });
+
     test('maps a user category', () {
       final cat = CategoryMapper.fromRow({
         'id': 'cat-x',
@@ -34,7 +57,7 @@ void main() {
   });
 
   group('CategoryMapper.toRow', () {
-    test('round-trips a category', () {
+    test('round-trips a category without slug', () {
       final cat = CategoryMapper.fromRow({
         'id': 'cat-religion',
         'name': 'Religion',
@@ -48,6 +71,20 @@ void main() {
       expect(row['color'], '#3A6B8C');
       expect(row['icon'], 'moon-star');
       expect(row['is_system'], true);
+      expect(row.containsKey('slug'), isFalse);
+    });
+
+    test('round-trips a category with slug', () {
+      final cat = CategoryMapper.fromRow({
+        'id': 'uuid-001',
+        'name': 'Religion',
+        'color': '#3A6B8C',
+        'icon': 'moon-star',
+        'is_system': true,
+        'slug': 'religion',
+      });
+      final row = CategoryMapper.toRow(cat);
+      expect(row['slug'], 'religion');
     });
   });
 }

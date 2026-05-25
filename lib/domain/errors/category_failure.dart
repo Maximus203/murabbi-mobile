@@ -16,6 +16,10 @@ sealed class CategoryFailure extends Equatable implements Exception {
   const factory CategoryFailure.unauthorized({String? message}) =
       CategoryUnauthorizedFailure;
 
+  /// Aucune catégorie correspondant au critère de recherche.
+  const factory CategoryFailure.notFound({String? message}) =
+      CategoryNotFoundFailure;
+
   @override
   List<Object?> get props => [runtimeType, message];
 
@@ -25,4 +29,8 @@ sealed class CategoryFailure extends Equatable implements Exception {
 
 class CategoryUnauthorizedFailure extends CategoryFailure {
   const CategoryUnauthorizedFailure({super.message}) : super._();
+}
+
+class CategoryNotFoundFailure extends CategoryFailure {
+  const CategoryNotFoundFailure({super.message}) : super._();
 }

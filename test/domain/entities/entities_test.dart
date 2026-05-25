@@ -367,6 +367,48 @@ void main() {
       );
       expect(a, equals(b));
     });
+
+    test('slug is null by default for user categories', () {
+      final cat = Category(
+        id: catId,
+        name: NonEmptyString('Custom'),
+        color: HexColor('#4A5568'),
+        icon: 'star',
+        isSystem: false,
+      );
+      expect(cat.slug, isNull);
+    });
+
+    test('system category retains its slug', () {
+      final cat = Category(
+        id: catId,
+        name: NonEmptyString('Religion'),
+        color: HexColor('#4A5568'),
+        icon: 'moon-star',
+        isSystem: true,
+        slug: 'religion',
+      );
+      expect(cat.slug, 'religion');
+    });
+
+    test('slug is included in equality', () {
+      final withSlug = Category(
+        id: catId,
+        name: NonEmptyString('Religion'),
+        color: HexColor('#4A5568'),
+        icon: 'moon-star',
+        isSystem: true,
+        slug: 'religion',
+      );
+      final withoutSlug = Category(
+        id: catId,
+        name: NonEmptyString('Religion'),
+        color: HexColor('#4A5568'),
+        icon: 'moon-star',
+        isSystem: true,
+      );
+      expect(withSlug, isNot(equals(withoutSlug)));
+    });
   });
 
   group('Habit entity', () {

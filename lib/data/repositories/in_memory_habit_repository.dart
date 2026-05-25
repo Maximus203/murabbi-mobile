@@ -4,6 +4,7 @@ import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/entities/habit_subtask.dart';
+import 'package:murabbi_mobile/domain/errors/category_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/category_repository.dart';
 import 'package:murabbi_mobile/domain/repositories/habit_repository.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
@@ -146,6 +147,7 @@ class InMemoryCategoryRepository implements CategoryRepository {
         color: HexColor(_colorToHex(AppColors.categoryReligion)),
         icon: 'moon-star',
         isSystem: true,
+        slug: 'religion',
       ),
       Category(
         id: CategoryId('cat-sport'),
@@ -153,6 +155,7 @@ class InMemoryCategoryRepository implements CategoryRepository {
         color: HexColor(_colorToHex(AppColors.categorySport)),
         icon: 'dumbbell',
         isSystem: true,
+        slug: 'sport',
       ),
       Category(
         id: CategoryId('cat-sante'),
@@ -160,6 +163,7 @@ class InMemoryCategoryRepository implements CategoryRepository {
         color: HexColor(_colorToHex(AppColors.categorySante)),
         icon: 'heart-pulse',
         isSystem: true,
+        slug: 'sante',
       ),
       Category(
         id: CategoryId('cat-mental'),
@@ -167,6 +171,7 @@ class InMemoryCategoryRepository implements CategoryRepository {
         color: HexColor(_colorToHex(AppColors.categoryMental)),
         icon: 'brain',
         isSystem: true,
+        slug: 'mental',
       ),
       Category(
         id: CategoryId('cat-social'),
@@ -174,6 +179,7 @@ class InMemoryCategoryRepository implements CategoryRepository {
         color: HexColor(_colorToHex(AppColors.categorySocial)),
         icon: 'users',
         isSystem: true,
+        slug: 'social',
       ),
     ];
   }
@@ -206,5 +212,14 @@ class InMemoryCategoryRepository implements CategoryRepository {
   @override
   Future<void> deleteCategory(CategoryId categoryId) async {
     _categories.removeWhere((c) => c.id == categoryId);
+  }
+
+  @override
+  Future<Category> getCategoryBySlug(UserId userId, String slug) async {
+    try {
+      return _categories.firstWhere((c) => c.slug == slug);
+    } on StateError {
+      throw CategoryFailure.notFound(message: 'No category with slug "$slug"');
+    }
   }
 }
