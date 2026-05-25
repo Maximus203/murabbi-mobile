@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:murabbi_mobile/data/repositories/in_memory_habit_repository.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
+import '../../helpers/in_memory_repositories.dart';
 import '../../helpers/test_uuids.dart';
 
 void main() {

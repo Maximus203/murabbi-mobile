@@ -15,28 +15,14 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 
-/// Implémentation **in-memory** des repositories Habits et Categories.
-///
-/// **Statut V1 (slice 3.D dev scaffold)** : permet de livrer les UI HA-01 /
-/// HA-02 / CA-01 fonctionnelles sur device sans dépendre du SQL Supabase
-/// (les colonnes v15 — target, subtasks, time range, points — ne sont pas
-/// encore exposées dans le datasource Supabase mobile).
-///
-/// **Remplacement Supabase** : à brancher en suite dans une slice dédiée
-/// `feat/data-habit-supabase-datasource` :
-///   1. SupabaseHabitsDataSource + mapper (cf. admin migration align_mobile_domain)
-///   2. HabitRepositoryImpl déléguant au datasource
-///   3. Override le provider ci-dessous via `habitRepositoryProvider.overrideWithValue(...)`
+/// Implémentation **in-memory** de [HabitRepository] — dev scaffold déplacé
+/// en `test/helpers/` (P6 : n'a pas sa place dans `lib/`).
 class InMemoryHabitRepository implements HabitRepository {
   InMemoryHabitRepository() {
-    // Audit TL PR #43 : guard runtime — ce repo dev scaffold ne doit
-    // jamais s'instancier en release build. Si ça arrive, on échoue tôt
-    // plutôt que de livrer un storage volatile en production.
     assert(
       kDebugMode || kProfileMode,
-      'InMemoryHabitRepository est un dev scaffold (slice 3.D). '
-      'Il ne doit pas être actif en release build — '
-      'override habitRepositoryProvider avec SupabaseHabitsDataSource.',
+      'InMemoryHabitRepository est un dev scaffold. '
+      'Il ne doit pas être actif en release build.',
     );
   }
 
@@ -74,24 +60,17 @@ class InMemoryHabitRepository implements HabitRepository {
     required HabitId habitId,
     required DateTime date,
     required HabitLogStatus status,
-  }) async {
-    // No-op in V1 dev scaffold — log history n'est pas affichée en HA-01.
-  }
+  }) async {}
 
   @override
-  Future<void> logHabit(HabitLog log) async {
-    // No-op in V1 dev scaffold (cf. ci-dessus).
-  }
+  Future<void> logHabit(HabitLog log) async {}
 
   @override
   Future<List<HabitLog>> getLogsForHabit({
     required HabitId habitId,
     required DateTime from,
     required DateTime to,
-  }) async {
-    // V1 dev scaffold — pas d'historique persisté en mémoire.
-    return const [];
-  }
+  }) async => const [];
 
   @override
   Future<List<HabitSubtask>> getSubtasks(HabitId habitId) async {
@@ -118,21 +97,17 @@ class InMemoryHabitRepository implements HabitRepository {
   }) async {}
 }
 
-/// Implémentation in-memory du `CategoryRepository`. Pré-seedée avec les 5
-/// catégories système (cf. AppColors.category*) — l'utilisateur peut en
-/// créer d'autres au runtime (perdues au redémarrage).
+/// Implémentation in-memory de [CategoryRepository] — pré-seedée avec les 5
+/// catégories système.
 class InMemoryCategoryRepository implements CategoryRepository {
   InMemoryCategoryRepository() {
     assert(
       kDebugMode || kProfileMode,
-      'InMemoryCategoryRepository est un dev scaffold (slice 3.D/3.E). '
+      'InMemoryCategoryRepository est un dev scaffold. '
       'Il ne doit pas être actif en release build.',
     );
   }
 
-  /// Audit TL PR #43 §3 : pas de hex hardcodé hors `AppColors`. On
-  /// dérive le hex depuis le token DS via [_colorToHex] — single source
-  /// of truth garantie.
   static String _colorToHex(Color c) {
     final argb = c.toARGB32();
     final rgb = argb & 0x00FFFFFF;

@@ -6,9 +6,6 @@ import 'package:murabbi_mobile/data/datasources/supabase/supabase_category_data_
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_client_provider.dart';
 import 'package:murabbi_mobile/data/repositories/category_repository_impl.dart';
 import 'package:murabbi_mobile/data/repositories/current_user_id_resolver_provider.dart';
-import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart'
-    show kUseInMemoryHabitRepository;
-import 'package:murabbi_mobile/data/repositories/in_memory_habit_repository.dart';
 import 'package:murabbi_mobile/domain/repositories/category_repository.dart';
 
 /// Provider Riverpod du datasource Categories (issue #149).
@@ -19,15 +16,10 @@ final categoryDataSourceProvider = Provider<CategoryDataSource>((ref) {
   );
 });
 
-/// Provider Riverpod du `CategoryRepository`.
-///
-/// Défaut : [CategoryRepositoryImpl] adossé à Supabase. Partage le flag
-/// [kUseInMemoryHabitRepository] pour rester cohérent avec le repository
-/// Habits en mode dev offline.
+/// Provider Riverpod du `CategoryRepository`. La couche presentation consomme
+/// uniquement ce provider (l'interface domain), jamais l'impl ni le
+/// datasource directement.
 final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
-  if (kUseInMemoryHabitRepository) {
-    return InMemoryCategoryRepository();
-  }
   return CategoryRepositoryImpl(
     ref.watch(categoryDataSourceProvider),
     currentUserIdResolver: ref.watch(currentUserIdResolverProvider),

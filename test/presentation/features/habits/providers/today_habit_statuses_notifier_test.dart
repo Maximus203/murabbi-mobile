@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
-import 'package:murabbi_mobile/data/repositories/in_memory_habit_repository.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/today_habit_statuses_notifier.dart';
+import '../../../../helpers/in_memory_repositories.dart';
 
 /// Repo dont `toggleHabitLog` peut échouer — simule une panne réseau.
 class _FailingRepo extends InMemoryHabitRepository {

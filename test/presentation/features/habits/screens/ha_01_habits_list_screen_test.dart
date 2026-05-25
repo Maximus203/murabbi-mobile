@@ -5,7 +5,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
 import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
-import 'package:murabbi_mobile/data/repositories/in_memory_habit_repository.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
@@ -17,6 +16,7 @@ import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/habits/screens/ha_01_habits_list_screen.dart';
+import '../../../../helpers/in_memory_repositories.dart';
 
 class _MockAuthRepo extends Mock implements AuthRepository {}
 
