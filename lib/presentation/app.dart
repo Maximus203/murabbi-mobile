@@ -1,18 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
+import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/presentation/app_resume_invalidator.dart';
+import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/leaderboard/providers/leaderboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/router/app_router.dart';
 import 'package:murabbi_mobile/presentation/theme/app_theme.dart';
 import 'package:murabbi_mobile/services/connectivity/connectivity_service.dart';
+import 'package:murabbi_mobile/services/sync/sync_service.dart';
 import 'package:murabbi_mobile/services/sync/sync_service_provider.dart';
 
 /// Seuil de pause au-delà duquel on invalide les caches de classement /
 /// dashboard au resume (issue #197 — M5). 5 min évite les invalidations
 /// inutiles lors d'une pause courte (notification, double-tap home).
 const Duration kResumeInvalidationThreshold = Duration(minutes: 5);
+
+/// Rejoue la queue offline après résolution de l'auth.
+///
+/// Extrait pour testabilité (S-1 — issue #200). L'auth doit être résolue
+/// avant de rejouer la queue : un replay sans session Supabase active
+/// échouerait sur toutes les opérations nécessitant auth.
+@visibleForTesting
+Future<void> runStartupSync({
+  required Future<User?> authFuture,
+  required SyncService syncService,
+}) async {
+  await authFuture;
+  await syncService.processPendingQueue();
+}
 
 /// Racine de l'application Murabbi — branche le GoRouter Riverpod et
 /// observe le lifecycle pour invalider les caches au retour de background
@@ -70,7 +87,10 @@ class _MurabbiAppState extends ConsumerState<MurabbiApp>
   /// dernier crash ou fermeture de l'app).
   Future<void> _processPendingQueueOnStartup() async {
     try {
-      await ref.read(syncServiceProvider).processPendingQueue();
+      await runStartupSync(
+        authFuture: ref.read(authNotifierProvider.future),
+        syncService: ref.read(syncServiceProvider),
+      );
       appLog.i('MurabbiApp: startup sync replay complete');
     } catch (e, st) {
       appLog.e(
