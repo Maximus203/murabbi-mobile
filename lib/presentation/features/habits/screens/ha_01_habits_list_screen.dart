@@ -73,7 +73,7 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       appBar: AppHeader.title(
-        title: 'Mes Habitudes',
+        title: 'Mes habitudes',
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -490,10 +490,7 @@ class _EmptyView extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.s5),
-          AppButton(
-            label: 'Créer une habitude',
-            onPressed: onCreate,
-          ),
+          AppButton(label: 'Créer une habitude', onPressed: onCreate),
           if (onOpenCollections != null) ...[
             const SizedBox(height: AppSpacing.s3),
             AppButton(

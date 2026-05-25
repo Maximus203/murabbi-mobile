@@ -214,7 +214,7 @@ void main() {
           mainAxisSize: MainAxisSize.min,
           children: [
             AppHeader.title(
-              title: 'Mes Habitudes',
+              title: 'Mes habitudes',
               trailing: IconButton(
                 onPressed: _noop,
                 icon: Icon(LucideIcons.plus, size: 18, color: AppColors.accent),
