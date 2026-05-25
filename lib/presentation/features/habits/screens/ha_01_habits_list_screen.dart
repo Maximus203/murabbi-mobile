@@ -225,11 +225,18 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
                           textAlign: TextAlign.center,
                         ),
                       )
-                    : _SectionedHabitsList(
-                        habits: filtered,
-                        categories: categoriesAsync.valueOrNull ?? const [],
-                        onToggle: _toggle,
-                        onOpenHabit: widget.onOpenHabit,
+                    : RefreshIndicator(
+                        color: AppColors.accent,
+                        onRefresh: () async {
+                          ref.invalidate(habitsNotifierProvider);
+                          await ref.read(habitsNotifierProvider.future);
+                        },
+                        child: _SectionedHabitsList(
+                          habits: filtered,
+                          categories: categoriesAsync.valueOrNull ?? const [],
+                          onToggle: _toggle,
+                          onOpenHabit: widget.onOpenHabit,
+                        ),
                       ),
               ),
             ],

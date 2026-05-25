@@ -86,6 +86,10 @@ class Sa01TodayScreen extends ConsumerWidget {
           // D-22 (issue #98) — Option A : tap → navigation SA-03.
           // Décision UX à valider avec Cherif (cf. rapport audit D-22).
           onPrayerTapped: onOpenDetail,
+          onRefresh: () async {
+            ref.invalidate(todaySalatNotifierProvider);
+            await ref.read(todaySalatNotifierProvider.future);
+          },
         ),
       ),
     );
@@ -99,7 +103,10 @@ class _PrayersList extends StatefulWidget {
   /// fournit pas de navigation (rétrocompatibilité tests).
   final ValueChanged<String>? onPrayerTapped;
 
-  const _PrayersList({required this.data, this.onPrayerTapped});
+  /// Pull-to-refresh (UX-2). Null → geste ignoré.
+  final Future<void> Function()? onRefresh;
+
+  const _PrayersList({required this.data, this.onPrayerTapped, this.onRefresh});
 
   @override
   State<_PrayersList> createState() => _PrayersListState();
@@ -147,49 +154,57 @@ class _PrayersListState extends State<_PrayersList> {
           ),
         ),
         Expanded(
-          // SingleChildScrollView + Column : matérialise toutes les lignes de
-          // prière dans l'arbre (pas de lazy-build), indépendamment du
-          // viewport — comportement attendu par les tests widget SA-01.
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.s4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Bandeau vidéo décoratif 130px (maquette ScreenSL01 — #71).
-                AppVideoBackground(
-                  assetPath: 'assets/media/09.mp4',
-                  height: 130,
-                  borderRadius: BorderRadius.circular(AppRadius.card),
-                ),
-                const SizedBox(height: AppSpacing.s3),
-                Text('$completed sur 5 complétées', style: AppTypography.label),
-                const SizedBox(height: AppSpacing.s3),
-                if (visible.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.s6,
-                    ),
-                    child: Text(
-                      'Aucune prière ne correspond.',
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.textSecondary,
+          child: RefreshIndicator(
+            color: AppColors.accent,
+            onRefresh: widget.onRefresh ?? () async {},
+            // SingleChildScrollView + Column : matérialise toutes les lignes de
+            // prière dans l'arbre (pas de lazy-build), indépendamment du
+            // viewport — comportement attendu par les tests widget SA-01.
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(AppSpacing.s4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Bandeau vidéo décoratif 130px (maquette ScreenSL01 — #71).
+                  AppVideoBackground(
+                    assetPath: 'assets/media/09.mp4',
+                    height: 130,
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                  ),
+                  const SizedBox(height: AppSpacing.s3),
+                  Text(
+                    '$completed sur 5 complétées',
+                    style: AppTypography.label,
+                  ),
+                  const SizedBox(height: AppSpacing.s3),
+                  if (visible.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.s6,
                       ),
-                      textAlign: TextAlign.center,
+                      child: Text(
+                        'Aucune prière ne correspond.',
+                        style: AppTypography.body.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                  ),
-                for (final i in visible)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.s3),
-                    child: _PrayerRow(
-                      row: rows[i],
-                      isPast: rows[i].utcTime.isBefore(now),
-                      isNext: i == nextIndex,
-                      onTap: widget.onPrayerTapped == null
-                          ? null
-                          : () => widget.onPrayerTapped!(rows[i].name),
+                  for (final i in visible)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+                      child: _PrayerRow(
+                        row: rows[i],
+                        isPast: rows[i].utcTime.isBefore(now),
+                        isNext: i == nextIndex,
+                        onTap: widget.onPrayerTapped == null
+                            ? null
+                            : () => widget.onPrayerTapped!(rows[i].name),
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

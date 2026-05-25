@@ -11,6 +11,7 @@ import 'package:murabbi_mobile/presentation/features/leaderboard/widgets/podium_
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 
 /// Nombre minimal de participants pour afficher un classement (sinon empty
@@ -46,6 +47,10 @@ class Lb01LeaderboardScreen extends ConsumerWidget {
           data: (scores) => _LeaderboardBody(
             scores: scores,
             currentUserId: currentUser?.id.value,
+            onRefresh: () async {
+              ref.invalidate(leaderboardProvider);
+              await ref.read(leaderboardProvider.future);
+            },
           ),
         ),
       ),
@@ -53,14 +58,19 @@ class Lb01LeaderboardScreen extends ConsumerWidget {
   }
 }
 
-class _LeaderboardBody extends StatelessWidget {
+class _LeaderboardBody extends ConsumerWidget {
   final List<UserScore> scores;
   final String? currentUserId;
+  final Future<void> Function()? onRefresh;
 
-  const _LeaderboardBody({required this.scores, required this.currentUserId});
+  const _LeaderboardBody({
+    required this.scores,
+    required this.currentUserId,
+    this.onRefresh,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (scores.length < _kMinParticipants) {
       return const _LeaderboardEmpty();
     }
@@ -69,34 +79,38 @@ class _LeaderboardBody extends StatelessWidget {
     final podium = scores.take(3).toList();
     final rest = scores.skip(3).toList();
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s5,
-        AppSpacing.s4,
-        AppSpacing.s5,
-        AppSpacing.s8,
-      ),
-      children: [
-        const AppHeader.title(title: 'Classement'),
-        const SizedBox(height: AppSpacing.s3),
-        Text(
-          'Cette semaine',
-          style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+    return RefreshIndicator(
+      color: AppColors.accent,
+      onRefresh: onRefresh ?? () async {},
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s5,
+          AppSpacing.s4,
+          AppSpacing.s5,
+          AppSpacing.s8,
         ),
-        const SizedBox(height: AppSpacing.s5),
-        _Podium(podium: podium),
-        const SizedBox(height: AppSpacing.s6),
-        ...rest.map(
-          (s) => Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.s2),
-            child: LeaderRow(
-              score: s,
-              initials: _initials(s.userId.value),
-              isCurrentUser: s.userId.value == currentUserId,
+        children: [
+          const AppHeader.title(title: 'Classement'),
+          const SizedBox(height: AppSpacing.s3),
+          Text(
+            'Cette semaine',
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.s5),
+          _Podium(podium: podium),
+          const SizedBox(height: AppSpacing.s6),
+          ...rest.map(
+            (s) => Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s2),
+              child: LeaderRow(
+                score: s,
+                initials: _initials(s.userId.value),
+                isCurrentUser: s.userId.value == currentUserId,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -199,18 +213,29 @@ class _LeaderboardEmpty extends StatelessWidget {
   }
 }
 
-class _LeaderboardError extends StatelessWidget {
+class _LeaderboardError extends ConsumerWidget {
   const _LeaderboardError();
 
   @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(AppSpacing.s6),
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.s6),
       child: Center(
-        child: Text(
-          'Une erreur est survenue.\nMerci de réessayer plus tard.',
-          textAlign: TextAlign.center,
-          style: AppTypography.body,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Une erreur est survenue.\nMerci de réessayer plus tard.',
+              textAlign: TextAlign.center,
+              style: AppTypography.body,
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            AppButton(
+              label: 'Réessayer',
+              variant: AppButtonVariant.secondary,
+              onPressed: () => ref.invalidate(leaderboardProvider),
+            ),
+          ],
         ),
       ),
     );
