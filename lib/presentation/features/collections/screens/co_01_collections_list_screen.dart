@@ -14,6 +14,7 @@ import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 
 /// CO-01 — Liste des collections d'habitudes (issue #6, Phase 5).
 ///
@@ -52,9 +53,22 @@ class Co01CollectionsListScreen extends ConsumerWidget {
         top: false,
         bottom: false,
         child: collections.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(
-              strokeWidth: AppBorderWidth.indicatorStroke,
+          loading: () => Semantics(
+            label: 'Chargement…',
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s5,
+                AppSpacing.s4,
+                AppSpacing.s5,
+                AppSpacing.s8,
+              ),
+              children: const [
+                AppSkeletonCard(lineCount: 3),
+                SizedBox(height: AppSpacing.s3),
+                AppSkeletonCard(lineCount: 3),
+                SizedBox(height: AppSpacing.s3),
+                AppSkeletonCard(lineCount: 3),
+              ],
             ),
           ),
           error: (e, st) {
@@ -65,6 +79,10 @@ class Co01CollectionsListScreen extends ConsumerWidget {
             collections: list,
             onOpenCollection: onOpenCollection,
             habits: ref.watch(habitsNotifierProvider).valueOrNull,
+            onRefresh: () async {
+              ref.invalidate(collectionsNotifierProvider);
+              await ref.read(collectionsNotifierProvider.future);
+            },
           ),
         ),
       ),
@@ -76,11 +94,13 @@ class _CollectionsBody extends ConsumerWidget {
   final List<Collection> collections;
   final void Function(String) onOpenCollection;
   final List<Habit>? habits;
+  final Future<void> Function()? onRefresh;
 
   const _CollectionsBody({
     required this.collections,
     required this.onOpenCollection,
     this.habits,
+    this.onRefresh,
   });
 
   @override
@@ -97,67 +117,71 @@ class _CollectionsBody extends ConsumerWidget {
       return const _CollectionsFullEmpty();
     }
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s5,
-        AppSpacing.s4,
-        AppSpacing.s5,
-        AppSpacing.s8,
+    return RefreshIndicator(
+      color: AppColors.accent,
+      onRefresh: onRefresh ?? () async {},
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s5,
+          AppSpacing.s4,
+          AppSpacing.s5,
+          AppSpacing.s8,
+        ),
+        children: [
+          // — Collections actives
+          if (active.isEmpty)
+            const _EmptyActiveHeader()
+          else ...[
+            const _SectionLabel('Mes collections actives'),
+            const SizedBox(height: AppSpacing.s3),
+            ...active.map(
+              (c) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+                child: CollectionCard(
+                  collection: c,
+                  onTap: () => onOpenCollection(c.id.value),
+                  ptsPerDay: habits != null ? c.ptsPerDay(habits!) : null,
+                ),
+              ),
+            ),
+          ],
+
+          // — Suggestions système (collections système non activées)
+          if (systemSuggestions.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s5),
+            const _SectionLabel('Collections suggérées'),
+            const SizedBox(height: AppSpacing.s3),
+            ...systemSuggestions.map(
+              (c) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+                child: _SuggestionCard(
+                  collection: c,
+                  onActivate: () => ref
+                      .read(collectionsNotifierProvider.notifier)
+                      .activate(CollectionId(c.id.value)),
+                ),
+              ),
+            ),
+          ],
+
+          // — Collections utilisateur inactives
+          if (userInactive.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s5),
+            const _SectionLabel('Mes collections inactives'),
+            const SizedBox(height: AppSpacing.s3),
+            ...userInactive.map(
+              (c) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+                child: CollectionCard(
+                  collection: c,
+                  onTap: () => onOpenCollection(c.id.value),
+                  ptsPerDay: habits != null ? c.ptsPerDay(habits!) : null,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
-      children: [
-        // — Collections actives
-        if (active.isEmpty)
-          const _EmptyActiveHeader()
-        else ...[
-          const _SectionLabel('Mes collections actives'),
-          const SizedBox(height: AppSpacing.s3),
-          ...active.map(
-            (c) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s3),
-              child: CollectionCard(
-                collection: c,
-                onTap: () => onOpenCollection(c.id.value),
-                ptsPerDay: habits != null ? c.ptsPerDay(habits!) : null,
-              ),
-            ),
-          ),
-        ],
-
-        // — Suggestions système (collections système non activées)
-        if (systemSuggestions.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s5),
-          const _SectionLabel('Collections suggérées'),
-          const SizedBox(height: AppSpacing.s3),
-          ...systemSuggestions.map(
-            (c) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s3),
-              child: _SuggestionCard(
-                collection: c,
-                onActivate: () => ref
-                    .read(collectionsNotifierProvider.notifier)
-                    .activate(CollectionId(c.id.value)),
-              ),
-            ),
-          ),
-        ],
-
-        // — Collections utilisateur inactives
-        if (userInactive.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s5),
-          const _SectionLabel('Mes collections inactives'),
-          const SizedBox(height: AppSpacing.s3),
-          ...userInactive.map(
-            (c) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s3),
-              child: CollectionCard(
-                collection: c,
-                onTap: () => onOpenCollection(c.id.value),
-                ptsPerDay: habits != null ? c.ptsPerDay(habits!) : null,
-              ),
-            ),
-          ),
-        ],
-      ],
     );
   }
 }
@@ -379,18 +403,29 @@ IconData _iconForCollection(String? iconName) {
   };
 }
 
-class _CollectionsError extends StatelessWidget {
+class _CollectionsError extends ConsumerWidget {
   const _CollectionsError();
 
   @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(AppSpacing.s6),
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.s6),
       child: Center(
-        child: Text(
-          'Une erreur est survenue.\nMerci de réessayer plus tard.',
-          textAlign: TextAlign.center,
-          style: AppTypography.body,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Une erreur est survenue.\nMerci de réessayer plus tard.',
+              textAlign: TextAlign.center,
+              style: AppTypography.body,
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            AppButton(
+              label: 'Réessayer',
+              variant: AppButtonVariant.secondary,
+              onPressed: () => ref.invalidate(collectionsNotifierProvider),
+            ),
+          ],
         ),
       ),
     );

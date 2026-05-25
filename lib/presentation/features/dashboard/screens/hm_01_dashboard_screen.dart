@@ -24,6 +24,7 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_dialog.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 
 // ignore: prefer_final_fields
@@ -74,11 +75,7 @@ class Hm01DashboardScreen extends ConsumerWidget {
           SafeArea(
             bottom: false,
             child: dashboard.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: AppBorderWidth.indicatorStroke,
-                ),
-              ),
+              loading: () => const _DashboardSkeleton(),
               error: (e, stackTrace) {
                 // Audit TL §B.2 PR #42 : pas de `e.toString()` brut exposé.
                 // Détail loggé via appLog, libellé canonique FR.
@@ -359,22 +356,44 @@ class _ScoreSection extends ConsumerWidget {
   }
 }
 
+/// Skeleton du dashboard complet pendant le chargement initial (UX-1).
+class _DashboardSkeleton extends StatelessWidget {
+  const _DashboardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Chargement…',
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s5,
+          AppSpacing.s6,
+          AppSpacing.s5,
+          AppSpacing.s5,
+        ),
+        children: const [
+          AppSkeletonCard(lineCount: 3), // en-tête (salut + pseudo + date)
+          SizedBox(height: AppSpacing.s4),
+          AppSkeletonCard(lineCount: 2), // score card
+          SizedBox(height: AppSpacing.s3),
+          AppSkeletonCard(lineCount: 2), // stats grid
+          SizedBox(height: AppSpacing.s4),
+          AppSkeletonCard(lineCount: 3), // prochaine prière
+          SizedBox(height: AppSpacing.s4),
+          AppSkeletonCard(lineCount: 2), // niyyah
+        ],
+      ),
+    );
+  }
+}
+
 /// Skeleton sobre pendant le chargement du score (pas de spinner intrusif).
 class _ScoreCardSkeleton extends StatelessWidget {
   const _ScoreCardSkeleton();
 
   @override
   Widget build(BuildContext context) {
-    return const AppCard(
-      child: SizedBox(
-        height: 88,
-        child: Center(
-          child: CircularProgressIndicator(
-            strokeWidth: AppBorderWidth.indicatorStroke,
-          ),
-        ),
-      ),
-    );
+    return const AppSkeletonCard(lineCount: 2);
   }
 }
 

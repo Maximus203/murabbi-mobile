@@ -13,6 +13,7 @@ import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 
 /// Nombre minimal de participants pour afficher un classement (sinon empty
 /// state). TODO(Q-leaderboard-min) à valider PO — défaut raisonnable : 3.
@@ -35,9 +36,21 @@ class Lb01LeaderboardScreen extends ConsumerWidget {
       body: SafeArea(
         bottom: false,
         child: leaderboard.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(
-              strokeWidth: AppBorderWidth.indicatorStroke,
+          loading: () => Semantics(
+            label: 'Chargement…',
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.s4),
+              children: const [
+                AppSkeletonCard(lineCount: 3),
+                SizedBox(height: AppSpacing.s3),
+                AppSkeletonCard(lineCount: 2),
+                SizedBox(height: AppSpacing.s3),
+                AppSkeletonCard(lineCount: 2),
+                SizedBox(height: AppSpacing.s3),
+                AppSkeletonCard(lineCount: 2),
+                SizedBox(height: AppSpacing.s3),
+                AppSkeletonCard(lineCount: 2),
+              ],
             ),
           ),
           error: (e, st) {

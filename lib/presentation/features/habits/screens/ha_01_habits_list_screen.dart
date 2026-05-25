@@ -19,6 +19,7 @@ import 'package:murabbi_mobile/presentation/widgets/app_chip.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_filter_chips.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_search_bar.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 
 /// HA-01 — Liste des habitudes de l'utilisateur (slice 3.D).
 ///
@@ -102,9 +103,19 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
         ),
       ),
       body: habits.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-            strokeWidth: AppBorderWidth.indicatorStroke,
+        loading: () => Semantics(
+          label: 'Chargement…',
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.s4),
+            children: const [
+              AppSkeletonCard(lineCount: 2),
+              SizedBox(height: AppSpacing.s3),
+              AppSkeletonCard(lineCount: 2),
+              SizedBox(height: AppSpacing.s3),
+              AppSkeletonCard(lineCount: 2),
+              SizedBox(height: AppSpacing.s3),
+              AppSkeletonCard(lineCount: 2),
+            ],
           ),
         ),
         error: (e, stackTrace) {

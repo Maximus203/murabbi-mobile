@@ -18,6 +18,7 @@ import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_filter_chips.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 
 /// SA-01 — Écran "Aujourd'hui" Salat (slice 3.C.3).
@@ -60,9 +61,21 @@ class Sa01TodayScreen extends ConsumerWidget {
         ),
       ),
       body: state.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-            strokeWidth: AppBorderWidth.indicatorStroke,
+        loading: () => Semantics(
+          label: 'Chargement…',
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.s4),
+            children: const [
+              AppSkeletonCard(lineCount: 3),
+              SizedBox(height: AppSpacing.s3),
+              AppSkeletonCard(lineCount: 3),
+              SizedBox(height: AppSpacing.s3),
+              AppSkeletonCard(lineCount: 3),
+              SizedBox(height: AppSpacing.s3),
+              AppSkeletonCard(lineCount: 3),
+              SizedBox(height: AppSpacing.s3),
+              AppSkeletonCard(lineCount: 3),
+            ],
           ),
         ),
         error: (e, stackTrace) {
