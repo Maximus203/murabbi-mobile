@@ -55,3 +55,7 @@ const kSubtaskIdAlpha = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 // ── User habits ───────────────────────────────────────────────────────────────
 /// Activation d'habitude principale (remplace 'uh-1', 'user-habit-1')
 const kUserHabitIdAlpha = 'e0e0e0e0-e0e0-e0e0-e0e0-e0e0e0e0e001';
+
+// ── Niyyah suggestions ────────────────────────────────────────────────────────
+/// Suggestion d'intention principale (fallback système)
+const kNiyyahSuggestionIdAlpha = '11111111-1111-1111-1111-111111111101';

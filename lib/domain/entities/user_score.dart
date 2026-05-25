@@ -9,12 +9,16 @@ class UserScore extends Equatable {
   final Level currentLevel;
   final int weeklyRank;
 
+  /// Rang de la semaine précédente — null si c'est la première semaine.
+  final int? previousWeekRank;
+
   UserScore({
     required this.userId,
     required this.totalPoints,
     required this.weeklyPoints,
     required this.currentLevel,
     required this.weeklyRank,
+    this.previousWeekRank,
   }) {
     if (totalPoints < 0) {
       throw ArgumentError.value(
@@ -32,6 +36,13 @@ class UserScore extends Equatable {
     }
   }
 
+  /// Mouvement de rang depuis la semaine précédente.
+  /// Positif = montée, négatif = descente, null = première semaine.
+  int? get rankMovement {
+    if (previousWeekRank == null) return null;
+    return previousWeekRank! - weeklyRank;
+  }
+
   @override
   List<Object?> get props => [
     userId,
@@ -39,5 +50,6 @@ class UserScore extends Equatable {
     weeklyPoints,
     currentLevel,
     weeklyRank,
+    previousWeekRank,
   ];
 }
