@@ -486,4 +486,66 @@ void main() {
       await controller.close();
     });
   });
+
+  // ── Bug S-2/S-3 : stream error ne déconnecte pas une session valide ──
+  group('AuthNotifier — stream error préserve session active (Bug S-2/S-3)', () {
+    test(
+      'stream error ne remplace PAS state si une session est déjà active',
+      () async {
+        // Simule : getCurrentUser() retourne un user (session valide),
+        // puis le stream émet une erreur (ex. TOKEN_REFRESHED + DB offline).
+        // Résultat attendu : state reste le user, pas AsyncError.
+        final errorController = StreamController<User?>();
+        final container = makeContainer(
+          authStream: errorController.stream,
+          stubGetCurrentUser: false,
+        );
+        when(() => repo.getCurrentUser()).thenAnswer((_) async => testUser);
+
+        await container.read(authNotifierProvider.future);
+        expect(container.read(authNotifierProvider).value, testUser);
+
+        errorController.addError(
+          Exception('DB unreachable — TOKEN_REFRESHED'),
+          StackTrace.empty,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        // Session doit être préservée — pas de redirect vers login.
+        final state = container.read(authNotifierProvider);
+        expect(
+          state.value,
+          testUser,
+          reason:
+              'Une erreur réseau transitoire du stream ne doit pas '
+              'déconnecter un utilisateur dont la session est valide.',
+        );
+        expect(state.hasError, isFalse);
+
+        await errorController.close();
+      },
+    );
+
+    test(
+      'stream error définit AsyncError si aucune session active (état null)',
+      () async {
+        // Sans session, une erreur stream doit remonter normalement
+        // (ex. une config Supabase incorrecte doit être visible).
+        final errorController = StreamController<User?>();
+        final container = makeContainer(authStream: errorController.stream);
+        await container.read(authNotifierProvider.future);
+        expect(container.read(authNotifierProvider).value, isNull);
+
+        errorController.addError(
+          Exception('Config error'),
+          StackTrace.empty,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(container.read(authNotifierProvider).hasError, isTrue);
+
+        await errorController.close();
+      },
+    );
+  });
 }

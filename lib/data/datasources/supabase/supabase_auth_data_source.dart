@@ -199,13 +199,21 @@ class SupabaseAuthDataSource implements AuthDataSource {
     return _toMaps(user);
   }
 
+  // TOKEN_REFRESHED survient silencieusement toutes les ~60 min. Il ne change
+  // pas le profil utilisateur — filtrer l'événement évite un SELECT inutile
+  // sur public.users qui, s'il échoue (réseau, timeout), déconnecterait
+  // l'utilisateur malgré une session JWT valide (Bug S-2).
   @override
   Stream<AuthMaps?> get authStateChanges =>
-      _client.auth.onAuthStateChange.asyncMap<AuthMaps?>((state) async {
-        final user = state.session?.user;
-        if (user == null) return null;
-        return _toMaps(user);
-      });
+      _client.auth.onAuthStateChange
+          .where(
+            (event) => event.event != sb.AuthChangeEvent.tokenRefreshed,
+          )
+          .asyncMap<AuthMaps?>((event) async {
+            final user = event.session?.user;
+            if (user == null) return null;
+            return _toMaps(user);
+          });
 
   Future<AuthMaps> _toMaps(
     sb.User user, {

@@ -29,7 +29,20 @@ class AuthNotifier extends AsyncNotifier<User?> {
     ref.onDispose(() => _sub?.cancel());
     _sub = repo.authStateChanges.listen(
       (user) => state = AsyncValue.data(user),
-      onError: (Object e, StackTrace st) => state = AsyncValue.error(e, st),
+      onError: (Object e, StackTrace st) {
+        // Ne pas écraser une session valide avec une erreur transitoire du
+        // stream (ex. DB offline au démarrage — Bug S-3). Si une session est
+        // déjà établie, on loggue et on préserve l'état courant.
+        if (state.valueOrNull == null) {
+          state = AsyncValue.error(e, st);
+        } else {
+          appLog.w(
+            'authStateChanges stream error (session active préservée)',
+            error: e,
+            stackTrace: st,
+          );
+        }
+      },
     );
     return repo.getCurrentUser();
   }
