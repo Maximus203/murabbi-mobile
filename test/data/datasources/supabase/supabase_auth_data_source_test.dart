@@ -37,13 +37,12 @@ void main() {
         // colonne de `public.users` (cf. PR #29). La SoT du score cumulé
         // est `user_scores.total_score` (table séparée), lue par un futur
         // `UserScoreRepository`.
-        // Issue #168 / admin#125 — `pseudo_full` est une colonne GENERATED
-        // ALWAYS AS STORED côté Postgres (`pseudo || '#' || pseudo_suffix`).
-        // On la lit (SELECT) mais on ne l'écrit JAMAIS (INSERT/UPDATE
-        // seraient rejetés par le serveur).
+        //
+        // `pseudo_full` est intentionnellement ABSENT — colonne GENERATED
+        // STORED (admin#125) non encore migrée en prod. UserMapper la gère
+        // null-safe. À réintégrer quand la migration admin sera appliquée.
         const expected = {
           'pseudo',
-          'pseudo_full',
           'email',
           'level',
           'current_streak',

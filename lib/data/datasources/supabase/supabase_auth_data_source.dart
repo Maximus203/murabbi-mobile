@@ -30,8 +30,11 @@ class SupabaseAuthDataSource implements AuthDataSource {
   ///
   /// `id` est volontairement absent — il vient déjà de `authUser.id`.
   /// `total_points` est volontairement absent — SoT = `user_scores.total_score`.
+  /// `pseudo_full` est volontairement absent — colonne GENERATED STORED non
+  /// encore migrée en prod ; le UserMapper la gère null-safe.
+  /// À réintégrer quand la migration admin correspondante sera appliquée.
   static const String profileColumns =
-      'pseudo, pseudo_full, email, level, current_streak, '
+      'pseudo, email, level, current_streak, '
       'completion_rate, deletion_requested_at';
 
   final sb.SupabaseClient _client;
