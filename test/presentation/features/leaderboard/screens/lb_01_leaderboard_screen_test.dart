@@ -87,7 +87,7 @@ void main() {
     await tester.pumpWidget(buildSut([]));
     await tester.pumpAndSettle();
 
-    expect(find.text('Classement à venir'), findsOneWidget);
+    expect(find.text('Pas encore assez de données'), findsOneWidget);
   });
 
   testWidgets('affiche un indicateur de chargement', (tester) async {

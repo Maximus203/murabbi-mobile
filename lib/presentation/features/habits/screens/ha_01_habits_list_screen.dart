@@ -73,10 +73,12 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
       appBar: AppHeader.title(
-        title: 'Habitudes',
-        trailing: widget.onOpenCategories == null
-            ? null
-            : IconButton(
+        title: 'Mes Habitudes',
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.onOpenCategories != null)
+              IconButton(
                 tooltip: 'Catégories',
                 splashRadius: 18,
                 onPressed: widget.onOpenCategories,
@@ -86,19 +88,17 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
                   color: AppColors.textPrimary,
                 ),
               ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s4,
-            AppSpacing.s3,
-            AppSpacing.s4,
-            AppSpacing.s4,
-          ),
-          child: AppButton(
-            label: 'Nouvelle habitude',
-            onPressed: widget.onCreate,
-          ),
+            IconButton(
+              tooltip: 'Nouvelle habitude',
+              splashRadius: 18,
+              onPressed: widget.onCreate,
+              icon: const Icon(
+                LucideIcons.plus,
+                size: 22,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
         ),
       ),
       body: habits.when(
@@ -445,11 +445,11 @@ class _HabitTile extends ConsumerWidget {
   }
 }
 
-/// Empty state HA-01 — #77 : icône Lucide évocatrice dans un container DS.
+/// Empty state HA-01 — icône activité, deux CTAs (wireframe v1.5).
 class _EmptyView extends StatelessWidget {
   final VoidCallback onCreate;
 
-  /// Navigue vers CO-01 si fourni (issue #6). Null → bouton masqué.
+  /// Navigue vers CO-01 si fourni. Null → bouton masqué.
   final VoidCallback? onOpenCollections;
 
   const _EmptyView({required this.onCreate, this.onOpenCollections});
@@ -471,7 +471,7 @@ class _EmptyView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.card),
               ),
               child: const Icon(
-                LucideIcons.clipboardList,
+                LucideIcons.activity,
                 size: 36,
                 color: AppColors.textSecondary,
               ),
@@ -479,18 +479,23 @@ class _EmptyView extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s4),
           const Text(
-            'Aucune habitude pour le moment',
+            "Aucune habitude pour l'instant",
             style: AppTypography.h2,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.s2),
           Text(
-            'Crée ta première habitude pour démarrer ton suivi quotidien.',
+            'Créez votre première ou activez une collection pré-configurée.',
             style: AppTypography.body.copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
+          const SizedBox(height: AppSpacing.s5),
+          AppButton(
+            label: 'Créer une habitude',
+            onPressed: onCreate,
+          ),
           if (onOpenCollections != null) ...[
-            const SizedBox(height: AppSpacing.s4),
+            const SizedBox(height: AppSpacing.s3),
             AppButton(
               label: 'Voir les collections',
               variant: AppButtonVariant.secondary,

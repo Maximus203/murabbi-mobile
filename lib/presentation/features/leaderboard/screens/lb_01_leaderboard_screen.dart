@@ -143,6 +143,11 @@ class _LeaderboardEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final daysUntilSunday = now.weekday == DateTime.sunday
+        ? 0
+        : 7 - now.weekday;
+
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.s6),
       child: Center(
@@ -150,19 +155,41 @@ class _LeaderboardEmpty extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              lu(LucideIcons.trophy),
+              lu(LucideIcons.chartBar),
               size: 48,
               color: AppColors.textTertiary,
             ),
             const SizedBox(height: AppSpacing.s4),
-            const Text('Classement à venir', style: AppTypography.h3),
+            const Text('Pas encore assez de données', style: AppTypography.h3),
             const SizedBox(height: AppSpacing.s2),
             Text(
-              'Pas encore assez de participants cette semaine. '
-              'Continue tes habitudes pour apparaître ici.',
+              'Le classement sera disponible en fin de semaine, dimanche soir.',
               textAlign: TextAlign.center,
               style: AppTypography.body.copyWith(
                 color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s3,
+                vertical: AppSpacing.s2,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.bgSurface,
+                borderRadius: BorderRadius.circular(AppRadius.chip),
+                border: Border.all(
+                  color: AppColors.borderDefault,
+                  width: AppBorderWidth.thin,
+                ),
+              ),
+              child: Text(
+                daysUntilSunday == 0
+                    ? 'Prochain classement ce soir'
+                    : 'Prochain classement dans $daysUntilSunday jour${daysUntilSunday > 1 ? "s" : ""}',
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
           ],

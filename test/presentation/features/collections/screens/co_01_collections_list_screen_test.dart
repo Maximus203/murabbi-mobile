@@ -135,7 +135,7 @@ void main() {
   ) async {
     await tester.pumpWidget(buildSut(collections: [systemCollection]));
     await tester.pumpAndSettle();
-    expect(find.textContaining('SYSTÈME'), findsOneWidget);
+    expect(find.textContaining('COLLECTIONS SUGGÉRÉES'), findsOneWidget);
   });
 
   testWidgets('section "Mes collections" présente si isSystem=false', (
@@ -146,27 +146,28 @@ void main() {
     expect(find.textContaining('MES COLLECTIONS'), findsOneWidget);
   });
 
-  testWidgets('FAB + appelle onCreate', (tester) async {
+  testWidgets('bouton "+" header appelle onCreate', (tester) async {
     var called = false;
     await tester.pumpWidget(
       buildSut(collections: [], onCreate: () => called = true),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(FloatingActionButton));
+    await tester.tap(find.byType(IconButton));
     expect(called, isTrue);
   });
 
-  testWidgets('tap sur une collection appelle onOpenCollection avec l\'id', (
-    tester,
-  ) async {
-    String? opened;
-    await tester.pumpWidget(
-      buildSut(collections: [systemCollection], onOpen: (id) => opened = id),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Routine matinale'));
-    expect(opened, equals('sys-1'));
-  });
+  testWidgets(
+    'tap sur une collection active appelle onOpenCollection avec l\'id',
+    (tester) async {
+      String? opened;
+      await tester.pumpWidget(
+        buildSut(collections: [userCollection], onOpen: (id) => opened = id),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sport hebdo'));
+      expect(opened, equals('usr-1'));
+    },
+  );
 
   testWidgets('error state — affiche message erreur', (tester) async {
     when(
