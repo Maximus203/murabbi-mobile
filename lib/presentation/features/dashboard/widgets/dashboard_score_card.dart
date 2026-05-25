@@ -11,12 +11,19 @@ import 'package:murabbi_mobile/presentation/widgets/app_progress_ring.dart';
 /// Score card du dashboard HM-01 (issue #6, Phase 5).
 ///
 /// Affiche l'anneau de progression vers le palier suivant, le niveau
-/// courant et les points totaux. Logique de calcul déléguée au domaine
-/// (`Level.progressToNext`).
+/// courant et les points totaux. [dailyCompletionRate] affiche l'objectif
+/// journalier 80% (Q-A) si la valeur est > 0.
 class DashboardScoreCard extends StatelessWidget {
   final UserScore score;
 
-  const DashboardScoreCard({super.key, required this.score});
+  /// Taux de complétion journalier (0.0 à 100.0). 0.0 = non disponible.
+  final double dailyCompletionRate;
+
+  const DashboardScoreCard({
+    super.key,
+    required this.score,
+    this.dailyCompletionRate = 0.0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +63,18 @@ class DashboardScoreCard extends StatelessWidget {
                       color: AppColors.textSecondary,
                     ),
                   ),
+                  if (dailyCompletionRate > 0) ...[
+                    const SizedBox(height: AppSpacing.s1),
+                    Text(
+                      'Objectif du jour : ${dailyCompletionRate.toStringAsFixed(0)}%'
+                      ' ${dailyCompletionRate >= 80 ? '✓' : '/ 80%'}',
+                      style: AppTypography.body.copyWith(
+                        color: dailyCompletionRate >= 80
+                            ? AppColors.success
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

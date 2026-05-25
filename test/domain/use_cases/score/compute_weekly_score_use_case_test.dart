@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:murabbi_mobile/domain/use_cases/score/compute_global_streak_use_case.dart';
+import 'package:murabbi_mobile/domain/entities/daily_score.dart';
 import 'package:murabbi_mobile/domain/use_cases/score/compute_weekly_score_use_case.dart';
 
 /// Score hebdomadaire = somme des points sur la fenêtre de 7 jours se

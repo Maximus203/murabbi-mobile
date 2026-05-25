@@ -191,7 +191,10 @@ class _DashboardBody extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s6),
 
           // ── Score & niveau (issue #6) ──────────────────────────────
-          _ScoreSection(globalStreak: streak),
+          _ScoreSection(
+            globalStreak: streak,
+            dailyCompletionRate: data.dailyCompletionRate,
+          ),
           const SizedBox(height: AppSpacing.s4),
 
           // ── Prochaine prière ───────────────────────────────────────
@@ -203,7 +206,7 @@ class _DashboardBody extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s4),
 
           // ── Niyyah du jour ─────────────────────────────────────────
-          const _NiyyahCard(),
+          _NiyyahCard(data: data),
 
           // D-25 : confirmation avant déconnexion via AppDialog DS.
           if (onSignOut != null) ...[
@@ -293,7 +296,12 @@ class _DashboardBody extends ConsumerWidget {
 /// erreur ne fasse pas vaciller le reste du dashboard.
 class _ScoreSection extends ConsumerWidget {
   final int globalStreak;
-  const _ScoreSection({required this.globalStreak});
+  final double dailyCompletionRate;
+
+  const _ScoreSection({
+    required this.globalStreak,
+    required this.dailyCompletionRate,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -341,7 +349,10 @@ class _ScoreSection extends ConsumerWidget {
         if (score == null) return const SizedBox.shrink();
         return Column(
           children: [
-            DashboardScoreCard(score: score),
+            DashboardScoreCard(
+              score: score,
+              dailyCompletionRate: dailyCompletionRate,
+            ),
             const SizedBox(height: AppSpacing.s3),
             DashboardStatsGrid(
               streakDays: globalStreak,
@@ -581,13 +592,18 @@ class _RemainingLabelState extends ConsumerState<_RemainingLabel> {
 
 /// Card "Niyyah du jour" avec fond vidéo + overlay dégradé (issue #79).
 ///
-/// La vidéo `01.mp4` tourne en boucle muette. Le texte est superposé
-/// en bas-gauche via un dégradé noir semi-transparent.
+/// Affiche la niyyah personnelle de l'utilisateur si elle existe,
+/// sinon une suggestion système rotative depuis [DashboardState.niyyahToday].
 class _NiyyahCard extends StatelessWidget {
-  const _NiyyahCard();
+  final DashboardState data;
+
+  const _NiyyahCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
+    final text = data.niyyahToday?.displayText ??
+        'Je cherche à plaire à Allah dans tout ce que je fais aujourd\'hui.';
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.card),
       child: AppVideoBackground(
@@ -617,10 +633,12 @@ class _NiyyahCard extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.s1),
               Text(
-                'Je fais cela pour plaire à Allah.',
+                text,
                 style: AppTypography.body.copyWith(
                   color: AppColors.bgSurface.withValues(alpha: 0.85),
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

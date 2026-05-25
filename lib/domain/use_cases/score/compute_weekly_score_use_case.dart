@@ -1,5 +1,5 @@
 import 'package:murabbi_mobile/domain/constants/scoring_constants.dart';
-import 'package:murabbi_mobile/domain/use_cases/score/compute_global_streak_use_case.dart';
+import 'package:murabbi_mobile/domain/entities/daily_score.dart';
 
 /// Calcule le score hebdomadaire (logique pure) — issue #6, Phase 5.
 ///

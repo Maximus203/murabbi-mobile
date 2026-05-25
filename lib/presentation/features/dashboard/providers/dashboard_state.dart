@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
+import 'package:murabbi_mobile/domain/entities/niyyah_display_item.dart';
 import 'package:murabbi_mobile/domain/entities/user_score.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/next_prayer.dart';
 
@@ -22,12 +23,22 @@ class DashboardState extends Equatable {
   /// Nombre de jours consécutifs de la série globale — 0 par défaut.
   final int globalStreak;
 
+  /// Taux de complétion journalier (0.0 à 100.0) depuis `daily_summaries`.
+  /// 0.0 si la table n'a pas encore de ligne pour aujourd'hui.
+  final double dailyCompletionRate;
+
+  /// Niyyah à afficher : personnelle ou suggestion système.
+  /// null si non encore chargé.
+  final NiyyahDisplayItem? niyyahToday;
+
   const DashboardState({
     required this.nowUtc,
     required this.nextPrayer,
     required this.settingsNotConfigured,
     this.userScore,
     this.globalStreak = 0,
+    this.dailyCompletionRate = 0.0,
+    this.niyyahToday,
   });
 
   DashboardState copyWith({
@@ -36,6 +47,8 @@ class DashboardState extends Equatable {
     bool? settingsNotConfigured,
     UserScore? userScore,
     int? globalStreak,
+    double? dailyCompletionRate,
+    NiyyahDisplayItem? niyyahToday,
   }) {
     return DashboardState(
       nowUtc: nowUtc ?? this.nowUtc,
@@ -44,6 +57,8 @@ class DashboardState extends Equatable {
           settingsNotConfigured ?? this.settingsNotConfigured,
       userScore: userScore ?? this.userScore,
       globalStreak: globalStreak ?? this.globalStreak,
+      dailyCompletionRate: dailyCompletionRate ?? this.dailyCompletionRate,
+      niyyahToday: niyyahToday ?? this.niyyahToday,
     );
   }
 
@@ -60,5 +75,7 @@ class DashboardState extends Equatable {
     settingsNotConfigured,
     userScore,
     globalStreak,
+    dailyCompletionRate,
+    niyyahToday,
   ];
 }
