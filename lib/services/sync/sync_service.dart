@@ -4,6 +4,7 @@ import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/data/local/pending_sync_item.dart';
 import 'package:murabbi_mobile/data/local/sync_database.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
+import 'package:murabbi_mobile/domain/errors/habit_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/habit_repository.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:uuid/uuid.dart';
@@ -18,7 +19,7 @@ import 'package:uuid/uuid.dart';
 /// **Gestion des erreurs** :
 /// - Succès → item supprimé de la queue.
 /// - Erreur transitoire → [PendingSyncItem.incrementRetry].
-/// - PostgrestException code '23505' (doublon UNIQUE — idempotence M4) →
+/// - [HabitDuplicateFailure] (doublon UNIQUE 23505, idempotence M4) →
 ///   supprimé silencieusement (pas d'erreur UI).
 /// - Après [PendingSyncItem.maxRetries] échecs → item marque `failed`
 ///   (dead-letter) et un événement est émis sur [deadLetterStream].
@@ -54,8 +55,7 @@ class SyncService {
   /// Émet le nombre d'items en attente après chaque [enqueueLogHabit] ou
   /// [processPendingQueue].
   ///
-  /// L'UI peut consommer ce stream pour afficher un badge ou un banner
-  /// "X en attente de sync".
+  /// Émet la valeur courante immédiatement à l'abonnement.
   Stream<int> get pendingCount async* {
     final pending = await _db.getPendingItems();
     yield pending.length;
@@ -64,9 +64,6 @@ class SyncService {
 
   /// Émet un [PendingSyncItem] quand il atteint le statut `failed`
   /// (dead-letter après [PendingSyncItem.maxRetries] tentatives).
-  ///
-  /// L'UI doit afficher un message du type :
-  /// "Une action n'a pas pu être synchronisée. Ouvre l'habitude pour réessayer."
   Stream<PendingSyncItem> get deadLetterStream => _deadLetterController.stream;
 
   // ── Enqueue ─────────────────────────────────────────────────────────────────
@@ -100,7 +97,6 @@ class SyncService {
     await _db.insert(item);
     appLog.d('$_tag: enqueued logHabit $habitId (id=${item.id})');
 
-    // Mise à jour du stream pendingCount.
     final pending = await _db.getPendingItems();
     _pendingCountController.add(pending.length);
   }
@@ -113,7 +109,7 @@ class SyncService {
   /// - Immédiatement après [enqueueLogHabit] si l'app est online.
   /// - Quand [connectivityProvider] passe de `false` à `true`.
   Future<void> processPendingQueue() async {
-    await _initFuture; // attend que la DB soit prête avant tout accès
+    await _initFuture;
     final items = await _db.getPendingItems();
     if (items.isEmpty) return;
 
@@ -123,7 +119,6 @@ class SyncService {
       await _processItem(item);
     }
 
-    // Mise à jour du stream pendingCount.
     final remaining = await _db.getPendingItems();
     _pendingCountController.add(remaining.length);
   }
@@ -144,19 +139,16 @@ class SyncService {
         case SyncItemType.logHabit:
           await _replayLogHabit(item);
         case SyncItemType.logPrayer:
-          // Extension point — prayer log sync (futur).
           appLog.w('$_tag: logPrayer replay not yet implemented');
       }
       await _db.delete(item.id);
       appLog.i('$_tag: replayed ${item.id} — deleted');
-    } on _UniqueConstraintException {
-      // PostgrestException code '23505' — doublon UNIQUE (M4 idempotence).
-      // L'opération a déjà été exécutée (ex: double tap avant queue).
-      // On supprime silencieusement : pas d'erreur UI.
+    } on HabitDuplicateFailure {
+      // Doublon UNIQUE (23505) — l'opération a déjà été exécutée.
+      // Suppression silencieuse : pas d'erreur UI (M4 idempotence).
       await _db.delete(item.id);
       appLog.d(
-        '$_tag: item ${item.id} skipped — UNIQUE constraint (23505), '
-        'deleted silently',
+        '$_tag: item ${item.id} skipped — duplicate (23505), deleted silently',
       );
     } catch (e, st) {
       await _onFailure(item, e, st);
@@ -174,14 +166,9 @@ class SyncService {
       status: HabitLogStatus.values.byName(statusName),
     );
 
-    try {
-      await _habitRepository.logHabit(log);
-    } catch (e) {
-      // Détecte un doublon UNIQUE (code '23505') — wrappé pour isoler
-      // l'import supabase_flutter hors du domaine.
-      if (_is23505(e)) throw const _UniqueConstraintException();
-      rethrow;
-    }
+    // Lève [HabitDuplicateFailure] si contrainte UNIQUE 23505 — déjà traduit
+    // par SupabaseHabitDataSource, géré dans [_processItem].
+    await _habitRepository.logHabit(log);
   }
 
   Future<void> _onFailure(PendingSyncItem item, Object e, StackTrace st) async {
@@ -205,27 +192,4 @@ class SyncService {
       );
     }
   }
-
-  /// Détecte un PostgrestException code '23505' sans importer supabase_flutter.
-  ///
-  /// On utilise la réflexion duck-typing (accès au champ `code` via toString
-  /// ou via runtimeType.toString) pour rester découplé du package Supabase
-  /// dans cette couche service — l'import direct est interdit en domain/service.
-  bool _is23505(Object e) {
-    // Duck-typing sur le champ `code` de PostgrestException.
-    try {
-      // ignore: avoid_dynamic_calls
-      final code = (e as dynamic).code as String?;
-      return code == '23505';
-    } catch (_) {
-      return e.toString().contains('23505');
-    }
-  }
-}
-
-/// Exception interne pour signaler un doublon UNIQUE 23505.
-///
-/// Isole le code 23505 sans propager l'exception Supabase native.
-class _UniqueConstraintException implements Exception {
-  const _UniqueConstraintException();
 }

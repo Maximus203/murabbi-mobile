@@ -42,8 +42,8 @@ class HabitLogMapper {
   static Map<String, dynamic> toRow(HabitLog log) {
     return {
       'habit_id': log.habitId.value,
-      'date': _formatIsoDate(log.date),
-      'status': _statusToSql(log.status),
+      'date': formatIsoDate(log.date),
+      'status': statusToSql(log.status),
       'actual_value': log.actualValue,
       'target_reached': log.targetReached,
       'subtasks_completed': log.subtasksCompleted
@@ -72,7 +72,11 @@ class HabitLogMapper {
     }
   }
 
-  static String _statusToSql(HabitLogStatus status) {
+  /// [HabitLogStatus] → valeur SQL (`'ontime'` / `'late'` / `'missed'`).
+  ///
+  /// Public : utilisé par [HabitRepositoryImpl.toggleHabitLog] pour éviter
+  /// la duplication de la table de conversion.
+  static String statusToSql(HabitLogStatus status) {
     switch (status) {
       case HabitLogStatus.onTime:
         return 'ontime';
@@ -103,7 +107,11 @@ class HabitLogMapper {
     throw ArgumentError.value(raw, 'timestamp', 'must be an ISO timestamp');
   }
 
-  static String _formatIsoDate(DateTime d) {
+  /// Formate [d] en `'YYYY-MM-DD'` (ISO 8601 date only).
+  ///
+  /// Public : utilisé par [HabitRepositoryImpl.getLogsForHabit] pour les
+  /// paramètres de filtre Supabase.
+  static String formatIsoDate(DateTime d) {
     final y = d.year.toString().padLeft(4, '0');
     final m = d.month.toString().padLeft(2, '0');
     final day = d.day.toString().padLeft(2, '0');

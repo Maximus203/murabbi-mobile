@@ -89,20 +89,8 @@ class HabitRepositoryImpl with OwnershipGuard implements HabitRepository {
     await _ds.toggleHabitLog(
       habitId: habitId.value,
       date: date,
-      status: _statusToSql(status),
+      status: HabitLogMapper.statusToSql(status),
     );
-  }
-
-  /// Convertit [HabitLogStatus] en valeur SQL (snake_case de l'enum).
-  static String _statusToSql(HabitLogStatus status) {
-    switch (status) {
-      case HabitLogStatus.onTime:
-        return 'ontime';
-      case HabitLogStatus.late:
-        return 'late';
-      case HabitLogStatus.missed:
-        return 'missed';
-    }
   }
 
   @override
@@ -120,17 +108,10 @@ class HabitRepositoryImpl with OwnershipGuard implements HabitRepository {
   }) async {
     final rows = await _ds.getLogsForHabit(
       habitId: habitId.value,
-      from: _formatIsoDate(from),
-      to: _formatIsoDate(to),
+      from: HabitLogMapper.formatIsoDate(from),
+      to: HabitLogMapper.formatIsoDate(to),
     );
     return rows.map(HabitLogMapper.fromRow).toList(growable: false);
-  }
-
-  static String _formatIsoDate(DateTime d) {
-    final y = d.year.toString().padLeft(4, '0');
-    final m = d.month.toString().padLeft(2, '0');
-    final day = d.day.toString().padLeft(2, '0');
-    return '$y-$m-$day';
   }
 
   // -------------------- Subtasks — non branchés en slice #149 ---------------
