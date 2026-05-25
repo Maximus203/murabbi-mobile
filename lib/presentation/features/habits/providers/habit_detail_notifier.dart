@@ -13,6 +13,8 @@ import 'package:murabbi_mobile/domain/value_objects/habit_stats.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
+import 'package:murabbi_mobile/services/connectivity/connectivity_service.dart';
+import 'package:murabbi_mobile/services/sync/sync_service_provider.dart';
 
 /// Use case providers HB-DETAIL (issue #153).
 final deleteHabitUseCaseProvider = Provider<DeleteHabitUseCase>((ref) {
@@ -104,6 +106,43 @@ class HabitDetailNotifier
     );
   }
 
+  /// Valide l'habitude courante — pattern Optimistic UI + sync queue (M2).
+  ///
+  /// **Séquence** :
+  /// 1. Met à jour l'état local immédiatement (sans attente réseau).
+  /// 2. Enqueue l'opération dans SQLite via [SyncService] (aucun appel réseau).
+  /// 3. Si online : déclenche [SyncService.processPendingQueue] immédiatement.
+  /// 4. Invalide le cache de score (M6).
+  ///
+  /// Protégé par [ActionSerializer] contre les double-taps (M4 / BUG-003).
+  Future<void> logHabit(HabitLogStatus status, {int? actualValue}) async {
+    await _serializer.run<void>(() async {
+      // 1. Optimistic update — visible immédiatement dans l'UI.
+      _applyOptimisticLog(status);
+
+      // 2. Enqueue dans SQLite (aucun appel réseau garanti).
+      await ref.read(syncServiceProvider).enqueueLogHabit(
+        habitId: _habitId,
+        userId: _resolveUserId().value,
+        status: status,
+        date: _today(),
+        actualValue: actualValue,
+      );
+
+      // 3. Sync immédiate si online — replay de la queue entière.
+      // On lit le service directement (pas le StreamProvider) pour obtenir
+      // le statut courant de façon fiable sans attendre la première émission.
+      final isOnline =
+          await ref.read(connectivityServiceProvider).isOnline();
+      if (isOnline) {
+        await ref.read(syncServiceProvider).processPendingQueue();
+      }
+
+      // 4. Invalide le cache score (M6 — le log peut modifier le total).
+      ref.invalidateScoreCache();
+    });
+  }
+
   /// Supprime l'habitude courante via [DeleteHabitUseCase] puis invalide la
   /// liste HA-01 pour qu'elle se rafraîchisse.
   Future<void> deleteHabit() async {
@@ -113,6 +152,34 @@ class HabitDetailNotifier
       // Issue #196 (M6) : la suppression peut impacter le total de points.
       ref.invalidateScoreCache();
     });
+  }
+
+  /// Met à jour l'état local sans réseau (optimistic).
+  ///
+  /// Ajoute [optimisticLog] en tête de [HabitDetailState.recentLogs] et
+  /// limite la liste à [historyLimit] entrées.
+  void _applyOptimisticLog(HabitLogStatus status) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final optimisticLog = HabitLog(
+      habitId: HabitId(_habitId),
+      date: _today(),
+      status: status,
+    );
+
+    final updatedLogs =
+        [optimisticLog, ...current.recentLogs]
+            .take(historyLimit)
+            .toList(growable: false);
+
+    state = AsyncValue.data(
+      HabitDetailState(
+        habit: current.habit,
+        stats: current.stats,
+        recentLogs: updatedLogs,
+      ),
+    );
   }
 
   /// Recharge habitude + stats (après un log par exemple).
