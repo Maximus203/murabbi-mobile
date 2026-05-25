@@ -1,4 +1,5 @@
 import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
+import 'package:murabbi_mobile/data/datasources/supabase/supabase_tables.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
@@ -60,16 +61,6 @@ abstract interface class SupabaseCollectionDataSource {
 /// (`is_system = true`). La view `published_catalog` filtre les habits
 /// publiés côté Supabase — le domaine ne voit jamais les soft-deleted.
 class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
-  /// Nom de la table principale des collections.
-  static const collectionsTable = 'collections';
-
-  /// Nom de la view Supabase remplaçant `collection_habits` (migration #162).
-  ///
-  /// Colonnes disponibles : `collection_id, habit_id, position,
-  /// collection_name, collection_description, cover_image_url, icon,
-  /// primary_category_id, category_name, category_color`.
-  static const publishedCatalog = 'published_catalog';
-
   static const _columns =
       'id, name, description, habit_ids, is_system, is_active, cover_image_url';
 
@@ -89,7 +80,7 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
     // Charge les collections de l'utilisateur + les collections système.
     // La policy RLS Supabase filtre `deleted_at IS NULL` côté serveur.
     final rows = await _client
-        .from(collectionsTable)
+        .from(SupabaseTables.collections)
         .select(_columns)
         .or('user_id.eq.${userId.value},is_system.eq.true')
         .order('created_at');
@@ -107,7 +98,7 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
     // Lit depuis `published_catalog` — remplace l'accès direct à
     // `collection_habits` révoqué par RLS (migration issue #162).
     final data = await _client
-        .from(publishedCatalog)
+        .from(SupabaseTables.publishedCatalog)
         .select('habit_id, position')
         .eq('collection_id', collectionId)
         .order('position');
@@ -121,7 +112,7 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
   }) async {
     await _wrapper.ensureFreshSession();
     await _client
-        .from(collectionsTable)
+        .from(SupabaseTables.collections)
         .update({'is_active': true})
         .eq('id', collectionId.value)
         .eq('user_id', userId.value);
@@ -134,7 +125,7 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
   }) async {
     await _wrapper.ensureFreshSession();
     await _client
-        .from(collectionsTable)
+        .from(SupabaseTables.collections)
         .update({'is_active': false})
         .eq('id', collectionId.value)
         .eq('user_id', userId.value);
@@ -147,7 +138,7 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
   }) async {
     await _wrapper.ensureFreshSession();
     final row = await _client
-        .from(collectionsTable)
+        .from(SupabaseTables.collections)
         .insert(_toRow(collection, userId))
         .select(_columns)
         .single();

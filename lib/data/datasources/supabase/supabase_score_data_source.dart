@@ -1,5 +1,6 @@
 import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/score_data_source.dart';
+import 'package:murabbi_mobile/data/datasources/supabase/supabase_tables.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 /// Implémentation Supabase de [ScoreDataSource]. Wrapper thin : aucune
@@ -19,9 +20,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 ///   - `UserScoreMapper` : correctness du mapping (tests unitaires complets).
 ///   - `*_jwt_test.dart` : ordering `ensureFreshSession()` first (#190).
 class SupabaseScoreDataSource implements ScoreDataSource {
-  static const _leaderboard = 'weekly_leaderboard';
-  static const _rpcGetUserScore = 'get_user_score';
-
   final sb.SupabaseClient _client;
 
   /// Wrapper JWT auto-refresh (BUG-001, #190).
@@ -40,7 +38,7 @@ class SupabaseScoreDataSource implements ScoreDataSource {
     // `.single()` retourne PostgrestMap (= Map<String, dynamic>) — on copie
     // pour produire une map mutable, conforme au contrat du datasource.
     final row = await _client
-        .rpc<dynamic>(_rpcGetUserScore, params: {'p_user_id': userId})
+        .rpc<dynamic>(SupabaseRpc.getUserScore, params: {'p_user_id': userId})
         .single();
     return Map<String, dynamic>.from(row);
   }
@@ -53,7 +51,7 @@ class SupabaseScoreDataSource implements ScoreDataSource {
     await _wrapper.ensureFreshSession();
     // Pagination obligatoire (#6) : `range` borne toujours la requête.
     final rows = await _client
-        .from(_leaderboard)
+        .from(SupabaseTables.weeklyLeaderboard)
         .select('user_id, weekly_score, rank')
         .order('rank', ascending: true)
         .range(offset, offset + limit - 1);

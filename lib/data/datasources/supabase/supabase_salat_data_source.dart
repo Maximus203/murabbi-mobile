@@ -1,5 +1,6 @@
 import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/salat_data_source.dart';
+import 'package:murabbi_mobile/data/datasources/supabase/supabase_tables.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 /// Implémentation Supabase de [SalatDataSource]. Wrapper thin :
@@ -14,7 +15,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 /// Supabase est trop fragile à mocker, sera couverte par integration tests
 /// en slice 3.C+).
 class SupabaseSalatDataSource implements SalatDataSource {
-  static const _table = 'prayer_days';
   static const _columns = 'user_id, day, fajr, dhuhr, asr, maghrib, isha';
 
   final sb.SupabaseClient _client;
@@ -34,7 +34,7 @@ class SupabaseSalatDataSource implements SalatDataSource {
   }) async {
     await _wrapper.ensureFreshSession();
     final row = await _client
-        .from(_table)
+        .from(SupabaseTables.prayerDays)
         .select(_columns)
         .eq('user_id', userId)
         .eq('day', day)
@@ -46,7 +46,7 @@ class SupabaseSalatDataSource implements SalatDataSource {
   @override
   Future<void> upsertPrayerDay(Map<String, dynamic> row) async {
     await _wrapper.ensureFreshSession();
-    await _client.from(_table).upsert(row, onConflict: 'user_id,day');
+    await _client.from(SupabaseTables.prayerDays).upsert(row, onConflict: 'user_id,day');
   }
 
   @override
@@ -57,7 +57,7 @@ class SupabaseSalatDataSource implements SalatDataSource {
   }) async {
     await _wrapper.ensureFreshSession();
     final rows = await _client
-        .from(_table)
+        .from(SupabaseTables.prayerDays)
         .select(_columns)
         .eq('user_id', userId)
         .gte('day', from)

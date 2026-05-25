@@ -1,4 +1,5 @@
 import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
+import 'package:murabbi_mobile/data/datasources/supabase/supabase_tables.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Accès Supabase à la table `daily_summaries`.
@@ -17,7 +18,7 @@ class SupabaseDailySummaryDataSource {
   Future<Map<String, dynamic>?> getTodaySummary(String userId) async {
     await _wrapper.ensureFreshSession();
     final rows = await _client
-        .from('daily_summaries')
+        .from(SupabaseTables.dailySummaries)
         .select()
         .eq('user_id', userId)
         .eq('day', _todayIso())
@@ -32,7 +33,7 @@ class SupabaseDailySummaryDataSource {
     await _wrapper.ensureFreshSession();
     final from = DateTime.now().subtract(Duration(days: days));
     return _client
-        .from('daily_summaries')
+        .from(SupabaseTables.dailySummaries)
         .select()
         .eq('user_id', userId)
         .gte('day', _dateIso(from))

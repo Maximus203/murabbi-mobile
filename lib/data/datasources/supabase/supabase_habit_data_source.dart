@@ -1,5 +1,6 @@
 import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/habit_data_source.dart';
+import 'package:murabbi_mobile/data/datasources/supabase/supabase_tables.dart';
 import 'package:murabbi_mobile/domain/errors/habit_failure.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
@@ -30,8 +31,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 /// fluent API Supabase est trop fragile à mocker, couverte par les
 /// integration tests).
 class SupabaseHabitDataSource implements HabitDataSource {
-  static const _habits = 'habits';
-  static const _habitLogs = 'habit_logs';
 
   final sb.SupabaseClient _client;
 
@@ -48,7 +47,7 @@ class SupabaseHabitDataSource implements HabitDataSource {
   Future<List<Map<String, dynamic>>> getHabits(String userId) async {
     await _wrapper.ensureFreshSession();
     final rows = await _client
-        .from(_habits)
+        .from(SupabaseTables.habits)
         .select()
         .eq('user_id', userId)
         .order('created_at', ascending: false);
@@ -60,7 +59,7 @@ class SupabaseHabitDataSource implements HabitDataSource {
   @override
   Future<Map<String, dynamic>> createHabit(Map<String, dynamic> row) async {
     await _wrapper.ensureFreshSession();
-    final created = await _client.from(_habits).insert(row).select().single();
+    final created = await _client.from(SupabaseTables.habits).insert(row).select().single();
     return Map<String, dynamic>.from(created);
   }
 
@@ -68,7 +67,7 @@ class SupabaseHabitDataSource implements HabitDataSource {
   Future<Map<String, dynamic>> updateHabit(Map<String, dynamic> row) async {
     await _wrapper.ensureFreshSession();
     final updated = await _client
-        .from(_habits)
+        .from(SupabaseTables.habits)
         .update(row)
         .eq('id', row['id'] as Object)
         .select()
@@ -79,14 +78,14 @@ class SupabaseHabitDataSource implements HabitDataSource {
   @override
   Future<void> deleteHabit(String habitId) async {
     await _wrapper.ensureFreshSession();
-    await _client.from(_habits).delete().eq('id', habitId);
+    await _client.from(SupabaseTables.habits).delete().eq('id', habitId);
   }
 
   @override
   Future<void> upsertHabitLog(Map<String, dynamic> row) async {
     await _wrapper.ensureFreshSession();
     try {
-      await _client.from(_habitLogs).upsert(row, onConflict: 'habit_id,date');
+      await _client.from(SupabaseTables.habitLogs).upsert(row, onConflict: 'habit_id,date');
     } on sb.PostgrestException catch (e) {
       // Issue #198 (M4) : la contrainte UNIQUE (habit_id, logged_date)
       // côté Supabase peut lever code 23505 sur double-tap concurrent.
@@ -102,7 +101,7 @@ class SupabaseHabitDataSource implements HabitDataSource {
   }) async {
     await _wrapper.ensureFreshSession();
     final rows = await _client
-        .from(_habitLogs)
+        .from(SupabaseTables.habitLogs)
         .select()
         .eq('habit_id', habitId)
         .gte('date', from)
@@ -131,7 +130,7 @@ class SupabaseHabitDataSource implements HabitDataSource {
     final d = date.day.toString().padLeft(2, '0');
     try {
       final result = await _client.rpc<Map<String, dynamic>>(
-        'toggle_habit_log',
+        SupabaseRpc.toggleHabitLog,
         params: {
           'p_habit_id': habitId,
           'p_day': '$y-$m-$d',
@@ -150,7 +149,7 @@ class SupabaseHabitDataSource implements HabitDataSource {
   ) async {
     await _wrapper.ensureFreshSession();
     final rows = await _client
-        .from('collection_habits')
+        .from(SupabaseTables.collectionHabits)
         .select('habits(*)')
         .eq('collection_id', collectionId);
     return rows

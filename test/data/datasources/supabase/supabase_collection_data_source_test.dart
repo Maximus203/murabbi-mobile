@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_collection_data_source.dart';
+import 'package:murabbi_mobile/data/datasources/supabase/supabase_tables.dart';
 
 /// Tests de contrat pour [SupabaseCollectionDataSourceImpl].
 ///
@@ -20,7 +21,7 @@ void main() {
         // `collection_habits` (révoqués par la RLS policy).
         // Cette valeur est la source de vérité pour les requêtes de habits.
         expect(
-          SupabaseCollectionDataSourceImpl.publishedCatalog,
+          SupabaseTables.publishedCatalog,
           equals('published_catalog'),
         );
       },
@@ -56,11 +57,11 @@ void main() {
         // Ce test documente l'invariant : la constante de table principale
         // ne doit jamais être `collection_habits`.
         expect(
-          SupabaseCollectionDataSourceImpl.collectionsTable,
+          SupabaseTables.collections,
           isNot(equals('collection_habits')),
         );
         expect(
-          SupabaseCollectionDataSourceImpl.publishedCatalog,
+          SupabaseTables.publishedCatalog,
           isNot(equals('collection_habits')),
         );
       },

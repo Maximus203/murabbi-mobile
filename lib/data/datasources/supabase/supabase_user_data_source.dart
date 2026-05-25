@@ -1,5 +1,6 @@
 import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_auth_data_source.dart';
+import 'package:murabbi_mobile/data/datasources/supabase/supabase_tables.dart';
 import 'package:murabbi_mobile/data/datasources/user_data_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
@@ -10,7 +11,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 /// réutilise [SupabaseAuthDataSource.profileColumns] pour rester aligné sur
 /// le contrat de colonnes anti-drift (PR #29).
 class SupabaseUserDataSource implements UserDataSource {
-  static const _users = 'users';
 
   final sb.SupabaseClient _client;
 
@@ -29,7 +29,7 @@ class SupabaseUserDataSource implements UserDataSource {
   }) async {
     await _wrapper.ensureFreshSession();
     final row = await _client
-        .from(_users)
+        .from(SupabaseTables.users)
         .update({'pseudo': pseudo})
         .eq('id', userId)
         .select(SupabaseAuthDataSource.profileColumns)

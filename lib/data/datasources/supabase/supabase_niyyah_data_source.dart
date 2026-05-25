@@ -1,4 +1,5 @@
 import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
+import 'package:murabbi_mobile/data/datasources/supabase/supabase_tables.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Accès Supabase à la table `daily_niyyahs`.
@@ -15,7 +16,7 @@ class SupabaseNiyyahDataSource {
     await _wrapper.ensureFreshSession();
     final today = _todayIso();
     final rows = await _client
-        .from('daily_niyyahs')
+        .from(SupabaseTables.dailyNiyyahs)
         .select()
         .eq('user_id', userId)
         .eq('day', today)
@@ -30,7 +31,7 @@ class SupabaseNiyyahDataSource {
     await _wrapper.ensureFreshSession();
     final today = _todayIso();
     final rows = await _client
-        .from('daily_niyyahs')
+        .from(SupabaseTables.dailyNiyyahs)
         .upsert(
           {'user_id': userId, 'day': today, 'text': text},
           onConflict: 'user_id,day',

@@ -1,5 +1,6 @@
 import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/category_data_source.dart';
+import 'package:murabbi_mobile/data/datasources/supabase/supabase_tables.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 /// Implémentation Supabase de [CategoryDataSource]. Wrapper thin : aucune
@@ -13,7 +14,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 ///
 /// Non couvert par tests unitaires (pattern `SupabaseSalatDataSource`).
 class SupabaseCategoryDataSource implements CategoryDataSource {
-  static const _table = 'categories';
 
   final sb.SupabaseClient _client;
 
@@ -29,7 +29,7 @@ class SupabaseCategoryDataSource implements CategoryDataSource {
   Future<List<Map<String, dynamic>>> getCategories(String userId) async {
     await _wrapper.ensureFreshSession();
     final rows = await _client
-        .from(_table)
+        .from(SupabaseTables.categories)
         .select()
         .or('user_id.eq.$userId,is_system.eq.true')
         .order('name');
@@ -45,7 +45,7 @@ class SupabaseCategoryDataSource implements CategoryDataSource {
   ) async {
     await _wrapper.ensureFreshSession();
     final row = await _client
-        .from(_table)
+        .from(SupabaseTables.categories)
         .select()
         .or('user_id.eq.$userId,is_system.eq.true')
         .eq('slug', slug)
@@ -56,7 +56,7 @@ class SupabaseCategoryDataSource implements CategoryDataSource {
   @override
   Future<Map<String, dynamic>> createCategory(Map<String, dynamic> row) async {
     await _wrapper.ensureFreshSession();
-    final created = await _client.from(_table).insert(row).select().single();
+    final created = await _client.from(SupabaseTables.categories).insert(row).select().single();
     return Map<String, dynamic>.from(created);
   }
 
@@ -64,7 +64,7 @@ class SupabaseCategoryDataSource implements CategoryDataSource {
   Future<Map<String, dynamic>> updateCategory(Map<String, dynamic> row) async {
     await _wrapper.ensureFreshSession();
     final updated = await _client
-        .from(_table)
+        .from(SupabaseTables.categories)
         .update(row)
         .eq('id', row['id'] as Object)
         .select()
@@ -75,6 +75,6 @@ class SupabaseCategoryDataSource implements CategoryDataSource {
   @override
   Future<void> deleteCategory(String categoryId) async {
     await _wrapper.ensureFreshSession();
-    await _client.from(_table).delete().eq('id', categoryId);
+    await _client.from(SupabaseTables.categories).delete().eq('id', categoryId);
   }
 }

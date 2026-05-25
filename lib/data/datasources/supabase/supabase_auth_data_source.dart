@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/auth_data_source.dart';
+import 'package:murabbi_mobile/data/datasources/supabase/supabase_tables.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 typedef AuthMaps = ({
@@ -177,7 +178,7 @@ class SupabaseAuthDataSource implements AuthDataSource {
     // Soft-delete (ADR-011) : flag deletion_requested_at + signOut. Le
     // hard-delete cascade RGPD est exécuté par un job batch admin (J+30).
     await _client
-        .from('users')
+        .from(SupabaseTables.users)
         .update(buildDeleteAccountUpdatePayload())
         .eq('id', userId);
     await _client.auth.signOut();
@@ -215,7 +216,7 @@ class SupabaseAuthDataSource implements AuthDataSource {
       profile = profileOverride;
     } else {
       final row = await _client
-          .from('users')
+          .from(SupabaseTables.users)
           .select(profileColumns)
           .eq('id', user.id)
           .single();
