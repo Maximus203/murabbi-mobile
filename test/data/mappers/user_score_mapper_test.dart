@@ -44,5 +44,46 @@ void main() {
 
       expect(UserScoreMapper.fromRow(row).currentLevel, Level.murabbi);
     });
+
+    test('previousWeekRank mappé quand présent', () {
+      final row = {
+        'user_id': 'u-4',
+        'total_points': 5000,
+        'weekly_score': 100,
+        'rank': 5,
+        'previous_week_rank': 7,
+      };
+
+      final s = UserScoreMapper.fromRow(row);
+
+      expect(s.previousWeekRank, 7);
+      expect(s.rankMovement, 2); // 7 - 5 = monté de 2
+    });
+
+    test('previousWeekRank null quand absent (première semaine)', () {
+      final row = {
+        'user_id': 'u-5',
+        'total_points': 0,
+        'weekly_score': 0,
+        'rank': 1,
+      };
+
+      final s = UserScoreMapper.fromRow(row);
+
+      expect(s.previousWeekRank, isNull);
+      expect(s.rankMovement, isNull);
+    });
+
+    test('previousWeekRank null explicite mappé en null', () {
+      final row = {
+        'user_id': 'u-6',
+        'total_points': 0,
+        'weekly_score': 0,
+        'rank': 1,
+        'previous_week_rank': null,
+      };
+
+      expect(UserScoreMapper.fromRow(row).previousWeekRank, isNull);
+    });
   });
 }

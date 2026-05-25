@@ -8,15 +8,13 @@ import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 /// Sources consommées :
 ///   - `users` : `id`, `total_points`.
 ///   - vue `weekly_leaderboard` : `user_id`, `weekly_score`, `rank`.
+///   - `user_scores` : `previous_week_rank` (Q-F, v1.2.1).
 ///
 /// Le datasource jointe ces sources et fournit une row plate ; les colonnes
-/// absentes retombent sur des défauts sûrs (0 point, rang 1) pour ne jamais
-/// violer les invariants de [UserScore] (`weeklyRank > 0`).
+/// absentes retombent sur des défauts sûrs.
 class UserScoreMapper {
   const UserScoreMapper._();
 
-  /// SQL row → entité domain. Le niveau est **dérivé** des points totaux via
-  /// [Level.fromPoints] — jamais lu d'une colonne (source de vérité domaine).
   static UserScore fromRow(Map<String, dynamic> row) {
     final totalPoints = (row['total_points'] as int?) ?? 0;
     final rawRank = (row['rank'] as int?) ?? 1;
@@ -27,6 +25,7 @@ class UserScoreMapper {
       weeklyPoints: (row['weekly_score'] as int?) ?? 0,
       currentLevel: Level.fromPoints(totalPoints),
       weeklyRank: rawRank < 1 ? 1 : rawRank,
+      previousWeekRank: row['previous_week_rank'] as int?,
     );
   }
 }
