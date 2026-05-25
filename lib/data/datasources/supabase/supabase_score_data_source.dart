@@ -6,8 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 /// logique métier, aucune traduction d'erreur — déléguées au repository.
 ///
 /// Sources consommées (cf. issue #6) :
-///   `users`              — id, total_points (via RPC `get_user_score`)
-///   `weekly_leaderboard` — vue : user_id, weekly_score, rank
+///   RPC `get_user_score`    — user_id, total_points, weekly_score, rank, pseudo.
+///   Vue `weekly_leaderboard`— user_id, weekly_score, rank, pseudo.
 ///
 /// Lecture atomique du score utilisateur via RPC `get_user_score(p_user_id)`
 /// (issue #199, M10) — un seul aller-retour réseau dans une transaction
@@ -16,8 +16,8 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 ///
 /// Non couvert par tests unitaires (pattern `SupabaseHabitDataSource` — la
 /// fluent API Supabase est trop fragile à mocker). Garanties par :
-///   - `UserScoreMapper` : correctness du mapping (tests unitaires complets).
-///   - `*_jwt_test.dart` : ordering `ensureFreshSession()` first (#190).
+///   - [UserScoreMapper] : correctness du mapping (tests unitaires complets).
+///   - `*_jwt_test.dart`  : ordering `ensureFreshSession()` first (#190).
 class SupabaseScoreDataSource implements ScoreDataSource {
   static const _leaderboard = 'weekly_leaderboard';
   static const _rpcGetUserScore = 'get_user_score';
@@ -52,9 +52,11 @@ class SupabaseScoreDataSource implements ScoreDataSource {
   }) async {
     await _wrapper.ensureFreshSession();
     // Pagination obligatoire (#6) : `range` borne toujours la requête.
+    // `pseudo` sélectionné — colonne NOT NULL dans weekly_leaderboard
+    // (vue jointe avec users.pseudo).
     final rows = await _client
         .from(_leaderboard)
-        .select('user_id, weekly_score, rank')
+        .select('user_id, weekly_score, rank, pseudo')
         .order('rank', ascending: true)
         .range(offset, offset + limit - 1);
     return rows
