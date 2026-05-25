@@ -191,12 +191,8 @@ void main() {
           actualValue: any(named: 'actualValue'),
         ),
       ).thenAnswer((_) async {});
-      when(
-        () => mockSync.processPendingQueue(),
-      ).thenAnswer((_) async {});
-      when(
-        () => mockSync.pendingCount,
-      ).thenAnswer((_) => Stream.value(0));
+      when(() => mockSync.processPendingQueue()).thenAnswer((_) async {});
+      when(() => mockSync.pendingCount).thenAnswer((_) => Stream.value(0));
       when(
         () => mockSync.deadLetterStream,
       ).thenAnswer((_) => const Stream.empty());
@@ -267,16 +263,19 @@ void main() {
       verifyNever(() => mockSync.processPendingQueue());
     });
 
-    test('nappelle pas directement habitRepo.logHabit (sync différée)', () async {
-      final container = makeContainer(syncService: mockSync);
-      await container.read(habitDetailNotifierProvider('h1').future);
+    test(
+      'nappelle pas directement habitRepo.logHabit (sync différée)',
+      () async {
+        final container = makeContainer(syncService: mockSync);
+        await container.read(habitDetailNotifierProvider('h1').future);
 
-      await container
-          .read(habitDetailNotifierProvider('h1').notifier)
-          .logHabit(HabitLogStatus.onTime);
+        await container
+            .read(habitDetailNotifierProvider('h1').notifier)
+            .logHabit(HabitLogStatus.onTime);
 
-      // Le log passe par la sync queue, jamais directement par le repo.
-      verifyNever(() => habitRepo.logHabit(any()));
-    });
+        // Le log passe par la sync queue, jamais directement par le repo.
+        verifyNever(() => habitRepo.logHabit(any()));
+      },
+    );
   });
 }

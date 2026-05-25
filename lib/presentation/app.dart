@@ -73,7 +73,11 @@ class _MurabbiAppState extends ConsumerState<MurabbiApp>
       await ref.read(syncServiceProvider).processPendingQueue();
       appLog.i('MurabbiApp: startup sync replay complete');
     } catch (e, st) {
-      appLog.e('MurabbiApp: startup sync replay failed', error: e, stackTrace: st);
+      appLog.e(
+        'MurabbiApp: startup sync replay failed',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 
@@ -88,7 +92,11 @@ class _MurabbiAppState extends ConsumerState<MurabbiApp>
         ref.read(syncServiceProvider).processPendingQueue().catchError(
           // ignore: avoid_types_on_closure_parameters
           (Object e, StackTrace st) {
-            appLog.e('MurabbiApp: sync replay failed', error: e, stackTrace: st);
+            appLog.e(
+              'MurabbiApp: sync replay failed',
+              error: e,
+              stackTrace: st,
+            );
           },
         );
       }

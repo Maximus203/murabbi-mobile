@@ -95,16 +95,19 @@ void main() {
       expect(item.retryCount, 0);
     });
 
-    test("n'appelle pas le repo Supabase (pas de réseau dans enqueue)", () async {
-      await sut.enqueueLogHabit(
-        habitId: 'h-1',
-        userId: 'u-1',
-        status: HabitLogStatus.onTime,
-        date: DateTime(2026, 5, 24),
-      );
+    test(
+      "n'appelle pas le repo Supabase (pas de réseau dans enqueue)",
+      () async {
+        await sut.enqueueLogHabit(
+          habitId: 'h-1',
+          userId: 'u-1',
+          status: HabitLogStatus.onTime,
+          date: DateTime(2026, 5, 24),
+        );
 
-      verifyNever(() => mockHabitRepo.logHabit(any()));
-    });
+        verifyNever(() => mockHabitRepo.logHabit(any()));
+      },
+    );
   });
 
   // ── 2. processPendingQueue — succès ─────────────────────────────────────────
@@ -113,7 +116,9 @@ void main() {
     test('exécute les items dans lordre FIFO et les supprime', () async {
       final item1 = _item(id: 'item-001');
       final item2 = _item(id: 'item-002');
-      when(() => mockDb.getPendingItems()).thenAnswer((_) async => [item1, item2]);
+      when(
+        () => mockDb.getPendingItems(),
+      ).thenAnswer((_) async => [item1, item2]);
       when(() => mockHabitRepo.logHabit(any())).thenAnswer((_) async {});
 
       await sut.processPendingQueue();
@@ -207,9 +212,9 @@ void main() {
     });
 
     test('émet le count après enqueue', () async {
-      when(() => mockDb.getPendingItems()).thenAnswer(
-        (_) async => [_item(id: 'i1'), _item(id: 'i2')],
-      );
+      when(
+        () => mockDb.getPendingItems(),
+      ).thenAnswer((_) async => [_item(id: 'i1'), _item(id: 'i2')]);
 
       await sut.enqueueLogHabit(
         habitId: 'h-1',

@@ -109,7 +109,10 @@ class SqfliteSyncDatabase implements SyncDatabase {
   // ── Privé ──────────────────────────────────────────────────────────────────
 
   Database get _database {
-    assert(_db != null, 'SqfliteSyncDatabase.init() doit être appelé avant usage.');
+    assert(
+      _db != null,
+      'SqfliteSyncDatabase.init() doit être appelé avant usage.',
+    );
     return _db!;
   }
 

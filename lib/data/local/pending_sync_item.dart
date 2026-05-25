@@ -80,10 +80,9 @@ class PendingSyncItem {
     final newCount = retryCount + 1;
     return copyWith(
       retryCount: newCount,
-      status:
-          newCount >= maxRetries
-              ? SyncItemStatus.failed
-              : SyncItemStatus.pending,
+      status: newCount >= maxRetries
+          ? SyncItemStatus.failed
+          : SyncItemStatus.pending,
     );
   }
 

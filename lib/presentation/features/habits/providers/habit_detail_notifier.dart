@@ -121,19 +121,20 @@ class HabitDetailNotifier
       _applyOptimisticLog(status);
 
       // 2. Enqueue dans SQLite (aucun appel réseau garanti).
-      await ref.read(syncServiceProvider).enqueueLogHabit(
-        habitId: _habitId,
-        userId: _resolveUserId().value,
-        status: status,
-        date: _today(),
-        actualValue: actualValue,
-      );
+      await ref
+          .read(syncServiceProvider)
+          .enqueueLogHabit(
+            habitId: _habitId,
+            userId: _resolveUserId().value,
+            status: status,
+            date: _today(),
+            actualValue: actualValue,
+          );
 
       // 3. Sync immédiate si online — replay de la queue entière.
       // On lit le service directement (pas le StreamProvider) pour obtenir
       // le statut courant de façon fiable sans attendre la première émission.
-      final isOnline =
-          await ref.read(connectivityServiceProvider).isOnline();
+      final isOnline = await ref.read(connectivityServiceProvider).isOnline();
       if (isOnline) {
         await ref.read(syncServiceProvider).processPendingQueue();
       }
@@ -168,10 +169,10 @@ class HabitDetailNotifier
       status: status,
     );
 
-    final updatedLogs =
-        [optimisticLog, ...current.recentLogs]
-            .take(historyLimit)
-            .toList(growable: false);
+    final updatedLogs = [
+      optimisticLog,
+      ...current.recentLogs,
+    ].take(historyLimit).toList(growable: false);
 
     state = AsyncValue.data(
       HabitDetailState(
