@@ -66,4 +66,16 @@ abstract interface class CollectionRepository {
   Future<List<Map<String, dynamic>>> getHabitsForCollection({
     required CollectionId collectionId,
   });
+
+  /// Supprime définitivement une collection utilisateur.
+  ///
+  /// **Périmètre** : collections `is_system = false` uniquement. La garde
+  /// est appliquée côté datasource (filtre `is_system = false` + `user_id`)
+  /// et renforcée par la policy RLS Supabase.
+  ///
+  /// Ne lève pas d'erreur si la collection n'existe pas — opération idempotente.
+  Future<void> deleteCollection({
+    required UserId userId,
+    required CollectionId collectionId,
+  });
 }

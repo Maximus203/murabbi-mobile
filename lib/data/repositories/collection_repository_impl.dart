@@ -78,6 +78,15 @@ class CollectionRepositoryImpl
     required CollectionId collectionId,
   }) => _guard(() => _ds.getHabitsForCollection(collectionId.value));
 
+  @override
+  Future<void> deleteCollection({
+    required UserId userId,
+    required CollectionId collectionId,
+  }) => _guard(() async {
+    await _guardOwnership(userId);
+    return _ds.deleteCollection(collectionId: collectionId, userId: userId);
+  });
+
   Future<T> _guard<T>(Future<T> Function() body) async {
     try {
       return await body();

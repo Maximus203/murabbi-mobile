@@ -1,6 +1,7 @@
 import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_tables.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
+import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
@@ -44,6 +45,15 @@ abstract interface class SupabaseCollectionDataSource {
     required Collection collection,
     required UserId userId,
   });
+
+  /// Supprime une collection utilisateur (`is_system = false`).
+  ///
+  /// Le filtre `user_id + is_system = false` garantit qu'on ne supprime
+  /// jamais une collection système, même en cas d'appel incorrect.
+  Future<void> deleteCollection({
+    required CollectionId collectionId,
+    required UserId userId,
+  });
 }
 
 /// Implémentation Supabase de [SupabaseCollectionDataSource].
@@ -61,8 +71,14 @@ abstract interface class SupabaseCollectionDataSource {
 /// (`is_system = true`). La view `published_catalog` filtre les habits
 /// publiés côté Supabase — le domaine ne voit jamais les soft-deleted.
 class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
+  /// Colonnes sélectionnées sur la table `collections`.
+  ///
+  /// `primary_category_id` et `icon` dépendent de la migration admin AR-04
+  /// (Q-23 verrouillée). Nullable dans le mapping — si la colonne n'existe
+  /// pas encore, Supabase retourne `null` pour ces champs.
   static const _columns =
-      'id, name, description, habit_ids, is_system, is_active, cover_image_url';
+      'id, name, description, habit_ids, is_system, is_active, '
+      'cover_image_url, primary_category_id, icon';
 
   final sb.SupabaseClient _client;
 
@@ -166,6 +182,8 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
       habitIds = [HabitId('placeholder')];
     }
 
+    final rawCategoryId = row['primary_category_id'] as String?;
+
     return Collection(
       id: CollectionId(row['id'] as String),
       name: NonEmptyString(row['name'] as String),
@@ -176,6 +194,9 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
       isSystem: row['is_system'] as bool? ?? false,
       isActive: row['is_active'] as bool? ?? false,
       coverImageUrl: row['cover_image_url'] as String?,
+      primaryCategoryId:
+          rawCategoryId != null ? CategoryId(rawCategoryId) : null,
+      icon: row['icon'] as String?,
     );
   }
 
@@ -189,7 +210,25 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
       'is_system': c.isSystem,
       'is_active': c.isActive,
       'cover_image_url': c.coverImageUrl,
+      'primary_category_id': c.primaryCategoryId?.value,
+      'icon': c.icon,
       'user_id': userId.value,
     };
+  }
+
+  @override
+  Future<void> deleteCollection({
+    required CollectionId collectionId,
+    required UserId userId,
+  }) async {
+    await _wrapper.ensureFreshSession();
+    // Filtre triple : id + user_id + is_system = false.
+    // Empêche toute suppression accidentelle d'une collection système.
+    await _client
+        .from(SupabaseTables.collections)
+        .delete()
+        .eq('id', collectionId.value)
+        .eq('user_id', userId.value)
+        .eq('is_system', false);
   }
 }

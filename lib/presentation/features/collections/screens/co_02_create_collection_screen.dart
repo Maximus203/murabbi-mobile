@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/core/utils/icon_utils.dart';
+import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
+import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/presentation/features/categories/providers/categories_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/collections/providers/collections_notifier.dart';
@@ -52,8 +54,10 @@ final Map<String, IconData> _kCollectionIconMap = {
 
 /// CO-02 — Création d'une collection (issue #6, Phase 5).
 ///
-/// Formulaire : titre, description, catégorie principale (Q-23),
-/// icône (Q-23) et sélection multiple d'habitudes (Q-24).
+/// Formulaire : titre, description, catégorie principale (chips colorés),
+/// icône et sélection multiple d'habitudes.
+///
+/// Footer sticky : compteur de sélection + pts/jour + bouton "Créer".
 class Co02CreateCollectionScreen extends ConsumerStatefulWidget {
   final VoidCallback onCreated;
   final VoidCallback onCancel;
@@ -113,33 +117,44 @@ class _Co02CreateCollectionScreenState
 
   @override
   Widget build(BuildContext context) {
-    final habits = ref.watch(habitsNotifierProvider);
+    final habitsAsync = ref.watch(habitsNotifierProvider);
+    final allHabits = habitsAsync.valueOrNull ?? [];
     final categories = ref.watch(categoriesNotifierProvider);
+    final allCategories = categories.valueOrNull ?? [];
     final isSaving = ref.watch(collectionsNotifierProvider).isLoading;
+
+    // Calcul pts/jour des habitudes sélectionnées.
+    final selectedPts = allHabits
+        .where((h) => _selected.contains(h.id.value))
+        .fold(0, (sum, h) => sum + (h.points?.value ?? 0));
+
+    // Map catégorie pour lookup dans le picker d'habitudes.
+    final categoryMap = <CategoryId, Category>{
+      for (final c in allCategories) c.id: c,
+    };
 
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
+      appBar: AppHeader.back(
+        title: 'Nouvelle collection',
+        onBack: widget.onCancel,
+      ),
       body: SafeArea(
+        top: false,
         bottom: false,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.s5,
             AppSpacing.s4,
             AppSpacing.s5,
-            AppSpacing.s8,
+            AppSpacing.s4,
           ),
           children: [
-            AppHeader.back(
-              title: 'Nouvelle collection',
-              onBack: widget.onCancel,
-            ),
-            const SizedBox(height: AppSpacing.s5),
-
-            // ── Titre ─────────────────────────────────────────────────────
+            // ── Titre ───────────────────────────────────────────────────
             AppInput(
               key: const Key('field_name'),
               label: 'Titre',
-              placeholder: 'Routine du matin',
+              placeholder: 'Ex. Routine du matin',
               controller: _nameController,
               onChanged: (_) => setState(() {}),
               errorText: _submitted && _nameController.text.trim().isEmpty
@@ -148,11 +163,12 @@ class _Co02CreateCollectionScreenState
             ),
             const SizedBox(height: AppSpacing.s4),
 
-            // ── Description ───────────────────────────────────────────────
+            // ── Description ─────────────────────────────────────────────
             AppInput(
               key: const Key('field_description'),
               label: 'Description',
-              placeholder: 'À quoi sert cette collection ?',
+              placeholder:
+                  'Quelques mots pour rappeler l\'intention de cette collection.',
               controller: _descController,
               onChanged: (_) => setState(() {}),
               errorText: _submitted && _descController.text.trim().isEmpty
@@ -161,39 +177,79 @@ class _Co02CreateCollectionScreenState
             ),
             const SizedBox(height: AppSpacing.s5),
 
-            // ── Catégorie principale (Q-23) ───────────────────────────────
-            const Text('CATÉGORIE PRINCIPALE', style: AppTypography.label),
-            const SizedBox(height: AppSpacing.s3),
-            categories.when(
-              loading: () => const SizedBox.shrink(),
-              error: (_, _) => const SizedBox.shrink(),
-              data: (cats) => Wrap(
-                spacing: AppSpacing.s2,
-                runSpacing: AppSpacing.s2,
-                children: cats.map((cat) {
-                  final isSelected = _primaryCategoryId == cat.id.value;
-                  return ChoiceChip(
-                    label: Text(cat.name.value),
-                    selected: isSelected,
-                    onSelected: (_) => setState(() {
-                      _primaryCategoryId = isSelected ? null : cat.id.value;
-                    }),
-                    selectedColor: AppColors.accent,
-                    labelStyle: AppTypography.caption.copyWith(
-                      color: isSelected
-                          ? AppColors.bgSurface
-                          : AppColors.textPrimary,
-                    ),
-                    backgroundColor: AppColors.bgInput,
-                    side: BorderSide.none,
-                  );
-                }).toList(),
+            // ── Catégorie principale ─────────────────────────────────────
+            Text(
+              'CATÉGORIE PRINCIPALE',
+              style: AppTypography.label.copyWith(
+                color: AppColors.textSecondary,
               ),
+            ),
+            const SizedBox(height: AppSpacing.s3),
+            Wrap(
+              spacing: AppSpacing.s2,
+              runSpacing: AppSpacing.s2,
+              children: allCategories.map((cat) {
+                final isSelected = _primaryCategoryId == cat.id.value;
+                final catColor = _colorFromHex(cat.color);
+                return GestureDetector(
+                  onTap: () => setState(() {
+                    _primaryCategoryId =
+                        isSelected ? null : cat.id.value;
+                  }),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s3,
+                      vertical: AppSpacing.s2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected ? catColor : AppColors.bgInput,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: isSelected
+                          ? null
+                          : Border.all(
+                              color: AppColors.borderEmphasis,
+                              width: AppBorderWidth.thin,
+                            ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.bgSurface
+                                : catColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.s2),
+                        Text(
+                          cat.name.value,
+                          style: AppTypography.caption.copyWith(
+                            color: isSelected
+                                ? AppColors.bgSurface
+                                : AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
             const SizedBox(height: AppSpacing.s5),
 
-            // ── Icône (Q-23) ──────────────────────────────────────────────
-            const Text('ICÔNE', style: AppTypography.label),
+            // ── Icône ────────────────────────────────────────────────────
+            Text(
+              'ICÔNE',
+              style: AppTypography.label.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
             const SizedBox(height: AppSpacing.s3),
             _CollectionIconPicker(
               selected: _icon,
@@ -202,28 +258,29 @@ class _Co02CreateCollectionScreenState
             ),
             const SizedBox(height: AppSpacing.s5),
 
-            // ── Habitudes ─────────────────────────────────────────────────
+            // ── Habitudes à inclure ──────────────────────────────────────
             Text(
-              'HABITUDES',
+              'HABITUDES À INCLURE',
               style: AppTypography.label.copyWith(
                 color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.s3),
-            habits.when(
+            habitsAsync.when(
               loading: () => const Center(
                 child: Padding(
                   padding: EdgeInsets.all(AppSpacing.s4),
                   child: CircularProgressIndicator(),
                 ),
               ),
-              error: (_, _) => Text(
+              error: (e, st) => Text(
                 'Impossible de charger les habitudes.',
                 style: AppTypography.body.copyWith(color: AppColors.danger),
               ),
               data: (list) => _HabitPicker(
                 habits: list,
                 selected: _selected,
+                categoryMap: categoryMap,
                 onToggle: (id) => setState(() {
                   _selected.contains(id)
                       ? _selected.remove(id)
@@ -238,12 +295,21 @@ class _Co02CreateCollectionScreenState
                 style: AppTypography.caption.copyWith(color: AppColors.danger),
               ),
             ],
-            const SizedBox(height: AppSpacing.s6),
-            AppButton(
-              label: 'Créer la collection',
-              onPressed: isSaving ? null : _submit,
-            ),
+            // Espace pour que le footer ne masque pas le bas de la liste.
+            const SizedBox(height: AppSpacing.s8),
           ],
+        ),
+      ),
+
+      // ── Footer sticky : compteur + bouton ─────────────────────────────
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: _CreateFooter(
+          selectedCount: _selected.length,
+          ptsPerDay: selectedPts,
+          isSaving: isSaving,
+          isValid: _isValid,
+          onSubmit: _submit,
         ),
       ),
     );
@@ -271,8 +337,8 @@ class _CollectionIconPicker extends StatelessWidget {
           onTap: () => onSelected(name),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            width: 52,
-            height: 52,
+            width: AppComponentSize.iconSelectorCell,
+            height: AppComponentSize.iconSelectorCell,
             decoration: BoxDecoration(
               color: isSelected ? AppColors.accent : AppColors.bgInput,
               borderRadius: BorderRadius.circular(AppSpacing.s3),
@@ -292,14 +358,17 @@ class _CollectionIconPicker extends StatelessWidget {
   }
 }
 
+/// Picker d'habitudes avec nom, catégorie et fréquence (CO-02).
 class _HabitPicker extends StatelessWidget {
   final List<Habit> habits;
   final Set<String> selected;
+  final Map<CategoryId, Category> categoryMap;
   final void Function(String) onToggle;
 
   const _HabitPicker({
     required this.habits,
     required this.selected,
+    required this.categoryMap,
     required this.onToggle,
   });
 
@@ -315,6 +384,13 @@ class _HabitPicker extends StatelessWidget {
       children: habits.map((h) {
         final id = h.id.value;
         final isSelected = selected.contains(id);
+        final category = categoryMap[h.categoryId];
+        final catName = category?.name.value ?? '';
+        final freqLabel = _frequencyLabel(h);
+        final subtitle = catName.isNotEmpty
+            ? '$catName · $freqLabel'
+            : freqLabel;
+
         return Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.s2),
           child: AppCard(
@@ -324,15 +400,28 @@ class _HabitPicker extends StatelessWidget {
               children: [
                 Icon(
                   isSelected ? LucideIcons.squareCheck : LucideIcons.square,
-                  size: 20,
+                  size: AppIconSize.rg,
                   color: isSelected ? AppColors.accent : AppColors.textTertiary,
                 ),
                 const SizedBox(width: AppSpacing.s3),
-                Expanded(child: Text(h.name.value, style: AppTypography.body)),
-                // #163 : points nullable — on masque si null.
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(h.name.value, style: AppTypography.body),
+                      if (subtitle.isNotEmpty)
+                        Text(
+                          subtitle,
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
                 if (h.points != null)
                   Text(
-                    '${h.points!.value} pts',
+                    '+${h.points!.value} pts',
                     style: AppTypography.caption.copyWith(
                       color: AppColors.textTertiary,
                     ),
@@ -344,4 +433,85 @@ class _HabitPicker extends StatelessWidget {
       }).toList(),
     );
   }
+}
+
+/// Footer sticky CO-02 : compteur de sélection + pts/jour + bouton Créer.
+class _CreateFooter extends StatelessWidget {
+  final int selectedCount;
+  final int ptsPerDay;
+  final bool isSaving;
+  final bool isValid;
+  final VoidCallback onSubmit;
+
+  const _CreateFooter({
+    required this.selectedCount,
+    required this.ptsPerDay,
+    required this.isSaving,
+    required this.isValid,
+    required this.onSubmit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s5,
+        AppSpacing.s3,
+        AppSpacing.s5,
+        AppSpacing.s5,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.bgSurface,
+        border: Border(
+          top: BorderSide(
+            color: AppColors.borderDefault,
+            width: AppBorderWidth.thin,
+          ),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (selectedCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+              child: Text(
+                '$selectedCount habitude${selectedCount > 1 ? "s" : ""} '
+                'sélectionnée${selectedCount > 1 ? "s" : ""}'
+                '${ptsPerDay > 0 ? " • +$ptsPerDay pts/jour" : ""}',
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          AppButton(
+            label: 'Créer la collection',
+            onPressed: isSaving ? null : onSubmit,
+            isLoading: isSaving,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+/// Convertit un [HexColor] en [Color] Flutter.
+Color _colorFromHex(HexColor hex) {
+  final s = hex.value.replaceFirst('#', '');
+  return Color(int.parse(s, radix: 16) | 0xFF000000);
+}
+
+/// Libellé de fréquence français.
+String _frequencyLabel(Habit h) {
+  return switch (h.frequencyType) {
+    HabitFrequencyType.daily => 'Quotidien',
+    HabitFrequencyType.perDay => '${h.frequency}×/jour',
+    HabitFrequencyType.perWeek => '${h.frequency}×/sem.',
+    HabitFrequencyType.weekly => '${h.activeDays.length}j/sem.',
+    HabitFrequencyType.monthly => 'Mensuel',
+    HabitFrequencyType.custom => 'Personnalisé',
+  };
 }

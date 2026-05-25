@@ -75,6 +75,7 @@ class _StubCollectionsNotifier extends CollectionsNotifier {
 /// Habitude factice pour les tests de sélection.
 final _kMockHabit = Habit(
   id: HabitId('habit-test-1'),
+  userId: UserId('user-uuid-001'),
   name: NonEmptyString('Habitude test'),
   categoryId: CategoryId('cat-test'),
   frequencyType: HabitFrequencyType.daily,

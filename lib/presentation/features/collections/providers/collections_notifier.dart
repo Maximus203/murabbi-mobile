@@ -4,6 +4,7 @@ import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/use_cases/collections/activate_collection_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/collections/create_collection_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/collections/deactivate_collection_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/collections/delete_collection_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/collections/get_collections_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/current_user_provider.dart';
@@ -30,6 +31,12 @@ final createCollectionUseCaseProvider = Provider<CreateCollectionUseCase>((
   ref,
 ) {
   return CreateCollectionUseCase(ref.watch(collectionRepositoryProvider));
+});
+
+final deleteCollectionUseCaseProvider = Provider<DeleteCollectionUseCase>((
+  ref,
+) {
+  return DeleteCollectionUseCase(ref.watch(collectionRepositoryProvider));
 });
 
 /// Liste des collections visibles par l'utilisateur connecté — alimente
@@ -80,6 +87,20 @@ class CollectionsNotifier extends AsyncNotifier<List<Collection>> {
       await ref.read(createCollectionUseCaseProvider)(
         userId: user.id,
         collection: collection,
+      );
+      return ref.read(getCollectionsUseCaseProvider)(user.id);
+    });
+  }
+
+  /// Supprime une collection utilisateur (`isSystem = false`) puis recharge.
+  Future<void> delete(CollectionId collectionId) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(deleteCollectionUseCaseProvider)(
+        userId: user.id,
+        collectionId: collectionId,
       );
       return ref.read(getCollectionsUseCaseProvider)(user.id);
     });

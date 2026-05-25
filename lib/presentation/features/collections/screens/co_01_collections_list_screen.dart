@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
+import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
+import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
+import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
+import 'package:murabbi_mobile/presentation/features/categories/providers/categories_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/collections/providers/collections_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/collections/widgets/collection_card.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
@@ -18,9 +22,12 @@ import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 
 /// CO-01 — Liste des collections d'habitudes (issue #6, Phase 5).
 ///
-/// Sépare collections actives, suggestions système et collections utilisateur
-/// inactives. Empty state si aucune collection. Tap sur une carte → CO-DETAIL ;
-/// bouton "+" dans le header → CO-02.
+/// Sections :
+///   • Carte "Aucune collection activée" si aucune collection active.
+///   • "SUGGESTIONS - SYSTÈME" / "SYSTÈME" : toutes les collections système.
+///   • "MES COLLECTIONS" : collections créées par l'utilisateur.
+///
+/// Tap "+" → CO-02 ; tap carte → CO-DETAIL.
 class Co01CollectionsListScreen extends ConsumerWidget {
   final void Function(String collectionId) onOpenCollection;
   final VoidCallback onCreate;
@@ -44,7 +51,7 @@ class Co01CollectionsListScreen extends ConsumerWidget {
           splashRadius: 18,
           icon: Icon(
             lu(LucideIcons.plus),
-            size: 20,
+            size: AppIconSize.rg,
             color: AppColors.textPrimary,
           ),
         ),
@@ -79,10 +86,16 @@ class Co01CollectionsListScreen extends ConsumerWidget {
             collections: list,
             onOpenCollection: onOpenCollection,
             habits: ref.watch(habitsNotifierProvider).valueOrNull,
+            categories:
+                ref.watch(categoriesNotifierProvider).valueOrNull ?? [],
             onRefresh: () async {
               ref.invalidate(collectionsNotifierProvider);
               await ref.read(collectionsNotifierProvider.future);
             },
+            onActivate: (id) => ref
+                .read(collectionsNotifierProvider.notifier)
+                .activate(CollectionId(id)),
+            isActivating: ref.watch(collectionsNotifierProvider).isLoading,
           ),
         ),
       ),
@@ -90,32 +103,56 @@ class Co01CollectionsListScreen extends ConsumerWidget {
   }
 }
 
-class _CollectionsBody extends ConsumerWidget {
+class _CollectionsBody extends StatelessWidget {
   final List<Collection> collections;
   final void Function(String) onOpenCollection;
   final List<Habit>? habits;
+  final List<Category> categories;
   final Future<void> Function()? onRefresh;
+  final Future<void> Function(String collectionId) onActivate;
+  final bool isActivating;
 
   const _CollectionsBody({
     required this.collections,
     required this.onOpenCollection,
+    required this.categories,
+    required this.onActivate,
+    required this.isActivating,
     this.habits,
     this.onRefresh,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final active = collections.where((c) => c.isActive).toList();
-    final systemSuggestions = collections
-        .where((c) => c.isSystem && !c.isActive)
-        .toList();
-    final userInactive = collections
-        .where((c) => !c.isSystem && !c.isActive)
-        .toList();
-
+  Widget build(BuildContext context) {
+    // Aucune collection (edge case — les collections système sont toujours seedées).
     if (collections.isEmpty) {
       return const _CollectionsFullEmpty();
     }
+
+    // Lookup catégorie par id.
+    final categoryMap = <CategoryId, Category>{
+      for (final c in categories) c.id: c,
+    };
+
+    // Section système : toutes les collections système, actives en premier.
+    final systemCollections = collections
+        .where((c) => c.isSystem)
+        .toList()
+      ..sort((a, b) {
+        if (a.isActive && !b.isActive) return -1;
+        if (!a.isActive && b.isActive) return 1;
+        return 0;
+      });
+
+    // Section utilisateur : collections créées par l'utilisateur.
+    final userCollections = collections.where((c) => !c.isSystem).toList();
+
+    // Label de section système — "SUGGESTIONS - SYSTÈME" si aucune active.
+    final hasActiveSystem = systemCollections.any((c) => c.isActive);
+    final systemLabel = hasActiveSystem ? 'SYSTÈME' : 'SUGGESTIONS - SYSTÈME';
+
+    // Carte "Aucune collection activée" si aucune collection active.
+    final hasAnyActive = collections.any((c) => c.isActive);
 
     return RefreshIndicator(
       color: AppColors.accent,
@@ -128,57 +165,66 @@ class _CollectionsBody extends ConsumerWidget {
           AppSpacing.s8,
         ),
         children: [
-          // — Collections actives
-          if (active.isEmpty)
-            const _EmptyActiveHeader()
-          else ...[
-            const _SectionLabel('Mes collections actives'),
+          // Sous-titre explicatif.
+          Text(
+            'Activez une collection en un tap. Les habitudes seront ajoutées à votre routine.',
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.s5),
+
+          // Carte "Aucune collection activée".
+          if (!hasAnyActive) ...[
+            const _EmptyActiveCard(),
+            const SizedBox(height: AppSpacing.s5),
+          ],
+
+          // Section SYSTÈME.
+          if (systemCollections.isNotEmpty) ...[
+            _SectionLabel(systemLabel),
             const SizedBox(height: AppSpacing.s3),
-            ...active.map(
-              (c) => Padding(
+            ...systemCollections.map((c) {
+              final cat = c.primaryCategoryId != null
+                  ? categoryMap[c.primaryCategoryId]
+                  : null;
+              return Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.s3),
                 child: CollectionCard(
                   collection: c,
                   onTap: () => onOpenCollection(c.id.value),
+                  categoryName: cat?.name.value,
+                  categoryColor: cat != null ? _colorFromHex(cat.color) : null,
                   ptsPerDay: habits != null ? c.ptsPerDay(habits!) : null,
+                  onActivate: c.isActive
+                      ? null
+                      : () => onActivate(c.id.value),
+                  isActivating: isActivating,
                 ),
-              ),
-            ),
+              );
+            }),
           ],
 
-          // — Suggestions système (collections système non activées)
-          if (systemSuggestions.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s5),
-            const _SectionLabel('Collections suggérées'),
+          // Section MES COLLECTIONS.
+          if (userCollections.isNotEmpty) ...[
+            if (systemCollections.isNotEmpty)
+              const SizedBox(height: AppSpacing.s5),
+            const _SectionLabel('MES COLLECTIONS'),
             const SizedBox(height: AppSpacing.s3),
-            ...systemSuggestions.map(
-              (c) => Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.s3),
-                child: _SuggestionCard(
-                  collection: c,
-                  onActivate: () => ref
-                      .read(collectionsNotifierProvider.notifier)
-                      .activate(CollectionId(c.id.value)),
-                ),
-              ),
-            ),
-          ],
-
-          // — Collections utilisateur inactives
-          if (userInactive.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s5),
-            const _SectionLabel('Mes collections inactives'),
-            const SizedBox(height: AppSpacing.s3),
-            ...userInactive.map(
-              (c) => Padding(
+            ...userCollections.map((c) {
+              final cat = c.primaryCategoryId != null
+                  ? categoryMap[c.primaryCategoryId]
+                  : null;
+              return Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.s3),
                 child: CollectionCard(
                   collection: c,
                   onTap: () => onOpenCollection(c.id.value),
+                  categoryName: cat?.name.value,
+                  categoryColor: cat != null ? _colorFromHex(cat.color) : null,
                   ptsPerDay: habits != null ? c.ptsPerDay(habits!) : null,
+                  // Les collections utilisateur s'activent depuis CO-DETAIL.
                 ),
-              ),
-            ),
+              );
+            }),
           ],
         ],
       ),
@@ -186,23 +232,45 @@ class _CollectionsBody extends ConsumerWidget {
   }
 }
 
-/// Header affiché dans la liste quand aucune collection n'est encore activée.
-class _EmptyActiveHeader extends StatelessWidget {
-  const _EmptyActiveHeader();
+/// Carte centrée "Aucune collection activée" — design EMPTY state.
+class _EmptyActiveCard extends StatelessWidget {
+  const _EmptyActiveCard();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.s6),
+      decoration: BoxDecoration(
+        color: AppColors.bgSurface,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(
+          color: AppColors.borderDefault,
+          width: AppBorderWidth.thin,
+        ),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(lu(LucideIcons.layers), size: 32, color: AppColors.textTertiary),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.bgInput,
+              borderRadius: BorderRadius.circular(AppRadius.chip),
+            ),
+            child: Icon(
+              lu(LucideIcons.layers),
+              size: AppIconSize.rg,
+              color: AppColors.textTertiary,
+            ),
+          ),
           const SizedBox(height: AppSpacing.s3),
           const Text('Aucune collection activée', style: AppTypography.h3),
           const SizedBox(height: AppSpacing.s2),
           Text(
-            'Active une collection suggérée ou crée la tienne pour regrouper tes habitudes.',
+            'Activez une collection système ou créez la vôtre pour structurer votre pratique.',
+            textAlign: TextAlign.center,
             style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           ),
         ],
@@ -211,7 +279,7 @@ class _EmptyActiveHeader extends StatelessWidget {
   }
 }
 
-/// Empty state complet — aucune collection du tout.
+/// Empty state complet — aucune collection en base (edge case).
 class _CollectionsFullEmpty extends StatelessWidget {
   const _CollectionsFullEmpty();
 
@@ -225,7 +293,7 @@ class _CollectionsFullEmpty extends StatelessWidget {
           children: [
             Icon(
               lu(LucideIcons.folderOpen),
-              size: 48,
+              size: AppIconSize.xxl,
               color: AppColors.textTertiary,
             ),
             const SizedBox(height: AppSpacing.s4),
@@ -245,133 +313,6 @@ class _CollectionsFullEmpty extends StatelessWidget {
   }
 }
 
-/// Carte suggestion — collection système non activée.
-///
-/// Affiche le nom, la description et un bouton "Activer".
-class _SuggestionCard extends StatefulWidget {
-  final Collection collection;
-  final VoidCallback onActivate;
-
-  const _SuggestionCard({required this.collection, required this.onActivate});
-
-  @override
-  State<_SuggestionCard> createState() => _SuggestionCardState();
-}
-
-class _SuggestionCardState extends State<_SuggestionCard> {
-  bool _activating = false;
-
-  Future<void> _handleActivate() async {
-    if (_activating) return;
-    setState(() => _activating = true);
-    try {
-      widget.onActivate();
-    } finally {
-      if (mounted) setState(() => _activating = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = widget.collection;
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: AppColors.borderDefault,
-          width: AppBorderWidth.thin,
-        ),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.s4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Icône de la collection
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.bgInput,
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                ),
-                child: Icon(
-                  lu(_iconForCollection(c.icon)),
-                  size: 20,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s3),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(c.name.value, style: AppTypography.h3),
-                    const SizedBox(height: AppSpacing.s1),
-                    Text(
-                      c.description.value,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s3),
-          Row(
-            children: [
-              _TagChip('${c.habitIds.length} habitudes'),
-              const SizedBox(width: AppSpacing.s2),
-              const _TagChip('Système'),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s4),
-          AppButton(
-            label: 'Activer',
-            onPressed: _activating ? null : _handleActivate,
-            isLoading: _activating,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Chip label pour les badges de suggestion.
-class _TagChip extends StatelessWidget {
-  final String label;
-  const _TagChip(this.label);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s2,
-        vertical: AppSpacing.s1,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.bgInput,
-        borderRadius: BorderRadius.circular(AppRadius.chip),
-        border: Border.all(
-          color: AppColors.borderDefault,
-          width: AppBorderWidth.thin,
-        ),
-      ),
-      child: Text(
-        label,
-        style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-      ),
-    );
-  }
-}
-
 class _SectionLabel extends StatelessWidget {
   final String text;
   const _SectionLabel(this.text);
@@ -379,28 +320,10 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      text.toUpperCase(),
+      text,
       style: AppTypography.label.copyWith(color: AppColors.textSecondary),
     );
   }
-}
-
-/// Mappe le nom d'icône kebab-case de la collection vers un [LucideIcons].
-IconData _iconForCollection(String? iconName) {
-  return switch (iconName) {
-    'heart' => LucideIcons.heart,
-    'brain' => LucideIcons.brain,
-    'dumbbell' => LucideIcons.dumbbell,
-    'book-open' => LucideIcons.bookOpen,
-    'moon' => LucideIcons.moon,
-    'sun' => LucideIcons.sun,
-    'leaf' => LucideIcons.leaf,
-    'zap' => LucideIcons.zap,
-    'target' => LucideIcons.target,
-    'star' => LucideIcons.star,
-    'layers' => LucideIcons.layers,
-    _ => LucideIcons.layoutGrid,
-  };
 }
 
 class _CollectionsError extends ConsumerWidget {
@@ -430,4 +353,10 @@ class _CollectionsError extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Convertit un [HexColor] (`#RRGGBB`) en [Color] Flutter.
+Color _colorFromHex(HexColor hex) {
+  final s = hex.value.replaceFirst('#', '');
+  return Color(int.parse(s, radix: 16) | 0xFF000000);
 }

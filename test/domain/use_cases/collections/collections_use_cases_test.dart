@@ -4,6 +4,7 @@ import 'package:murabbi_mobile/domain/entities/collection.dart';
 import 'package:murabbi_mobile/domain/repositories/collection_repository.dart';
 import 'package:murabbi_mobile/domain/use_cases/collections/activate_collection_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/collections/create_collection_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/collections/delete_collection_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/collections/get_collections_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/collection_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
@@ -118,6 +119,45 @@ void main() {
           collection: testCollection,
         ),
       ).called(1);
+    });
+  });
+
+  group('DeleteCollectionUseCase', () {
+    late DeleteCollectionUseCase useCase;
+    final collectionId = CollectionId(kCollectionIdAlpha);
+
+    setUp(() => useCase = DeleteCollectionUseCase(mockRepo));
+
+    test('calls repository.deleteCollection with correct params', () async {
+      when(
+        () => mockRepo.deleteCollection(
+          userId: userId,
+          collectionId: collectionId,
+        ),
+      ).thenAnswer((_) async {});
+
+      await useCase(userId: userId, collectionId: collectionId);
+
+      verify(
+        () => mockRepo.deleteCollection(
+          userId: userId,
+          collectionId: collectionId,
+        ),
+      ).called(1);
+    });
+
+    test('propagates exception from repository', () {
+      when(
+        () => mockRepo.deleteCollection(
+          userId: userId,
+          collectionId: collectionId,
+        ),
+      ).thenThrow(Exception('delete error'));
+
+      expect(
+        () => useCase(userId: userId, collectionId: collectionId),
+        throwsException,
+      );
     });
   });
 }
