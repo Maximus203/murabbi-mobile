@@ -1,6 +1,6 @@
 # Q-22 — BUG-004 : Migration SQL colonne `users.timezone`
 
-**Statut** : En attente de validation PO  
+**Statut** : `closed` — prompt admin créé (2026-05-25) ; voir `docs/prompts/ADMIN-Q22-timezone-migration.md`  
 **Lié à** : BUG-004 (issue #184), ADR-018 §timezone  
 **Branche** : `fix/alert-system-bug-002-003-004`
 

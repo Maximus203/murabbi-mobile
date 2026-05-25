@@ -1,6 +1,6 @@
 # Q-21 — Stratégie de mapping `Category.id` au switch in-memory → Supabase
 
-**Statut** : `open` — bloque le wiring `SupabaseCategoryRepository` (slice à venir).
+**Statut** : `closed` — Option B actée par Cherif (2026-05-25), commit `625b7c8`.
 **Slice associée** : PR #43 (`feat/phase-3-slice-d-habits`, dev scaffold in-memory).
 **Référence** : audit TL §B.2 PR #43 §3.5.
 
@@ -54,6 +54,9 @@ Détruire les habitudes créées en scaffold dev au moment du switch Supabase (p
 
 ## Décision PO
 
-**À prendre** — bloquante avant tout merge de `feat/data-categories-supabase-datasource`.
+**Option B retenue** — `slug: String?` ajouté à `Category`, `getCategoryBySlug`
+exposé dans l'interface. Le SupabaseCategoryRepository lira la colonne `slug`
+quand elle sera ajoutée au schéma admin (cf. prompt `docs/prompts/ADMIN-Q21-slug-column.md`).
 
-Cette question reste **`open`** jusqu'à la validation du PO sur l'option retenue.
+**Action admin requise** : ajouter la colonne `slug text UNIQUE` à la table
+`categories` dans `murabbi-admin/supabase/migrations/` (voir prompt dédié).

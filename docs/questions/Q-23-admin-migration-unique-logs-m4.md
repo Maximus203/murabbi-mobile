@@ -1,6 +1,6 @@
 # Q-23 — Migration admin requise : UNIQUE sur habit_logs et prayer_logs (M4)
 
-**Status :** WAITING — bloque l'effet réel de M4 côté backend
+**Status :** `closed` — prompt admin créé (2026-05-25) ; voir `docs/prompts/ADMIN-Q23-unique-logs.md`
 **Lié à :** issue #198 (mob M4 — rate limiting), PR feat/errors-m4-rate-limit-serializer
 **Repo concerné :** `murabbi-admin/supabase/migrations/` (PAS le mobile)
 
