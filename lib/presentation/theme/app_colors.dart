@@ -108,6 +108,16 @@ class AppColors {
   /// Arc bleu du logo « G » Google.
   static const Color googleBlue = Color(0xFF4285F4);
 
+  // -- Superposition vidéo (bandeaux vidéo — HM-01 niyyah, SA-01, SA-03) ----
+  /// Sommet du dégradé de lisibilité sur fond vidéo — noir 40 %.
+  static const Color videoOverlayTop = Color(0x66000000);
+
+  /// Base du dégradé de lisibilité sur fond vidéo — noir 80 %.
+  static const Color videoOverlayBottom = Color(0xCC000000);
+
+  /// Texte affiché sur la superposition vidéo (label + citation).
+  static const Color videoOverlayText = Colors.white;
+
   // -- Utilitaires -----------------------------------------------------------
   /// Transparent pur — utilisé pour les variantes ghost/link de AppButton (P-2).
   /// Centralise l'usage de `Colors.transparent` pour respecter la règle P-2 :

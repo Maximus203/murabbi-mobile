@@ -11,12 +11,21 @@ import 'package:murabbi_mobile/domain/use_cases/prayer/get_prayer_times_use_case
 import 'package:murabbi_mobile/domain/value_objects/calculation_method.dart';
 import 'package:murabbi_mobile/domain/value_objects/high_latitude_rule.dart';
 import 'package:murabbi_mobile/domain/value_objects/madhab.dart';
+import 'package:murabbi_mobile/presentation/common/app_video_player.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_clock_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
 import 'package:murabbi_mobile/services/prayer/prayer_times_providers.dart';
 import 'package:murabbi_mobile/services/prayer/prayer_times_service.dart';
+import 'package:murabbi_mobile/services/video_service.dart';
 
 class _MockSettingsRepo extends Mock implements PrayerSettingsRepository {}
+
+/// Stub sans Supabase — retourne une URL statique pour les widget tests.
+class _FakeVideoService implements VideoService {
+  const _FakeVideoService();
+  @override
+  String getRemoteVideoUrl(String key) => 'https://test.example.com/$key';
+}
 
 class _FakePrayerTimesService implements PrayerTimesService {
   _FakePrayerTimesService(this.response);
@@ -69,6 +78,7 @@ void main() {
             repository: settingsRepo,
           ),
         ),
+        videoServiceProvider.overrideWithValue(const _FakeVideoService()),
       ],
       child: MaterialApp(
         home: Hm01DashboardScreen(
@@ -120,6 +130,19 @@ void main() {
     expect(find.text('INTENTION DU JOUR'), findsOneWidget);
     expect(find.text('Habitudes du jour'), findsNothing);
     expect(find.text('Série globale'), findsNothing);
+  });
+
+  testWidgets('_NiyyahCard utilise AppVideoPlayer comme fond vidéo', (
+    tester,
+  ) async {
+    await tester.pumpWidget(pumpable());
+    await tester.pumpAndSettle();
+
+    // La carte doit contenir un AppVideoPlayer (fond vidéo 01_murabbi).
+    expect(find.byType(AppVideoPlayer), findsOneWidget);
+    // Le label et la citation de fallback sont toujours visibles dans l'overlay.
+    expect(find.text('INTENTION DU JOUR'), findsOneWidget);
+    expect(find.textContaining('Je fais cela pour plaire à Allah'), findsOneWidget);
   });
 
   test('PrayerSettingsNotConfiguredFailure remonte settingsNotConfigured', () {

@@ -6,6 +6,7 @@ import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
+import 'package:murabbi_mobile/presentation/common/app_video_player.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/daily_summary_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
@@ -21,12 +22,14 @@ import 'package:murabbi_mobile/presentation/features/habits/providers/habits_not
 import 'package:murabbi_mobile/presentation/features/habits/providers/today_habit_statuses_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/today_salat_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_media.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_dialog.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
+import 'package:murabbi_mobile/services/video_service.dart';
 
 // ignore: prefer_final_fields
 
@@ -392,62 +395,103 @@ class _StatsCard extends ConsumerWidget {
   }
 }
 
-/// Card "Intention du jour" — niyyah personnelle ou suggestion système.
+/// Card “Intention du jour” — niyyah personnelle ou suggestion système.
 ///
-/// Fond uni beige (AppColors.bgSurface) avec label "INTENTION DU JOUR",
-/// texte italique entre guillemets, et icône crayon si personnalisable.
-/// Affiche le fallback même en cas d'erreur Supabase.
+/// Fond vidéo (01_murabbi depuis Supabase Storage — [AppMedia.niyyahVideoKey])
+/// avec label “INTENTION DU JOUR” et texte italique en overlay semi-opaque.
+/// [AppVideoPlayer] gère le fallback gradient si la vidéo n'est pas disponible.
 class _NiyyahCard extends ConsumerWidget {
   const _NiyyahCard();
 
-  static const String _fallback =
-      'Je fais cela pour plaire à Allah.';
+  static const String _fallback = 'Je fais cela pour plaire à Allah.';
+  static const double _height = 130;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final niyyahAsync = ref.watch(niyyahProvider);
+    final videoUrl = ref
+        .watch(videoServiceProvider)
+        .getRemoteVideoUrl(AppMedia.niyyahVideoKey);
 
     return niyyahAsync.when(
       loading: () => const AppSkeletonCard(lineCount: 2),
-      error: (e, _) => _card(text: _fallback, isPersonal: false),
-      data: (resolved) => _card(
+      error: (e, _) => _videoCard(
+        text: _fallback,
+        isPersonal: false,
+        videoUrl: videoUrl,
+      ),
+      data: (resolved) => _videoCard(
         text: resolved?.text ?? _fallback,
         isPersonal: resolved?.isPersonal ?? false,
+        videoUrl: videoUrl,
       ),
     );
   }
 
-  Widget _card({required String text, required bool isPersonal}) {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'INTENTION DU JOUR',
-                style: AppTypography.label.copyWith(
-                  color: AppColors.accent,
+  Widget _videoCard({
+    required String text,
+    required bool isPersonal,
+    required String videoUrl,
+  }) {
+    return AppVideoPlayer(
+      url: videoUrl,
+      height: _height,
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      overlay: _NiyyahOverlay(text: text, isPersonal: isPersonal),
+    );
+  }
+}
+
+/// Superposition de la niyyah sur le fond vidéo — dégradé + texte.
+class _NiyyahOverlay extends StatelessWidget {
+  final String text;
+  final bool isPersonal;
+
+  const _NiyyahOverlay({required this.text, required this.isPersonal});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [AppColors.videoOverlayTop, AppColors.videoOverlayBottom],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'INTENTION DU JOUR',
+                  style: AppTypography.label.copyWith(
+                    color: AppColors.accent,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              if (isPersonal)
-                const Icon(
-                  LucideIcons.pencil,
-                  size: 16,
-                  color: AppColors.textTertiary,
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s3),
-          Text(
-            '“$text”',
-            style: AppTypography.body.copyWith(
-              color: AppColors.textPrimary,
-              fontStyle: FontStyle.italic,
+                const Spacer(),
+                if (isPersonal)
+                  const Icon(
+                    LucideIcons.pencil,
+                    size: 16,
+                    color: AppColors.videoOverlayText,
+                  ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.s3),
+            Text(
+              '”$text”',
+              style: AppTypography.body.copyWith(
+                color: AppColors.videoOverlayText,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
