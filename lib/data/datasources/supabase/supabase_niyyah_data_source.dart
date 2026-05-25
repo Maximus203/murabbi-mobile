@@ -1,12 +1,18 @@
+import 'package:murabbi_mobile/core/network/supabase_client_wrapper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Accès Supabase à la table `daily_niyyahs`.
 class SupabaseNiyyahDataSource {
   final SupabaseClient _client;
+  final SupabaseClientWrapper _wrapper;
 
-  const SupabaseNiyyahDataSource(this._client);
+  const SupabaseNiyyahDataSource(
+    this._client, {
+    required SupabaseClientWrapper wrapper,
+  }) : _wrapper = wrapper;
 
   Future<Map<String, dynamic>?> getTodayNiyyah(String userId) async {
+    await _wrapper.ensureFreshSession();
     final today = _todayIso();
     final rows = await _client
         .from('daily_niyyahs')
@@ -21,6 +27,7 @@ class SupabaseNiyyahDataSource {
     String userId,
     String text,
   ) async {
+    await _wrapper.ensureFreshSession();
     final today = _todayIso();
     final rows = await _client
         .from('daily_niyyahs')
