@@ -112,14 +112,13 @@ void main() {
     expect(find.textContaining('DEMAIN'), findsOneWidget);
   });
 
-  testWidgets('rend la carte Niyyah du jour', (tester) async {
+  testWidgets('rend la carte intention du jour', (tester) async {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
 
-    // Issue #6 : les placeholders "Habitudes du jour" / "Série globale"
-    // sont remplacés par la section score (DashboardScoreCard +
-    // DashboardStatsGrid), masquée hors session dans ce test sans auth.
-    expect(find.text('Niyyah du jour'), findsOneWidget);
+    // La _NiyyahCard affiche "INTENTION DU JOUR" (redesign HM-01).
+    // Section score masquée hors session (pas d'auth dans ce test).
+    expect(find.text('INTENTION DU JOUR'), findsOneWidget);
     expect(find.text('Habitudes du jour'), findsNothing);
     expect(find.text('Série globale'), findsNothing);
   });

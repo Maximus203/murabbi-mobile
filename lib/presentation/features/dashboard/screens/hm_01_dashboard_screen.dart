@@ -7,9 +7,11 @@ import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/dashboard/providers/daily_summary_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_ticker_provider.dart';
+import 'package:murabbi_mobile/presentation/features/dashboard/providers/niyyah_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/user_score_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/widgets/dashboard_score_card.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/widgets/dashboard_stats_grid.dart';
@@ -25,14 +27,13 @@ import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_dialog.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 
 // ignore: prefer_final_fields
 
 /// HM-01 — Écran d'accueil Murabbi (slice 3.A).
 ///
-/// Agrège : salutation, date du jour (grégorienne + hijri), prochaine prière,
-/// placeholders habitudes / niyyah / streak (slices à venir 3.D/3.E/scoring),
+/// Agrège : salutation, date du jour (grégorienne + hijri), score du jour,
+/// intention du jour (niyyah), grille de stats, prochaine prière,
 /// et barre de navigation principale.
 class Hm01DashboardScreen extends ConsumerWidget {
   final VoidCallback onConfigurePrayers;
@@ -77,8 +78,6 @@ class Hm01DashboardScreen extends ConsumerWidget {
             child: dashboard.when(
               loading: () => const _DashboardSkeleton(),
               error: (e, stackTrace) {
-                // Audit TL §B.2 PR #42 : pas de `e.toString()` brut exposé.
-                // Détail loggé via appLog, libellé canonique FR.
                 appLog.e(
                   'Hm01DashboardScreen render error',
                   error: e,
@@ -96,8 +95,6 @@ class Hm01DashboardScreen extends ConsumerWidget {
               ),
             ),
           ),
-          // Overlay plein écran LEVEL-UP — affiché tant qu'un palier vient
-          // d'être franchi ; "Continuer" appelle `acknowledge`.
           if (pendingLevelUp != null)
             Positioned.fill(
               child: LevelUpScreen(
@@ -139,6 +136,8 @@ class _DashboardBody extends ConsumerWidget {
       color: AppColors.accent,
       onRefresh: () async {
         ref.invalidate(dashboardNotifierProvider);
+        ref.invalidate(dailySummaryProvider);
+        ref.invalidate(niyyahProvider);
         await ref.read(dashboardNotifierProvider.future);
       },
       child: ListView(
@@ -157,7 +156,6 @@ class _DashboardBody extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // D-30 : salutation en body/accent — plus visible
                     Text(
                       'As-salāmu ʿalaykum',
                       style: AppTypography.body.copyWith(
@@ -190,8 +188,16 @@ class _DashboardBody extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s6),
 
-          // ── Score & niveau (issue #6) ──────────────────────────────
-          _ScoreSection(globalStreak: streak),
+          // ── Score du jour ──────────────────────────────────────────
+          _ScoreCard(),
+          const SizedBox(height: AppSpacing.s4),
+
+          // ── Intention du jour (niyyah) ─────────────────────────────
+          const _NiyyahCard(),
+          const SizedBox(height: AppSpacing.s4),
+
+          // ── Grille de statistiques ─────────────────────────────────
+          _StatsCard(globalStreak: streak),
           const SizedBox(height: AppSpacing.s4),
 
           // ── Prochaine prière ───────────────────────────────────────
@@ -200,12 +206,7 @@ class _DashboardBody extends ConsumerWidget {
             onConfigurePrayers: onConfigurePrayers,
             onOpenSalat: onOpenSalat,
           ),
-          const SizedBox(height: AppSpacing.s4),
 
-          // ── Niyyah du jour ─────────────────────────────────────────
-          const _NiyyahCard(),
-
-          // D-25 : confirmation avant déconnexion via AppDialog DS.
           if (onSignOut != null) ...[
             const SizedBox(height: AppSpacing.s6),
             AppButton(
@@ -287,19 +288,40 @@ class _DashboardBody extends ConsumerWidget {
   }
 }
 
-/// Section score du dashboard : score card + grille de stats (issue #6).
+/// Score card isolée — consomme [userScoreProvider] + [dailySummaryProvider].
 ///
-/// Consume [userScoreProvider] de façon isolée pour que son chargement /
-/// erreur ne fasse pas vaciller le reste du dashboard.
-class _ScoreSection extends ConsumerWidget {
+/// Son chargement / erreur ne fait pas vaciller le reste du dashboard.
+class _ScoreCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scoreAsync = ref.watch(userScoreProvider);
+    final summaryAsync = ref.watch(dailySummaryProvider);
+
+    return scoreAsync.when(
+      loading: () => const _ScoreCardSkeleton(),
+      error: (e, st) {
+        appLog.w('userScoreProvider error', error: e, stackTrace: st);
+        return const SizedBox.shrink();
+      },
+      data: (score) {
+        if (score == null) return const SizedBox.shrink();
+        final summary = summaryAsync.valueOrNull;
+        return DashboardScoreCard(score: score, dailySummary: summary);
+      },
+    );
+  }
+}
+
+/// Grille de stats isolée — consomme score, summary, salat, habitudes.
+class _StatsCard extends ConsumerWidget {
   final int globalStreak;
-  const _ScoreSection({required this.globalStreak});
+  const _StatsCard({required this.globalStreak});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scoreAsync = ref.watch(userScoreProvider);
+    final summaryAsync = ref.watch(dailySummaryProvider);
 
-    // UX-3 : câblage des labels salat + habitudes sur les données réelles.
     final salatAsync = ref.watch(todaySalatNotifierProvider);
     final salatLabel =
         salatAsync.whenOrNull(
@@ -327,29 +349,87 @@ class _ScoreSection extends ConsumerWidget {
     final completedHabits = habitStatuses.values
         .where((s) => s != HabitLogStatus.missed)
         .length;
-    final habitsLabel = habits.isEmpty
-        ? '—'
-        : '$completedHabits/${habits.length}';
+    final habitsLabel = habits.isEmpty ? '—' : '$completedHabits/${habits.length}';
 
-    return scoreAsync.when(
-      loading: () => const _ScoreCardSkeleton(),
-      error: (e, st) {
-        appLog.w('userScoreProvider error', error: e, stackTrace: st);
-        return const SizedBox.shrink();
-      },
-      data: (score) {
-        if (score == null) return const SizedBox.shrink();
-        return Column(
-          children: [
-            DashboardScoreCard(score: score),
-            const SizedBox(height: AppSpacing.s3),
-            DashboardStatsGrid(
-              streakDays: globalStreak,
-              salatLabel: salatLabel,
-              habitsLabel: habitsLabel,
-              weeklyRank: score.weeklyRank,
-            ),
-          ],
+    final score = scoreAsync.valueOrNull;
+    final summary = summaryAsync.valueOrNull;
+
+    // Sous-label habitudes : "XX% · +N pts" quand summary disponible.
+    final habitsSubLabel = summary != null
+        ? '${summary.completionRate.round()}% · +${summary.habitPointsToday} pts'
+        : null;
+
+    // Sous-label classement : "↗ N places" (haut) ou "↘ N places" (bas).
+    String? rankSubLabel;
+    if (score != null && score.rankMovement != null) {
+      final delta = score.rankMovement!;
+      if (delta > 0) {
+        rankSubLabel = '↗ $delta place${delta > 1 ? 's' : ''}';
+      } else if (delta < 0) {
+        rankSubLabel = '↘ ${delta.abs()} place${delta.abs() > 1 ? 's' : ''}';
+      }
+    }
+
+    return DashboardStatsGrid(
+      streakDays: globalStreak,
+      salatLabel: salatLabel,
+      salatSubLabel: 'à l\'heure',
+      habitsLabel: habitsLabel,
+      habitsSubLabel: habitsSubLabel,
+      weeklyRank: score?.weeklyRank ?? 1,
+      rankSubLabel: rankSubLabel,
+    );
+  }
+}
+
+/// Card "Intention du jour" — niyyah personnelle ou suggestion système.
+///
+/// Fond uni beige (AppColors.bgSurface) avec label "INTENTION DU JOUR",
+/// texte de la niyyah, et icône crayon si personnalisable.
+class _NiyyahCard extends ConsumerWidget {
+  const _NiyyahCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final niyyahAsync = ref.watch(niyyahProvider);
+
+    return niyyahAsync.when(
+      loading: () => const AppSkeletonCard(lineCount: 2),
+      error: (e, _) => const SizedBox.shrink(),
+      data: (resolved) {
+        final text = resolved?.text ?? 'Je fais cela pour plaire à Allah.';
+        final isPersonal = resolved?.isPersonal ?? false;
+
+        return AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'INTENTION DU JOUR',
+                    style: AppTypography.label.copyWith(
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (isPersonal)
+                    const Icon(
+                      LucideIcons.pencil,
+                      size: 16,
+                      color: AppColors.textTertiary,
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s3),
+              Text(
+                text,
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -372,22 +452,22 @@ class _DashboardSkeleton extends StatelessWidget {
           AppSpacing.s5,
         ),
         children: const [
-          AppSkeletonCard(lineCount: 3), // en-tête (salut + pseudo + date)
+          AppSkeletonCard(lineCount: 3), // en-tête
           SizedBox(height: AppSpacing.s4),
           AppSkeletonCard(lineCount: 2), // score card
-          SizedBox(height: AppSpacing.s3),
+          SizedBox(height: AppSpacing.s4),
+          AppSkeletonCard(lineCount: 2), // niyyah
+          SizedBox(height: AppSpacing.s4),
           AppSkeletonCard(lineCount: 2), // stats grid
           SizedBox(height: AppSpacing.s4),
           AppSkeletonCard(lineCount: 3), // prochaine prière
-          SizedBox(height: AppSpacing.s4),
-          AppSkeletonCard(lineCount: 2), // niyyah
         ],
       ),
     );
   }
 }
 
-/// Skeleton sobre pendant le chargement du score (pas de spinner intrusif).
+/// Skeleton sobre pendant le chargement du score.
 class _ScoreCardSkeleton extends StatelessWidget {
   const _ScoreCardSkeleton();
 
@@ -504,10 +584,6 @@ class _NextPrayerCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.s2),
-                  // Audit TL §B.2 PR #42 : countdown live via dashboardTickerProvider
-                  // (StreamProvider 30s), scoped sur ce sous-widget pour éviter le
-                  // rebuild storm sur le DashboardNotifier (qui re-fetcherait les
-                  // horaires à chaque tick).
                   _RemainingLabel(
                     initialNow: state.nowUtc,
                     nextUtc: next.timeUtc,
@@ -528,11 +604,10 @@ class _NextPrayerCard extends StatelessWidget {
 }
 
 /// Sous-widget Consumer qui watch [dashboardTickerProvider] — seul lui
-/// rebuild toutes les 30s. Le reste de la card / ListView reste statique
-/// entre les ticks. Cf. audit TL §B.2 PR #42.
+/// rebuild toutes les 30s. Cf. audit TL §B.2 PR #42.
 ///
-/// UX-7 : quand le compte à rebours atteint zéro, invalide [dashboardNotifierProvider]
-/// une seule fois (garde `_invalidated`) pour recharger la prochaine prière.
+/// UX-7 : quand le compte à rebours atteint zéro, invalide
+/// [dashboardNotifierProvider] une seule fois (garde `_invalidated`).
 class _RemainingLabel extends ConsumerStatefulWidget {
   final DateTime initialNow;
   final DateTime nextUtc;
@@ -579,57 +654,6 @@ class _RemainingLabelState extends ConsumerState<_RemainingLabel> {
   }
 }
 
-/// Card "Niyyah du jour" avec fond vidéo + overlay dégradé (issue #79).
-///
-/// La vidéo `01.mp4` tourne en boucle muette. Le texte est superposé
-/// en bas-gauche via un dégradé noir semi-transparent.
-class _NiyyahCard extends StatelessWidget {
-  const _NiyyahCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.card),
-      child: AppVideoBackground(
-        assetPath: 'assets/media/01.mp4',
-        height: 120,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        overlay: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.transparent,
-                Colors.black.withValues(alpha: 0.55),
-              ],
-            ),
-          ),
-          padding: const EdgeInsets.all(AppSpacing.s4),
-          alignment: Alignment.bottomLeft,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Niyyah du jour',
-                style: AppTypography.h3.copyWith(color: AppColors.bgSurface),
-              ),
-              const SizedBox(height: AppSpacing.s1),
-              Text(
-                'Je fais cela pour plaire à Allah.',
-                style: AppTypography.body.copyWith(
-                  color: AppColors.bgSurface.withValues(alpha: 0.85),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Avatar circulaire avec l'initiale du pseudo — affiché dans le header HM-01.
 class _UserAvatar extends StatelessWidget {
   final User? user;
@@ -661,8 +685,6 @@ class _GenericError extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Message FR neutre, sans détail technique (audit TL §B.2 PR #42).
-    // L'erreur précise est loggée via appLog côté caller.
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.s6),
       child: Center(

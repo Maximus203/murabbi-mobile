@@ -7,11 +7,19 @@ import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 
 /// Grille 2×2 de statistiques du dashboard HM-01 (issue #6, Phase 5) :
 /// Série / Salat du jour / Habitudes du jour / Classement hebdo.
+///
+/// Les [subLabel] optionnels affichent une métrique secondaire sous la valeur
+/// principale (ex. "+3 pts", "80%", "↗ 2 places"). Masqués si null.
 class DashboardStatsGrid extends StatelessWidget {
   final int streakDays;
   final String salatLabel;
   final String habitsLabel;
   final int weeklyRank;
+
+  final String? streakSubLabel;
+  final String? salatSubLabel;
+  final String? habitsSubLabel;
+  final String? rankSubLabel;
 
   const DashboardStatsGrid({
     super.key,
@@ -19,6 +27,10 @@ class DashboardStatsGrid extends StatelessWidget {
     required this.salatLabel,
     required this.habitsLabel,
     required this.weeklyRank,
+    this.streakSubLabel,
+    this.salatSubLabel,
+    this.habitsSubLabel,
+    this.rankSubLabel,
   });
 
   @override
@@ -28,17 +40,25 @@ class DashboardStatsGrid extends StatelessWidget {
         icon: LucideIcons.flame,
         label: 'Série',
         value: '$streakDays j',
+        subLabel: streakSubLabel,
       ),
-      _StatTile(icon: LucideIcons.moonStar, label: 'Salat', value: salatLabel),
+      _StatTile(
+        icon: LucideIcons.moonStar,
+        label: 'Salat',
+        value: salatLabel,
+        subLabel: salatSubLabel,
+      ),
       _StatTile(
         icon: LucideIcons.listChecks,
         label: 'Habitudes',
         value: habitsLabel,
+        subLabel: habitsSubLabel,
       ),
       _StatTile(
         icon: LucideIcons.trophy,
         label: 'Classement',
         value: '#$weeklyRank',
+        subLabel: rankSubLabel,
       ),
     ];
 
@@ -72,17 +92,19 @@ class _StatTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final String? subLabel;
 
   const _StatTile({
     required this.icon,
     required this.label,
     required this.value,
+    this.subLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: '$label : $value',
+      label: subLabel != null ? '$label : $value · $subLabel' : '$label : $value',
       excludeSemantics: true,
       child: AppCard(
         padding: const EdgeInsets.all(AppSpacing.s4),
@@ -99,6 +121,15 @@ class _StatTile extends StatelessWidget {
                 color: AppColors.textSecondary,
               ),
             ),
+            if (subLabel != null) ...[
+              const SizedBox(height: AppSpacing.s1),
+              Text(
+                subLabel!,
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.accent,
+                ),
+              ),
+            ],
           ],
         ),
       ),
