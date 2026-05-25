@@ -17,15 +17,20 @@ final syncServiceProvider = Provider<SyncService>((ref) {
   final db = SqfliteSyncDatabase();
   final habitRepo = ref.watch(habitRepositoryProvider);
 
-  final service = SyncService(db: db, habitRepository: habitRepo);
-
-  // Initialise la base SQLite de façon asynchrone. En cas d'erreur,
-  // le service reste opérationnel (queue vide au démarrage).
-  db.init().catchError(
+  // On capture le Future d'init pour que SyncService puisse l'await avant
+  // tout accès DB — évite la race condition au démarrage (app.dart initState
+  // appelle processPendingQueue avant que init() ait résolu).
+  final initFuture = db.init().catchError(
     // ignore: avoid_types_on_closure_parameters
     (Object e, StackTrace st) {
       // L'erreur est loggée par SqfliteSyncDatabase — pas d'action ici.
     },
+  );
+
+  final service = SyncService(
+    db: db,
+    habitRepository: habitRepo,
+    initFuture: initFuture,
   );
 
   ref.onDispose(service.dispose);

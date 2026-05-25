@@ -37,11 +37,17 @@ class SyncService {
 
   static const _tag = 'SyncService';
 
+  /// Future résolu quand la DB sous-jacente est prête.
+  /// Injecté par [syncServiceProvider] pour éviter la race condition au démarrage.
+  final Future<void> _initFuture;
+
   SyncService({
     required SyncDatabase db,
     required HabitRepository habitRepository,
+    Future<void>? initFuture,
   }) : _db = db,
-       _habitRepository = habitRepository;
+       _habitRepository = habitRepository,
+       _initFuture = initFuture ?? Future.value();
 
   // ── Streams publics ─────────────────────────────────────────────────────────
 
@@ -107,6 +113,7 @@ class SyncService {
   /// - Immédiatement après [enqueueLogHabit] si l'app est online.
   /// - Quand [connectivityProvider] passe de `false` à `true`.
   Future<void> processPendingQueue() async {
+    await _initFuture; // attend que la DB soit prête avant tout accès
     final items = await _db.getPendingItems();
     if (items.isEmpty) return;
 
