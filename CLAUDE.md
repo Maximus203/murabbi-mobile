@@ -732,10 +732,12 @@ pour une distribution Play Store.
 
 | Symptôme                                  | Cause probable                                | Remède |
 |-------------------------------------------|-----------------------------------------------|--------|
-| `Gradle build failed` (cache corrompu)    | Cache Gradle / Flutter désynchronisé          | `flutter clean && flutter pub get` puis rebuild |
-| `SDK location not found`                  | `ANDROID_HOME` non défini ou `local.properties` absent | Définir `ANDROID_HOME` ou créer `android/local.properties` avec `sdk.dir=<chemin>` |
-| `supabase_flutter not initialized` à l'usage | `--dart-define` Supabase manquant au build/run | Repasser les deux `--dart-define` (cf. §15.1) |
-| `MissingPluginException` (geolocator, notifications) | Plugin natif ajouté après dernier build | Rebuild complet : `flutter clean && flutter pub get && flutter run` |
+| `FAIL 'adb' introuvable dans le PATH`     | `C:\Android\Sdk\platform-tools` absent du PATH | Ajouter `C:\Android\Sdk\platform-tools` dans les variables d'environnement système (Paramètres → Variables d'env → Path) |
+| `FAIL Credentials Supabase introuvables`  | Aucun fichier `.env*` à la racine             | Créer `.env.local` avec `SUPABASE_URL` et `SUPABASE_ANON_KEY` (cf. §15.1) |
+| `Gradle build failed` (cache corrompu)    | Cache Gradle / Flutter désynchronisé          | `.\scripts\run_device.ps1 -Clean` ou `flutter clean && flutter pub get` |
+| `SDK location not found`                  | `ANDROID_HOME` non défini ou `local.properties` absent | Définir `ANDROID_HOME` ou créer `android/local.properties` avec `sdk.dir=C:\Android\Sdk` |
+| `supabase_flutter not initialized` à l'usage | `--dart-define` Supabase manquant au build/run | Utiliser `run_device.ps1` — il passe les defines automatiquement |
+| `MissingPluginException` (geolocator, notifications) | Plugin natif ajouté après dernier build | `.\scripts\run_device.ps1 -Clean` |
 | `CheckAarMetadata` / `minSdk` error       | minSdk Flutter par défaut < 21                | Vérifier `android/app/build.gradle.kts` : `minSdk = 21` (cf. ADR-008) |
 | `Execution failed for task ':app:desugar...'` | JDK < 17 ou desugar lib manquante         | Vérifier `java -version` (doit être 17) + `coreLibraryDesugaring` dans `build.gradle.kts` |
 
