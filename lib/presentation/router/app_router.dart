@@ -385,6 +385,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     // Idem issue #214 : configure prayers → Settings.
                     onConfigurePrayers: () => context.go(AppRoutes.settings),
                     onOpenSalat: () => context.go(AppRoutes.salat),
+                    onOpenSettings: () => context.go(AppRoutes.settings),
                     // Audit TL PR #42 : Consumer + ref.read plutôt que
                     // ProviderScope.containerOf (plus idiomatique).
                     onSignOut: () =>

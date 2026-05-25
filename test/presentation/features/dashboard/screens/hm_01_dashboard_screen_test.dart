@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/core/utils/icon_utils.dart';
-import 'package:murabbi_mobile/services/prayer/prayer_times_providers.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_settings.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_times.dart';
 import 'package:murabbi_mobile/domain/errors/prayer_failure.dart';
@@ -15,6 +14,7 @@ import 'package:murabbi_mobile/domain/value_objects/high_latitude_rule.dart';
 import 'package:murabbi_mobile/domain/value_objects/madhab.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_clock_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
+import 'package:murabbi_mobile/services/prayer/prayer_times_providers.dart';
 import 'package:murabbi_mobile/services/prayer/prayer_times_service.dart';
 
 class _MockSettingsRepo extends Mock implements PrayerSettingsRepository {}
@@ -165,9 +165,15 @@ void main() {
     expect(find.byIcon(LucideIcons.chevronRight), findsOneWidget);
   });
 
-  testWidgets('affiche l\'icône Bell dans le header (#58)', (tester) async {
-    await tester.pumpWidget(pumpable());
-    await tester.pumpAndSettle();
-    expect(find.byIcon(lu(LucideIcons.bell)), findsOneWidget);
-  });
+  testWidgets(
+    'UX-5 : icône Bell absente, avatar remplace l\'accès aux paramètres (#58)',
+    (tester) async {
+      await tester.pumpWidget(pumpable());
+      await tester.pumpAndSettle();
+      // Bell supprimé — l'avatar est désormais le point d'entrée paramètres.
+      expect(find.byIcon(lu(LucideIcons.bell)), findsNothing);
+      // L'avatar circulaire affiche l'initiale (user null → '?').
+      expect(find.text('?'), findsOneWidget);
+    },
+  );
 }

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
+import 'package:murabbi_mobile/domain/entities/habit_log.dart';
+import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
@@ -14,6 +15,9 @@ import 'package:murabbi_mobile/presentation/features/dashboard/widgets/dashboard
 import 'package:murabbi_mobile/presentation/features/dashboard/widgets/dashboard_stats_grid.dart';
 import 'package:murabbi_mobile/presentation/features/gamification/providers/level_up_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/gamification/screens/level_up_screen.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/today_habit_statuses_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/salat/providers/today_salat_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -33,12 +37,14 @@ class Hm01DashboardScreen extends ConsumerWidget {
   final VoidCallback onConfigurePrayers;
   final VoidCallback onOpenSalat;
   final VoidCallback? onSignOut;
+  final VoidCallback? onOpenSettings;
 
   const Hm01DashboardScreen({
     super.key,
     required this.onConfigurePrayers,
     required this.onOpenSalat,
     this.onSignOut,
+    this.onOpenSettings,
   });
 
   @override
@@ -89,6 +95,7 @@ class Hm01DashboardScreen extends ConsumerWidget {
                 onConfigurePrayers: onConfigurePrayers,
                 onOpenSalat: onOpenSalat,
                 onSignOut: onSignOut,
+                onOpenSettings: onOpenSettings,
               ),
             ),
           ),
@@ -115,6 +122,7 @@ class _DashboardBody extends ConsumerWidget {
   final VoidCallback onConfigurePrayers;
   final VoidCallback onOpenSalat;
   final VoidCallback? onSignOut;
+  final VoidCallback? onOpenSettings;
 
   const _DashboardBody({
     required this.data,
@@ -122,11 +130,14 @@ class _DashboardBody extends ConsumerWidget {
     required this.onConfigurePrayers,
     required this.onOpenSalat,
     this.onSignOut,
+    this.onOpenSettings,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final local = data.nowUtc.toLocal();
+    final streak =
+        ref.watch(authNotifierProvider).valueOrNull?.currentStreak ?? 0;
     return RefreshIndicator(
       color: AppColors.accent,
       onRefresh: () async {
@@ -168,27 +179,22 @@ class _DashboardBody extends ConsumerWidget {
                   ],
                 ),
               ),
-              Semantics(
-                label: 'Notifications',
-                button: true,
-                child: IconButton(
-                  onPressed:
-                      null, // stub — navigation Notifications à venir (Phase 5)
-                  icon: Icon(
-                    lu(LucideIcons.bell),
-                    size: 22,
-                    color: AppColors.textSecondary,
+              GestureDetector(
+                onTap: onOpenSettings,
+                child: Semantics(
+                  label: 'Ouvrir les paramètres',
+                  button: true,
+                  child: _UserAvatar(
+                    user: ref.watch(authNotifierProvider).valueOrNull,
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.s1),
-              _UserAvatar(user: ref.watch(authNotifierProvider).valueOrNull),
             ],
           ),
           const SizedBox(height: AppSpacing.s6),
 
           // ── Score & niveau (issue #6) ──────────────────────────────
-          const _ScoreSection(),
+          _ScoreSection(globalStreak: streak),
           const SizedBox(height: AppSpacing.s4),
 
           // ── Prochaine prière ───────────────────────────────────────
@@ -289,11 +295,45 @@ class _DashboardBody extends ConsumerWidget {
 /// Consume [userScoreProvider] de façon isolée pour que son chargement /
 /// erreur ne fasse pas vaciller le reste du dashboard.
 class _ScoreSection extends ConsumerWidget {
-  const _ScoreSection();
+  final int globalStreak;
+  const _ScoreSection({required this.globalStreak});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scoreAsync = ref.watch(userScoreProvider);
+
+    // UX-3 : câblage des labels salat + habitudes sur les données réelles.
+    final salatAsync = ref.watch(todaySalatNotifierProvider);
+    final salatLabel =
+        salatAsync.whenOrNull(
+          data: (s) {
+            final statuses = [
+              s.prayerDay.fajr,
+              s.prayerDay.dhuhr,
+              s.prayerDay.asr,
+              s.prayerDay.maghrib,
+              s.prayerDay.isha,
+            ];
+            final done = statuses
+                .where(
+                  (st) =>
+                      st != PrayerStatus.pending && st != PrayerStatus.missed,
+                )
+                .length;
+            return '$done/5';
+          },
+        ) ??
+        '—';
+
+    final habitStatuses = ref.watch(todayHabitStatusesProvider);
+    final habits = ref.watch(habitsNotifierProvider).valueOrNull ?? const [];
+    final completedHabits = habitStatuses.values
+        .where((s) => s != HabitLogStatus.missed)
+        .length;
+    final habitsLabel = habits.isEmpty
+        ? '—'
+        : '$completedHabits/${habits.length}';
+
     return scoreAsync.when(
       loading: () => const _ScoreCardSkeleton(),
       error: (e, st) {
@@ -307,9 +347,9 @@ class _ScoreSection extends ConsumerWidget {
             DashboardScoreCard(score: score),
             const SizedBox(height: AppSpacing.s3),
             DashboardStatsGrid(
-              streakDays: 0,
-              salatLabel: '—',
-              habitsLabel: '—',
+              streakDays: globalStreak,
+              salatLabel: salatLabel,
+              habitsLabel: habitsLabel,
               weeklyRank: score.weeklyRank,
             ),
           ],
@@ -471,18 +511,41 @@ class _NextPrayerCard extends StatelessWidget {
 /// Sous-widget Consumer qui watch [dashboardTickerProvider] — seul lui
 /// rebuild toutes les 30s. Le reste de la card / ListView reste statique
 /// entre les ticks. Cf. audit TL §B.2 PR #42.
-class _RemainingLabel extends ConsumerWidget {
+///
+/// UX-7 : quand le compte à rebours atteint zéro, invalide [dashboardNotifierProvider]
+/// une seule fois (garde `_invalidated`) pour recharger la prochaine prière.
+class _RemainingLabel extends ConsumerStatefulWidget {
   final DateTime initialNow;
   final DateTime nextUtc;
 
   const _RemainingLabel({required this.initialNow, required this.nextUtc});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_RemainingLabel> createState() => _RemainingLabelState();
+}
+
+class _RemainingLabelState extends ConsumerState<_RemainingLabel> {
+  bool _invalidated = false;
+
+  @override
+  void didUpdateWidget(_RemainingLabel old) {
+    super.didUpdateWidget(old);
+    if (old.nextUtc != widget.nextUtc) _invalidated = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final ticker = ref.watch(dashboardTickerProvider);
-    final now = ticker.valueOrNull ?? initialNow;
+    final now = ticker.valueOrNull ?? widget.initialNow;
+    final diff = widget.nextUtc.difference(now);
+    if (diff.isNegative && !_invalidated) {
+      _invalidated = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.invalidate(dashboardNotifierProvider);
+      });
+    }
     return Text(
-      'Dans ${_formatRemaining(nextUtc, now)}',
+      'Dans ${_formatRemaining(widget.nextUtc, now)}',
       style: AppTypography.body.copyWith(color: AppColors.textSecondary),
     );
   }
@@ -574,20 +637,31 @@ class _UserAvatar extends StatelessWidget {
   }
 }
 
-class _GenericError extends StatelessWidget {
+class _GenericError extends ConsumerWidget {
   const _GenericError();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Message FR neutre, sans détail technique (audit TL §B.2 PR #42).
     // L'erreur précise est loggée via appLog côté caller.
-    return const Padding(
-      padding: EdgeInsets.all(AppSpacing.s6),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.s6),
       child: Center(
-        child: Text(
-          'Une erreur est survenue.\nMerci de réessayer plus tard.',
-          style: AppTypography.body,
-          textAlign: TextAlign.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Une erreur est survenue.\nMerci de réessayer plus tard.',
+              style: AppTypography.body,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            AppButton(
+              label: 'Réessayer',
+              variant: AppButtonVariant.secondary,
+              onPressed: () => ref.invalidate(dashboardNotifierProvider),
+            ),
+          ],
         ),
       ),
     );
