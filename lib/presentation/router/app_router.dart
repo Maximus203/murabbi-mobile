@@ -31,6 +31,7 @@ import 'package:murabbi_mobile/presentation/features/settings/screens/st_02_edit
 import 'package:murabbi_mobile/presentation/features/settings/screens/st_03_delete_account_screen.dart';
 import 'package:murabbi_mobile/presentation/features/splash/screens/splash_screen.dart';
 import 'package:murabbi_mobile/presentation/router/auth_redirect.dart';
+import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
 import 'package:murabbi_mobile/presentation/widgets/offline_banner.dart';
 import 'package:murabbi_mobile/services/connectivity/connectivity_service.dart';
@@ -69,6 +70,13 @@ class _ShellScaffold extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // S-2 : garde contre la fenêtre d'1 frame où auth passe en AsyncLoading
+    // (ex. signOut) avant que GoRouter évalue son redirect → /splash.
+    final authState = ref.watch(authNotifierProvider);
+    if (authState.isLoading) {
+      return const Scaffold(backgroundColor: AppColors.bgPrimary);
+    }
+
     final activeTab = _tabs[navigationShell.currentIndex];
     // Bannière offline (issue #195 — M11). On assume online par défaut
     // tant que le 1er ping n'a pas répondu pour éviter un flash.

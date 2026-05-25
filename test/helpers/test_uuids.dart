@@ -1,9 +1,6 @@
-/// Constantes UUID de test — format PostgreSQL uuid valide.
-/// À importer dans les fichiers de test à la place des pseudo-IDs ad-hoc.
-///
-/// Schéma de nommage : 1 préfixe répété par entité + ordinal sur les 12 derniers chiffres.
-library test_uuids;
-
+// Constantes UUID de test — format PostgreSQL uuid valide.
+// À importer dans les fichiers de test à la place des pseudo-IDs ad-hoc.
+// Schéma de nommage : 1 préfixe répété par entité + ordinal sur les 12 derniers chiffres.
 // ── Utilisateurs ──────────────────────────────────────────────────────────────
 /// Utilisateur principal (remplace 'user-1', 'u-1', 'uid-1', 'user-001', 'user-uuid-001')
 const kUserIdAlpha = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
