@@ -302,10 +302,8 @@ dependencies:
   intl: ^0.19.0
 
 dev_dependencies:
-  build_runner: ^2.4.0
-  freezed: ^2.5.0
-  json_serializable: ^6.8.0
-  riverpod_generator: ^2.3.0
+  # build_runner / freezed / json_serializable / riverpod_generator retirés
+  # — cf. ADR-016. Providers legacy manuels, pas de codegen.
   mocktail: ^1.0.0
   golden_toolkit: ^0.15.0
   very_good_analysis: ^5.1.0
@@ -313,20 +311,26 @@ dev_dependencies:
     sdk: flutter
 ```
 
-### Patterns Riverpod (code generation)
+### Patterns Riverpod (providers legacy manuels — cf. ADR-016)
 
-**Toujours utiliser `@riverpod` avec génération de code.**
+**Utiliser les providers Riverpod legacy manuels** (`Provider`, `NotifierProvider`,
+`AsyncNotifierProvider`, `StreamProvider`, `FutureProvider`). Pas de codegen
+`@riverpod`, pas de `build_runner` pour les providers. Voir
+[`docs/adr/ADR-016-riverpod-legacy-providers.md`](docs/adr/ADR-016-riverpod-legacy-providers.md)
+pour la justification (Option B retenue : 100% du repo en legacy, boucle dev
+rapide, typage `Ref` déjà obtenu via `AsyncNotifier<T>`).
 
 ```dart
 // Provider de lecture simple
-@riverpod
-Future<List<Habit>> userHabits(UserHabitsRef ref) async {
+final userHabitsProvider = FutureProvider<List<Habit>>((ref) async {
   return ref.watch(habitRepositoryProvider).getHabitsForToday();
-}
+});
 
 // Provider mutable avec AsyncNotifier
-@riverpod
-class HabitNotifier extends _$HabitNotifier {
+final habitNotifierProvider =
+    AsyncNotifierProvider<HabitNotifier, List<Habit>>(HabitNotifier.new);
+
+class HabitNotifier extends AsyncNotifier<List<Habit>> {
   @override
   Future<List<Habit>> build() async {
     return ref.watch(habitRepositoryProvider).getHabitsForToday();
@@ -591,7 +595,136 @@ Tu refuses de merger. Tu signales et tu corriges avant de continuer.
 
 ---
 
-## 14. Premier message attendu de toi
+## 15. Build & Run
+
+> Cible : un dev qui clone le repo doit pouvoir lancer une APK release sur son
+> device en moins de 10 minutes en suivant cette section.
+>
+> Périmètre : Android uniquement pour l'instant. iOS sera documenté dans une PR
+> ultérieure (nécessite une machine macOS pour valider les commandes).
+
+### 15.1 — Prérequis environnement
+
+| Outil           | Version minimale         | Vérification                          |
+|-----------------|--------------------------|---------------------------------------|
+| Flutter SDK     | `3.41.x` (Dart `3.11.x`) | `flutter --version`                   |
+| JDK             | `17` (Gradle 8.x)        | `java -version`                       |
+| Android SDK     | platform-tools + API 35  | `flutter doctor --android-licenses`   |
+| `ANDROID_HOME`  | défini                   | `echo $ANDROID_HOME` (Bash) / `echo $env:ANDROID_HOME` (PowerShell) |
+
+La version Flutter cible est fixée par `pubspec.yaml` (`sdk: ^3.11.1`). Tout
+décalage majeur doit être tracé en ADR avant bump.
+
+Variables d'environnement Supabase à fournir au build (cf.
+[`lib/main.dart`](lib/main.dart) + [`lib/data/datasources/supabase/supabase_client_provider.dart`](lib/data/datasources/supabase/supabase_client_provider.dart)) :
+
+- `SUPABASE_URL` — URL du projet Supabase (ex. `https://xxxx.supabase.co`)
+- `SUPABASE_ANON_KEY` — clé `anon` publique du projet
+
+⚠ Aucune clé n'est jamais commitée (règle S-1 / §11). Si les deux variables
+sont absentes, l'app démarre quand même en mode « design » (cf. `main.dart`)
+mais toute requête Supabase échouera proprement.
+
+### 15.2 — Lancer en local (debug)
+
+```bash
+# Lance l'app sur le device branché (debug, hot-reload actif)
+flutter run \
+  --dart-define=SUPABASE_URL=<your_supabase_url> \
+  --dart-define=SUPABASE_ANON_KEY=<your_supabase_anon_key>
+```
+
+Variante release (plus rapide, mais sans hot-reload) — utile pour valider
+les perf cibles du §10 :
+
+```bash
+# Profile/release sans hot-reload — bench perf, smoke run avant PR
+flutter run --release \
+  --dart-define=SUPABASE_URL=<your_supabase_url> \
+  --dart-define=SUPABASE_ANON_KEY=<your_supabase_anon_key>
+```
+
+Astuce : `flutter devices` pour lister les devices/émulateurs disponibles
+et `flutter run -d <device_id>` pour cibler explicitement.
+
+### 15.3 — Build APK pour test sur device
+
+```bash
+# Build APK release universel (toutes ABIs) — pratique pour partage rapide
+flutter build apk --release \
+  --dart-define=SUPABASE_URL=<your_supabase_url> \
+  --dart-define=SUPABASE_ANON_KEY=<your_supabase_anon_key>
+# Output : build/app/outputs/flutter-apk/app-release.apk
+```
+
+Variante split par ABI (APK plus légères, à privilégier pour les devices
+réels que tu connais) :
+
+```bash
+# Build APKs séparées par ABI — 3 fichiers, ~30% plus légers à l'installation
+flutter build apk --release --split-per-abi \
+  --dart-define=SUPABASE_URL=<your_supabase_url> \
+  --dart-define=SUPABASE_ANON_KEY=<your_supabase_anon_key>
+# Output : build/app/outputs/flutter-apk/app-{armeabi-v7a,arm64-v8a,x86_64}-release.apk
+```
+
+Installation sur device branché via USB (debug activé dans les options
+développeur Android) :
+
+```bash
+# Installer l'APK sur le device USB connecté
+adb install -r build/app/outputs/flutter-apk/app-release.apk
+```
+
+### 15.4 — Build App Bundle (Play Store)
+
+```bash
+# Build .aab pour upload Play Console
+flutter build appbundle --release \
+  --dart-define=SUPABASE_URL=<your_supabase_url> \
+  --dart-define=SUPABASE_ANON_KEY=<your_supabase_anon_key>
+# Output : build/app/outputs/bundle/release/app-release.aab
+```
+
+⚠ Tant que le signing release n'est pas configuré (cf. §15.5), le `.aab`
+est signé avec la debug keystore et **ne peut pas** être uploadé sur Play
+Console. Le build sert uniquement à valider que la chaîne compile.
+
+### 15.5 — Signing
+
+| Profil   | État                                                  | Action requise |
+|----------|-------------------------------------------------------|----------------|
+| Debug    | ✅ Auto (`~/.android/debug.keystore` géré par Android SDK) | Rien à faire |
+| Release  | ⚠ **Pas encore configuré**                            | TODO — issue de suivi à ouvrir |
+
+Le bloc `buildTypes.release` de [`android/app/build.gradle.kts`](android/app/build.gradle.kts)
+signe actuellement avec la debug keystore (`signingConfig = signingConfigs.getByName("debug")`)
+pour que `flutter run --release` fonctionne. Cette config **n'est pas valide**
+pour une distribution Play Store.
+
+**À faire avant Phase 6 (build release & soumission stores) :**
+- Générer une keystore release (`keytool -genkey -v ...`).
+- Créer `android/key.properties` (gitignored — cf. `.gitignore`).
+- Mettre à jour `build.gradle.kts` pour lire la keystore depuis
+  `key.properties` et basculer `signingConfig` en release.
+- Documenter la procédure dans `docs/runbooks/release-signing.md`.
+- Ouvrir une issue GitHub `chore(android): configure release signing` —
+  bloquant pour Phase 6.
+
+### 15.6 — Troubleshooting fréquent
+
+| Symptôme                                  | Cause probable                                | Remède |
+|-------------------------------------------|-----------------------------------------------|--------|
+| `Gradle build failed` (cache corrompu)    | Cache Gradle / Flutter désynchronisé          | `flutter clean && flutter pub get` puis rebuild |
+| `SDK location not found`                  | `ANDROID_HOME` non défini ou `local.properties` absent | Définir `ANDROID_HOME` ou créer `android/local.properties` avec `sdk.dir=<chemin>` |
+| `supabase_flutter not initialized` à l'usage | `--dart-define` Supabase manquant au build/run | Repasser les deux `--dart-define` (cf. §15.1) |
+| `MissingPluginException` (geolocator, notifications) | Plugin natif ajouté après dernier build | Rebuild complet : `flutter clean && flutter pub get && flutter run` |
+| `CheckAarMetadata` / `minSdk` error       | minSdk Flutter par défaut < 21                | Vérifier `android/app/build.gradle.kts` : `minSdk = 21` (cf. ADR-008) |
+| `Execution failed for task ':app:desugar...'` | JDK < 17 ou desugar lib manquante         | Vérifier `java -version` (doit être 17) + `coreLibraryDesugaring` dans `build.gradle.kts` |
+
+---
+
+## 16. Premier message attendu de toi
 
 Quand je lance Claude Code avec ce CLAUDE.md, ton premier message doit être :
 

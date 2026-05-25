@@ -1,4 +1,4 @@
-# Flutter
+# Flutter / Dart
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -6,45 +6,77 @@
 .pub-cache/
 .pub/
 build/
+*.iml
+.metadata
 **/generated_plugin_registrant.dart
 **/generated/
 *.g.dart
 *.freezed.dart
 
-# IDE
-.idea/
-.vscode/
-*.iml
-.metadata
+# Coverage
+coverage/
+test/.test_coverage.dart
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Env / secrets
-.env
-.env.*
-!.env.example
+# Golden diff outputs (générés par golden_toolkit en cas de fail — pas à commiter)
+**/test/**/failures/
 
 # iOS
-ios/Pods/
-ios/.symlinks/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
+ios/.symlinks
+ios/Pods/
+ios/Podfile.lock
+ios/.generated/
 ios/Runner.xcworkspace/xcuserdata/
 
 # Android
+android/local.properties
 android/.gradle/
 android/captures/
-android/local.properties
+android/gradlew
+android/gradlew.bat
+android/gradle/wrapper/gradle-wrapper.jar
 android/key.properties
 android/app/release/
 *.jks
 *.keystore
 
-# Coverage
-coverage/
-test/.test_coverage.dart
+# macOS
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/ephemeral/
+
+# Web
+lib/generated_plugin_registrant.dart
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Secrets (never commit)
+.env
+.env.*
+!.env.example
+google-services.json
+GoogleService-Info.plist
 
 # Claude
 .claude/
+
+# S-11 — ne jamais commiter de fichiers admin dans le repo public mobile
+# (cloisonnement repo public/privé). Patterns défensifs pour toute fuite
+# d'asset admin qui viendrait par copie manuelle.
+**/admin-*.jsx
+**/Murabbi Admin.html
+**/Murabbi Admin.html.bak
+
+# S-11 — chemins non canoniques pour les wireframes (livraisons brutes).
+# La source de vérité mobile est docs/wireframes/bundle/. Tout autre chemin
+# (notamment /wireframes/ à la racine du repo) est ignoré pour éviter les
+# fuites accidentelles depuis des extractions externes.
+/wireframes/

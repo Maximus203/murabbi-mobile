@@ -1,0 +1,458 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:murabbi_mobile/domain/entities/category.dart';
+import 'package:murabbi_mobile/domain/entities/habit.dart';
+import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/auth/screens/au_01_login_screen.dart';
+import 'package:murabbi_mobile/presentation/features/auth/screens/au_02_signup_screen.dart';
+import 'package:murabbi_mobile/presentation/features/auth/screens/au_03_forgot_password_screen.dart';
+import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_verification_gate.dart';
+import 'package:murabbi_mobile/presentation/features/calendar/screens/cal_01_calendar_screen.dart';
+import 'package:murabbi_mobile/presentation/features/categories/providers/categories_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/categories/screens/hb_03_categories_list_screen.dart';
+import 'package:murabbi_mobile/presentation/features/categories/screens/hb_04_category_form_screen.dart';
+import 'package:murabbi_mobile/presentation/features/collections/screens/co_01_collections_list_screen.dart';
+import 'package:murabbi_mobile/presentation/features/collections/screens/co_02_create_collection_screen.dart';
+import 'package:murabbi_mobile/presentation/features/collections/screens/co_detail_collection_screen.dart';
+import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/habits/screens/ha_01_habits_list_screen.dart';
+import 'package:murabbi_mobile/presentation/features/habits/screens/ha_02_create_habit_screen.dart';
+import 'package:murabbi_mobile/presentation/features/habits/screens/hb_detail_screen.dart';
+import 'package:murabbi_mobile/presentation/features/leaderboard/screens/lb_01_leaderboard_screen.dart';
+import 'package:murabbi_mobile/presentation/features/onboarding/providers/onboarding_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/onboarding/screens/setup_01_onboarding_screen.dart';
+import 'package:murabbi_mobile/presentation/features/salat/screens/sa_01_today_screen.dart';
+import 'package:murabbi_mobile/presentation/features/salat/screens/sa_02_prayer_settings_screen.dart';
+import 'package:murabbi_mobile/presentation/features/salat/screens/sa_03_prayer_detail_screen.dart';
+import 'package:murabbi_mobile/presentation/features/settings/screens/st_01_settings_screen.dart';
+import 'package:murabbi_mobile/presentation/features/settings/screens/st_02_edit_profile_screen.dart';
+import 'package:murabbi_mobile/presentation/features/settings/screens/st_03_delete_account_screen.dart';
+import 'package:murabbi_mobile/presentation/features/splash/screens/splash_screen.dart';
+import 'package:murabbi_mobile/presentation/router/auth_redirect.dart';
+import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_bottom_nav.dart';
+import 'package:murabbi_mobile/presentation/widgets/offline_banner.dart';
+import 'package:murabbi_mobile/services/connectivity/connectivity_service.dart';
+
+/// Pont Riverpod → Listenable pour le `refreshListenable` de GoRouter :
+/// chaque fois que l'état d'auth ou d'onboarding change, on notifie le
+/// routeur qui ré-évalue [authRedirect].
+class _RouterRefreshNotifier extends ChangeNotifier {
+  _RouterRefreshNotifier(Ref ref) {
+    ref.listen(authNotifierProvider, (_, _) => notifyListeners());
+    ref.listen(onboardingNotifierProvider, (_, _) => notifyListeners());
+  }
+}
+
+/// Shell principal avec barre de navigation persistante (D-17 — issue #103).
+///
+/// Utilise [StatefulShellRoute.indexedStack] pour conserver l'état de chaque
+/// onglet lorsque l'utilisateur navigue entre Accueil, Salat et Habitudes.
+/// Sans ce shell, chaque `context.go()` détruisait et recréait l'arbre du
+/// nouvel onglet, déclenchant un re-fetch complet et un flash de chargement.
+class _ShellScaffold extends ConsumerWidget {
+  /// Shell fourni par [StatefulShellRoute] — contient le [Navigator] de
+  /// l'onglet actif avec son historique propre.
+  final StatefulNavigationShell navigationShell;
+
+  const _ShellScaffold({required this.navigationShell});
+
+  /// Index → onglet [AppBottomNavTab] correspondant.
+  static const List<AppBottomNavTab> _tabs = [
+    AppBottomNavTab.home,
+    AppBottomNavTab.salat,
+    AppBottomNavTab.habits,
+    AppBottomNavTab.collections,
+    AppBottomNavTab.leaderboard,
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // S-2 : garde contre la fenêtre d'1 frame où auth passe en AsyncLoading
+    // (ex. signOut) avant que GoRouter évalue son redirect → /splash.
+    final authState = ref.watch(authNotifierProvider);
+    if (authState.isLoading) {
+      return const Scaffold(backgroundColor: AppColors.bgPrimary);
+    }
+
+    final activeTab = _tabs[navigationShell.currentIndex];
+    // Bannière offline (issue #195 — M11). On assume online par défaut
+    // tant que le 1er ping n'a pas répondu pour éviter un flash.
+    final isOnline = ref.watch(connectivityProvider).valueOrNull ?? true;
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      // La BottomNav est dans le shell → un seul widget partagé entre onglets,
+      // pas de reconstruction à chaque changement d'onglet.
+      bottomNavigationBar: AppBottomNav(
+        active: activeTab,
+        onTabSelected: (tab) => _onTabSelected(context, ref, tab),
+      ),
+      // Le body est le Navigator de l'onglet courant maintenu par go_router,
+      // précédé de la bannière offline si l'appareil est déconnecté.
+      body: Column(
+        children: [
+          if (!isOnline) const SafeArea(bottom: false, child: OfflineBanner()),
+          Expanded(child: navigationShell),
+        ],
+      ),
+    );
+  }
+
+  void _onTabSelected(
+    BuildContext context,
+    WidgetRef ref,
+    AppBottomNavTab tab,
+  ) {
+    final index = _tabs.indexOf(tab);
+    if (index == -1) return;
+
+    // goBranch avec `initialLocation: true` si on retap le même onglet
+    // → remonte en haut de l'historique de cet onglet (comportement standard).
+    navigationShell.goBranch(
+      index,
+      initialLocation: index == navigationShell.currentIndex,
+    );
+  }
+}
+
+/// Provider du GoRouter Murabbi — lifecycle aligné sur le ProviderContainer
+/// racine. Toute la logique de redirection vit dans [authRedirect] (testable
+/// hors GoRouter).
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final refresh = _RouterRefreshNotifier(ref);
+  ref.onDispose(refresh.dispose);
+
+  return GoRouter(
+    initialLocation: AppRoutes.splash,
+    refreshListenable: refresh,
+    redirect: (context, state) {
+      return authRedirect(
+        auth: ref.read(authNotifierProvider),
+        onboarded: ref.read(onboardingNotifierProvider),
+        currentPath: state.matchedLocation,
+      );
+    },
+    routes: [
+      // ── Routes pre-home (hors shell) ──────────────────────────────────
+      GoRoute(path: AppRoutes.splash, builder: (_, _) => const SplashScreen()),
+      GoRoute(
+        path: AppRoutes.login,
+        builder: (context, _) => Au01LoginScreen(
+          onForgotPassword: (email) =>
+              context.push(AppRoutes.forgot, extra: email),
+          onSignUp: () => context.push(AppRoutes.signup),
+          onAuthenticated: () {
+            // Le redirect global gère la suite (onboarding ou home).
+          },
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.signup,
+        builder: (context, _) => Au02SignupScreen(
+          onSignIn: () => context.pop(),
+          onSignedUp: () => context.go(AppRoutes.verifyEmail),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.forgot,
+        builder: (context, state) => Au03ForgotPasswordScreen(
+          onBack: () => context.pop(),
+          initialEmail: state.extra is String ? state.extra as String : null,
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.verifyEmail,
+        builder: (context, _) => Au04EmailVerificationGate(
+          onContinue: () {
+            // Une fois l'email confirmé côté Supabase, on rafraîchit la
+            // session puis on quitte le sas verify-email (le redirect
+            // global laisse cette route toujours autorisée — sans push
+            // explicite l'utilisateur resterait bloqué ici).
+            ref.invalidate(authNotifierProvider);
+            context.go(AppRoutes.home);
+          },
+          onChangeEmail: () => context.go(AppRoutes.signup),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (context, _) => Setup01OnboardingScreen(
+          onCompleted: () {
+            // Le redirect global pousse vers /home après la mise à jour
+            // de onboardingNotifierProvider — rien à faire ici.
+          },
+        ),
+      ),
+
+      // ── Routes hors-shell (modal / sous-pages) ────────────────────────
+      // Ces routes naviguent en dehors du shell indexedStack — l'utilisateur
+      // les quitte via `context.go(AppRoutes.salat)` ou `context.go(AppRoutes.habits)`.
+      GoRoute(
+        path: AppRoutes.salatSettings,
+        builder: (context, _) => Sa02PrayerSettingsScreen(
+          onBack: () => context.go(AppRoutes.salat),
+          onSaved: () => context.go(AppRoutes.salat),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.salatDetailPattern,
+        builder: (context, state) {
+          final prayerName = state.pathParameters['prayerName'] ?? 'fajr';
+          return Sa03PrayerDetailScreen(
+            prayerName: prayerName,
+            onBack: () => context.go(AppRoutes.salat),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.habitsCreate,
+        builder: (context, _) => Ha02CreateHabitScreen(
+          onCreated: () => context.go(AppRoutes.habits),
+          onCancel: () => context.go(AppRoutes.habits),
+        ),
+      ),
+      // HA-02 mode édition (issue #152). L'habitude à éditer est lue depuis
+      // la liste déjà chargée ; si introuvable (deep-link à froid), on
+      // retombe sur HA-01.
+      GoRoute(
+        path: AppRoutes.habitEditPattern,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return Consumer(
+            builder: (context, ref, _) {
+              final habits =
+                  ref.watch(habitsNotifierProvider).valueOrNull ??
+                  const <Habit>[];
+              final matches = habits.where((h) => h.id.value == id).toList();
+              final match = matches.isEmpty ? null : matches.first;
+              if (match == null) {
+                return Ha01HabitsListScreen(
+                  onCreate: () => context.go(AppRoutes.habitsCreate),
+                  onOpenCategories: () => context.go(AppRoutes.categories),
+                  onEditHabit: (id) => context.go(AppRoutes.habitEdit(id)),
+                  onOpenHabit: (id) => context.go(AppRoutes.habitDetail(id)),
+                );
+              }
+              return Ha02CreateHabitScreen(
+                initialHabit: match,
+                onCreated: () => context.go(AppRoutes.habits),
+                onCancel: () => context.go(AppRoutes.habits),
+              );
+            },
+          );
+        },
+      ),
+
+      // HB-DETAIL — détail habitude (issue #153). Déclarée APRÈS
+      // `/habits/create` et `/habits/:id/edit` pour que go_router matche
+      // ces routes plus spécifiques d'abord.
+      GoRoute(
+        path: AppRoutes.habitDetailPattern,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return HbDetailScreen(
+            habitId: id,
+            onBack: () => context.go(AppRoutes.habits),
+            onEdit: (habitId) => context.go(AppRoutes.habitEdit(habitId)),
+            onDeleted: () => context.go(AppRoutes.habits),
+          );
+        },
+      ),
+
+      // ── Catégories — HB-03 liste / HB-04 formulaire (issue #150) ──────
+      GoRoute(
+        path: AppRoutes.categories,
+        builder: (context, _) => Hb03CategoriesListScreen(
+          onCreate: () => context.go(AppRoutes.categoriesCreate),
+          onEdit: (id) => context.go(AppRoutes.categoryEdit(id.value)),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.categoriesCreate,
+        builder: (context, _) => Hb04CategoryFormScreen(
+          onDone: () => context.go(AppRoutes.categories),
+          onCancel: () => context.go(AppRoutes.categories),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.categoryEditPattern,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return Consumer(
+            builder: (context, ref, _) {
+              // La catégorie à éditer est lue depuis la liste déjà chargée.
+              // Si introuvable (deep-link à froid), on retombe sur HB-03.
+              final categories =
+                  ref.watch(categoriesNotifierProvider).valueOrNull ??
+                  const <Category>[];
+              final matches = categories
+                  .where((c) => c.id.value == id)
+                  .toList();
+              final match = matches.isEmpty ? null : matches.first;
+              if (match == null) {
+                return Hb03CategoriesListScreen(
+                  onCreate: () => context.go(AppRoutes.categoriesCreate),
+                  onEdit: (id) => context.go(AppRoutes.categoryEdit(id.value)),
+                );
+              }
+              return Hb04CategoryFormScreen(
+                initialCategory: match,
+                onDone: () => context.go(AppRoutes.categories),
+                onCancel: () => context.go(AppRoutes.categories),
+              );
+            },
+          );
+        },
+      ),
+
+      // ── Collections — CO-02 création / CO-DETAIL (issue #6) ───────────
+      // Déclarées hors shell ; CO-02 avant CO-DETAIL pour que `/new` matche
+      // avant `/:id`.
+      GoRoute(
+        path: AppRoutes.collectionsCreate,
+        builder: (context, _) => Co02CreateCollectionScreen(
+          onCreated: () => context.go(AppRoutes.collections),
+          onCancel: () => context.go(AppRoutes.collections),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.collectionDetailPattern,
+        builder: (context, state) => CoDetailCollectionScreen(
+          collectionId: state.pathParameters['id'] ?? '',
+          onBack: () => context.go(AppRoutes.collections),
+        ),
+      ),
+
+      // ── Calendrier — CAL-01 (issue #7, Phase 6) ───────────────────────
+      GoRoute(
+        path: AppRoutes.calendar,
+        builder: (context, _) =>
+            Cal01CalendarScreen(onBack: () => context.go(AppRoutes.home)),
+      ),
+
+      // ── Paramètres — ST-01 / ST-02 / ST-03 (issue #7, Phase 6) ────────
+      // Hors shell : sous-pages authentifiées. ST-02/ST-03 déclarées avant
+      // rien de plus spécifique — pas de conflit de pattern.
+      GoRoute(
+        path: AppRoutes.settingsProfile,
+        builder: (context, _) => St02EditProfileScreen(
+          onBack: () => context.go(AppRoutes.settings),
+          onSaved: () => context.go(AppRoutes.settings),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.settingsDelete,
+        builder: (context, _) => Consumer(
+          builder: (context, ref, _) => St03DeleteAccountScreen(
+            onBack: () => context.go(AppRoutes.settings),
+            // Suppression réussie → le signOut interne au use case bascule
+            // l'auth state, le redirect global pousse vers /auth/login.
+            onDeleted: () => context.go(AppRoutes.login),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (context, _) => Consumer(
+          builder: (context, ref, _) => St01SettingsScreen(
+            onBack: () => context.go(AppRoutes.home),
+            onEditProfile: () => context.go(AppRoutes.settingsProfile),
+            onOpenPrayerSettings: () => context.go(AppRoutes.salatSettings),
+            onDeleteAccount: () => context.go(AppRoutes.settingsDelete),
+            onSignOut: () => ref.read(authNotifierProvider.notifier).signOut(),
+          ),
+        ),
+      ),
+
+      // ── Shell persistant — onglets principaux (D-17) ──────────────────
+      // StatefulShellRoute.indexedStack maintient un Navigator distinct par
+      // branche → l'état (scroll, providers, page stack) est préservé lors
+      // du changement d'onglet. Chaque branche a sa propre initialLocation.
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            _ShellScaffold(navigationShell: navigationShell),
+        branches: [
+          // Branche 0 — Accueil
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (context, _) => Consumer(
+                  builder: (context, ref, _) => Hm01DashboardScreen(
+                    // Idem issue #214 : configure prayers → Settings.
+                    onConfigurePrayers: () => context.go(AppRoutes.settings),
+                    onOpenSalat: () => context.go(AppRoutes.salat),
+                    onOpenSettings: () => context.go(AppRoutes.settings),
+                    // Audit TL PR #42 : Consumer + ref.read plutôt que
+                    // ProviderScope.containerOf (plus idiomatique).
+                    onSignOut: () =>
+                        ref.read(authNotifierProvider.notifier).signOut(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Branche 1 — Salat
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.salat,
+                builder: (context, _) => Sa01TodayScreen(
+                  // Décision UX issue #214 : la config salat n'est accessible
+                  // que depuis ST-01 (Paramètres → Horaires de prière).
+                  onConfigureSettings: () => context.go(AppRoutes.settings),
+                  onOpenDetail: (prayerName) =>
+                      context.go(AppRoutes.salatDetail(prayerName)),
+                ),
+              ),
+            ],
+          ),
+
+          // Branche 2 — Habitudes
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.habits,
+                builder: (context, _) => Ha01HabitsListScreen(
+                  onCreate: () => context.go(AppRoutes.habitsCreate),
+                  onOpenCategories: () => context.go(AppRoutes.categories),
+                  onEditHabit: (id) => context.go(AppRoutes.habitEdit(id)),
+                  onOpenHabit: (id) => context.go(AppRoutes.habitDetail(id)),
+                  onOpenCollections: () => context.go(AppRoutes.collections),
+                ),
+              ),
+            ],
+          ),
+
+          // Branche 3 — Collections — CO-01 (issue #6)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.collections,
+                builder: (context, _) => Co01CollectionsListScreen(
+                  onCreate: () => context.go(AppRoutes.collectionsCreate),
+                  onOpenCollection: (id) =>
+                      context.go(AppRoutes.collectionDetail(id)),
+                ),
+              ),
+            ],
+          ),
+
+          // Branche 4 — Classement — LB-01 (issue #6)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.leaderboard,
+                builder: (_, _) => const Lb01LeaderboardScreen(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+});
