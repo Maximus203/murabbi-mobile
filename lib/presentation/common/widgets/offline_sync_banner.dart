@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
+import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/services/offline/offline_queue_provider.dart';
 
 /// Bannière affichée en haut de l'écran quand des actions sont en attente
@@ -37,21 +40,27 @@ class OfflineSyncBanner extends ConsumerWidget {
 
         return Material(
           elevation: 4,
-          color: Colors.orange.shade700,
+          color: AppColors.warning,
           child: SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s4,
+                vertical: AppSpacing.s2,
+              ),
               child: Row(
                 children: [
-                  const Icon(Icons.cloud_off, color: Colors.white, size: 16),
-                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.cloud_off,
+                    color: AppColors.onOverlay,
+                    size: AppIconSize.sm,
+                  ),
+                  const SizedBox(width: AppSpacing.s2),
                   Expanded(
                     child: Text(
                       '$count action${count > 1 ? 's' : ''} en attente de sync',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
+                      style: AppTypography.micro.copyWith(
+                        color: AppColors.onOverlay,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_duration.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 
 /// Toggle iOS-like 44×26, accent ocre quand `value=true`, borderDefault quand `false`.
@@ -35,7 +36,7 @@ class AppToggle extends StatelessWidget {
         child: GestureDetector(
           onTap: enabled ? () => onChanged!(!value) : null,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: AppDuration.standard,
             width: 44,
             height: 26,
             decoration: BoxDecoration(
@@ -44,7 +45,7 @@ class AppToggle extends StatelessWidget {
               border: Border.all(color: border, width: AppBorderWidth.thin),
             ),
             child: AnimatedAlign(
-              duration: const Duration(milliseconds: 200),
+              duration: AppDuration.standard,
               alignment: value ? Alignment.centerRight : Alignment.centerLeft,
               child: Container(
                 margin: const EdgeInsets.all(2),

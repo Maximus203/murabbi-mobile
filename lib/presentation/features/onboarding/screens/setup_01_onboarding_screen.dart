@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/presentation/features/onboarding/providers/onboarding_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_duration.dart';
 import 'package:murabbi_mobile/presentation/theme/app_media.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -106,7 +107,7 @@ class _Setup01OnboardingScreenState
       return;
     }
     await _pageCtrl.nextPage(
-      duration: const Duration(milliseconds: 250),
+      duration: AppDuration.pageSlide,
       curve: Curves.easeOut,
     );
   }
@@ -163,7 +164,7 @@ class _Setup01OnboardingScreenState
                         onPressed: _saving
                             ? null
                             : () => _pageCtrl.previousPage(
-                                duration: const Duration(milliseconds: 250),
+                                duration: AppDuration.pageSlide,
                                 curve: Curves.easeOut,
                               ),
                       ),
@@ -325,7 +326,7 @@ class _DotsIndicator extends StatelessWidget {
       children: List.generate(count, (i) {
         final active = i == index;
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: AppDuration.standard,
           margin: const EdgeInsets.symmetric(horizontal: 4),
           width: active ? 24 : 8,
           height: 8,

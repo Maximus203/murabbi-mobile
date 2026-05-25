@@ -109,10 +109,17 @@ class AppColors {
   static const Color googleBlue = Color(0xFF4285F4);
 
   // -- Utilitaires -----------------------------------------------------------
-  /// Transparent pur — utilisé pour les variantes ghost/link de AppButton (P-2).
-  /// Centralise l'usage de `Colors.transparent` pour respecter la règle P-2 :
-  /// aucune valeur couleur hors de AppColors.
+  /// Transparent pur — variantes ghost/link, surfaceTintColor, barrierColor nul.
   static const Color transparent = Colors.transparent;
+
+  /// Blanc pur — texte et icônes sur fond sombre (overlay vidéo, gradient noir).
+  /// Usage : `color: AppColors.onOverlay` ou `.copyWith(color: AppColors.onOverlay)`.
+  /// Toujours associé à [AppOpacity] pour les degrés intermédiaires.
+  static const Color onOverlay = Color(0xFFFFFFFF);
+
+  /// Noir pur — base des gradients sombres sur vidéo/média (P-2).
+  /// N'est jamais utilisé seul : toujours `.withValues(alpha: AppOpacity.xxx)`.
+  static const Color overlayDark = Color(0xFF000000);
 }
 
 /// Palette sombre Murabbi — miroir terreuse de [AppColors] en mode nuit.

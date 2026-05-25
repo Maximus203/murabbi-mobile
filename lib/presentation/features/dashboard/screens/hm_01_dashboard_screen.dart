@@ -19,6 +19,7 @@ import 'package:murabbi_mobile/presentation/features/habits/providers/habits_not
 import 'package:murabbi_mobile/presentation/features/habits/providers/today_habit_statuses_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/salat/providers/today_salat_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_opacity.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
@@ -617,7 +618,7 @@ class _NiyyahCard extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 AppColors.transparent,
-                Colors.black.withValues(alpha: 0.55),
+                AppColors.overlayDark.withValues(alpha: AppOpacity.overlayMedium),
               ],
             ),
           ),
@@ -635,7 +636,7 @@ class _NiyyahCard extends StatelessWidget {
               Text(
                 text,
                 style: AppTypography.body.copyWith(
-                  color: AppColors.bgSurface.withValues(alpha: 0.85),
+                  color: AppColors.bgSurface.withValues(alpha: AppOpacity.overlayEmphasis),
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

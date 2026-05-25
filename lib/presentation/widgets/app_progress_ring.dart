@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_duration.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 
 /// Anneau de progression — utilisé sur HM-01 (score quotidien) et HB-EXECUTE
@@ -70,7 +71,7 @@ class AnimatedProgressRing extends StatelessWidget {
     super.key,
     required double progress,
     double from = 0.0,
-    this.duration = const Duration(milliseconds: 600),
+    this.duration = AppDuration.slow,
     this.size = 120,
     this.strokeWidth = 6,
     this.trackColor = AppColors.borderDefault,

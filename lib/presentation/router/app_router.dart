@@ -83,7 +83,7 @@ class _ShellScaffold extends ConsumerWidget {
     final isOnline = ref.watch(connectivityProvider).valueOrNull ?? true;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       // La BottomNav est dans le shell → un seul widget partagé entre onglets,
       // pas de reconstruction à chaque changement d'onglet.
       bottomNavigationBar: AppBottomNav(

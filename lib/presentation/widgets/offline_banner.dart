@@ -20,12 +20,12 @@ class OfflineBanner extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(LucideIcons.wifiOff, color: Colors.white, size: AppIconSize.sm),
+          const Icon(LucideIcons.wifiOff, color: AppColors.onOverlay, size: AppIconSize.sm),
           const SizedBox(width: AppSpacing.s2),
           Text(
             'Hors ligne',
             style: AppTypography.micro.copyWith(
-              color: Colors.white,
+              color: AppColors.onOverlay,
               fontWeight: FontWeight.w500,
             ),
           ),
