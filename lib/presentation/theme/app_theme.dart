@@ -54,4 +54,62 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData dark() {
+    const colorScheme = ColorScheme(
+      brightness: Brightness.dark,
+      primary: AppColorsDark.accent,
+      onPrimary: AppColorsDark.bgSurface,
+      secondary: AppColorsDark.accentHover,
+      onSecondary: AppColorsDark.bgSurface,
+      surface: AppColorsDark.bgSurface,
+      onSurface: AppColorsDark.textPrimary,
+      error: AppColorsDark.danger,
+      onError: AppColorsDark.bgSurface,
+    );
+
+    final base = ThemeData(useMaterial3: true, colorScheme: colorScheme);
+
+    return base.copyWith(
+      scaffoldBackgroundColor: AppColorsDark.bgPrimary,
+      textTheme: TextTheme(
+        displayMedium: AppTypography.display.copyWith(
+          color: AppColorsDark.textPrimary,
+        ),
+        headlineLarge: AppTypography.h1.copyWith(
+          color: AppColorsDark.textPrimary,
+        ),
+        headlineMedium: AppTypography.h2.copyWith(
+          color: AppColorsDark.textPrimary,
+        ),
+        titleMedium: AppTypography.h3.copyWith(
+          color: AppColorsDark.textPrimary,
+        ),
+        bodyMedium: AppTypography.body.copyWith(
+          color: AppColorsDark.textPrimary,
+        ),
+        labelMedium: AppTypography.label.copyWith(
+          color: AppColorsDark.textSecondary,
+        ),
+        bodySmall: AppTypography.caption.copyWith(
+          color: AppColorsDark.textSecondary,
+        ),
+      ),
+      iconTheme: const IconThemeData(
+        color: AppColorsDark.textPrimary,
+        size: 20,
+      ),
+      dividerTheme: const DividerThemeData(
+        color: AppColorsDark.borderDefault,
+        thickness: 0.5,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColorsDark.bgSurface,
+        contentTextStyle: AppTypography.body.copyWith(
+          color: AppColorsDark.textPrimary,
+        ),
+        actionTextColor: AppColorsDark.accent,
+      ),
+    );
+  }
 }

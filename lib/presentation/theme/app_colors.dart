@@ -114,3 +114,54 @@ class AppColors {
   /// aucune valeur couleur hors de AppColors.
   static const Color transparent = Colors.transparent;
 }
+
+/// Palette sombre Murabbi — miroir terreuse de [AppColors] en mode nuit.
+///
+/// Mêmes tokens, tons inversés : fonds sombres / textes clairs. L'accent ocre
+/// est légèrement éclairci pour rester lisible sur fond sombre (ratio ≥ 4.5:1).
+/// Utilisée exclusivement par [AppTheme.dark()] — jamais directement dans les
+/// widgets.
+class AppColorsDark {
+  AppColorsDark._();
+
+  // -- Backgrounds & texte ---------------------------------------------------
+  /// Fond principal — brun foncé chaud.
+  static const Color bgPrimary = Color(0xFF1A1814);
+
+  /// Surface élevée — cartes, modaux.
+  static const Color bgSurface = Color(0xFF252220);
+
+  /// Surface d'input pressée / désactivée.
+  static const Color bgInput = Color(0xFF302D2A);
+
+  /// Texte principal — crème chaud.
+  static const Color textPrimary = Color(0xFFF0EDE8);
+
+  /// Texte secondaire — gris chaud clair.
+  static const Color textSecondary = Color(0xFFA8998A);
+
+  /// Texte tertiaire — gris chaud moyen.
+  static const Color textTertiary = Color(0xFF6B5E50);
+
+  // -- Accent & sémantiques --------------------------------------------------
+  /// Accent ocre éclairci — ratio ≥ 4.5:1 sur [bgSurface] (accessibilité).
+  static const Color accent = Color(0xFFA68655);
+
+  /// État hover/pressed du CTA primaire sombre.
+  static const Color accentHover = Color(0xFF8B6F47);
+
+  static const Color success = Color(0xFF6B8C6B);
+  static const Color warning = Color(0xFF9B5E3C);
+  static const Color danger = Color(0xFF8C3D3D);
+
+  /// Bordure thin — alpha identique à la version light, sur texte clair.
+  static const Color borderDefault = Color(0x14F0EDE8);
+  static const Color borderEmphasis = Color(0x29F0EDE8);
+
+  // -- Shimmer ---------------------------------------------------------------
+  static const Color bgShimmerBase = Color(0xFF302D2A);
+  static const Color bgShimmerHighlight = Color(0xFF3D3A36);
+
+  // -- Utilitaires -----------------------------------------------------------
+  static const Color transparent = Colors.transparent;
+}

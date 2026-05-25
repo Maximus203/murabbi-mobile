@@ -128,6 +128,23 @@ class AuthNotifier extends AsyncNotifier<User?> {
       return null;
     });
   }
+
+  /// Rafraîchit silencieusement la session Supabase au retour de background
+  /// (S-4 — issue #sprint). Ne touche pas à [state] : l'auth stream mettra
+  /// à jour l'état si le token a été renouvelé. En cas d'erreur, on loggue
+  /// uniquement — l'utilisateur sera redirigé vers le login par le router
+  /// si la session a expiré.
+  Future<void> refreshSession() async {
+    try {
+      await _repo.refreshSession();
+    } catch (e, st) {
+      appLog.w(
+        'AuthNotifier.refreshSession failed (silent)',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
 }
 
 final authNotifierProvider = AsyncNotifierProvider<AuthNotifier, User?>(

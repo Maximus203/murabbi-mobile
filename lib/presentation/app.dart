@@ -79,6 +79,9 @@ class _MurabbiAppState extends ConsumerState<MurabbiApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _invalidator.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      ref.read(authNotifierProvider.notifier).refreshSession();
+    }
   }
 
   // ── SyncService (M2) ────────────────────────────────────────────────────────
@@ -130,6 +133,8 @@ class _MurabbiAppState extends ConsumerState<MurabbiApp>
       title: 'Murabbi',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.system,
       routerConfig: router,
     );
   }
