@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/auth/widgets/auth_error_banner.dart';
+import 'package:murabbi_mobile/presentation/features/auth/widgets/google_sign_in_button.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -195,15 +195,8 @@ class _Au01LoginScreenState extends ConsumerState<Au01LoginScreen> {
                 ],
               ),
               const SizedBox(height: AppSpacing.s4),
-              AppButton(
-                label: 'Continuer avec Google',
+              GoogleSignInButton(
                 onPressed: isLoading ? null : _signInWithGoogle,
-                variant: AppButtonVariant.secondary,
-                leadingWidget: SvgPicture.asset(
-                  'assets/images/logo_google.svg',
-                  width: 18,
-                  height: 18,
-                ),
               ),
               const SizedBox(height: AppSpacing.s6),
               Row(
