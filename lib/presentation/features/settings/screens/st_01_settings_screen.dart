@@ -30,6 +30,10 @@ class St01SettingsScreen extends ConsumerWidget {
   /// cette navigation.
   final VoidCallback onEditProfile;
 
+  /// Ouvre SA-02 — réglages horaires de prière (accessible uniquement depuis
+  /// les paramètres — cf. décision UX issue #214).
+  final VoidCallback onOpenPrayerSettings;
+
   /// Ouvre ST-03 — suppression de compte.
   final VoidCallback onDeleteAccount;
 
@@ -40,6 +44,7 @@ class St01SettingsScreen extends ConsumerWidget {
     super.key,
     required this.onBack,
     required this.onEditProfile,
+    required this.onOpenPrayerSettings,
     required this.onDeleteAccount,
     required this.onSignOut,
   });
@@ -58,13 +63,17 @@ class St01SettingsScreen extends ConsumerWidget {
           // immuable côté serveur, plus rien à éditer en self-service).
           if (user != null) _ProfileCard(user: user),
           const SizedBox(height: AppSpacing.s5),
-          const _Section(
+          _Section(
             title: 'Pratique',
             tiles: [
               _SettingsTile(
+                icon: LucideIcons.clock,
+                label: 'Horaires de prière',
+                onTap: onOpenPrayerSettings,
+              ),
+              const _SettingsTile(
                 icon: LucideIcons.bell,
                 label: 'Notifications',
-                // Réglages notifications gérés via SA-02 (plages horaires).
                 onTap: null,
               ),
             ],

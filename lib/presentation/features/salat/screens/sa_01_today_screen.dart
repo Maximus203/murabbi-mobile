@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_day.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
@@ -45,7 +46,19 @@ class Sa01TodayScreen extends ConsumerWidget {
     final state = ref.watch(todaySalatNotifierProvider);
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
-      appBar: const AppHeader.title(title: "Aujourd'hui"),
+      appBar: AppHeader.title(
+        title: 'Prières du jour',
+        trailing: ExcludeSemantics(
+          child: IconButton(
+            onPressed: null, // stub — navigation Calendrier à venir
+            icon: Icon(
+              lu(LucideIcons.calendar),
+              size: 20,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ),
       body: state.when(
         loading: () => const Center(
           child: CircularProgressIndicator(
@@ -149,7 +162,7 @@ class _PrayersListState extends State<_PrayersList> {
                   borderRadius: BorderRadius.circular(AppRadius.card),
                 ),
                 const SizedBox(height: AppSpacing.s3),
-                Text('$completed / 5 prières', style: AppTypography.label),
+                Text('$completed sur 5 complétées', style: AppTypography.label),
                 const SizedBox(height: AppSpacing.s3),
                 if (visible.isEmpty)
                   Padding(
@@ -355,7 +368,7 @@ class _NotConfiguredView extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.s6),
-          AppButton(label: 'Configurer les prières', onPressed: onConfigure),
+          AppButton(label: 'Aller dans Paramètres', onPressed: onConfigure),
         ],
       ),
     );

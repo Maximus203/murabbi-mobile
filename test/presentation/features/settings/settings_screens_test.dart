@@ -76,6 +76,7 @@ void main() {
           St01SettingsScreen(
             onBack: () {},
             onEditProfile: () {},
+            onOpenPrayerSettings: () {},
             onDeleteAccount: () {},
             onSignOut: () {},
           ),
@@ -99,6 +100,7 @@ void main() {
           St01SettingsScreen(
             onBack: () {},
             onEditProfile: () {},
+            onOpenPrayerSettings: () {},
             onDeleteAccount: () => tapped = true,
             onSignOut: () {},
           ),

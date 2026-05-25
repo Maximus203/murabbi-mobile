@@ -4,6 +4,7 @@ import 'package:hijri/hijri_calendar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
+import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
@@ -180,6 +181,8 @@ class _DashboardBody extends ConsumerWidget {
                   ),
                 ),
               ),
+              const SizedBox(width: AppSpacing.s1),
+              _UserAvatar(user: ref.watch(authNotifierProvider).valueOrNull),
             ],
           ),
           const SizedBox(height: AppSpacing.s6),
@@ -540,6 +543,32 @@ class _NiyyahCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Avatar circulaire avec l'initiale du pseudo — affiché dans le header HM-01.
+class _UserAvatar extends StatelessWidget {
+  final User? user;
+  const _UserAvatar({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = (user?.pseudo.value ?? '').isEmpty
+        ? '?'
+        : user!.pseudo.value.characters.first.toUpperCase();
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: const BoxDecoration(
+        color: AppColors.accent,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: AppTypography.h3.copyWith(color: AppColors.bgSurface),
       ),
     );
   }

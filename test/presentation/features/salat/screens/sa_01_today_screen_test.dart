@@ -150,8 +150,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Configurer les prières'), findsOneWidget);
-    await tester.tap(find.text('Configurer les prières'));
+    expect(find.text('Aller dans Paramètres'), findsOneWidget);
+    await tester.tap(find.text('Aller dans Paramètres'));
     await tester.pumpAndSettle();
     expect(configureCalled, isTrue);
   });

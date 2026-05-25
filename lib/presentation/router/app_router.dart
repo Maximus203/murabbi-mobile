@@ -352,6 +352,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           builder: (context, ref, _) => St01SettingsScreen(
             onBack: () => context.go(AppRoutes.home),
             onEditProfile: () => context.go(AppRoutes.settingsProfile),
+            onOpenPrayerSettings: () => context.go(AppRoutes.salatSettings),
             onDeleteAccount: () => context.go(AppRoutes.settingsDelete),
             onSignOut: () => ref.read(authNotifierProvider.notifier).signOut(),
           ),
@@ -373,8 +374,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: AppRoutes.home,
                 builder: (context, _) => Consumer(
                   builder: (context, ref, _) => Hm01DashboardScreen(
-                    onConfigurePrayers: () =>
-                        context.go(AppRoutes.salatSettings),
+                    // Idem issue #214 : configure prayers → Settings.
+                    onConfigurePrayers: () => context.go(AppRoutes.settings),
                     onOpenSalat: () => context.go(AppRoutes.salat),
                     // Audit TL PR #42 : Consumer + ref.read plutôt que
                     // ProviderScope.containerOf (plus idiomatique).
@@ -392,8 +393,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.salat,
                 builder: (context, _) => Sa01TodayScreen(
-                  onConfigureSettings: () =>
-                      context.go(AppRoutes.salatSettings),
+                  // Décision UX issue #214 : la config salat n'est accessible
+                  // que depuis ST-01 (Paramètres → Horaires de prière).
+                  onConfigureSettings: () => context.go(AppRoutes.settings),
                   onOpenDetail: (prayerName) =>
                       context.go(AppRoutes.salatDetail(prayerName)),
                 ),
