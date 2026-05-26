@@ -3,6 +3,9 @@
 > **Pour Claude Code agissant comme Architecte & Développeur Mobile Senior**
 > Stack : Flutter 3.x + Dart 3.x + Riverpod + go_router + Supabase
 > Méthode : TDD strict · Clean Architecture · Décisions métier validées par le PO
+>
+> **Pratiques engineering** : `../MOBILE_PRACTICES.md` — référence obligatoire pour
+> tout agent intervenant sur ce repo (patterns mobile + backend).
 
 ---
 
@@ -259,8 +262,13 @@ presentation → domain ← data
 - ❌ Logique métier dans un Widget
 - ❌ Appel HTTP dans un Widget
 - ❌ `print()` n'importe où — utiliser `logger`
-- ❌ Couleur hex hardcodée hors `AppColors`
+- ❌ Couleur hex hardcodée hors `AppColors` (règle P-2)
+- ❌ Taille numérique nue dans l'UI (`size: 20`, `width: 36`) — utiliser les tokens
+- ❌ `Icons.X` (Material Icons) — utiliser exclusivement `LucideIcons.X`
+- ❌ Style de texte inline (`TextStyle(fontSize:...)`) — utiliser `AppTypography`
 - ❌ String UI hardcodée — passer par `lib/core/l10n/` (si i18n implémenté)
+
+> Voir §17 pour les règles complètes du Design Token System.
 
 ---
 
@@ -582,6 +590,7 @@ Tu refuses de merger. Tu signales et tu corriges avant de continuer.
 
 ## 13. Liens vers la documentation projet
 
+- `../MOBILE_PRACTICES.md` — **Pratiques engineering obligatoires** (patterns mobile + backend)
 - `docs/wireframes/Murabbi Wireframes.html` — Wireframes Hi-Fi (miroir local, bundle JSX manquant)
 - `docs/wireframes/WIREFRAMES_INCOMPLETS.md` — Inventaire des 32 écrans + statut bundle
 - `docs/audit/wireframes_audit.md` — (à créer en Phase 0)
@@ -691,7 +700,13 @@ flutter build apk --release \
 
 # Install via adb
 adb install -r build/app/outputs/flutter-apk/app-release.apk
+
+# Lancement manuel (package name correct)
+adb shell am start -n 'com.murabbi.murabbi/.MainActivity'
 ```
+
+> **Package Android** : `com.murabbi.murabbi` — ne pas confondre avec
+> `com.murabbi.mobile` (ancien nom, provoque une erreur `Activity not found`).
 
 ### 15.4 — Build App Bundle (Play Store)
 
@@ -732,7 +747,7 @@ pour une distribution Play Store.
 
 | Symptôme                                  | Cause probable                                | Remède |
 |-------------------------------------------|-----------------------------------------------|--------|
-| `FAIL 'adb' introuvable dans le PATH`     | `C:\Android\Sdk\platform-tools` absent du PATH | Ajouter `C:\Android\Sdk\platform-tools` dans les variables d'environnement système (Paramètres → Variables d'env → Path) |
+| `FAIL 'adb' introuvable dans le PATH`     | Fallback automatique échoue aussi (SDK non installé) | Installer Android SDK Platform Tools ; le script détecte automatiquement `C:\Android\Sdk\platform-tools` si présent |
 | `FAIL Credentials Supabase introuvables`  | Aucun fichier `.env*` à la racine             | Créer `.env.local` avec `SUPABASE_URL` et `SUPABASE_ANON_KEY` (cf. §15.1) |
 | `Gradle build failed` (cache corrompu)    | Cache Gradle / Flutter désynchronisé          | `.\scripts\run_device.ps1 -Clean` ou `flutter clean && flutter pub get` |
 | `SDK location not found`                  | `ANDROID_HOME` non défini ou `local.properties` absent | Définir `ANDROID_HOME` ou créer `android/local.properties` avec `sdk.dir=C:\Android\Sdk` |
@@ -740,6 +755,125 @@ pour une distribution Play Store.
 | `MissingPluginException` (geolocator, notifications) | Plugin natif ajouté après dernier build | `.\scripts\run_device.ps1 -Clean` |
 | `CheckAarMetadata` / `minSdk` error       | minSdk Flutter par défaut < 21                | Vérifier `android/app/build.gradle.kts` : `minSdk = 21` (cf. ADR-008) |
 | `Execution failed for task ':app:desugar...'` | JDK < 17 ou desugar lib manquante         | Vérifier `java -version` (doit être 17) + `coreLibraryDesugaring` dans `build.gradle.kts` |
+
+---
+
+## 14. Design Token System — Règles d'usage obligatoires
+
+> Référence engineering : `../MOBILE_PRACTICES.md` §Côté mobile, point 5
+> (*Design system + tokens pour éviter le hardcode UI*).
+
+### 14.1 — Source de vérité unique
+
+Tous les tokens visuels sont définis dans `lib/presentation/theme/` et
+**nulle part ailleurs**. Chaque fichier couvre un domaine sémantique :
+
+| Fichier | Classe(s) | Domaine |
+|---|---|---|
+| `app_colors.dart` | `AppColors`, `AppColorsDark` | Couleurs — règle P-2 |
+| `app_typography.dart` | `AppTypography` | Styles de texte |
+| `app_spacing.dart` | `AppSpacing` | Espacements (grille 4 px) |
+| `app_spacing.dart` | `AppRadius` | Rayons de bordure |
+| `app_spacing.dart` | `AppIconSize` | Tailles d'icônes (hiérarchie sémantique) |
+| `app_spacing.dart` | `AppComponentSize` | Tailles de composants (touch targets, avatars…) |
+| `app_spacing.dart` | `AppBorderWidth` | Épaisseurs de bordure |
+| `app_responsive.dart` | `AppResponsive`, `AppResponsiveContext` | Mise à l'échelle responsive |
+
+### 14.2 — Interdictions absolues (tokens)
+
+```dart
+// ❌ INTERDIT — valeurs numériques nues dans l'UI
+Icon(LucideIcons.bell, size: 20)
+Container(width: 36, height: 36)
+EdgeInsets.all(16)
+BorderRadius.circular(8)
+SizedBox(height: 24)
+
+// ✅ OBLIGATOIRE — tokens sémantiques
+Icon(LucideIcons.bell, size: AppIconSize.rg)
+Container(width: AppComponentSize.avatarSm, height: AppComponentSize.avatarSm)
+EdgeInsets.all(AppSpacing.s4)
+BorderRadius.circular(AppRadius.card)
+SizedBox(height: AppSpacing.s6)
+```
+
+```dart
+// ❌ INTERDIT — couleurs hors AppColors (règle P-2)
+color: Color(0xFF8B6F47)
+color: Colors.orange
+color: Colors.white
+color: Colors.transparent
+
+// ✅ OBLIGATOIRE
+color: AppColors.accent
+color: AppColors.offlineBanner
+color: AppColors.videoOverlayText
+color: AppColors.transparent
+```
+
+```dart
+// ❌ INTERDIT — styles de texte inline
+TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+TextStyle(fontSize: 12, color: Colors.grey)
+
+// ✅ OBLIGATOIRE
+AppTypography.h2
+AppTypography.caption.copyWith(color: AppColors.textSecondary)
+```
+
+```dart
+// ❌ INTERDIT — Material Icons (incohérence avec la bibliothèque Lucide)
+Icon(Icons.close)
+Icon(Icons.chevron_right)
+Icon(Icons.add)
+
+// ✅ OBLIGATOIRE — LucideIcons exclusivement
+Icon(LucideIcons.x)
+Icon(LucideIcons.chevronRight)
+Icon(LucideIcons.plus)
+```
+
+### 14.3 — Icônes dans les headers : `context.rs()` obligatoire
+
+Tous les icônes placés en haut des interfaces (headers `AppHeader`, top bars
+custom) **doivent** utiliser `context.rs()` pour la mise à l'échelle responsive.
+
+```dart
+// Actions standard (tags, ellipsis, calendar, plus secondaire)
+Icon(LucideIcons.plus, size: context.rs(AppIconSize.rg))      // 20 dp @ 390 dp
+
+// Navigation principale (chevron retour, CTA primaire liste)
+Icon(LucideIcons.chevronLeft, size: context.rs(AppIconSize.rg))
+Icon(LucideIcons.plus, size: context.rs(AppIconSize.nav))     // 24 dp @ 390 dp
+
+// Fermeture sheet plein écran
+Icon(LucideIcons.x, size: context.rs(AppIconSize.nav))
+```
+
+**Paramètres `AppResponsive` (ne pas modifier sans ADR) :**
+- Référence : `390 dp` (iPhone 14 — viewport du design)
+- Facteur min : `0.8×` (petits Android ~360 dp)
+- Facteur max : `1.2×` (grands iPhone 430 dp+)
+- API : `context.rs(base)` ou `AppResponsive.scale(context, base)`
+
+### 14.4 — Ajouter un token
+
+Si un besoin visuel n'est couvert par aucun token existant :
+1. Ajouter le token dans le fichier thème approprié (`app_spacing.dart`, `app_colors.dart`…)
+2. Documenter avec `///` — rôle sémantique + valeur de référence
+3. Commit : `chore(tokens): add AppComponentSize.timerButton = 64`
+4. **Ne jamais** laisser une valeur orpheline dans le widget
+
+### 14.5 — Checklist avant chaque commit UI
+
+- [ ] `flutter analyze` → 0 issue
+- [ ] Aucun `Color(0xFF...)` ni `Colors.X` hors `AppColors`
+- [ ] Aucune taille numérique nue (`size: 20`, `width: 36`, `height: 4`)
+- [ ] Aucun `EdgeInsets` avec valeurs littérales
+- [ ] Aucun `BorderRadius.circular(N)` avec N littéral
+- [ ] Aucun `Icons.X` (Material) — uniquement `LucideIcons.X`
+- [ ] Icônes header : `context.rs(AppIconSize.X)`, pas de `const Icon`
+- [ ] Styles texte : `AppTypography.X` ou `.copyWith()`, jamais `TextStyle(...)`
 
 ---
 
