@@ -34,6 +34,58 @@ void main() {
       expect(score.currentLevel, Level.salik);
       expect(score.weeklyRank, 2);
     });
+
+    // Q-F — previous_week_rank propagé depuis la datasource jusqu'au domaine.
+    test('previousWeekRank propagé depuis la row datasource', () async {
+      when(() => ds.getUserScore(kUserIdAlpha)).thenAnswer(
+        (_) async => {
+          'user_id': kUserIdAlpha,
+          'total_points': 5000,
+          'weekly_score': 100,
+          'rank': 3,
+          'previous_week_rank': 6,
+        },
+      );
+
+      final score = await repo.getUserScore(UserId(kUserIdAlpha));
+
+      expect(score.previousWeekRank, 6);
+      expect(score.rankMovement, 3); // 6 - 3 = monté de 3 places
+    });
+
+    test('previousWeekRank null → rankMovement null (première semaine)', () async {
+      when(() => ds.getUserScore(kUserIdAlpha)).thenAnswer(
+        (_) async => {
+          'user_id': kUserIdAlpha,
+          'total_points': 0,
+          'weekly_score': 0,
+          'rank': 1,
+          // pas de clé 'previous_week_rank' — simule première semaine
+        },
+      );
+
+      final score = await repo.getUserScore(UserId(kUserIdAlpha));
+
+      expect(score.previousWeekRank, isNull);
+      expect(score.rankMovement, isNull);
+    });
+
+    test('rankMovement négatif si régression de rang', () async {
+      when(() => ds.getUserScore(kUserIdAlpha)).thenAnswer(
+        (_) async => {
+          'user_id': kUserIdAlpha,
+          'total_points': 1000,
+          'weekly_score': 20,
+          'rank': 8,
+          'previous_week_rank': 5,
+        },
+      );
+
+      final score = await repo.getUserScore(UserId(kUserIdAlpha));
+
+      // 5 - 8 = -3 → redescendu de 3 places
+      expect(score.rankMovement, -3);
+    });
   });
 
   group('getLeaderboard', () {
