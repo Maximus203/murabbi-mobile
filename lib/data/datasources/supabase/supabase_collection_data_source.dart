@@ -60,18 +60,15 @@ abstract interface class SupabaseCollectionDataSource {
 /// (`is_system = true`). La view `published_catalog` filtre les habits
 /// publiés côté Supabase — le domaine ne voit jamais les soft-deleted.
 class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
-  /// Nom de la table principale des collections.
-  static const collectionsTable = 'collections';
-
-  /// Nom de la view Supabase remplaçant `collection_habits` (migration #162).
+  /// Sélection PostgREST avec relations imbriquées — aligne sur le schéma v1.3.
   ///
-  /// Colonnes disponibles : `collection_id, habit_id, position,
-  /// collection_name, collection_description, cover_image_url, icon,
-  /// primary_category_id, category_name, category_color`.
-  static const publishedCatalog = 'published_catalog';
-
-  static const _columns =
-      'id, name, description, habit_ids, is_system, is_active, cover_image_url';
+  /// - `collection_habits(habit_id)` : habit IDs via junction table.
+  /// - `user_collections(*)` : RLS `user_id = auth.uid()` — ne retourne
+  ///   que les lignes de l'utilisateur courant, sans passer userId.
+  static const _select =
+      'id, name, description, cover_image_url, '
+      'collection_habits(habit_id), '
+      'user_collections(*)';
 
   final sb.SupabaseClient _client;
 
@@ -86,16 +83,17 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
   @override
   Future<List<Collection>> getCollections(UserId userId) async {
     await _wrapper.ensureFreshSession();
-    // Charge les collections de l'utilisateur + les collections système.
-    // La policy RLS Supabase filtre `deleted_at IS NULL` côté serveur.
+    // Lecture des collections publiées avec leurs habitudes et l'état
+    // d'activation de l'utilisateur courant (filtrée par RLS).
     final rows = await _client
-        .from(collectionsTable)
-        .select(_columns)
-        .or('user_id.eq.${userId.value},is_system.eq.true')
-        .order('created_at');
+        .from('collections')
+        .select(_select)
+        .eq('status', 'published')
+        .isFilter('deleted_at', null)
+        .order('name');
 
-    return rows
-        .map<Collection>((r) => _mapRow(Map<String, dynamic>.from(r)))
+    return (rows as List)
+        .map<Collection>((r) => _mapRow(Map<String, dynamic>.from(r as Map)))
         .toList();
   }
 
@@ -104,10 +102,10 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
     String collectionId,
   ) async {
     await _wrapper.ensureFreshSession();
-    // Lit depuis `published_catalog` — remplace l'accès direct à
-    // `collection_habits` révoqué par RLS (migration issue #162).
+    // Lit depuis `collection_habits` — RLS open (SELECT true pour tout
+    // utilisateur authentifié selon le schéma v1.3).
     final data = await _client
-        .from(publishedCatalog)
+        .from('collection_habits')
         .select('habit_id, position')
         .eq('collection_id', collectionId)
         .order('position');
@@ -120,11 +118,16 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
     required UserId userId,
   }) async {
     await _wrapper.ensureFreshSession();
-    await _client
-        .from(collectionsTable)
-        .update({'is_active': true})
-        .eq('id', collectionId.value)
-        .eq('user_id', userId.value);
+    // UPSERT : INSERT si première activation, UPDATE (deactivated_at → null)
+    // si l'utilisateur réactive une collection précédemment désactivée.
+    await _client.from('user_collections').upsert(
+      {
+        'user_id': userId.value,
+        'collection_id': collectionId.value,
+        'deactivated_at': null,
+      },
+      onConflict: 'user_id,collection_id',
+    );
   }
 
   @override
@@ -133,11 +136,13 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
     required UserId userId,
   }) async {
     await _wrapper.ensureFreshSession();
+    final now = DateTime.now().toUtc().toIso8601String();
     await _client
-        .from(collectionsTable)
-        .update({'is_active': false})
-        .eq('id', collectionId.value)
-        .eq('user_id', userId.value);
+        .from('user_collections')
+        .update({'deactivated_at': now})
+        .eq('user_id', userId.value)
+        .eq('collection_id', collectionId.value)
+        .isFilter('deactivated_at', null);
   }
 
   @override
@@ -145,60 +150,47 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
     required Collection collection,
     required UserId userId,
   }) async {
-    await _wrapper.ensureFreshSession();
-    final row = await _client
-        .from(collectionsTable)
-        .insert(_toRow(collection, userId))
-        .select(_columns)
-        .single();
-
-    return _mapRow(Map<String, dynamic>.from(row));
+    // La table `collections` est admin-only en INSERT (schéma v1.3).
+    // Une migration DB est requise avant d'implémenter les collections
+    // personnalisées utilisateur — lève une erreur attrapée par le repo.
+    throw UnsupportedError(
+      'User-created collections require a Supabase migration not yet deployed.',
+    );
   }
 
-  /// Mappe une row Supabase vers [Collection].
+  /// Mappe une row PostgREST (avec relations imbriquées) vers [Collection].
   ///
-  /// Lit `habit_ids` (colonne text[] sur `collections`) — et non plus
-  /// `collection_habits` (accès révoqué par RLS, migration issue #162).
+  /// - `collection_habits` → liste des [HabitId]
+  /// - `user_collections` (filtrée par RLS) → isActive si présence d'une ligne
   Collection _mapRow(Map<String, dynamic> row) {
-    // habit_ids est stocké en JSON array côté Supabase
-    final rawIds = row['habit_ids'];
-    List<HabitId> habitIds;
-    if (rawIds is List) {
-      habitIds = rawIds.map((id) => HabitId(id.toString())).toList();
-    } else {
-      habitIds = [];
-    }
+    // Relation collection_habits → habit IDs
+    final rawHabits = row['collection_habits'] as List<dynamic>? ?? [];
+    final habitIds = rawHabits
+        .map(
+          (ch) => HabitId(
+            (ch as Map<String, dynamic>)['habit_id'] as String,
+          ),
+        )
+        .toList();
 
-    // Une collection doit avoir au moins 1 habitude — si vide (données
-    // corrompues), on insère un placeholder plutôt que de crasher.
-    if (habitIds.isEmpty) {
-      habitIds = [HabitId('placeholder')];
-    }
+    // Relation user_collections (RLS → user_id = auth.uid()).
+    // isActive : au moins une ligne présente (toute ligne = collection activée).
+    final rawUserCols = row['user_collections'] as List<dynamic>? ?? [];
+    final isActive = rawUserCols.isNotEmpty;
 
     return Collection(
       id: CollectionId(row['id'] as String),
       name: NonEmptyString(row['name'] as String),
       description: NonEmptyString(
-        (row['description'] as String?) ?? 'Collection sans description',
+        (row['description'] as String?)?.trim().isNotEmpty == true
+            ? (row['description'] as String).trim()
+            : '—',
       ),
       habitIds: habitIds,
-      isSystem: row['is_system'] as bool? ?? false,
-      isActive: row['is_active'] as bool? ?? false,
+      // Toutes les collections du catalogue sont admin-créées (système).
+      isSystem: true,
+      isActive: isActive,
       coverImageUrl: row['cover_image_url'] as String?,
     );
-  }
-
-  /// Sérialise une [Collection] vers une row Supabase.
-  Map<String, dynamic> _toRow(Collection c, UserId userId) {
-    return {
-      'id': c.id.value,
-      'name': c.name.value,
-      'description': c.description.value,
-      'habit_ids': c.habitIds.map((id) => id.value).toList(),
-      'is_system': c.isSystem,
-      'is_active': c.isActive,
-      'cover_image_url': c.coverImageUrl,
-      'user_id': userId.value,
-    };
   }
 }
