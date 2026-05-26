@@ -1,28 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/settings/providers/edit_profile_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 
-/// ST-02 — Profil (lecture seule depuis l'issue #168).
+/// ST-02 — Mon profil.
 ///
-/// **Évolution #168** : avec la migration admin#125 (`pseudo_full` =
-/// `pseudo#XXXX` immuable, suffixe CSPRNG, RPC `update_user_pseudo`
-/// neutralisée côté serveur), il n'existe plus aucun chemin légitime
-/// pour modifier son pseudo depuis le mobile. Cet écran devient une vue
-/// de consultation : avatar, pseudo canonique, email verrouillé.
+/// Affiche les informations de profil selon le wireframe validé.
 ///
-/// Le nom de classe `St02EditProfileScreen` est conservé pour ne pas
-/// casser le routeur ; un futur PR pourra le renommer en
-/// `St02ProfileScreen` une fois les call-sites migrés.
-class St02EditProfileScreen extends ConsumerWidget {
+/// ## État des champs (Q-26 — décision PO attendue)
+///
+/// - **Nom complet** : read-only jusqu'à la migration `display_name` dans
+///   `users` v1.3.x (aucune colonne actuellement).
+/// - **Email** : verrouillé Supabase Auth — toujours read-only.
+/// - **Pseudonyme (classement)** : read-only per issue #168 (`pseudo_immutable_trigger`).
+///
+/// Le bouton "Enregistrer" est présent (wireframe) mais désactivé.
+/// Il sera activé par tranche, en parallèle des migrations schema.
+class St02EditProfileScreen extends ConsumerStatefulWidget {
   /// Retour vers ST-01.
   final VoidCallback onBack;
 
-  /// Callback historique « profil enregistré » — plus jamais déclenché
-  /// (lecture seule). Conservé pour compatibilité de signature.
+  /// Profil sauvegardé avec succès (réservé pour les futures tranches).
   final VoidCallback onSaved;
 
   const St02EditProfileScreen({
@@ -32,20 +37,29 @@ class St02EditProfileScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<St02EditProfileScreen> createState() =>
+      _St02EditProfileScreenState();
+}
+
+class _St02EditProfileScreenState extends ConsumerState<St02EditProfileScreen> {
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(authNotifierProvider).valueOrNull;
+    final saving = ref.watch(editProfileNotifierProvider).isLoading;
+
     final displayPseudo = user?.displayPseudo ?? '—';
     final email = user?.email.value ?? '—';
-    final initial = (user?.pseudo.value ?? '?').isEmpty
-        ? '?'
-        : (user?.pseudo.value ?? '?').characters.first.toUpperCase();
+    final initial = (user?.pseudo.value.isNotEmpty ?? false)
+        ? user!.pseudo.value.characters.first.toUpperCase()
+        : '?';
 
     return Scaffold(
       backgroundColor: AppColors.bgPrimary,
-      appBar: AppHeader.back(title: 'Profil', onBack: onBack),
+      appBar: AppHeader.back(title: 'Mon profil', onBack: widget.onBack),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.s5),
         children: [
+          // ── Avatar ────────────────────────────────────────────────────
           Center(
             child: Column(
               children: [
@@ -64,31 +78,59 @@ class St02EditProfileScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.s4),
-                Text(displayPseudo, style: AppTypography.h2),
+                const SizedBox(height: AppSpacing.s3),
+                // Q-26 : feature photo non déployée — no-op.
+                GestureDetector(
+                  onTap: () =>
+                      appLog.d('ST-02 : Modifier la photo — Q-26 pending'),
+                  child: Text(
+                    'Modifier la photo',
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.accent,
+                      decoration: TextDecoration.underline,
+                      decorationColor: AppColors.accent,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.s6),
-          _ReadOnlyField(label: 'Pseudo (public)', value: displayPseudo),
-          const SizedBox(height: AppSpacing.s2),
+
+          // ── Nom complet (Q-26 — migration display_name requise) ────────
+          const _FieldLabel(label: 'Nom complet'),
+          const SizedBox(height: AppSpacing.s1),
+          _ReadOnlyField(value: displayPseudo, hint: 'Ton nom complet'),
+          const SizedBox(height: AppSpacing.s4),
+
+          // ── Email (verrouillé Supabase Auth) ──────────────────────────
+          const _FieldLabel(label: 'Email'),
+          const SizedBox(height: AppSpacing.s1),
+          _ReadOnlyField(value: email, hint: 'Email', showLock: true),
+          const SizedBox(height: AppSpacing.s4),
+
+          // ── Pseudonyme classement (Q-26 — issue #168) ─────────────────
+          const _FieldLabel(label: 'Pseudonyme (classement)'),
+          const SizedBox(height: AppSpacing.s1),
+          _ReadOnlyField(
+            value: user?.pseudo.value ?? '—',
+            hint: 'Pseudonyme',
+          ),
+          const SizedBox(height: AppSpacing.s1),
           Text(
-            // Issue #168 — le suffixe `#XXXX` est tiré par CSPRNG côté
-            // admin et figé pour la durée de vie du compte (admin#125).
-            'Le pseudo et son suffixe sont définitifs et identifient ton '
-            'compte de manière unique.',
+            'Apparaîtra publiquement sur le classement.',
             style: AppTypography.caption.copyWith(
               color: AppColors.textTertiary,
             ),
           ),
-          const SizedBox(height: AppSpacing.s5),
-          _ReadOnlyField(label: 'Email', value: email),
-          const SizedBox(height: AppSpacing.s2),
-          Text(
-            "L'email est verrouillé et ne peut pas être modifié.",
-            style: AppTypography.caption.copyWith(
-              color: AppColors.textTertiary,
-            ),
+          const SizedBox(height: AppSpacing.s8),
+
+          // ── Enregistrer (désactivé — Q-26 en attente) ─────────────────
+          AppButton(
+            label: saving ? 'Enregistrement…' : 'Enregistrer',
+            variant: AppButtonVariant.primary,
+            // ignore: avoid_redundant_argument_values
+            onPressed: null, // activé quand Q-26 résolu
           ),
         ],
       ),
@@ -96,42 +138,69 @@ class St02EditProfileScreen extends ConsumerWidget {
   }
 }
 
-/// Champ affiché en lecture seule (style cohérent avec `AppInput` désactivé
-/// mais sans dépendre d'un `TextEditingController` — évite toute affordance
-/// de saisie pour le lecteur d'écran).
-class _ReadOnlyField extends StatelessWidget {
-  final String label;
-  final String value;
+// ── Widgets internes ──────────────────────────────────────────────────────────
 
-  const _ReadOnlyField({required this.label, required this.value});
+/// Label de champ — style `label` secondaire.
+class _FieldLabel extends StatelessWidget {
+  final String label;
+  const _FieldLabel({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+    return Text(
+      label,
+      style: AppTypography.label.copyWith(color: AppColors.textSecondary),
+    );
+  }
+}
+
+/// Champ en lecture seule visuellement cohérent avec AppInput désactivé.
+/// [showLock] ajoute l'icône cadenas (champ Email).
+class _ReadOnlyField extends StatelessWidget {
+  final String value;
+  final String hint;
+  final bool showLock;
+
+  const _ReadOnlyField({
+    required this.value,
+    required this.hint,
+    this.showLock = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s4,
+        vertical: AppSpacing.s3,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.bgInput,
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        border: Border.all(
+          color: AppColors.borderDefault,
+          width: AppBorderWidth.thin,
         ),
-        const SizedBox(height: AppSpacing.s1),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s4,
-            vertical: AppSpacing.s3,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              value,
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
-          decoration: BoxDecoration(
-            color: AppColors.bgInput,
-            borderRadius: BorderRadius.circular(AppRadius.button),
-            border: Border.all(color: AppColors.borderEmphasis),
-          ),
-          child: Text(
-            value,
-            style: AppTypography.body.copyWith(color: AppColors.textPrimary),
-          ),
-        ),
-      ],
+          if (showLock)
+            const Icon(
+              LucideIcons.lock,
+              size: AppIconSize.sm,
+              color: AppColors.textTertiary,
+            ),
+        ],
+      ),
     );
   }
 }
