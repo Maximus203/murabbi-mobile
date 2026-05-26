@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
+import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/categories/providers/categories_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_ticker_provider.dart';
@@ -24,7 +26,6 @@ import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_dialog.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_video_background.dart';
 
@@ -195,7 +196,17 @@ class _DashboardBody extends ConsumerWidget {
           _ScoreSection(
             globalStreak: streak,
             dailyCompletionRate: data.dailyCompletionRate,
+            streakDelta: data.streakDelta,
+            habitPointsToday: data.habitPointsToday,
           ),
+          const SizedBox(height: AppSpacing.s4),
+
+          // ── Habitudes du jour ──────────────────────────────────────
+          const _DashboardHabitsSection(),
+          const SizedBox(height: AppSpacing.s4),
+
+          // ── Niyyah du jour ─────────────────────────────────────────
+          _NiyyahCard(data: data),
           const SizedBox(height: AppSpacing.s4),
 
           // ── Prochaine prière ───────────────────────────────────────
@@ -204,35 +215,6 @@ class _DashboardBody extends ConsumerWidget {
             onConfigurePrayers: onConfigurePrayers,
             onOpenSalat: onOpenSalat,
           ),
-          const SizedBox(height: AppSpacing.s4),
-
-          // ── Niyyah du jour ─────────────────────────────────────────
-          _NiyyahCard(data: data),
-
-          // D-25 : confirmation avant déconnexion via AppDialog DS.
-          if (onSignOut != null) ...[
-            const SizedBox(height: AppSpacing.s6),
-            AppButton(
-              label: 'Se déconnecter',
-              variant: AppButtonVariant.ghost,
-              onPressed: () => showDialog<void>(
-                context: context,
-                builder: (ctx) => AppDialog(
-                  title: 'Se déconnecter ?',
-                  body:
-                      "Vous devrez vous reconnecter pour accéder à l'application.",
-                  confirmLabel: 'Se déconnecter',
-                  cancelLabel: 'Annuler',
-                  isDangerous: true,
-                  onConfirm: () {
-                    Navigator.pop(ctx);
-                    onSignOut!();
-                  },
-                  onCancel: () => Navigator.pop(ctx),
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -299,9 +281,17 @@ class _ScoreSection extends ConsumerWidget {
   final int globalStreak;
   final double dailyCompletionRate;
 
+  /// Delta de streak hebdomadaire (Q-D). 0 = stable / non disponible.
+  final int streakDelta;
+
+  /// Points habitudes gagnés aujourd'hui (Q-E). 0 = non disponible.
+  final int habitPointsToday;
+
   const _ScoreSection({
     required this.globalStreak,
     required this.dailyCompletionRate,
+    this.streakDelta = 0,
+    this.habitPointsToday = 0,
   });
 
   @override
@@ -360,6 +350,9 @@ class _ScoreSection extends ConsumerWidget {
               salatLabel: salatLabel,
               habitsLabel: habitsLabel,
               weeklyRank: score.weeklyRank,
+              streakDelta: streakDelta != 0 ? streakDelta : null,
+              habitPointsDelta: habitPointsToday != 0 ? habitPointsToday : null,
+              rankMovement: score.rankMovement,
             ),
           ],
         );
@@ -672,6 +665,138 @@ class _UserAvatar extends StatelessWidget {
         style: AppTypography.h3.copyWith(color: AppColors.bgSurface),
       ),
     );
+  }
+}
+
+/// Mini-section "HABITUDES · X/Y" — affiche jusqu'à 6 habitudes du jour
+/// avec leur statut (✓ vert si validée, cercle neutre sinon).
+///
+/// Retourne [SizedBox.shrink] si aucune habitude n'est chargée.
+class _DashboardHabitsSection extends ConsumerWidget {
+  const _DashboardHabitsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final habits = ref.watch(habitsNotifierProvider).valueOrNull ?? const [];
+    if (habits.isEmpty) return const SizedBox.shrink();
+
+    final statuses = ref.watch(todayHabitStatusesProvider);
+    final categories =
+        ref.watch(categoriesNotifierProvider).valueOrNull ?? const [];
+    final categoryMap = {for (final c in categories) c.id: c};
+
+    // Habitudes validées = onTime ou late (pas missed, pas absent de la map)
+    final completed = statuses.values
+        .where((s) => s != HabitLogStatus.missed)
+        .length;
+    final displayed = habits.take(6).toList();
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // En-tête HABITUDES · X/Y
+          Row(
+            children: [
+              Text(
+                'HABITUDES',
+                style: AppTypography.label.copyWith(
+                  color: AppColors.textTertiary,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s2),
+              Text(
+                '· $completed/${habits.length}',
+                style: AppTypography.label.copyWith(
+                  color: AppColors.accent,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s3),
+          // Lignes habitudes
+          ...displayed.map((habit) {
+            final status = statuses[habit.id];
+            final isDone =
+                status != null && status != HabitLogStatus.missed;
+            final cat = categoryMap[habit.categoryId];
+            final dotColor = _dotColor(cat);
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s2),
+              child: Row(
+                children: [
+                  // Dot couleur catégorie
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: dotColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s3),
+                  // Nom habitude
+                  Expanded(
+                    child: Text(
+                      habit.name.value,
+                      style: AppTypography.body.copyWith(
+                        color: isDone
+                            ? AppColors.textSecondary
+                            : AppColors.textPrimary,
+                        decoration: isDone
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Icône statut
+                  if (isDone)
+                    const Icon(
+                      LucideIcons.circleCheck,
+                      size: 16,
+                      color: AppColors.success,
+                    )
+                  else
+                    const Icon(
+                      LucideIcons.circle,
+                      size: 16,
+                      color: AppColors.textTertiary,
+                    ),
+                ],
+              ),
+            );
+          }),
+          // "et X de plus" si > 6 habitudes
+          if (habits.length > 6) ...[
+            const SizedBox(height: AppSpacing.s1),
+            Text(
+              'et ${habits.length - 6} de plus…',
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Convertit la couleur hex de la catégorie en [Color] Flutter.
+  /// Fallback : [AppColors.accent] si la catégorie est nulle ou le hex invalide.
+  static Color _dotColor(Category? cat) {
+    if (cat == null) return AppColors.accent;
+    try {
+      final hex = cat.color.value.startsWith('#')
+          ? cat.color.value.substring(1)
+          : cat.color.value;
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      return AppColors.accent;
+    }
   }
 }
 
