@@ -185,19 +185,21 @@ class _AccountChip extends StatelessWidget {
                   Navigator.of(ctx).pop();
                   onForget();
                 },
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSpacing.s3),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s3),
                   child: Row(
                     children: [
-                      Icon(
+                      const Icon(
                         LucideIcons.trash2,
                         size: AppIconSize.md,
                         color: AppColors.danger,
                       ),
-                      SizedBox(width: AppSpacing.s3),
+                      const SizedBox(width: AppSpacing.s3),
                       Text(
                         'Oublier ce compte',
-                        style: TextStyle(color: AppColors.danger),
+                        style: AppTypography.body.copyWith(
+                          color: AppColors.danger,
+                        ),
                       ),
                     ],
                   ),

@@ -616,7 +616,7 @@ class _NextPrayerCard extends StatelessWidget {
                       Text(label, style: AppTypography.h1),
                       const SizedBox(width: AppSpacing.s3),
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
+                        padding: const EdgeInsets.only(bottom: AppSpacing.s1),
                         child: Text(
                           '$hh:$mm',
                           style: AppTypography.h3.copyWith(

@@ -212,7 +212,7 @@ Future<void> showHabitTimerSheet(
   return Navigator.of(context).push(
     PageRouteBuilder(
       opaque: false,
-      barrierColor: Colors.black26,
+      barrierColor: AppColors.overlayDark.withValues(alpha: 0.26),
       pageBuilder: (context, animation, secondaryAnimation) => ProviderScope(
         child: HabitTimerSheet(
           habit: habit,
