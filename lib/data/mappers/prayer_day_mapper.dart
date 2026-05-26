@@ -34,7 +34,7 @@ class PrayerDayMapper {
       );
     }
 
-    final dayRaw = row['day'];
+    final dayRaw = row['date'];
     final DateTime date;
     if (dayRaw is DateTime) {
       date = dayRaw;
@@ -47,7 +47,7 @@ class PrayerDayMapper {
     } else {
       throw ArgumentError.value(
         dayRaw,
-        'day',
+        'date',
         'must be an ISO-8601 date String or a DateTime',
       );
     }
@@ -67,7 +67,7 @@ class PrayerDayMapper {
   static Map<String, dynamic> toRow(PrayerDay day) {
     return {
       'user_id': day.userId.value,
-      'day': _formatIsoDate(day.date),
+      'date': _formatIsoDate(day.date),
       'fajr': _statusToSql(day.fajr),
       'dhuhr': _statusToSql(day.dhuhr),
       'asr': _statusToSql(day.asr),

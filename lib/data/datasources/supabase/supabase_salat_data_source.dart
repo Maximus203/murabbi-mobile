@@ -8,14 +8,14 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 /// dans `PrayerRepositoryImpl` (cf. ADR-004 datasource pattern).
 ///
 /// Schéma `prayer_days` consommé (cf. `murabbi-admin/supabase/migrations/`) :
-///   id, user_id, day, fajr, dhuhr, asr, maghrib, isha, created_at, updated_at
-///   contrainte unique (user_id, day) — utilisée pour l'upsert.
+///   id, user_id, date, fajr, dhuhr, asr, maghrib, isha, created_at, updated_at
+///   contrainte unique (user_id, date) — utilisée pour l'upsert.
 ///
 /// Note : non couvert par tests unitaires (pattern auth — la fluent API
 /// Supabase est trop fragile à mocker, sera couverte par integration tests
 /// en slice 3.C+).
 class SupabaseSalatDataSource implements SalatDataSource {
-  static const _columns = 'user_id, day, fajr, dhuhr, asr, maghrib, isha';
+  static const _columns = 'user_id, date, fajr, dhuhr, asr, maghrib, isha';
 
   final sb.SupabaseClient _client;
 
@@ -37,7 +37,7 @@ class SupabaseSalatDataSource implements SalatDataSource {
         .from(SupabaseTables.prayerDays)
         .select(_columns)
         .eq('user_id', userId)
-        .eq('day', day)
+        .eq('date', day)
         .maybeSingle();
     if (row == null) return null;
     return Map<String, dynamic>.from(row);
@@ -46,7 +46,7 @@ class SupabaseSalatDataSource implements SalatDataSource {
   @override
   Future<void> upsertPrayerDay(Map<String, dynamic> row) async {
     await _wrapper.ensureFreshSession();
-    await _client.from(SupabaseTables.prayerDays).upsert(row, onConflict: 'user_id,day');
+    await _client.from(SupabaseTables.prayerDays).upsert(row, onConflict: 'user_id,date');
   }
 
   @override
@@ -60,9 +60,9 @@ class SupabaseSalatDataSource implements SalatDataSource {
         .from(SupabaseTables.prayerDays)
         .select(_columns)
         .eq('user_id', userId)
-        .gte('day', from)
-        .lte('day', to)
-        .order('day');
+        .gte('date', from)
+        .lte('date', to)
+        .order('date');
     return rows
         .map<Map<String, dynamic>>((r) => Map<String, dynamic>.from(r))
         .toList();

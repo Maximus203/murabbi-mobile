@@ -28,7 +28,7 @@ void main() {
     String day = '2026-05-09',
   }) => {
     'user_id': userId,
-    'day': day,
+    'date': day,
     'fajr': fajr,
     'dhuhr': dhuhr,
     'asr': asr,
@@ -118,7 +118,7 @@ void main() {
     });
 
     test('missing day throws ArgumentError', () {
-      final row = validRow()..remove('day');
+      final row = validRow()..remove('date');
       expect(() => PrayerDayMapper.fromRow(row), throwsA(isA<ArgumentError>()));
     });
 
@@ -133,7 +133,7 @@ void main() {
 
     test('day already a DateTime is accepted', () {
       final row = validRow();
-      row['day'] = DateTime.utc(2026, 5, 9);
+      row['date'] = DateTime.utc(2026, 5, 9);
       final entity = PrayerDayMapper.fromRow(row);
       expect(entity.date, DateTime.utc(2026, 5, 9));
     });
@@ -189,7 +189,7 @@ void main() {
       final row = PrayerDayMapper.toRow(buildDay());
       expect(row['user_id'], userId);
       // ISO date YYYY-MM-DD (no time) — SQL "date" column.
-      expect(row['day'], '2026-05-09');
+      expect(row['date'], '2026-05-09');
     });
   });
 
@@ -197,7 +197,7 @@ void main() {
     test('SQL → domain → SQL preserves all 5 prayer statuses', () {
       final original = {
         'user_id': userId,
-        'day': '2026-05-09',
+        'date': '2026-05-09',
         'fajr': 'ontime',
         'dhuhr': 'late',
         'asr': 'missed',
@@ -208,7 +208,7 @@ void main() {
       final roundtrip = PrayerDayMapper.toRow(entity);
 
       expect(roundtrip['user_id'], original['user_id']);
-      expect(roundtrip['day'], original['day']);
+      expect(roundtrip['date'], original['date']);
       expect(roundtrip['fajr'], original['fajr']);
       expect(roundtrip['dhuhr'], original['dhuhr']);
       expect(roundtrip['asr'], original['asr']);
