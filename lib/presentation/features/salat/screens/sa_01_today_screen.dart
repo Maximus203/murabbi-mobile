@@ -241,7 +241,10 @@ class _HeroSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        const AppVideoBackground(assetPath: 'assets/media/09.mp4', height: 200),
+        const AppVideoBackground(
+          assetPath: 'assets/media/09.mp4',
+          height: AppComponentSize.heroVideo,
+        ),
         // Overlay dégradé bas → haut
         const Positioned.fill(
           child: DecoratedBox(
@@ -270,8 +273,9 @@ class _HeroSection extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.s1),
               // Date + compteur fusionnés sur une seule ligne (design SA-01)
+              // Format wireframe : "X/5 complétées" sans espaces autour du /.
               Text(
-                '$dateLabel · $completed / 5 complétées',
+                '$dateLabel · $completed/5 complétées',
                 style: AppTypography.caption.copyWith(
                   color: AppColors.videoOverlayText.withValues(alpha: 0.80),
                 ),
@@ -299,12 +303,14 @@ class _HeroSection extends StatelessWidget {
 }
 
 /// Noms arabes des prières (D-34 — issue #98).
+/// Format wireframe validé PO : article défini "ال" + sans diacritiques (harakāt).
+/// Ne pas utiliser les formes courtes avec diacritiques — cf. audit SA-01 v2.
 const Map<String, String> _arabicPrayerNames = {
-  'fajr': 'فَجْر',
-  'dhuhr': 'ظُهْر',
-  'asr': 'عَصْر',
-  'maghrib': 'مَغْرِب',
-  'isha': 'عِشَاء',
+  'fajr': 'الفجر',
+  'dhuhr': 'الظهر',
+  'asr': 'العصر',
+  'maghrib': 'المغرب',
+  'isha': 'العشاء',
 };
 
 /// Icônes spécifiques à chaque prière.
@@ -387,14 +393,14 @@ class _PrayerRow extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
+                        // Token AppTypography.arabic — 22px Noto Sans Arabic Medium (P-3).
+                        // Ne pas substituer par h3.copyWith(fontFamily:...) : le token
+                        // est la source de vérité pour la typographie arabe.
                         if (arabic.isNotEmpty)
                           ExcludeSemantics(
                             child: Text(
                               arabic,
-                              style: AppTypography.h3.copyWith(
-                                fontFamily: 'Noto Sans Arabic',
-                                height: 1.2,
-                              ),
+                              style: AppTypography.arabic,
                             ),
                           ),
                         if (arabic.isNotEmpty)

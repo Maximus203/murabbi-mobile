@@ -92,12 +92,12 @@ void main() {
       await tester.pumpWidget(_buildApp(_buildPendingState()));
       await tester.pump();
 
-      // Noms arabes présents
-      expect(find.text('فَجْر'), findsOneWidget);
-      expect(find.text('ظُهْر'), findsOneWidget);
-      expect(find.text('عَصْر'), findsOneWidget);
-      expect(find.text('مَغْرِب'), findsOneWidget);
-      expect(find.text('عِشَاء'), findsOneWidget);
+      // Noms arabes conformes au wireframe : article défini "ال", sans diacritiques
+      expect(find.text('الفجر'), findsOneWidget);
+      expect(find.text('الظهر'), findsOneWidget);
+      expect(find.text('العصر'), findsOneWidget);
+      expect(find.text('المغرب'), findsOneWidget);
+      expect(find.text('العشاء'), findsOneWidget);
     });
 
     testWidgets('affiche les 5 noms latins des prières', (tester) async {
@@ -111,13 +111,13 @@ void main() {
       expect(find.text('Isha'), findsOneWidget);
     });
 
-    testWidgets('le hero affiche "X / 5 complétées" dans le subtitle', (tester) async {
+    testWidgets('le hero affiche "X/5 complétées" dans le subtitle', (tester) async {
       await tester.pumpWidget(_buildApp(_buildPendingState()));
       await tester.pump();
 
       // Avec toutes les prières pending, completed = 0
-      // Le subtitle doit contenir "0 / 5 complétées"
-      expect(find.textContaining('0 / 5 complétées'), findsOneWidget);
+      // Le subtitle doit contenir "0/5 complétées" (sans espaces autour du /)
+      expect(find.textContaining('0/5 complétées'), findsOneWidget);
     });
 
     testWidgets('le hero subtitle est une seule ligne (date + compteur fusionnés)', (tester) async {
