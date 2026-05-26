@@ -269,28 +269,11 @@ class _HeroSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.s1),
+              // Date + compteur fusionnés sur une seule ligne (design SA-01)
               Text(
-                dateLabel,
+                '$dateLabel · $completed / 5 complétées',
                 style: AppTypography.caption.copyWith(
-                  color: AppColors.videoOverlayText.withValues(alpha: 0.75),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.s2),
-              // Compteur de prières complétées
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s3,
-                  vertical: AppSpacing.s1,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.videoOverlayBottom,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                child: Text(
-                  '$completed / 5 complétées',
-                  style: AppTypography.label.copyWith(
-                    color: AppColors.videoOverlayText,
-                  ),
+                  color: AppColors.videoOverlayText.withValues(alpha: 0.80),
                 ),
               ),
             ],
@@ -379,10 +362,11 @@ class _PrayerRow extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.s3),
 
-              // ── Nom arabe (grand) + latin + heure (centre) ──────────
+              // ── Nom arabe (grand) + nom latin (dessous) — colonne expandée ──
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Nom arabe en grand
                     if (arabic.isNotEmpty)
@@ -395,21 +379,22 @@ class _PrayerRow extends StatelessWidget {
                           ),
                         ),
                       ),
-                    const SizedBox(height: AppSpacing.s1),
-                    // Nom latin + heure sur la même ligne
-                    Row(
-                      children: [
-                        Text(
-                          PrayerNameLabels.label(row.name),
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text('$hh:$mm', style: AppTypography.body),
-                      ],
+                    // Nom latin seul — l'heure est dans le Row externe
+                    Text(
+                      PrayerNameLabels.label(row.name),
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
+                ),
+              ),
+
+              // ── Heure — colonne séparée, centrée verticalement ───────────
+              Text(
+                '$hh:$mm',
+                style: AppTypography.mono.copyWith(
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(width: AppSpacing.s3),
@@ -465,6 +450,15 @@ class _SummaryBanner extends StatelessWidget {
     if (onTime == 0 && late == 0 && missed == 0) {
       return const SizedBox.shrink();
     }
+
+    // Construit le texte condensé "X à l'heure · Y en retard · Z manquées"
+    // en n'incluant que les segments non nuls.
+    final parts = <String>[];
+    if (onTime > 0) parts.add('$onTime à l\'heure');
+    if (late > 0) parts.add('$late en retard');
+    if (missed > 0) parts.add('$missed manquées');
+    final summaryText = parts.join(' · ');
+
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.s2),
       padding: const EdgeInsets.symmetric(
@@ -472,30 +466,28 @@ class _SummaryBanner extends StatelessWidget {
         horizontal: AppSpacing.s4,
       ),
       decoration: BoxDecoration(
-        color: AppColors.bgSurface,
+        color: AppColors.success.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: AppColors.borderDefault,
+          color: AppColors.success.withValues(alpha: 0.25),
           width: AppBorderWidth.thin,
         ),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _SummaryChip(
-            count: onTime,
-            label: 'À l\'heure',
+          Icon(
+            LucideIcons.circleCheck,
+            size: AppIconSize.sm,
             color: AppColors.success,
           ),
-          _SummaryChip(
-            count: late,
-            label: 'En retard',
-            color: AppColors.warning,
-          ),
-          _SummaryChip(
-            count: missed,
-            label: 'Manquées',
-            color: AppColors.danger,
+          const SizedBox(width: AppSpacing.s2),
+          Expanded(
+            child: Text(
+              summaryText,
+              style: AppTypography.label.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
         ],
       ),
@@ -503,31 +495,6 @@ class _SummaryBanner extends StatelessWidget {
   }
 }
 
-class _SummaryChip extends StatelessWidget {
-  final int count;
-  final String label;
-  final Color color;
-
-  const _SummaryChip({
-    required this.count,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text('$count', style: AppTypography.h3.copyWith(color: color)),
-        const SizedBox(height: AppSpacing.s1),
-        Text(
-          label,
-          style: AppTypography.caption.copyWith(color: AppColors.textSecondary),
-        ),
-      ],
-    );
-  }
-}
 
 class _NotConfiguredView extends StatelessWidget {
   final VoidCallback onConfigure;
