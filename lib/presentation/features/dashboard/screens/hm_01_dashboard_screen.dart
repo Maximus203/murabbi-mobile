@@ -146,6 +146,7 @@ class _DashboardBody extends ConsumerWidget {
         ref.invalidate(dashboardNotifierProvider);
         ref.invalidate(dailySummaryProvider);
         ref.invalidate(niyyahProvider);
+        ref.invalidate(streakDeltaProvider);
         await ref.read(dashboardNotifierProvider.future);
       },
       child: ListView(
