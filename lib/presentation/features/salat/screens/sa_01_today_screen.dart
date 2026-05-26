@@ -276,6 +276,20 @@ class _HeroSection extends StatelessWidget {
                   color: AppColors.videoOverlayText.withValues(alpha: 0.80),
                 ),
               ),
+              const SizedBox(height: AppSpacing.s2),
+              // Barre de progression mince (completed / 5 prières)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: LinearProgressIndicator(
+                  value: completed / 5,
+                  minHeight: AppBorderWidth.indicatorStroke,
+                  backgroundColor: AppColors.videoOverlayText
+                      .withValues(alpha: 0.20),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.videoOverlayText,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -347,7 +361,7 @@ class _PrayerRow extends StatelessWidget {
         child: AppCard(
           onTap: onTap,
           padding: const EdgeInsets.symmetric(
-            vertical: AppSpacing.s4,
+            vertical: AppSpacing.s3,
             horizontal: AppSpacing.s4,
           ),
           child: Row(
@@ -362,27 +376,41 @@ class _PrayerRow extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.s3),
 
-              // ── Nom arabe (grand) + nom latin (dessous) — colonne expandée ──
+              // ── Colonne centrale expandée : nom + heure ────────────
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Nom arabe en grand
-                    if (arabic.isNotEmpty)
-                      ExcludeSemantics(
-                        child: Text(
-                          arabic,
-                          style: AppTypography.h3.copyWith(
-                            fontFamily: 'Noto Sans Arabic',
-                            height: 1.2,
+                    // Ligne 1 : nom arabe + nom latin côte à côte (design SA-01)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        if (arabic.isNotEmpty)
+                          ExcludeSemantics(
+                            child: Text(
+                              arabic,
+                              style: AppTypography.h3.copyWith(
+                                fontFamily: 'Noto Sans Arabic',
+                                height: 1.2,
+                              ),
+                            ),
+                          ),
+                        if (arabic.isNotEmpty)
+                          const SizedBox(width: AppSpacing.s2),
+                        Text(
+                          PrayerNameLabels.label(row.name),
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textSecondary,
                           ),
                         ),
-                      ),
-                    // Nom latin seul — l'heure est dans le Row externe
+                      ],
+                    ),
+                    // Ligne 2 : heure en dessous des noms
                     Text(
-                      PrayerNameLabels.label(row.name),
-                      style: AppTypography.caption.copyWith(
+                      '$hh:$mm',
+                      style: AppTypography.mono.copyWith(
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -390,21 +418,12 @@ class _PrayerRow extends StatelessWidget {
                 ),
               ),
 
-              // ── Heure — colonne séparée, centrée verticalement ───────────
-              Text(
-                '$hh:$mm',
-                style: AppTypography.mono.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s3),
-
-              // ── Cercle de statut (droite) ────────────────────────────
+              // ── Cercle de statut (droite, 36 dp) ─────────────────────
               Semantics(
                 label: PrayerStatusVisuals.label(row.status),
                 child: Container(
-                  width: 28,
-                  height: 28,
+                  width: AppComponentSize.avatarSm,
+                  height: AppComponentSize.avatarSm,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: isPending
@@ -419,7 +438,7 @@ class _PrayerRow extends StatelessWidget {
                       ? null
                       : Icon(
                           PrayerStatusVisuals.icon(row.status),
-                          size: AppIconSize.xs,
+                          size: AppIconSize.sm,
                           color: statusColor,
                         ),
                 ),
