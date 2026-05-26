@@ -53,8 +53,8 @@ class AppBadge extends StatelessWidget {
         children: [
           if (dotColor != null) ...[
             Container(
-              width: 6,
-              height: 6,
+              width: AppComponentSize.dotSize,
+              height: AppComponentSize.dotSize,
               decoration: BoxDecoration(
                 color: dotColor,
                 shape: BoxShape.circle,
@@ -63,7 +63,7 @@ class AppBadge extends StatelessWidget {
             const SizedBox(width: AppSpacing.s2),
           ],
           if (leadingIcon != null) ...[
-            Icon(lu(leadingIcon!), size: 11, color: spec.foreground),
+            Icon(lu(leadingIcon!), size: AppIconSize.badge, color: spec.foreground),
             const SizedBox(width: AppSpacing.s1 + 2),
           ],
           Text(

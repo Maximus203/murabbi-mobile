@@ -54,7 +54,7 @@ class Sa01TodayScreen extends ConsumerWidget {
             onPressed: null, // stub — navigation Calendrier à venir
             icon: Icon(
               lu(LucideIcons.calendar),
-              size: 20,
+              size: AppIconSize.rg,
               color: AppColors.textSecondary,
             ),
           ),
@@ -298,7 +298,7 @@ class _PrayerRow extends StatelessWidget {
     final cardDecoration = isNext
         ? BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: AppColors.accent, width: 1.5),
+            border: Border.all(color: AppColors.accent, width: AppBorderWidth.focusRing),
           )
         : null;
 
@@ -321,7 +321,7 @@ class _PrayerRow extends StatelessWidget {
               ExcludeSemantics(
                 child: Icon(
                   PrayerStatusVisuals.icon(row.status),
-                  size: 22,
+                  size: AppIconSize.nav,
                   color: PrayerStatusVisuals.color(row.status),
                 ),
               ),
@@ -358,7 +358,7 @@ class _PrayerRow extends StatelessWidget {
                 const ExcludeSemantics(
                   child: Icon(
                     LucideIcons.chevronRight,
-                    size: 16,
+                    size: AppIconSize.sm,
                     color: AppColors.textSecondary,
                   ),
                 ),

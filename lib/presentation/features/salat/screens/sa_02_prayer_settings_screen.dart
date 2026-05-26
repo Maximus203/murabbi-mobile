@@ -266,7 +266,7 @@ class _MethodSection extends StatelessWidget {
                     if (method == m)
                       const Icon(
                         LucideIcons.check,
-                        size: 16,
+                        size: AppIconSize.sm,
                         color: AppColors.accent,
                       ),
                   ],
@@ -376,7 +376,7 @@ class _HighLatitudeSection extends StatelessWidget {
                       value == rule
                           ? LucideIcons.circleCheck
                           : LucideIcons.circle,
-                      size: 20,
+                      size: AppIconSize.rg,
                       color: value == rule
                           ? AppColors.accent
                           : AppColors.textSecondary,
@@ -416,7 +416,7 @@ class _ErrorBanner extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s3),
       decoration: BoxDecoration(
         color: AppColors.bgSurface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.button),
         border: Border.all(color: AppColors.danger),
       ),
       child: Text(

@@ -66,7 +66,7 @@ class HbDetailScreen extends ConsumerWidget {
                 onPressed: () => _showActionsSheet(context, ref),
                 icon: const Icon(
                   LucideIcons.ellipsisVertical,
-                  size: 20,
+                  size: AppIconSize.rg,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -102,7 +102,7 @@ class HbDetailScreen extends ConsumerWidget {
                 key: const Key('hb_detail_action_edit'),
                 leading: const Icon(
                   LucideIcons.pencil,
-                  size: 20,
+                  size: AppIconSize.rg,
                   color: AppColors.textPrimary,
                 ),
                 title: const Text('Modifier', style: AppTypography.body),
@@ -115,7 +115,7 @@ class HbDetailScreen extends ConsumerWidget {
                 key: const Key('hb_detail_action_delete'),
                 leading: const Icon(
                   LucideIcons.trash2,
-                  size: 20,
+                  size: AppIconSize.rg,
                   color: AppColors.danger,
                 ),
                 title: Text(
@@ -370,7 +370,7 @@ class _ObjectiveCard extends StatelessWidget {
               if (_done)
                 const Icon(
                   LucideIcons.circleCheck,
-                  size: 18,
+                  size: AppIconSize.md,
                   color: AppColors.success,
                 ),
             ],
@@ -398,7 +398,7 @@ class _ObjectiveCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s3),
           // Barre de progression
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.indicator),
             child: LinearProgressIndicator(
               value: (_actual / _targetValue).clamp(0.0, 1.0),
               backgroundColor: AppColors.bgInput,
@@ -454,7 +454,7 @@ class _TimerCard extends StatelessWidget {
               if (alreadyDone)
                 const Icon(
                   LucideIcons.circleCheck,
-                  size: 18,
+                  size: AppIconSize.md,
                   color: AppColors.success,
                 ),
             ],
@@ -462,7 +462,7 @@ class _TimerCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s3),
           Row(
             children: [
-              const Icon(LucideIcons.timer, size: 28, color: AppColors.accent),
+              const Icon(LucideIcons.timer, size: AppIconSize.semilg, color: AppColors.accent),
               const SizedBox(width: AppSpacing.s3),
               Text(
                 _targetLabel,
@@ -524,7 +524,7 @@ class _ErrorState extends StatelessWidget {
           children: [
             const Icon(
               LucideIcons.circleAlert,
-              size: 40,
+              size: AppComponentSize.iconTile,
               color: AppColors.textTertiary,
             ),
             const SizedBox(height: AppSpacing.s4),

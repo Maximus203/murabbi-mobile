@@ -253,8 +253,8 @@ class _EmptyActiveCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: AppComponentSize.iconSelectorCell,
+            height: AppComponentSize.iconSelectorCell,
             decoration: BoxDecoration(
               color: AppColors.bgInput,
               borderRadius: BorderRadius.circular(AppRadius.chip),

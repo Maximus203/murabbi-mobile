@@ -59,7 +59,7 @@ class HabitLogHistoryTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s3),
       child: Row(
         children: [
-          Icon(_statusIcon, size: 18, color: _statusColor),
+          Icon(_statusIcon, size: AppIconSize.md, color: _statusColor),
           const SizedBox(width: AppSpacing.s3),
           Expanded(
             child: Text(

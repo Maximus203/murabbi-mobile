@@ -262,7 +262,7 @@ class _SlideView extends StatelessWidget {
                 width: AppBorderWidth.thin,
               ),
             ),
-            child: Icon(slide.icon, size: 40, color: AppColors.accent),
+            child: Icon(slide.icon, size: AppComponentSize.iconTile, color: AppColors.accent),
           ),
           const SizedBox(height: AppSpacing.s5),
           Text(
@@ -305,7 +305,7 @@ class _IllustrationBanner extends StatelessWidget {
       child: Center(
         child: Icon(
           icon,
-          size: 56,
+          size: AppComponentSize.avatarMd,
           color: AppColors.accent.withValues(alpha: 0.55),
         ),
       ),
@@ -331,7 +331,7 @@ class _DotsIndicator extends StatelessWidget {
           height: 8,
           decoration: BoxDecoration(
             color: active ? AppColors.accent : AppColors.borderDefault,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.indicator),
           ),
         );
       }),

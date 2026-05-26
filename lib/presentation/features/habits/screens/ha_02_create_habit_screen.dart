@@ -269,8 +269,8 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                       selected: _categoryId == c.id,
                       onTap: () => setState(() => _categoryId = c.id),
                       leading: Container(
-                        width: 8,
-                        height: 8,
+                        width: AppSpacing.s2,
+                        height: AppSpacing.s2,
                         decoration: BoxDecoration(
                           color: _hexToColor(c.color.value),
                           shape: BoxShape.circle,
@@ -308,7 +308,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                           _frequencyType == t
                               ? LucideIcons.circleCheck
                               : LucideIcons.circle,
-                          size: 20,
+                          size: AppIconSize.rg,
                           color: _frequencyType == t
                               ? AppColors.accent
                               : AppColors.textSecondary,
@@ -336,7 +336,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                       onPressed: _perDayFrequency > 1
                           ? () => setState(() => _perDayFrequency--)
                           : null,
-                      icon: Icon(lu(LucideIcons.minus), size: 16),
+                      icon: Icon(lu(LucideIcons.minus), size: AppIconSize.sm),
                     ),
                     Text('$_perDayFrequency', style: AppTypography.h3),
                     IconButton(
@@ -344,7 +344,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                       onPressed: _perDayFrequency < 10
                           ? () => setState(() => _perDayFrequency++)
                           : null,
-                      icon: Icon(lu(LucideIcons.plus), size: 16),
+                      icon: Icon(lu(LucideIcons.plus), size: AppIconSize.sm),
                     ),
                   ],
                 ),
@@ -395,7 +395,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                 onPressed: _points > HabitPoints.min
                     ? () => setState(() => _points--)
                     : null,
-                icon: Icon(lu(LucideIcons.minus), size: 16),
+                icon: Icon(lu(LucideIcons.minus), size: AppIconSize.sm),
               ),
               Text(
                 '$_points pt${_points > 1 ? 's' : ''}',
@@ -409,7 +409,7 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                 onPressed: _points < HabitPoints.max
                     ? () => setState(() => _points++)
                     : null,
-                icon: Icon(lu(LucideIcons.plus), size: 16),
+                icon: Icon(lu(LucideIcons.plus), size: AppIconSize.sm),
               ),
             ],
           ),
@@ -441,8 +441,8 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
           onPressed: _saving ? null : () => _submit(categories),
           child: _saving
               ? const SizedBox(
-                  width: 16,
-                  height: 16,
+                  width: AppIconSize.sm,
+                  height: AppIconSize.sm,
                   child: CircularProgressIndicator(
                     strokeWidth: AppBorderWidth.indicatorStroke,
                     color: AppColors.bgSurface,
@@ -509,8 +509,8 @@ class _DayChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.pill),
           child: Center(
             child: Container(
-              width: 36,
-              height: 36,
+              width: AppComponentSize.avatarSm,
+              height: AppComponentSize.avatarSm,
               decoration: BoxDecoration(
                 color: selected ? AppColors.accent : AppColors.bgSurface,
                 borderRadius: BorderRadius.circular(AppRadius.pill),

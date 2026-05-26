@@ -167,7 +167,9 @@ class _AccountChip extends StatelessWidget {
       context: context,
       backgroundColor: AppColors.bgSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.bottomSheet),
+        ),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -189,7 +191,7 @@ class _AccountChip extends StatelessWidget {
                     children: [
                       Icon(
                         LucideIcons.trash2,
-                        size: 18,
+                        size: AppIconSize.md,
                         color: AppColors.danger,
                       ),
                       SizedBox(width: AppSpacing.s3),

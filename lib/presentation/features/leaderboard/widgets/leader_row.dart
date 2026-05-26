@@ -37,7 +37,7 @@ class LeaderRow extends StatelessWidget {
         child: Row(
           children: [
             SizedBox(
-              width: 28,
+              width: AppIconSize.semilg,
               child: Text(
                 '${score.weeklyRank}',
                 style: AppTypography.h3.copyWith(
@@ -47,8 +47,8 @@ class LeaderRow extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.s2),
             Container(
-              width: 36,
-              height: 36,
+              width: AppComponentSize.avatarSm,
+              height: AppComponentSize.avatarSm,
               decoration: const BoxDecoration(
                 color: AppColors.bgInput,
                 shape: BoxShape.circle,

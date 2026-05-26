@@ -64,7 +64,7 @@ class SalatStatusButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(lu(spec.icon), size: 16, color: spec.color),
+              Icon(lu(spec.icon), size: AppIconSize.sm, color: spec.color),
               const SizedBox(width: AppSpacing.s2),
               Text(
                 spec.label,

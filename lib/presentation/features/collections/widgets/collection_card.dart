@@ -204,8 +204,8 @@ class _BadgeChip extends StatelessWidget {
         children: [
           if (dotColor != null) ...[
             Container(
-              width: 6,
-              height: 6,
+              width: AppComponentSize.dotSize,
+              height: AppComponentSize.dotSize,
               decoration: BoxDecoration(
                 color: dotColor,
                 shape: BoxShape.circle,

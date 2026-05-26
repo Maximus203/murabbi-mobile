@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 
 /// `ThemeData` Murabbi — mode clair par défaut (P-4).
@@ -36,7 +37,10 @@ class AppTheme {
         labelMedium: AppTypography.label,
         bodySmall: AppTypography.caption,
       ),
-      iconTheme: const IconThemeData(color: AppColors.textPrimary, size: 20),
+      iconTheme: const IconThemeData(
+        color: AppColors.textPrimary,
+        size: AppIconSize.rg,
+      ),
       dividerTheme: const DividerThemeData(
         color: AppColors.borderDefault,
         thickness: 0.5,
@@ -97,7 +101,7 @@ class AppTheme {
       ),
       iconTheme: const IconThemeData(
         color: AppColorsDark.textPrimary,
-        size: 20,
+        size: AppIconSize.rg,
       ),
       dividerTheme: const DividerThemeData(
         color: AppColorsDark.borderDefault,

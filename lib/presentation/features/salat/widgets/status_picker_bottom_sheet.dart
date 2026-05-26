@@ -106,7 +106,7 @@ class _StatusTile extends StatelessWidget {
       label: PrayerStatusVisuals.label(status),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.button),
         child: Padding(
           padding: const EdgeInsets.symmetric(
             vertical: AppSpacing.s3,
@@ -114,7 +114,7 @@ class _StatusTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(PrayerStatusVisuals.icon(status), size: 20, color: color),
+              Icon(PrayerStatusVisuals.icon(status), size: AppIconSize.rg, color: color),
               const SizedBox(width: AppSpacing.s3),
               Expanded(
                 child: Text(
@@ -125,7 +125,7 @@ class _StatusTile extends StatelessWidget {
               if (selected)
                 const Icon(
                   LucideIcons.check,
-                  size: 18,
+                  size: AppIconSize.md,
                   color: AppColors.textSecondary,
                 ),
             ],

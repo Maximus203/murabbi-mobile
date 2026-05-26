@@ -216,8 +216,8 @@ class _Co02CreateCollectionScreenState
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 6,
-                          height: 6,
+                          width: AppComponentSize.dotSize,
+                          height: AppComponentSize.dotSize,
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.bgSurface
@@ -348,7 +348,7 @@ class _CollectionIconPicker extends StatelessWidget {
             ),
             child: Icon(
               lu(_kCollectionIconMap[name] ?? LucideIcons.layoutGrid),
-              size: 22,
+              size: AppIconSize.nav,
               color: isSelected ? AppColors.bgSurface : AppColors.textSecondary,
             ),
           ),

@@ -116,7 +116,7 @@ class _StatTile extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(icon, size: AppIconSize.sm, color: AppColors.accent),
+                  Icon(icon, size: AppIconSize.md, color: AppColors.accent),
                   const SizedBox(width: AppSpacing.s2),
                   Text(
                     label,

@@ -154,8 +154,8 @@ class _MailIllustration extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        width: 88,
-        height: 88,
+        width: AppComponentSize.avatarLg,
+        height: AppComponentSize.avatarLg,
         decoration: BoxDecoration(
           color: AppColors.accent.withValues(alpha: 0.08),
           shape: BoxShape.circle,
@@ -166,7 +166,7 @@ class _MailIllustration extends StatelessWidget {
         ),
         child: const Icon(
           LucideIcons.mailCheck,
-          size: 36,
+          size: AppIconSize.xl,
           color: AppColors.accent,
         ),
       ),
@@ -194,7 +194,7 @@ class _ResentBanner extends StatelessWidget {
         children: [
           const Icon(
             LucideIcons.circleCheck,
-            size: 18,
+            size: AppIconSize.md,
             color: AppColors.success,
           ),
           const SizedBox(width: AppSpacing.s2),

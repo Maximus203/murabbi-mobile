@@ -35,7 +35,7 @@ class HabitStatCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 20, color: AppColors.accent),
+          Icon(icon, size: AppIconSize.rg, color: AppColors.accent),
           const SizedBox(height: AppSpacing.s2),
           Text(
             value,

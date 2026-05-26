@@ -36,20 +36,20 @@ class AppToggle extends StatelessWidget {
           onTap: enabled ? () => onChanged!(!value) : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: 44,
-            height: 26,
+            width: AppComponentSize.toggleWidth,
+            height: AppComponentSize.toggleHeight,
             decoration: BoxDecoration(
               color: track,
-              borderRadius: BorderRadius.circular(13),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
               border: Border.all(color: border, width: AppBorderWidth.thin),
             ),
             child: AnimatedAlign(
               duration: const Duration(milliseconds: 200),
               alignment: value ? Alignment.centerRight : Alignment.centerLeft,
               child: Container(
-                margin: const EdgeInsets.all(2),
-                width: 20,
-                height: 20,
+                margin: const EdgeInsets.all(AppRadius.drag),
+                width: AppComponentSize.toggleThumb,
+                height: AppComponentSize.toggleThumb,
                 decoration: const BoxDecoration(
                   color: AppColors.bgSurface,
                   shape: BoxShape.circle,

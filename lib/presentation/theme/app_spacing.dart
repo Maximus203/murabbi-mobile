@@ -42,6 +42,12 @@ class AppRadius {
 
   /// 20px — bottom sheets (coins supérieurs).
   static const double bottomSheet = 20.0;
+
+  /// 2px — drag handle, thumb margin.
+  static const double drag = 2;
+
+  /// 4px — barre de progression, dots de pagination.
+  static const double indicator = 4;
 }
 
 /// Tailles d'icônes — hiérarchie sémantique (DS sheet § Iconographie).
@@ -50,6 +56,9 @@ class AppRadius {
 /// Toute valeur littérale hors de cette liste est interdite.
 class AppIconSize {
   AppIconSize._();
+
+  /// 11px — icône dans un badge/chip.
+  static const double badge = 11;
 
   /// 12px — badge micro.
   static const double xs = 12;
@@ -86,8 +95,17 @@ class AppIconSize {
 class AppComponentSize {
   AppComponentSize._();
 
+  /// 6px — dot couleur catégorie (badge, chip).
+  static const double dotSize = 6;
+
   /// 20px — spinner dans un bouton.
   static const double spinnerSm = 20;
+
+  /// 20px — pouce du toggle iOS.
+  static const double toggleThumb = 20;
+
+  /// 26px — hauteur contractuelle du toggle iOS.
+  static const double toggleHeight = 26;
 
   /// 32px — cellule Heatmap30.
   static const double heatmapCell = 32;
@@ -101,11 +119,23 @@ class AppComponentSize {
   /// 44px — touch target minimum a11y.
   static const double touchTarget = 44;
 
+  /// 44px — largeur contractuelle du toggle iOS.
+  static const double toggleWidth = 44;
+
   /// 48px — cellule sélecteur d'icône HB-04.
   static const double iconSelectorCell = 48;
 
+  /// 56px — avatar moyen (paramètres profil).
+  static const double avatarMd = 56;
+
+  /// 72px — colonne podium leaderboard / conteneur icône avertissement.
+  static const double podiumCol = 72;
+
   /// 80px — illustration empty state compact.
   static const double emptyStateSm = 80;
+
+  /// 88px — avatar large (écran vérification email, édition profil).
+  static const double avatarLg = 88;
 
   /// 88px — illustration empty state principal.
   static const double emptyStateMd = 88;
@@ -125,6 +155,7 @@ class AppComponentSize {
 ///   * [focusRing]       — anneau de focus accessibilité (états focused).
 ///   * [indicatorStroke] — indicateurs d'état : loaders circulaires, arcs de
 ///                         progression, countdown next-prayer (slice 3.C.3).
+///   * [progressRing]    — anneau de progression score quotidien (dashboard).
 class AppBorderWidth {
   AppBorderWidth._();
 
@@ -136,4 +167,7 @@ class AppBorderWidth {
 
   /// 2.0px — indicateurs d'état (CircularProgressIndicator, arcs Salat).
   static const double indicatorStroke = 2.0;
+
+  /// 7.0px — anneau de progression animé (DashboardScoreCard, AppProgressRing).
+  static const double progressRing = 7.0;
 }

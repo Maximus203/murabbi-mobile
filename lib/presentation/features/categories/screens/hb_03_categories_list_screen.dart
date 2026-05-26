@@ -47,7 +47,7 @@ class Hb03CategoriesListScreen extends ConsumerWidget {
           onPressed: onCreate,
           icon: const Icon(
             LucideIcons.plus,
-            size: 20,
+            size: AppIconSize.rg,
             color: AppColors.textPrimary,
           ),
         ),
@@ -165,7 +165,7 @@ class _CategoriesBody extends ConsumerWidget {
         color: AppColors.danger.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.card),
       ),
-      child: Icon(lu(LucideIcons.trash2), color: AppColors.danger, size: 20),
+      child: Icon(lu(LucideIcons.trash2), color: AppColors.danger, size: AppIconSize.rg),
     );
   }
 
@@ -220,15 +220,15 @@ class _EmptyUserCategories extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: 80,
-            height: 80,
+            width: AppComponentSize.emptyStateSm,
+            height: AppComponentSize.emptyStateSm,
             decoration: BoxDecoration(
               color: AppColors.bgInput,
               borderRadius: BorderRadius.circular(AppRadius.card),
             ),
             child: const Icon(
               LucideIcons.tags,
-              size: 36,
+              size: AppIconSize.xl,
               color: AppColors.textSecondary,
             ),
           ),

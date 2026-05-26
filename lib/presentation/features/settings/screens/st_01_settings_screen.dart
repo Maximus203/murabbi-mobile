@@ -152,8 +152,8 @@ class _ProfileCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: AppComponentSize.avatarMd,
+            height: AppComponentSize.avatarMd,
             decoration: const BoxDecoration(
               color: AppColors.accent,
               shape: BoxShape.circle,
@@ -245,7 +245,7 @@ class _SettingsTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: color),
+            Icon(icon, size: AppIconSize.rg, color: color),
             const SizedBox(width: AppSpacing.s3),
             Expanded(
               child: Text(
@@ -263,7 +263,7 @@ class _SettingsTile extends StatelessWidget {
             else if (onTap != null)
               const Icon(
                 LucideIcons.chevronRight,
-                size: 18,
+                size: AppIconSize.md,
                 color: AppColors.textTertiary,
               ),
           ],

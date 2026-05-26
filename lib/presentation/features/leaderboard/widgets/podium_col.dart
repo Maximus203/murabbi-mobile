@@ -55,7 +55,7 @@ class PodiumCol extends StatelessWidget {
           Text('${score.weeklyPoints} pts', style: AppTypography.label),
           const SizedBox(height: AppSpacing.s1),
           Container(
-            width: 72,
+            width: AppComponentSize.podiumCol,
             height: pedestalHeight,
             decoration: BoxDecoration(
               color: AppColors.bgSurface,

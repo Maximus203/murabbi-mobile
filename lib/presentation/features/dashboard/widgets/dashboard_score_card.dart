@@ -66,7 +66,7 @@ class DashboardScoreCard extends StatelessWidget {
             AnimatedProgressRing(
               progress: ringProgress,
               size: 88,
-              strokeWidth: 7,
+              strokeWidth: AppBorderWidth.progressRing,
               centerLabel: centerLabel,
             ),
             const SizedBox(width: AppSpacing.s5),

@@ -153,14 +153,14 @@ class _MonthNavBar extends StatelessWidget {
         IconButton(
           tooltip: 'Mois précédent',
           onPressed: onPrevious,
-          icon: Icon(lu(LucideIcons.chevronLeft), size: 22),
+          icon: Icon(lu(LucideIcons.chevronLeft), size: AppIconSize.nav),
           color: AppColors.textPrimary,
         ),
         Text(label, style: AppTypography.h3),
         IconButton(
           tooltip: 'Mois suivant',
           onPressed: onNext,
-          icon: Icon(lu(LucideIcons.chevronRight), size: 22),
+          icon: Icon(lu(LucideIcons.chevronRight), size: AppIconSize.nav),
           color: AppColors.textPrimary,
         ),
       ],
@@ -404,15 +404,15 @@ class _CalendarEmpty extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: 80,
-            height: 80,
+            width: AppComponentSize.emptyStateSm,
+            height: AppComponentSize.emptyStateSm,
             decoration: BoxDecoration(
               color: AppColors.bgInput,
               borderRadius: BorderRadius.circular(AppRadius.card),
             ),
             child: const Icon(
               LucideIcons.calendarRange,
-              size: 36,
+              size: AppIconSize.xl,
               color: AppColors.textSecondary,
             ),
           ),

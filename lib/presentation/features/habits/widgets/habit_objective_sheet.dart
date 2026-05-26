@@ -92,11 +92,11 @@ class _HabitObjectiveSheetState extends State<HabitObjectiveSheet> {
           children: [
             // ── Drag handle ─────────────────────────────────────────────
             Container(
-              width: 36,
-              height: 4,
+              width: AppComponentSize.avatarSm,
+              height: AppSpacing.s1,
               decoration: BoxDecoration(
                 color: AppColors.bgInput,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.drag),
               ),
             ),
             const SizedBox(height: AppSpacing.s5),
@@ -143,7 +143,7 @@ class _HabitObjectiveSheetState extends State<HabitObjectiveSheet> {
                 ),
                 const SizedBox(width: AppSpacing.s5),
                 SizedBox(
-                  width: 56,
+                  width: AppComponentSize.avatarMd,
                   child: Text(
                     '$_value',
                     style: AppTypography.h1.copyWith(color: _valueColor),

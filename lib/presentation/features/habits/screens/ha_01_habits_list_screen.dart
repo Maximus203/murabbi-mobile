@@ -85,7 +85,7 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
                 onPressed: widget.onOpenCategories,
                 icon: const Icon(
                   LucideIcons.tags,
-                  size: 20,
+                  size: AppIconSize.rg,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -95,7 +95,7 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
               onPressed: widget.onCreate,
               icon: const Icon(
                 LucideIcons.plus,
-                size: 22,
+                size: AppIconSize.nav,
                 color: AppColors.textPrimary,
               ),
             ),
@@ -298,7 +298,7 @@ class _SortMenuButton extends StatelessWidget {
       tooltip: 'Trier',
       icon: const Icon(
         LucideIcons.arrowUpDown,
-        size: 20,
+        size: AppIconSize.rg,
         color: AppColors.textPrimary,
       ),
       onSelected: onSelected,
@@ -310,7 +310,7 @@ class _SortMenuButton extends StatelessWidget {
               children: [
                 Icon(
                   s == current ? LucideIcons.check : LucideIcons.minus,
-                  size: 16,
+                  size: AppIconSize.sm,
                   color: s == current
                       ? AppColors.accent
                       : AppColors.transparent,
@@ -424,8 +424,8 @@ class _CategoryChipsBar extends StatelessWidget {
               selected: selectedId == cat.id,
               onTap: () => onSelected(cat.id),
               leading: Container(
-                width: 8,
-                height: 8,
+                width: AppSpacing.s2,
+                height: AppSpacing.s2,
                 decoration: BoxDecoration(
                   color: _hexToColor(cat.color.value),
                   shape: BoxShape.circle,
@@ -482,15 +482,15 @@ class _EmptyView extends StatelessWidget {
         children: [
           Center(
             child: Container(
-              width: 80,
-              height: 80,
+              width: AppComponentSize.emptyStateSm,
+              height: AppComponentSize.emptyStateSm,
               decoration: BoxDecoration(
                 color: AppColors.bgInput,
                 borderRadius: BorderRadius.circular(AppRadius.card),
               ),
               child: const Icon(
                 LucideIcons.activity,
-                size: 36,
+                size: AppIconSize.xl,
                 color: AppColors.textSecondary,
               ),
             ),

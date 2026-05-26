@@ -35,8 +35,8 @@ class SplashScreen extends StatelessWidget {
               ),
               const Spacer(),
               const SizedBox(
-                width: 24,
-                height: 24,
+                width: AppSpacing.s6,
+                height: AppSpacing.s6,
                 child: CircularProgressIndicator(
                   strokeWidth: AppBorderWidth.indicatorStroke,
                   color: AppColors.bgSurface,

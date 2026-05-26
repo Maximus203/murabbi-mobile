@@ -50,8 +50,8 @@ class St02EditProfileScreen extends ConsumerWidget {
             child: Column(
               children: [
                 Container(
-                  width: 88,
-                  height: 88,
+                  width: AppComponentSize.avatarLg,
+                  height: AppComponentSize.avatarLg,
                   decoration: const BoxDecoration(
                     color: AppColors.accent,
                     shape: BoxShape.circle,
@@ -123,7 +123,7 @@ class _ReadOnlyField extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: AppColors.bgInput,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.button),
             border: Border.all(color: AppColors.borderEmphasis),
           ),
           child: Text(

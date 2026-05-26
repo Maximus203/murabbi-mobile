@@ -206,7 +206,7 @@ class _SuccessView extends StatelessWidget {
                 children: [
                   const Icon(
                     LucideIcons.circleCheck,
-                    size: 22,
+                    size: AppIconSize.nav,
                     color: AppColors.success,
                   ),
                   const SizedBox(width: AppSpacing.s2),

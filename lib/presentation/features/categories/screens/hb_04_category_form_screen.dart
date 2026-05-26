@@ -123,8 +123,8 @@ class _Hb04CategoryFormScreenState
             onPressed: form.canSubmit && !_saving ? () => _save(form) : null,
             child: _saving
                 ? const SizedBox(
-                    width: 20,
-                    height: 20,
+                    width: AppIconSize.rg,
+                    height: AppIconSize.rg,
                     child: CircularProgressIndicator(
                       strokeWidth: AppBorderWidth.indicatorStroke,
                       color: AppColors.bgSurface,

@@ -87,15 +87,15 @@ class _St03DeleteAccountScreenState
         children: [
           Center(
             child: Container(
-              width: 72,
-              height: 72,
+              width: AppComponentSize.podiumCol,
+              height: AppComponentSize.podiumCol,
               decoration: BoxDecoration(
                 color: AppColors.danger.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 LucideIcons.triangleAlert,
-                size: 32,
+                size: AppIconSize.lg,
                 color: AppColors.danger,
               ),
             ),
@@ -123,7 +123,7 @@ class _St03DeleteAccountScreenState
                     children: [
                       const Icon(
                         LucideIcons.x,
-                        size: 16,
+                        size: AppIconSize.sm,
                         color: AppColors.danger,
                       ),
                       const SizedBox(width: AppSpacing.s2),

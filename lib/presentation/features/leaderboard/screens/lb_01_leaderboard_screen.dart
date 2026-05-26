@@ -183,7 +183,7 @@ class _LeaderboardEmpty extends StatelessWidget {
           children: [
             Icon(
               lu(LucideIcons.chartBar),
-              size: 48,
+              size: AppIconSize.xxl,
               color: AppColors.textTertiary,
             ),
             const SizedBox(height: AppSpacing.s4),

@@ -121,6 +121,9 @@ class AppColors {
   /// Centralise l'usage de `Colors.transparent` pour respecter la règle P-2 :
   /// aucune valeur couleur hors de AppColors.
   static const Color transparent = Colors.transparent;
+
+  /// Fond bannière hors-ligne — orange Material 700 (sync pending).
+  static const Color offlineBanner = Color(0xFFF57C00);
 }
 
 /// Palette sombre Murabbi — miroir terreuse de [AppColors] en mode nuit.

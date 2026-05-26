@@ -75,7 +75,7 @@ class HabitTimerSheet extends ConsumerWidget {
                   ),
                   IconButton(
                     tooltip: 'Fermer',
-                    icon: const Icon(Icons.close, size: 22),
+                    icon: const Icon(Icons.close, size: AppIconSize.nav),
                     color: AppColors.textSecondary,
                     onPressed: () => Navigator.of(context).pop(),
                   ),

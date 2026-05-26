@@ -42,7 +42,11 @@ class Sa03PrayerDetailScreen extends ConsumerWidget {
       appBar: AppHeader.back(title: label, onBack: onBack),
       body: asyncState.when(
         loading: () =>
-            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            const Center(
+              child: CircularProgressIndicator(
+                strokeWidth: AppBorderWidth.indicatorStroke,
+              ),
+            ),
         error: (_, _) => const _ErrorView(),
         data: (state) => _DetailBody(
           state: state,
@@ -94,7 +98,7 @@ class _DetailBody extends StatelessWidget {
             children: [
               Icon(
                 PrayerStatusVisuals.icon(todayStatus),
-                size: 28,
+                size: AppIconSize.semilg,
                 color: PrayerStatusVisuals.color(todayStatus),
               ),
               const SizedBox(width: AppSpacing.s3),
@@ -148,7 +152,7 @@ class _DetailBody extends StatelessWidget {
               message: _legendTooltip,
               child: Icon(
                 LucideIcons.info,
-                size: 16,
+                size: AppIconSize.sm,
                 color: AppColors.textTertiary,
               ),
             ),

@@ -269,8 +269,8 @@ class _CategorySubtitle extends StatelessWidget {
       children: [
         if (category != null) ...[
           Container(
-            width: 8,
-            height: 8,
+            width: AppComponentSize.dotSize,
+            height: AppComponentSize.dotSize,
             decoration: BoxDecoration(
               color: categoryColor,
               shape: BoxShape.circle,
@@ -328,8 +328,8 @@ class _HabitRow extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 8,
-            height: 8,
+            width: AppComponentSize.dotSize,
+            height: AppComponentSize.dotSize,
             decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: AppSpacing.s3),

@@ -180,7 +180,7 @@ class _DashboardBody extends ConsumerWidget {
                 button: true,
                 child: const Icon(
                   LucideIcons.bell,
-                  size: 20,
+                  size: AppIconSize.rg,
                   color: AppColors.textSecondary,
                 ),
               ),
@@ -449,7 +449,7 @@ class _NiyyahCard extends ConsumerWidget {
                   const Spacer(),
                   const Icon(
                     LucideIcons.pencil,
-                    size: 16,
+                    size: AppIconSize.sm,
                     color: AppColors.videoOverlayText,
                   ),
                 ],
@@ -586,7 +586,7 @@ class _NextPrayerCard extends StatelessWidget {
                     children: [
                       const Icon(
                         LucideIcons.moonStar,
-                        size: 18,
+                        size: AppIconSize.md,
                         color: AppColors.accent,
                       ),
                       const SizedBox(width: AppSpacing.s2),
@@ -627,7 +627,7 @@ class _NextPrayerCard extends StatelessWidget {
             ),
             const Icon(
               LucideIcons.chevronRight,
-              size: 18,
+              size: AppIconSize.md,
               color: AppColors.textTertiary,
             ),
           ],
@@ -699,8 +699,8 @@ class _UserAvatar extends StatelessWidget {
         ? '?'
         : user!.pseudo.value.characters.first.toUpperCase();
     return Container(
-      width: 36,
-      height: 36,
+      width: AppComponentSize.avatarSm,
+      height: AppComponentSize.avatarSm,
       decoration: const BoxDecoration(
         color: AppColors.accent,
         shape: BoxShape.circle,
