@@ -475,7 +475,7 @@ class _SummaryBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             LucideIcons.circleCheck,
             size: AppIconSize.sm,
             color: AppColors.success,
