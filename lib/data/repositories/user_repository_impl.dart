@@ -34,4 +34,19 @@ class UserRepositoryImpl implements UserRepository {
     }
     return user;
   }
+
+  /// Q-26 Option A — met à jour `display_name` et retourne l'entité mise à
+  /// jour. Repose sur [currentUser] pour éviter une re-jointure `auth.users`.
+  @override
+  Future<User> updateDisplayName(User currentUser, String displayName) async {
+    final row = await _ds.updateDisplayName(
+      userId: currentUser.id.value,
+      displayName: displayName,
+    );
+    final persisted = row['display_name'];
+    return currentUser.copyWith(
+      displayName:
+          persisted is String && persisted.isNotEmpty ? persisted : null,
+    );
+  }
 }

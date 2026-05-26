@@ -33,6 +33,7 @@ class UserMapper {
 
     final pseudo = profile['pseudo'];
     final pseudoFullRaw = profile['pseudo_full'];
+    final displayNameRaw = profile['display_name'];
     final levelRaw = profile['level'];
     final currentStreakRaw = profile['current_streak'];
     final completionRateRaw = profile['completion_rate'];
@@ -96,6 +97,13 @@ class UserMapper {
       pseudoFull = pseudoFullRaw;
     }
 
+    // Q-26 Option A — `display_name` (colonne TEXT nullable, migration à
+    // appliquer côté murabbi-admin). Absente ou vide → null.
+    String? displayName;
+    if (displayNameRaw is String && displayNameRaw.isNotEmpty) {
+      displayName = displayNameRaw;
+    }
+
     return User(
       id: UserId(id),
       pseudo: Pseudonym(pseudo),
@@ -106,6 +114,7 @@ class UserMapper {
       completionRate: completionRateRaw.toDouble(),
       emailConfirmedAt: emailConfirmedAt,
       pseudoFull: pseudoFull,
+      displayName: displayName,
     );
   }
 }

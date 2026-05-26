@@ -9,10 +9,12 @@ import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/repositories/auth_repository.dart';
 import 'package:murabbi_mobile/domain/use_cases/auth/delete_account_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/auth/update_display_name_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/settings/providers/delete_account_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/settings/providers/edit_profile_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/settings/screens/st_01_settings_screen.dart';
 import 'package:murabbi_mobile/presentation/features/settings/screens/st_02_edit_profile_screen.dart';
 import 'package:murabbi_mobile/presentation/features/settings/screens/st_03_delete_account_screen.dart';
@@ -26,6 +28,17 @@ class _FakeDeleteAccountUseCase implements DeleteAccountUseCase {
   @override
   Future<void> call(UserId userId) async {
     called = true;
+  }
+}
+
+class _FakeUpdateDisplayNameUseCase implements UpdateDisplayNameUseCase {
+  bool called = false;
+  String? lastDisplayName;
+  @override
+  Future<User> call({required User currentUser, required String displayName}) async {
+    called = true;
+    lastDisplayName = displayName;
+    return currentUser.copyWith(displayName: displayName);
   }
 }
 
@@ -265,6 +278,82 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Enregistrer'), findsOneWidget);
+    });
+
+    // ── Q-26 Option A — Nom complet éditable ────────────────────────────────
+
+    testWidgets('Nom complet field is editable (TextField present)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(St02EditProfileScreen(onBack: () {}, onSaved: () {})),
+      );
+      await tester.pumpAndSettle();
+
+      // Au moins un TextField : celui du Nom complet.
+      // (Email et Pseudonyme restent en lecture seule.)
+      expect(find.byType(TextField), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets('Enregistrer is disabled when Nom complet unchanged', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(St02EditProfileScreen(onBack: () {}, onSaved: () {})),
+      );
+      await tester.pumpAndSettle();
+
+      // Aucune saisie → bouton désactivé.
+      final btn = tester.widget<AppButton>(
+        find.widgetWithText(AppButton, 'Enregistrer'),
+      );
+      expect(btn.onPressed, isNull);
+    });
+
+    testWidgets('Enregistrer becomes enabled after typing Nom complet', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(St02EditProfileScreen(onBack: () {}, onSaved: () {})),
+      );
+      await tester.pumpAndSettle();
+
+      // Saisie dans le premier TextField (Nom complet).
+      await tester.enterText(find.byType(TextField).first, 'Cherif Diouf');
+      await tester.pumpAndSettle();
+
+      final btn = tester.widget<AppButton>(
+        find.widgetWithText(AppButton, 'Enregistrer'),
+      );
+      expect(btn.onPressed, isNotNull);
+    });
+
+    testWidgets('tapping Enregistrer calls saveDisplayName and onSaved', (
+      tester,
+    ) async {
+      final useCase = _FakeUpdateDisplayNameUseCase();
+      var saved = false;
+      await tester.pumpWidget(
+        wrap(
+          St02EditProfileScreen(
+            onBack: () {},
+            onSaved: () => saved = true,
+          ),
+          overrides: [
+            updateDisplayNameUseCaseProvider.overrideWithValue(useCase),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, 'Cherif Diouf');
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppButton, 'Enregistrer'));
+      await tester.pumpAndSettle();
+
+      expect(useCase.called, isTrue);
+      expect(useCase.lastDisplayName, 'Cherif Diouf');
+      expect(saved, isTrue);
     });
   });
 

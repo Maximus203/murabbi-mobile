@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/data/repositories/user_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
+import 'package:murabbi_mobile/domain/use_cases/auth/update_display_name_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/auth/update_profile_use_case.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 
@@ -12,6 +13,13 @@ import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifie
 final updateProfileUseCaseProvider = Provider<UpdateProfileUseCase>((ref) {
   // ignore: deprecated_member_use_from_same_package
   return UpdateProfileUseCase(ref.watch(userRepositoryProvider));
+});
+
+/// Q-26 Option A — provider du use case de mise à jour du nom complet.
+/// Surchargeable en test.
+final updateDisplayNameUseCaseProvider =
+    Provider<UpdateDisplayNameUseCase>((ref) {
+  return UpdateDisplayNameUseCase(ref.watch(userRepositoryProvider));
 });
 
 /// Notifier de l'écran ST-02 — pilote l'enregistrement du pseudo.
@@ -35,6 +43,27 @@ class EditProfileNotifier extends AsyncNotifier<void> {
       return ref
           .read(updateProfileUseCaseProvider)
           .call(currentUser: currentUser, newPseudo: newPseudo);
+    });
+    state = result.hasError
+        ? AsyncValue.error(result.error!, result.stackTrace!)
+        : const AsyncValue.data(null);
+    if (!result.hasError) {
+      ref.invalidate(authNotifierProvider);
+    }
+    return !result.hasError;
+  }
+
+  /// Q-26 Option A — enregistre le nom complet (`display_name`).
+  /// En cas de succès, rafraîchit `authNotifierProvider`.
+  Future<bool> saveDisplayName(String displayName) async {
+    final currentUser = await ref.read(authNotifierProvider.future);
+    if (currentUser == null) return false;
+
+    state = const AsyncValue.loading();
+    final result = await AsyncValue.guard<User>(() {
+      return ref
+          .read(updateDisplayNameUseCaseProvider)
+          .call(currentUser: currentUser, displayName: displayName);
     });
     state = result.hasError
         ? AsyncValue.error(result.error!, result.stackTrace!)

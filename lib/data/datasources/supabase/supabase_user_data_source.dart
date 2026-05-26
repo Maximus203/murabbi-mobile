@@ -36,4 +36,27 @@ class SupabaseUserDataSource implements UserDataSource {
         .single();
     return Map<String, dynamic>.from(row);
   }
+
+  /// Q-26 Option A — met à jour `display_name`.
+  ///
+  /// ⚠ Nécessite la migration `ALTER TABLE users ADD COLUMN display_name TEXT;`
+  /// côté murabbi-admin avant d'être activé en production. Jusqu'à
+  /// l'application de la migration, tout appel à cette méthode lèvera une
+  /// erreur Supabase (colonne inconnue).
+  ///
+  /// [displayName] vide → stocké null (effacement du nom complet).
+  @override
+  Future<Map<String, dynamic>> updateDisplayName({
+    required String userId,
+    required String displayName,
+  }) async {
+    await _wrapper.ensureFreshSession();
+    final row = await _client
+        .from(SupabaseTables.users)
+        .update({'display_name': displayName.isEmpty ? null : displayName})
+        .eq('id', userId)
+        .select('display_name')
+        .single();
+    return Map<String, dynamic>.from(row);
+  }
 }

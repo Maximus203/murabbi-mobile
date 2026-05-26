@@ -11,4 +11,12 @@ abstract interface class UserDataSource {
     required String userId,
     required String pseudo,
   });
+
+  /// Q-26 Option A — met à jour `display_name` et renvoie la row `users`
+  /// rafraîchie. Nécessite la migration `ALTER TABLE users ADD COLUMN
+  /// display_name TEXT;` côté murabbi-admin.
+  Future<Map<String, dynamic>> updateDisplayName({
+    required String userId,
+    required String displayName,
+  });
 }

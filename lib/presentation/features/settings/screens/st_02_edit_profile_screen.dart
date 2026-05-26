@@ -9,25 +9,23 @@ import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_input.dart';
 
 /// ST-02 — Mon profil.
 ///
 /// Affiche les informations de profil selon le wireframe validé.
 ///
-/// ## État des champs (Q-26 — décision PO attendue)
+/// ## État des champs (Q-26 Option A)
 ///
-/// - **Nom complet** : read-only jusqu'à la migration `display_name` dans
-///   `users` v1.3.x (aucune colonne actuellement).
+/// - **Nom complet** : éditable — colonne `display_name TEXT` (migration
+///   murabbi-admin requise). Bouton "Enregistrer" activé dès modification.
 /// - **Email** : verrouillé Supabase Auth — toujours read-only.
 /// - **Pseudonyme (classement)** : read-only per issue #168 (`pseudo_immutable_trigger`).
-///
-/// Le bouton "Enregistrer" est présent (wireframe) mais désactivé.
-/// Il sera activé par tranche, en parallèle des migrations schema.
 class St02EditProfileScreen extends ConsumerStatefulWidget {
   /// Retour vers ST-01.
   final VoidCallback onBack;
 
-  /// Profil sauvegardé avec succès (réservé pour les futures tranches).
+  /// Profil sauvegardé avec succès.
   final VoidCallback onSaved;
 
   const St02EditProfileScreen({
@@ -42,12 +40,58 @@ class St02EditProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _St02EditProfileScreenState extends ConsumerState<St02EditProfileScreen> {
+  late final TextEditingController _displayNameCtrl;
+
+  /// Valeur initiale au premier build avec `user != null`.
+  /// Sert à détecter les modifications pour activer "Enregistrer".
+  String? _initialDisplayName;
+  bool _seeded = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _displayNameCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _displayNameCtrl.dispose();
+    super.dispose();
+  }
+
+  bool get _canSave {
+    final trimmed = _displayNameCtrl.text.trim();
+    return trimmed != (_initialDisplayName ?? '');
+  }
+
+  Future<void> _save() async {
+    setState(() => _error = null);
+    final ok = await ref
+        .read(editProfileNotifierProvider.notifier)
+        .saveDisplayName(_displayNameCtrl.text.trim());
+    if (!mounted) return;
+    if (ok) {
+      widget.onSaved();
+    } else {
+      setState(
+        () => _error = 'La sauvegarde a échoué. Réessaie plus tard.',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authNotifierProvider).valueOrNull;
     final saving = ref.watch(editProfileNotifierProvider).isLoading;
 
-    final displayPseudo = user?.displayPseudo ?? '—';
+    // Initialisation au premier build avec données utilisateur.
+    if (!_seeded && user != null) {
+      _seeded = true;
+      _initialDisplayName = user.displayName;
+      _displayNameCtrl.text = user.displayName ?? '';
+    }
+
     final email = user?.email.value ?? '—';
     final initial = (user?.pseudo.value.isNotEmpty ?? false)
         ? user!.pseudo.value.characters.first.toUpperCase()
@@ -97,10 +141,15 @@ class _St02EditProfileScreenState extends ConsumerState<St02EditProfileScreen> {
           ),
           const SizedBox(height: AppSpacing.s6),
 
-          // ── Nom complet (Q-26 — migration display_name requise) ────────
+          // ── Nom complet (Q-26 Option A — éditable) ────────────────────
           const _FieldLabel(label: 'Nom complet'),
           const SizedBox(height: AppSpacing.s1),
-          _ReadOnlyField(value: displayPseudo, hint: 'Ton nom complet'),
+          AppInput(
+            placeholder: 'Ton nom complet',
+            controller: _displayNameCtrl,
+            errorText: _error,
+            onChanged: (_) => setState(() {}),
+          ),
           const SizedBox(height: AppSpacing.s4),
 
           // ── Email (verrouillé Supabase Auth) ──────────────────────────
@@ -125,12 +174,11 @@ class _St02EditProfileScreenState extends ConsumerState<St02EditProfileScreen> {
           ),
           const SizedBox(height: AppSpacing.s8),
 
-          // ── Enregistrer (désactivé — Q-26 en attente) ─────────────────
+          // ── Enregistrer (activé dès que Nom complet modifié) ──────────
           AppButton(
             label: saving ? 'Enregistrement…' : 'Enregistrer',
             variant: AppButtonVariant.primary,
-            // ignore: avoid_redundant_argument_values
-            onPressed: null, // activé quand Q-26 résolu
+            onPressed: (saving || !_canSave) ? null : _save,
           ),
         ],
       ),
