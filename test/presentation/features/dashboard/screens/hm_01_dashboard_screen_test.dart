@@ -29,6 +29,12 @@ class _FakePrayerTimesService implements PrayerTimesService {
   }) => response;
 }
 
+void _phone(WidgetTester tester) {
+  tester.view.physicalSize = const Size(1080, 2340);
+  tester.view.devicePixelRatio = 3.0;
+  addTearDown(tester.view.reset);
+}
+
 void main() {
   late _MockSettingsRepo settingsRepo;
 
@@ -83,6 +89,7 @@ void main() {
   testWidgets('affiche la salutation et la prochaine prière du jour', (
     tester,
   ) async {
+    _phone(tester);
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
 
@@ -94,6 +101,7 @@ void main() {
   testWidgets('affiche le CTA "Configurer" quand settings non configurés', (
     tester,
   ) async {
+    _phone(tester);
     await tester.pumpWidget(pumpable(settingsNotConfigured: true));
     await tester.pumpAndSettle();
 
@@ -104,6 +112,7 @@ void main() {
   testWidgets('marque "(DEMAIN)" quand toutes les prières sont passées', (
     tester,
   ) async {
+    _phone(tester);
     await tester.pumpWidget(
       pumpable(now: day.add(const Duration(hours: 23, minutes: 59))),
     );
@@ -172,6 +181,7 @@ void main() {
   });
 
   testWidgets('_NextPrayerCard affiche un ChevronRight (#59)', (tester) async {
+    _phone(tester);
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
     expect(find.byIcon(LucideIcons.chevronRight), findsOneWidget);

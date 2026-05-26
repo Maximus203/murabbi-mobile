@@ -63,8 +63,8 @@ class AppIconSize {
   /// 20px — icône UI standard (header, tile, formulaires).
   static const double rg = 20;
 
-  /// 22px — icône navigation (bottom nav, chevrons).
-  static const double nav = 22;
+  /// 24px — icône navigation (bottom nav, chevrons).
+  static const double nav = 24;
 
   /// 28px — icône intermédiaire (logo auth, timer icon).
   static const double semilg = 28;
@@ -110,9 +110,9 @@ class AppComponentSize {
   /// 88px — illustration empty state principal.
   static const double emptyStateMd = 88;
 
-  /// 108px — hauteur contractuelle d'une tuile stat du dashboard HM-01.
+  /// 132px — hauteur contractuelle d'une tuile stat du dashboard HM-01.
   /// Garantit une hauteur identique avec ou sans sous-label.
-  static const double statTile = 108;
+  static const double statTile = 132;
 }
 
 /// Largeurs de bordure — grammaire ternaire volontaire.

@@ -78,7 +78,7 @@ class DashboardScoreCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text(mainNumber, style: AppTypography.h1),
+                      Text(mainNumber, style: AppTypography.displayMd),
                       const SizedBox(width: AppSpacing.s2),
                       Text(
                         mainUnit,

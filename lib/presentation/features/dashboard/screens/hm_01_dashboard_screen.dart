@@ -402,7 +402,7 @@ class _NiyyahCard extends ConsumerWidget {
   const _NiyyahCard();
 
   static const String _fallback = 'Je fais cela pour plaire à Allah.';
-  static const double _height = 120;
+  static const double _height = 160;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -67,52 +67,52 @@ class AppTypography {
     color: AppColors.textPrimary,
   );
 
-  /// H1 26 / Geist SemiBold / -0.3px — titre d'écran.
+  /// H1 32 / Geist SemiBold / -0.3px — titre d'écran (pseudo, nom de prière).
   static const TextStyle h1 = TextStyle(
     fontFamily: _geist,
-    fontSize: 26,
+    fontSize: 32,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.3,
     color: AppColors.textPrimary,
   );
 
-  /// H2 18 / Geist SemiBold — sous-titre de section.
+  /// H2 22 / Geist SemiBold — sous-titre de section.
   static const TextStyle h2 = TextStyle(
     fontFamily: _geist,
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
-  /// H3 15 / Geist Medium — titre de carte.
+  /// H3 17 / Geist Medium — titre de carte.
   static const TextStyle h3 = TextStyle(
     fontFamily: _geist,
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
   );
 
-  /// Body 14 / Geist Regular — texte courant.
+  /// Body 16 / Geist Regular — texte courant.
   static const TextStyle body = TextStyle(
     fontFamily: _geist,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
   );
 
-  /// Label 11 / Geist Medium — UPPERCASE attendu côté usage.
+  /// Label 12 / Geist Medium — UPPERCASE attendu côté usage.
   static const TextStyle label = TextStyle(
     fontFamily: _geist,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.4,
     color: AppColors.textSecondary,
   );
 
-  /// Caption 11 / Geist Regular.
+  /// Caption 12 / Geist Regular.
   static const TextStyle caption = TextStyle(
     fontFamily: _geist,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
   );
