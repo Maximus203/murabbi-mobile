@@ -64,6 +64,19 @@ class PrayerSettingsFormNotifier extends Notifier<PrayerSettingsFormState> {
     state = state.copyWith(highLatitudeRule: rule, clearError: true);
   }
 
+  /// Met à jour le libellé de localisation (ville résolue via géocodage inverse).
+  /// Passer `null` pour effacer (ex. si les coordonnées ont été réinitialisées).
+  void setLocationLabel(String? label) {
+    state = label == null
+        ? state.copyWith(clearLocationLabel: true)
+        : state.copyWith(locationLabel: label);
+  }
+
+  /// Active / désactive la prise en compte automatique de l'heure d'été (DST).
+  void setUseDst({required bool value}) {
+    state = state.copyWith(useDst: value);
+  }
+
   /// Persiste les settings courants. Retourne `true` en cas de succès,
   /// `false` si la validation a échoué ou si le repository a levé une
   /// exception (cf. [PrayerSettingsFormState.error]).

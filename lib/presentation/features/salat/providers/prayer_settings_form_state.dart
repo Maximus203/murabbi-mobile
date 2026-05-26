@@ -22,6 +22,8 @@ enum PrayerSettingsFormError {
 ///
 /// Distinguer cet état de [PrayerSettings] (entité domain) — ici lat/lng
 /// sont nullables tant que l'utilisateur n'a pas saisi ses coordonnées.
+/// [locationLabel] : nom de ville résolu par le géocodage inverse (Nominatim).
+/// [useDst] : heure d'été automatique (DST) — actif par défaut.
 class PrayerSettingsFormState extends Equatable {
   final CalculationMethod method;
   final Madhab madhab;
@@ -31,6 +33,14 @@ class PrayerSettingsFormState extends Equatable {
   final bool isSaving;
   final PrayerSettingsFormError? error;
 
+  /// Libellé de localisation résolu via géocodage inverse (ex. "Paris, France").
+  /// Null tant que l'utilisateur n'a pas utilisé le bouton GPS ou saisi les
+  /// coordonnées avec résolution automatique.
+  final String? locationLabel;
+
+  /// Heure d'été (DST) automatique. Activé par défaut.
+  final bool useDst;
+
   const PrayerSettingsFormState({
     required this.method,
     required this.madhab,
@@ -39,6 +49,8 @@ class PrayerSettingsFormState extends Equatable {
     required this.highLatitudeRule,
     required this.isSaving,
     required this.error,
+    this.locationLabel,
+    this.useDst = true,
   });
 
   /// Défauts ADR-013 : MWL + Shafi + middleOfTheNight, coords vides.
@@ -49,7 +61,9 @@ class PrayerSettingsFormState extends Equatable {
       longitude = null,
       highLatitudeRule = HighLatitudeRule.middleOfTheNight,
       isSaving = false,
-      error = null;
+      error = null,
+      locationLabel = null,
+      useDst = true;
 
   /// Latitude et longitude présentes et dans les bornes acceptées par
   /// [PrayerSettings].
@@ -77,9 +91,12 @@ class PrayerSettingsFormState extends Equatable {
     HighLatitudeRule? highLatitudeRule,
     bool? isSaving,
     PrayerSettingsFormError? error,
+    String? locationLabel,
+    bool? useDst,
     bool clearError = false,
     bool clearLatitude = false,
     bool clearLongitude = false,
+    bool clearLocationLabel = false,
   }) {
     return PrayerSettingsFormState(
       method: method ?? this.method,
@@ -89,6 +106,10 @@ class PrayerSettingsFormState extends Equatable {
       highLatitudeRule: highLatitudeRule ?? this.highLatitudeRule,
       isSaving: isSaving ?? this.isSaving,
       error: clearError ? null : (error ?? this.error),
+      locationLabel: clearLocationLabel
+          ? null
+          : (locationLabel ?? this.locationLabel),
+      useDst: useDst ?? this.useDst,
     );
   }
 
@@ -101,5 +122,7 @@ class PrayerSettingsFormState extends Equatable {
     highLatitudeRule,
     isSaving,
     error,
+    locationLabel,
+    useDst,
   ];
 }

@@ -1,8 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
+import 'package:murabbi_mobile/data/repositories/daily_summary_repository_provider.dart';
+import 'package:murabbi_mobile/data/repositories/niyyah_repository_provider.dart';
+import 'package:murabbi_mobile/data/repositories/niyyah_suggestion_repository_provider.dart';
 import 'package:murabbi_mobile/data/repositories/score_repository_provider.dart';
+import 'package:murabbi_mobile/domain/entities/niyyah_display_item.dart';
 import 'package:murabbi_mobile/domain/entities/user_score.dart';
 import 'package:murabbi_mobile/domain/errors/prayer_failure.dart';
+import 'package:murabbi_mobile/domain/use_cases/niyyah/resolve_today_niyyah_use_case.dart';
+import 'package:murabbi_mobile/domain/use_cases/score/compute_daily_completion_rate_use_case.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_clock_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
@@ -27,13 +33,23 @@ class DashboardNotifier extends AsyncNotifier<DashboardState> {
     final civilDay = DateTime.utc(now.year, now.month, now.day);
     final user = ref.read(currentUserProvider);
 
-    // Charge les horaires de prière et le score en parallèle.
+    // Charge en parallèle : horaires, score, taux journalier, niyyah.
     final prayerFuture = _loadPrayer(civilDay, now);
     final scoreFuture = _loadScore(user?.id);
+    final completionFuture = _loadDailyCompletion(user?.id);
+    final niyyahFuture = _loadNiyyah(user?.id, now);
 
-    final results = await Future.wait([prayerFuture, scoreFuture]);
+    final results = await Future.wait([
+      prayerFuture,
+      scoreFuture,
+      completionFuture,
+      niyyahFuture,
+    ]);
+
     final prayerState = results[0] as _PrayerResult;
     final score = results[1] as UserScore?;
+    final completionRate = results[2] as double;
+    final niyyah = results[3] as NiyyahDisplayItem?;
 
     return DashboardState(
       nowUtc: now,
@@ -41,6 +57,8 @@ class DashboardNotifier extends AsyncNotifier<DashboardState> {
       settingsNotConfigured: prayerState.settingsNotConfigured,
       userScore: score,
       globalStreak: user?.currentStreak ?? 0,
+      dailyCompletionRate: completionRate,
+      niyyahToday: niyyah,
     );
   }
 
@@ -64,12 +82,33 @@ class DashboardNotifier extends AsyncNotifier<DashboardState> {
     try {
       return await ref.read(scoreRepositoryProvider).getUserScore(userId);
     } catch (e, st) {
-      // Le score est non-bloquant : on logue et on retourne null.
-      appLog.w(
-        'DashboardNotifier: score non disponible',
-        error: e,
-        stackTrace: st,
-      );
+      appLog.w('DashboardNotifier: score non disponible', error: e, stackTrace: st);
+      return null;
+    }
+  }
+
+  Future<double> _loadDailyCompletion(UserId? userId) async {
+    if (userId == null) return 0.0;
+    try {
+      final repo = ref.read(dailySummaryRepositoryProvider);
+      return await ComputeDailyCompletionRateUseCase(repo)(userId);
+    } catch (e, st) {
+      appLog.w('DashboardNotifier: completion rate non disponible', error: e, stackTrace: st);
+      return 0.0;
+    }
+  }
+
+  Future<NiyyahDisplayItem?> _loadNiyyah(UserId? userId, DateTime now) async {
+    if (userId == null) return null;
+    try {
+      final niyyahRepo = ref.read(niyyahRepositoryProvider);
+      final suggestionRepo = ref.read(niyyahSuggestionRepositoryProvider);
+      return await ResolveTodayNiyyahUseCase(
+        niyyahRepository: niyyahRepo,
+        suggestionRepository: suggestionRepo,
+      )(userId, referenceDate: now);
+    } catch (e, st) {
+      appLog.w('DashboardNotifier: niyyah non disponible', error: e, stackTrace: st);
       return null;
     }
   }

@@ -6,6 +6,7 @@ import 'package:murabbi_mobile/core/utils/logger.dart';
 import 'package:murabbi_mobile/domain/entities/category.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
+import 'package:murabbi_mobile/domain/entities/niyyah_display_item.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
@@ -27,6 +28,7 @@ import 'package:murabbi_mobile/presentation/features/habits/providers/today_habi
 import 'package:murabbi_mobile/presentation/features/salat/providers/today_salat_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_media.dart';
+import 'package:murabbi_mobile/presentation/theme/app_opacity.dart';
 import 'package:murabbi_mobile/presentation/theme/app_responsive.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
@@ -212,7 +214,10 @@ class _DashboardBody extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s4),
 
           // ── Grille de statistiques ─────────────────────────────────
-          _StatsCard(globalStreak: streak),
+          _StatsCard(
+            globalStreak: streak,
+            dailyCompletionRate: data.dailyCompletionRate,
+          ),
           const SizedBox(height: AppSpacing.s4),
 
           // ── Prochaine prière ───────────────────────────────────────
@@ -306,7 +311,14 @@ class _ScoreCard extends ConsumerWidget {
 /// Grille de stats isolée — consomme score, summary, salat, habitudes.
 class _StatsCard extends ConsumerWidget {
   final int globalStreak;
-  const _StatsCard({required this.globalStreak});
+
+  /// Taux de complétion journalier (0.0 à 100.0) depuis `daily_summaries`.
+  final double dailyCompletionRate;
+
+  const _StatsCard({
+    required this.globalStreak,
+    this.dailyCompletionRate = 0.0,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -373,15 +385,16 @@ class _StatsCard extends ConsumerWidget {
   }
 }
 
-/// Card “Intention du jour” — niyyah personnelle ou suggestion système.
+/// Card "Intention du jour" — niyyah personnelle ou suggestion système.
 ///
 /// Fond vidéo local [AppMedia.niyyahLocalVideo] (asset bundlé, 120 px).
-/// Dégradé transparent→noir 55 % ancré en bas à gauche (DS validé).
+/// Dégradé transparent→noir ancré en bas à gauche (DS validé).
 /// [AppVideoPlayer] gère le fallback gradient si le player échoue.
 class _NiyyahCard extends ConsumerWidget {
   const _NiyyahCard();
 
-  static const String _fallback = 'Je fais cela pour plaire à Allah.';
+  static const String _fallback =
+      'Je cherche à plaire à Allah dans tout ce que je fais aujourd\'hui.';
   static const double _height = 160;
 
   @override
@@ -392,8 +405,8 @@ class _NiyyahCard extends ConsumerWidget {
       loading: () => const AppSkeletonCard(lineCount: 2),
       error: (e, _) => _videoCard(text: _fallback, isPersonal: false),
       data: (resolved) => _videoCard(
-        text: resolved?.text ?? _fallback,
-        isPersonal: resolved?.isPersonal ?? false,
+        text: resolved?.displayText ?? _fallback,
+        isPersonal: resolved is UserNiyyah,
       ),
     );
   }
@@ -404,11 +417,14 @@ class _NiyyahCard extends ConsumerWidget {
       height: _height,
       borderRadius: BorderRadius.circular(AppRadius.card),
       overlay: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [AppColors.transparent, AppColors.videoOverlayBottom],
+            colors: [
+              AppColors.transparent,
+              AppColors.overlayDark.withValues(alpha: AppOpacity.overlayMedium),
+            ],
           ),
         ),
         padding: const EdgeInsets.all(AppSpacing.s4),
@@ -437,7 +453,7 @@ class _NiyyahCard extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.s2),
             Text(
-              '”$text”',
+              '"$text"',
               style: AppTypography.body.copyWith(
                 color: AppColors.bgSurface,
                 fontStyle: FontStyle.italic,
@@ -755,6 +771,16 @@ class _DashboardHabitsSection extends ConsumerWidget {
               category: categoryMap[habit.categoryId.value],
             ),
           ),
+          // "et X de plus" si > _maxVisible habitudes
+          if (habits.length > _maxVisible) ...[
+            const SizedBox(height: AppSpacing.s1),
+            Text(
+              'et ${habits.length - _maxVisible} de plus…',
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -763,7 +789,7 @@ class _DashboardHabitsSection extends ConsumerWidget {
 
 /// Ligne compacte d'une habitude dans le dashboard HM-01.
 ///
-/// Dot couleur catégorie · Nom · Statut (check vert, objectif X/Y, vide).
+/// Dot couleur catégorie · Nom · Statut (check vert si validée, vide sinon).
 class _HabitMiniRow extends StatelessWidget {
   final Habit habit;
   final HabitLogStatus? status;
@@ -778,6 +804,7 @@ class _HabitMiniRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dotColor = _resolveColor(category?.color);
+    final isDone = status != null && status != HabitLogStatus.missed;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s1),
@@ -797,7 +824,11 @@ class _HabitMiniRow extends StatelessWidget {
           Expanded(
             child: Text(
               habit.name.value,
-              style: AppTypography.body,
+              style: AppTypography.body.copyWith(
+                color: isDone ? AppColors.textSecondary : AppColors.textPrimary,
+                decoration:
+                    isDone ? TextDecoration.lineThrough : TextDecoration.none,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

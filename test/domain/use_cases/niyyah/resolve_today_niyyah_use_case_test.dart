@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/domain/entities/daily_niyyah.dart';
+import 'package:murabbi_mobile/domain/entities/niyyah_display_item.dart';
 import 'package:murabbi_mobile/domain/entities/niyyah_suggestion.dart';
 import 'package:murabbi_mobile/domain/repositories/niyyah_repository.dart';
 import 'package:murabbi_mobile/domain/repositories/niyyah_suggestion_repository.dart';
@@ -49,8 +50,10 @@ void main() {
     suggestionRepo = MockSuggestionRepo();
   });
 
-  ResolveTodayNiyyahUseCase buildUseCase() =>
-      ResolveTodayNiyyahUseCase(niyyahRepo, suggestionRepo);
+  ResolveTodayNiyyahUseCase buildUseCase() => ResolveTodayNiyyahUseCase(
+    niyyahRepository: niyyahRepo,
+    suggestionRepository: suggestionRepo,
+  );
 
   group('ResolveTodayNiyyahUseCase — niyyah personnelle', () {
     test('retourne la niyyah personnelle quand elle existe', () async {
@@ -59,13 +62,12 @@ void main() {
       ).thenAnswer((_) async => personalNiyyah);
 
       final result = await buildUseCase().call(
-        userId: userId,
+        userId,
         referenceDate: today,
       );
 
-      expect(result, isNotNull);
-      expect(result!.text, 'Mon intention personnelle.');
-      expect(result.isPersonal, isTrue);
+      expect(result, isA<UserNiyyah>());
+      expect(result.displayText, 'Mon intention personnelle.');
       verifyNever(() => suggestionRepo.getActiveSuggestions());
     });
   });
@@ -82,55 +84,55 @@ void main() {
 
     test('retourne une suggestion système quand aucune niyyah personnelle', () async {
       final result = await buildUseCase().call(
-        userId: userId,
+        userId,
         referenceDate: today,
       );
 
-      expect(result, isNotNull);
-      expect(result!.isPersonal, isFalse);
+      expect(result, isA<SystemNiyyah>());
     });
 
     test('rotation : dayOfYear 145 % 3 = index 1 → Suggestion 1', () async {
       // today = 2026-05-25 → dayOfYear = 145, 145 % 3 = 1
       final result = await buildUseCase().call(
-        userId: userId,
+        userId,
         referenceDate: today,
       );
 
-      expect(result!.text, 'Suggestion 1');
+      expect(result.displayText, 'Suggestion 1');
     });
 
     test('rotation : dayOfYear 1 % 3 = index 1 → Suggestion 1', () async {
       final jan1 = DateTime(2026, 1, 1); // dayOfYear = 1
       final result = await buildUseCase().call(
-        userId: userId,
+        userId,
         referenceDate: jan1,
       );
 
-      expect(result!.text, 'Suggestion 1');
+      expect(result.displayText, 'Suggestion 1');
     });
 
     test('rotation : dayOfYear 3 % 3 = index 0 → Suggestion 0', () async {
       final jan3 = DateTime(2026, 1, 3); // dayOfYear = 3
       final result = await buildUseCase().call(
-        userId: userId,
+        userId,
         referenceDate: jan3,
       );
 
-      expect(result!.text, 'Suggestion 0');
+      expect(result.displayText, 'Suggestion 0');
     });
 
-    test('retourne null quand aucune suggestion active', () async {
+    test('retourne le fallback hardcodé quand aucune suggestion active', () async {
       when(
         () => suggestionRepo.getActiveSuggestions(),
       ).thenAnswer((_) async => []);
 
       final result = await buildUseCase().call(
-        userId: userId,
+        userId,
         referenceDate: today,
       );
 
-      expect(result, isNull);
+      expect(result, isA<SystemNiyyah>());
+      expect(result.displayText, isNotEmpty);
     });
   });
 }

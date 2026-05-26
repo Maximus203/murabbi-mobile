@@ -41,12 +41,11 @@ class Sa03PrayerDetailScreen extends ConsumerWidget {
       backgroundColor: AppColors.bgPrimary,
       appBar: AppHeader.back(title: label, onBack: onBack),
       body: asyncState.when(
-        loading: () =>
-            const Center(
-              child: CircularProgressIndicator(
-                strokeWidth: AppBorderWidth.indicatorStroke,
-              ),
-            ),
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            strokeWidth: AppBorderWidth.indicatorStroke,
+          ),
+        ),
         error: (_, _) => const _ErrorView(),
         data: (state) => _DetailBody(
           state: state,

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_clock_provider.dart';
+import 'package:murabbi_mobile/presentation/theme/app_duration.dart';
 
 /// Ticker périodique scoped au countdown "Dans X min" de _NextPrayerCard.
 ///
@@ -20,7 +21,7 @@ final dashboardTickerProvider = StreamProvider.autoDispose<DateTime>((ref) {
     onListen: () {
       controller.add(clock());
       timer = Timer.periodic(
-        const Duration(seconds: 30),
+        AppDuration.dashboardTick,
         (_) => controller.add(clock()),
       );
     },

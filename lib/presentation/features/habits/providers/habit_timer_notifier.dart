@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:murabbi_mobile/presentation/theme/app_duration.dart';
 
 /// Statut du timer in-app (spec v1.5 § 3.5, ADR-008).
 enum HabitTimerStatus { initial, running, paused, completed }
@@ -58,7 +59,7 @@ class HabitTimerNotifier extends FamilyNotifier<HabitTimerState, Duration> {
   void play() {
     if (state.isCompleted) return;
     _cancelTicker();
-    _ticker = Timer.periodic(const Duration(seconds: 1), _tick);
+    _ticker = Timer.periodic(AppDuration.timerTick, _tick);
     state = state.copyWith(status: HabitTimerStatus.running);
   }
 
@@ -76,7 +77,7 @@ class HabitTimerNotifier extends FamilyNotifier<HabitTimerState, Duration> {
   }
 
   void _tick(Timer _) {
-    final next = state.elapsed + const Duration(seconds: 1);
+    final next = state.elapsed + AppDuration.timerTick;
     if (next >= state.target) {
       _cancelTicker();
       state = state.copyWith(

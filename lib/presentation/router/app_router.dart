@@ -83,7 +83,7 @@ class _ShellScaffold extends ConsumerWidget {
     final isOnline = ref.watch(connectivityProvider).valueOrNull ?? true;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       // La BottomNav est dans le shell → un seul widget partagé entre onglets,
       // pas de reconstruction à chaque changement d'onglet.
       bottomNavigationBar: AppBottomNav(
@@ -402,9 +402,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.salat,
                 builder: (context, _) => Sa01TodayScreen(
-                  // Décision UX issue #214 : la config salat n'est accessible
-                  // que depuis ST-01 (Paramètres → Horaires de prière).
-                  onConfigureSettings: () => context.go(AppRoutes.settings),
+                  // Fix #215 : dirige vers SA-02 (réglages salat) et non vers
+                  // ST-01 (paramètres généraux) — comportement attendu par la
+                  // maquette pour l'utilisateur non-configuré.
+                  onConfigureSettings: () =>
+                      context.go(AppRoutes.salatSettings),
                   onOpenDetail: (prayerName) =>
                       context.go(AppRoutes.salatDetail(prayerName)),
                 ),

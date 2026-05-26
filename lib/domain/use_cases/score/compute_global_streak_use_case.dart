@@ -1,44 +1,37 @@
-import 'package:equatable/equatable.dart';
-import 'package:murabbi_mobile/domain/entities/level.dart';
+import 'package:murabbi_mobile/domain/entities/daily_summary.dart';
 
-/// Score quotidien (date normalisée + total de points).
-class DailyScore extends Equatable {
-  final DateTime date;
-  final int points;
-
-  const DailyScore({required this.date, required this.points});
-
-  @override
-  List<Object?> get props => [date, points];
-}
-
-/// Q-17 verrouillée — option C : streak global = jours consécutifs où
-/// `dailyPoints >= level.dailyGoal`, comptés à rebours depuis [referenceDate].
+/// Streak global = jours consécutifs à rebours depuis [referenceDate]
+/// où `DailySummary.streakValid == true` (objectif 80% atteint, Q-23 Option A).
 ///
-/// Cas particuliers (cf. issue #9 commentaire Q-17) :
-/// - Pas d'historique ou jour de référence < goal → streak = 0
-/// - Trou dans l'historique → break (pas de « jour off » en V1)
-/// - Changement de niveau → on évalue avec le **nouveau** dailyGoal partout
+/// Règles :
+/// - Aujourd'hui non encore terminé (`streakValid = false` ou absent) ne
+///   pénalise pas le streak — on commence à compter à partir de J-1.
+/// - Un trou d'un seul jour calendaire casse le streak.
+/// - Si la liste est vide → 0.
 class ComputeGlobalStreakUseCase {
   const ComputeGlobalStreakUseCase();
 
   int call({
-    required List<DailyScore> history,
+    required List<DailySummary> history,
     required DateTime referenceDate,
-    required Level level,
   }) {
     if (history.isEmpty) return 0;
 
-    final goal = level.dailyGoal;
-    final byDay = <DateTime, int>{
-      for (final s in history) _normalize(s.date): s.points,
+    final today = _normalize(referenceDate);
+
+    // Indexer par date normalisée pour lookup O(1).
+    final byDay = <DateTime, bool>{
+      for (final s in history) _normalize(s.day): s.streakValid,
     };
 
     var streak = 0;
-    var cursor = _normalize(referenceDate);
+
+    // Si aujourd'hui n'est pas validé (absent ou false), on commence à J-1.
+    var cursor = (byDay[today] == true) ? today : today.subtract(const Duration(days: 1));
+
     while (true) {
-      final pts = byDay[cursor];
-      if (pts == null || pts < goal) break;
+      final valid = byDay[cursor];
+      if (valid != true) break;
       streak++;
       cursor = cursor.subtract(const Duration(days: 1));
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_opacity.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 
@@ -34,7 +35,7 @@ class AppChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bgColor = selected
-        ? AppColors.accent.withValues(alpha: 0.15)
+        ? AppColors.accent.withValues(alpha: AppOpacity.tint)
         : AppColors.bgInput;
     final borderColor = selected ? AppColors.accent : AppColors.borderDefault;
     final textColor = selected ? AppColors.accent : AppColors.textPrimary;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_duration.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 
@@ -124,7 +125,7 @@ class _ShimmerBoxState extends State<_ShimmerBox>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: AppDuration.shimmer,
     )..repeat();
     _anim = Tween<double>(
       begin: -1,

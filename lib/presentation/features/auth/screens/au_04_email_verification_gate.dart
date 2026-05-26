@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/auth/screens/au_04_email_verification_screen.dart';
+import 'package:murabbi_mobile/presentation/theme/app_duration.dart';
 
 /// Wrapper "gate" — branche [Au04EmailVerificationScreen] sur le routeur :
 /// - lit l'email depuis `authNotifierProvider` (utilisateur fraîchement
@@ -47,7 +48,7 @@ class _Au04EmailVerificationGateState
   Timer? _poller;
   bool _continueFired = false;
 
-  static const _pollInterval = Duration(seconds: 5);
+  static const _pollInterval = AppDuration.pollInterval;
 
   @override
   void initState() {

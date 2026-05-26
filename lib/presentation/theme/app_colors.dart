@@ -124,6 +124,14 @@ class AppColors {
 
   /// Fond bannière hors-ligne — orange Material 700 (sync pending).
   static const Color offlineBanner = Color(0xFFF57C00);
+
+  /// Blanc pur — texte et icônes sur fond sombre (overlay vidéo, gradient noir).
+  /// Usage : `color: AppColors.onOverlay` ou `.copyWith(color: AppColors.onOverlay)`.
+  static const Color onOverlay = Color(0xFFFFFFFF);
+
+  /// Noir pur — base des gradients sombres sur vidéo/média (P-2).
+  /// N'est jamais utilisé seul : toujours `.withValues(alpha: ...)`.
+  static const Color overlayDark = Color(0xFF000000);
 }
 
 /// Palette sombre Murabbi — miroir terreuse de [AppColors] en mode nuit.

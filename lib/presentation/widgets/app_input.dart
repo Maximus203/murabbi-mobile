@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/core/utils/icon_utils.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_duration.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 
@@ -157,7 +158,7 @@ class _AppInputState extends State<AppInput> {
           const SizedBox(height: AppSpacing.s2),
         ],
         AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
+          duration: AppDuration.fast,
           constraints: const BoxConstraints(
             minHeight: kMinInteractiveDimension,
           ),

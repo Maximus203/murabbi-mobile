@@ -51,6 +51,11 @@ dependencies:
   # Utils
   equatable: ^2.0.7
 
+  # HTTP client — utilisé par GeocodingService (Nominatim reverse geocoding).
+  # Disponible transitivement via Flutter SDK ; déclaré explicitement pour
+  # satisfaire la règle `depend_on_referenced_packages` de l'analyser.
+  http: ^1.2.0
+
   # Grapheme cluster iteration (used by BuildCollectionCoverUseCase to compute
   # the fallback cover initial — emoji + combining marks safe). Available
   # transitively via the Flutter SDK; declared explicitly so analyzer's

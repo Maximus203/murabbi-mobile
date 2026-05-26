@@ -1,46 +1,43 @@
+import 'package:murabbi_mobile/domain/entities/niyyah_display_item.dart';
 import 'package:murabbi_mobile/domain/repositories/niyyah_repository.dart';
 import 'package:murabbi_mobile/domain/repositories/niyyah_suggestion_repository.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 
-/// Résultat de [ResolveTodayNiyyahUseCase].
-///
-/// [isPersonal] = true → texte posé par l'utilisateur (éditable).
-/// [isPersonal] = false → suggestion système en rotation.
-class ResolvedNiyyah {
-  final String text;
-  final bool isPersonal;
-
-  const ResolvedNiyyah({required this.text, required this.isPersonal});
-}
-
-/// Retourne la niyyah du jour : personnelle si l'utilisateur en a posé une,
-/// sinon une suggestion système en rotation (dayOfYear % activeCount).
-///
-/// Le [referenceDate] est injecté pour faciliter les tests.
+/// Résout la niyyah à afficher pour aujourd'hui :
+/// 1. Niyyah personnelle de l'utilisateur si elle existe.
+/// 2. Sinon, suggestion système rotative (`dayOfYear % suggestions.length`).
+/// 3. Si aucune suggestion disponible, fallback hardcodé.
 class ResolveTodayNiyyahUseCase {
-  final NiyyahRepository _niyyahRepo;
-  final NiyyahSuggestionRepository _suggestionRepo;
+  static const _fallback =
+      'Je cherche à plaire à Allah dans tout ce que je fais aujourd\'hui.';
 
-  const ResolveTodayNiyyahUseCase(this._niyyahRepo, this._suggestionRepo);
+  final NiyyahRepository _niyyahRepository;
+  final NiyyahSuggestionRepository _suggestionRepository;
 
-  Future<ResolvedNiyyah?> call({
-    required UserId userId,
+  const ResolveTodayNiyyahUseCase({
+    required NiyyahRepository niyyahRepository,
+    required NiyyahSuggestionRepository suggestionRepository,
+  })  : _niyyahRepository = niyyahRepository,
+        _suggestionRepository = suggestionRepository;
+
+  Future<NiyyahDisplayItem> call(
+    UserId userId, {
     required DateTime referenceDate,
   }) async {
-    final personal = await _niyyahRepo.getTodayNiyyah(userId);
-    if (personal != null) {
-      return ResolvedNiyyah(text: personal.text.value, isPersonal: true);
-    }
+    final niyyah = await _niyyahRepository.getTodayNiyyah(userId);
+    if (niyyah != null) return UserNiyyah(niyyah);
 
-    final suggestions = await _suggestionRepo.getActiveSuggestions();
-    if (suggestions.isEmpty) return null;
+    final suggestions = await _suggestionRepository.getActiveSuggestions();
+    if (suggestions.isEmpty) return const SystemNiyyah(_fallback);
 
-    final sorted = [...suggestions]
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    final idx = _dayOfYear(referenceDate) % sorted.length;
-    return ResolvedNiyyah(text: sorted[idx].textFr, isPersonal: false);
+    final dayOfYear = _dayOfYear(referenceDate);
+    final index = dayOfYear % suggestions.length;
+    return SystemNiyyah.fromSuggestion(suggestions[index]);
   }
 
-  int _dayOfYear(DateTime dt) =>
-      dt.difference(DateTime(dt.year)).inDays + 1;
+  /// Numéro du jour dans l'année (1-based).
+  int _dayOfYear(DateTime date) {
+    final startOfYear = DateTime(date.year);
+    return date.difference(startOfYear).inDays + 1;
+  }
 }

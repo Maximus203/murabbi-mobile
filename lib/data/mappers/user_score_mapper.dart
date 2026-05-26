@@ -26,6 +26,7 @@ class UserScoreMapper {
       currentLevel: Level.fromPoints(totalPoints),
       weeklyRank: rawRank < 1 ? 1 : rawRank,
       previousWeekRank: row['previous_week_rank'] as int?,
+      pseudo: row['pseudo'] as String?,
     );
   }
 }

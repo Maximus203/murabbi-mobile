@@ -82,7 +82,7 @@ class _AccountChip extends StatelessWidget {
           ),
         ),
         child: Material(
-          color: Colors.transparent,
+          color: AppColors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           child: Row(
             mainAxisSize: MainAxisSize.min,

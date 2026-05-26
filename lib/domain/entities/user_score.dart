@@ -12,6 +12,10 @@ class UserScore extends Equatable {
   /// Rang de la semaine précédente — null si c'est la première semaine.
   final int? previousWeekRank;
 
+  /// Pseudo affiché dans le classement (depuis `weekly_leaderboard.pseudo`).
+  /// Null si la vue ne l'expose pas encore (défaut défensif).
+  final String? pseudo;
+
   UserScore({
     required this.userId,
     required this.totalPoints,
@@ -19,6 +23,7 @@ class UserScore extends Equatable {
     required this.currentLevel,
     required this.weeklyRank,
     this.previousWeekRank,
+    this.pseudo,
   }) {
     if (totalPoints < 0) {
       throw ArgumentError.value(
@@ -51,5 +56,6 @@ class UserScore extends Equatable {
     currentLevel,
     weeklyRank,
     previousWeekRank,
+    pseudo,
   ];
 }

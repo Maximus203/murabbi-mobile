@@ -14,6 +14,7 @@ import 'package:murabbi_mobile/presentation/features/categories/providers/catego
 import 'package:murabbi_mobile/presentation/features/collections/providers/collections_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_duration.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
@@ -336,7 +337,7 @@ class _CollectionIconPicker extends StatelessWidget {
         return GestureDetector(
           onTap: () => onSelected(name),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
+            duration: AppDuration.snappy,
             width: AppComponentSize.iconSelectorCell,
             height: AppComponentSize.iconSelectorCell,
             decoration: BoxDecoration(

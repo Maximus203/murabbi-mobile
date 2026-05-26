@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:murabbi_mobile/domain/entities/daily_summary.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/entities/habit_subtask.dart';
 import 'package:murabbi_mobile/domain/entities/habit_target.dart';
-import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/domain/use_cases/calendar/compute_day_color_use_case.dart';
 import 'package:murabbi_mobile/domain/use_cases/habits/reorder_subtasks_use_case.dart';
@@ -538,65 +538,54 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // Global streak (Q-17 option C)
+  // Global streak (Q-17 → rewrite DailySummary — Q-A/Q-23)
   // ---------------------------------------------------------------------------
 
-  group('ComputeGlobalStreakUseCase (Q-17 option C)', () {
+  group('ComputeGlobalStreakUseCase (Q-17 DailySummary)', () {
     const useCase = ComputeGlobalStreakUseCase();
     final ref = DateTime(2026, 5, 4);
 
-    DailyScore d(int daysAgo, int points) => DailyScore(
-      date: ref.subtract(Duration(days: daysAgo)),
-      points: points,
+    DailySummary d(int daysAgo, {required bool valid}) => DailySummary(
+      userId: UserId('u'),
+      day: ref.subtract(Duration(days: daysAgo)),
+      completionRate: valid ? 87.5 : 25.0,
+      streakValid: valid,
+      habitPointsToday: valid ? 70 : 20,
     );
 
     test('returns 0 for empty history', () {
-      expect(
-        useCase(history: const [], referenceDate: ref, level: Level.aspirant),
-        0,
-      );
+      expect(useCase(history: const [], referenceDate: ref), 0);
     });
 
-    test('counts consecutive days >= dailyGoal back from reference', () {
-      // Aspirant goal = 30 pts/j
-      final history = [d(0, 35), d(1, 40), d(2, 30), d(3, 10)];
-      expect(
-        useCase(history: history, referenceDate: ref, level: Level.aspirant),
-        3,
-      );
+    test('counts consecutive valid days back from reference', () {
+      final history = [
+        d(0, valid: true),
+        d(1, valid: true),
+        d(2, valid: true),
+        d(3, valid: false),
+      ];
+      expect(useCase(history: history, referenceDate: ref), 3);
     });
 
-    test('breaks on day below goal', () {
-      final history = [d(0, 35), d(1, 25)];
-      expect(
-        useCase(history: history, referenceDate: ref, level: Level.aspirant),
-        1,
-      );
+    test('breaks on first invalid day', () {
+      final history = [d(0, valid: true), d(1, valid: false), d(2, valid: true)];
+      expect(useCase(history: history, referenceDate: ref), 1);
     });
 
-    test('returns 0 if today below goal', () {
-      final history = [d(0, 10), d(1, 50)];
-      expect(
-        useCase(history: history, referenceDate: ref, level: Level.aspirant),
-        0,
-      );
+    test('today not done does not penalise streak — counts from J-1', () {
+      final history = [d(0, valid: false), d(1, valid: true), d(2, valid: true)];
+      expect(useCase(history: history, referenceDate: ref), 2);
     });
 
-    test('uses the level dailyGoal (Murid = 45)', () {
-      final history = [d(0, 50), d(1, 40)]; // 40 < 45 → break
-      expect(
-        useCase(history: history, referenceDate: ref, level: Level.murid),
-        1,
-      );
+    test('today absent — counts from J-1', () {
+      final history = [d(1, valid: true), d(2, valid: true)];
+      expect(useCase(history: history, referenceDate: ref), 2);
     });
 
-    test('skips missing days as breaks (no day off in V1)', () {
-      // No record for daysAgo=1 → break.
-      final history = [d(0, 60), d(2, 60)];
-      expect(
-        useCase(history: history, referenceDate: ref, level: Level.aspirant),
-        1,
-      );
+    test('missing day acts as a break', () {
+      // daysAgo=1 absent → streak stops at today.
+      final history = [d(0, valid: true), d(2, valid: true)];
+      expect(useCase(history: history, referenceDate: ref), 1);
     });
   });
 }
