@@ -281,4 +281,76 @@ void main() {
     // Toujours une seule habitude — update, pas create.
     expect(await repo.getHabits(testUser.id), hasLength(1));
   });
+
+  // ── Tests suppression (Phase 3 — bouton delete en mode édition) ────────────
+
+  testWidgets('mode création : bouton supprimer absent', (tester) async {
+    await pumpScreen(tester);
+    expect(find.text('Supprimer cette habitude'), findsNothing);
+  });
+
+  testWidgets('mode édition : bouton supprimer visible', (tester) async {
+    await pumpScreen(tester, initialHabit: makeHabit());
+    expect(find.text('Supprimer cette habitude'), findsOneWidget);
+  });
+
+  testWidgets('delete : tap → dialog de confirmation affiché', (tester) async {
+    final repo = InMemoryHabitRepository();
+    await repo.createHabit(userId: testUser.id, habit: makeHabit());
+    await pumpScreen(tester, customRepo: repo, initialHabit: makeHabit());
+
+    await tester.tap(find.text('Supprimer cette habitude'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Supprimer l\'habitude ?'), findsOneWidget);
+    // Boutons dialog présents.
+    expect(find.text('Supprimer'), findsOneWidget);
+    expect(find.text('Annuler'), findsOneWidget);
+  });
+
+  testWidgets('delete confirmé : repo vide + onCreated appelé', (tester) async {
+    final repo = InMemoryHabitRepository();
+    final habit = makeHabit();
+    await repo.createHabit(userId: testUser.id, habit: habit);
+
+    var doneCalled = false;
+    await pumpScreen(
+      tester,
+      customRepo: repo,
+      initialHabit: habit,
+      onCreated: () => doneCalled = true,
+    );
+
+    await tester.tap(find.text('Supprimer cette habitude'));
+    await tester.pumpAndSettle();
+    // Confirmer dans le dialog.
+    await tester.tap(find.text('Supprimer'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(doneCalled, isTrue);
+    expect(await repo.getHabits(testUser.id), isEmpty);
+  });
+
+  testWidgets('delete annulé : repo inchangé + écran reste ouvert', (
+    tester,
+  ) async {
+    final repo = InMemoryHabitRepository();
+    final habit = makeHabit();
+    await repo.createHabit(userId: testUser.id, habit: habit);
+
+    await pumpScreen(tester, customRepo: repo, initialHabit: habit);
+
+    await tester.tap(find.text('Supprimer cette habitude'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Annuler'));
+    await tester.pumpAndSettle();
+
+    // Dialog fermé.
+    expect(find.text('Supprimer l\'habitude ?'), findsNothing);
+    // Habitude toujours présente.
+    expect(await repo.getHabits(testUser.id), hasLength(1));
+    // Formulaire toujours visible.
+    expect(find.text('Supprimer cette habitude'), findsOneWidget);
+  });
 }

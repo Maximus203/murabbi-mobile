@@ -111,13 +111,13 @@ class HabitRow extends StatelessWidget {
               child: InkResponse(
                 key: const Key('habit_row_checkmark'),
                 onTap: onToggle,
-                radius: 24,
+                radius: AppIconSize.nav,
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.s2),
                   child: Icon(
                     _checkIcon,
                     key: const Key('habit_row_checkmark_icon'),
-                    size: 24,
+                    size: AppIconSize.nav,
                     color: _checkColor,
                   ),
                 ),

@@ -10,6 +10,7 @@ import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/habit_points.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/habit_detail_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
@@ -17,6 +18,7 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_chip.dart';
+import 'package:murabbi_mobile/presentation/widgets/app_dialog.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_input.dart';
 
@@ -194,6 +196,49 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
         _globalError = widget.isEditMode
             ? "Impossible de mettre à jour l'habitude. Réessaie dans un instant."
             : "Impossible de créer l'habitude. Réessaie dans un instant.";
+      });
+    }
+  }
+
+  /// Demande confirmation puis supprime l'habitude en mode édition.
+  Future<void> _delete() async {
+    final habit = widget.initialHabit!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AppDialog(
+        title: "Supprimer l'habitude ?",
+        body: '« ${habit.name.value} » sera définitivement supprimée.',
+        confirmLabel: 'Supprimer',
+        isDangerous: true,
+        onConfirm: () => Navigator.pop(dialogContext, true),
+        onCancel: () => Navigator.pop(dialogContext, false),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final user = ref.read(authNotifierProvider).valueOrNull;
+    if (user == null) {
+      setState(() => _globalError = 'Tu dois être connecté.');
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      await ref.read(deleteHabitUseCaseProvider).call(habit.id, user.id);
+      await ref.read(habitsNotifierProvider.notifier).refresh();
+      if (!mounted) return;
+      widget.onCreated();
+    } catch (e, stackTrace) {
+      appLog.e(
+        'Ha02CreateHabitScreen delete failed',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _globalError =
+            "Impossible de supprimer l'habitude. Réessaie dans un instant.";
       });
     }
   }
@@ -450,6 +495,17 @@ class _Ha02CreateHabitScreenState extends ConsumerState<Ha02CreateHabitScreen> {
                 )
               : null,
         ),
+
+        // ── Supprimer (mode édition uniquement) ────────────────────
+        if (widget.isEditMode) ...[
+          const SizedBox(height: AppSpacing.s3),
+          AppButton(
+            label: 'Supprimer cette habitude',
+            variant: AppButtonVariant.destructive,
+            onPressed: _saving ? null : _delete,
+          ),
+        ],
+
         const SizedBox(height: AppSpacing.s6),
       ],
     );

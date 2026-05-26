@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_target.dart';
 import 'package:murabbi_mobile/domain/value_objects/category_id.dart';
@@ -111,7 +112,8 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.byIcon(Icons.close), findsOneWidget);
+      // L'implémentation utilise LucideIcons.x — pas Icons.close (Material interdit).
+      expect(find.byIcon(LucideIcons.x), findsOneWidget);
     });
 
     testWidgets('affiche "✓ Valider l\'habitude" dans A.1 (état initial)', (

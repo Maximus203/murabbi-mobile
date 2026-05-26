@@ -63,7 +63,7 @@ class HbDetailScreen extends ConsumerWidget {
             : IconButton(
                 key: const Key('hb_detail_menu'),
                 tooltip: 'Options',
-                splashRadius: 18,
+                splashRadius: AppIconSize.md,
                 onPressed: () => _showActionsSheet(context, ref),
                 icon: Icon(
                   LucideIcons.ellipsisVertical,
@@ -383,10 +383,7 @@ class _ObjectiveCard extends StatelessWidget {
             children: [
               Text(
                 '$_actual',
-                style: AppTypography.h1.copyWith(
-                  fontSize: 40,
-                  color: _valueColor,
-                ),
+                style: AppTypography.displayMd.copyWith(color: _valueColor),
               ),
               Text(
                 ' / $_targetValue $_unitLabel',
@@ -404,7 +401,7 @@ class _ObjectiveCard extends StatelessWidget {
               value: (_actual / _targetValue).clamp(0.0, 1.0),
               backgroundColor: AppColors.bgInput,
               color: _done ? AppColors.success : AppColors.accent,
-              minHeight: 6,
+              minHeight: AppComponentSize.progressBarHeight,
             ),
           ),
           const SizedBox(height: AppSpacing.s4),
@@ -463,12 +460,13 @@ class _TimerCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s3),
           Row(
             children: [
-              const Icon(LucideIcons.timer, size: AppIconSize.semilg, color: AppColors.accent),
-              const SizedBox(width: AppSpacing.s3),
-              Text(
-                _targetLabel,
-                style: AppTypography.h1.copyWith(fontSize: 32),
+              const Icon(
+                LucideIcons.timer,
+                size: AppIconSize.semilg,
+                color: AppColors.accent,
               ),
+              const SizedBox(width: AppSpacing.s3),
+              Text(_targetLabel, style: AppTypography.h1),
             ],
           ),
           const SizedBox(height: AppSpacing.s4),
