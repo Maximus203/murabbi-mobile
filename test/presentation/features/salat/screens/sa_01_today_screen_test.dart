@@ -150,8 +150,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Aller dans Paramètres'), findsOneWidget);
-    await tester.tap(find.text('Aller dans Paramètres'));
+    // Label CTA SA-01 NotConfiguredView (cf. sa_01_today_screen.dart ligne ~563).
+    // Ancienne valeur "Aller dans Paramètres" renommée "Configurer maintenant"
+    // lors du polish SA-01.
+    expect(find.text('Configurer maintenant'), findsOneWidget);
+    await tester.tap(find.text('Configurer maintenant'));
     await tester.pumpAndSettle();
     expect(configureCalled, isTrue);
   });
