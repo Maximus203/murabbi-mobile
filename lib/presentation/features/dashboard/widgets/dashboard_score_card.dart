@@ -31,19 +31,22 @@ class DashboardScoreCard extends StatelessWidget {
 
     final double ringProgress;
     final String centerLabel;
-    final String mainValue;
+    final String mainNumber;
+    final String mainUnit;
     final String subText;
 
     if (dailySummary != null) {
       ringProgress = dailySummary!.completionRate / 100;
       centerLabel = '${dailySummary!.completionRate.round()}%';
-      mainValue = '${dailySummary!.habitPointsToday} / ${level.dailyGoal} pts';
+      mainNumber = '${dailySummary!.habitPointsToday}';
+      mainUnit = '/ ${level.dailyGoal} pts';
       subText = 'Score du jour · objectif ${level.dailyGoal} pts';
     } else {
       final progress = level.progressToNext(score.totalPoints);
       ringProgress = progress;
       centerLabel = '${(progress * 100).round()}%';
-      mainValue = '${score.totalPoints} pts';
+      mainNumber = '${score.totalPoints}';
+      mainUnit = 'pts';
       final next = level.nextLevel;
       subText = next == null
           ? 'Niveau maximal atteint'
@@ -54,7 +57,7 @@ class DashboardScoreCard extends StatelessWidget {
 
     return Semantics(
       label:
-          'Niveau ${level.label}. $mainValue. '
+          'Niveau ${level.label}. $mainNumber $mainUnit. '
           'Progression $pct pour cent.',
       excludeSemantics: true,
       child: AppCard(
@@ -71,15 +74,31 @@ class DashboardScoreCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  AppBadge(label: level.label, leadingIcon: LucideIcons.star),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(mainValue, style: AppTypography.h2),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(mainNumber, style: AppTypography.h1),
+                      const SizedBox(width: AppSpacing.s2),
+                      Text(
+                        mainUnit,
+                        style: AppTypography.body.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: AppSpacing.s1),
                   Text(
                     subText,
                     style: AppTypography.body.copyWith(
                       color: AppColors.textSecondary,
                     ),
+                  ),
+                  const SizedBox(height: AppSpacing.s2),
+                  AppBadge(
+                    label: '${level.label} · Niveau ${level.index + 1}',
+                    leadingIcon: LucideIcons.star,
                   ),
                 ],
               ),

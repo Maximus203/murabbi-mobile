@@ -29,8 +29,6 @@ import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_dialog.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
-import 'package:murabbi_mobile/services/video_service.dart';
-
 // ignore: prefer_final_fields
 
 /// HM-01 — Écran d'accueil Murabbi (slice 3.A).
@@ -397,96 +395,71 @@ class _StatsCard extends ConsumerWidget {
 
 /// Card “Intention du jour” — niyyah personnelle ou suggestion système.
 ///
-/// Fond vidéo (01_murabbi depuis Supabase Storage — [AppMedia.niyyahVideoKey])
-/// avec label “INTENTION DU JOUR” et texte italique en overlay semi-opaque.
-/// [AppVideoPlayer] gère le fallback gradient si la vidéo n'est pas disponible.
+/// Fond vidéo local [AppMedia.niyyahLocalVideo] (asset bundlé, 120 px).
+/// Dégradé transparent→noir 55 % ancré en bas à gauche (DS validé).
+/// [AppVideoPlayer] gère le fallback gradient si le player échoue.
 class _NiyyahCard extends ConsumerWidget {
   const _NiyyahCard();
 
   static const String _fallback = 'Je fais cela pour plaire à Allah.';
-  static const double _height = 130;
+  static const double _height = 120;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final niyyahAsync = ref.watch(niyyahProvider);
-    final videoUrl = ref
-        .watch(videoServiceProvider)
-        .getRemoteVideoUrl(AppMedia.niyyahVideoKey);
 
     return niyyahAsync.when(
       loading: () => const AppSkeletonCard(lineCount: 2),
-      error: (e, _) => _videoCard(
-        text: _fallback,
-        isPersonal: false,
-        videoUrl: videoUrl,
-      ),
+      error: (e, _) => _videoCard(text: _fallback, isPersonal: false),
       data: (resolved) => _videoCard(
         text: resolved?.text ?? _fallback,
         isPersonal: resolved?.isPersonal ?? false,
-        videoUrl: videoUrl,
       ),
     );
   }
 
-  Widget _videoCard({
-    required String text,
-    required bool isPersonal,
-    required String videoUrl,
-  }) {
+  Widget _videoCard({required String text, required bool isPersonal}) {
     return AppVideoPlayer(
-      url: videoUrl,
+      assetPath: AppMedia.niyyahLocalVideo,
       height: _height,
       borderRadius: BorderRadius.circular(AppRadius.card),
-      overlay: _NiyyahOverlay(text: text, isPersonal: isPersonal),
-    );
-  }
-}
-
-/// Superposition de la niyyah sur le fond vidéo — dégradé + texte.
-class _NiyyahOverlay extends StatelessWidget {
-  final String text;
-  final bool isPersonal;
-
-  const _NiyyahOverlay({required this.text, required this.isPersonal});
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.videoOverlayTop, AppColors.videoOverlayBottom],
+      overlay: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [AppColors.transparent, AppColors.videoOverlayBottom],
+          ),
         ),
-      ),
-      child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s4),
+        alignment: Alignment.bottomLeft,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Row(
               children: [
                 Text(
                   'INTENTION DU JOUR',
                   style: AppTypography.label.copyWith(
-                    color: AppColors.accent,
+                    color: AppColors.bgSurface,
                   ),
                 ),
-                const Spacer(),
-                if (isPersonal)
+                if (isPersonal) ...[
+                  const Spacer(),
                   const Icon(
                     LucideIcons.pencil,
                     size: 16,
                     color: AppColors.videoOverlayText,
                   ),
+                ],
               ],
             ),
-            const SizedBox(height: AppSpacing.s3),
+            const SizedBox(height: AppSpacing.s2),
             Text(
               '”$text”',
               style: AppTypography.body.copyWith(
-                color: AppColors.videoOverlayText,
+                color: AppColors.bgSurface,
                 fontStyle: FontStyle.italic,
               ),
             ),

@@ -42,8 +42,9 @@ void main() {
       );
       await tester.pump(const Duration(seconds: 1));
 
-      expect(find.text('Aspirant'), findsOneWidget);
-      expect(find.text('5000 pts'), findsOneWidget);
+      expect(find.textContaining('Aspirant'), findsOneWidget);
+      expect(find.text('5000'), findsOneWidget);
+      expect(find.text('pts'), findsOneWidget);
       // aspirant 0 → murid 10000 : 5000 ⇒ 50%
       expect(find.text('50%'), findsOneWidget);
       expect(find.text('Prochain palier : Murīd'), findsOneWidget);
@@ -80,7 +81,8 @@ void main() {
       );
       await tester.pump(const Duration(seconds: 1));
 
-      expect(find.text('18 / 30 pts'), findsOneWidget);
+      expect(find.text('18'), findsOneWidget);
+      expect(find.text('/ 30 pts'), findsOneWidget);
       expect(find.text('Score du jour · objectif 30 pts'), findsOneWidget);
     });
 

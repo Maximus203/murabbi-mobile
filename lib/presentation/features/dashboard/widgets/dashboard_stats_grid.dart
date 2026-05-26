@@ -127,14 +127,14 @@ class _StatTile extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.s3),
-              Text(value, style: AppTypography.h2),
+              Text(value, style: AppTypography.h1),
               const SizedBox(height: AppSpacing.s1),
               // Toujours rendu pour garantir une hauteur de tuile constante.
               Text(
                 subLabel ?? '',
                 style: AppTypography.caption.copyWith(
                   color: subLabel != null
-                      ? AppColors.accent
+                      ? AppColors.success
                       : Colors.transparent,
                 ),
               ),

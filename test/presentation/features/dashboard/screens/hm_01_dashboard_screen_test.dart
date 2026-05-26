@@ -16,16 +16,8 @@ import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboa
 import 'package:murabbi_mobile/presentation/features/dashboard/screens/hm_01_dashboard_screen.dart';
 import 'package:murabbi_mobile/services/prayer/prayer_times_providers.dart';
 import 'package:murabbi_mobile/services/prayer/prayer_times_service.dart';
-import 'package:murabbi_mobile/services/video_service.dart';
 
 class _MockSettingsRepo extends Mock implements PrayerSettingsRepository {}
-
-/// Stub sans Supabase — retourne une URL statique pour les widget tests.
-class _FakeVideoService implements VideoService {
-  const _FakeVideoService();
-  @override
-  String getRemoteVideoUrl(String key) => 'https://test.example.com/$key';
-}
 
 class _FakePrayerTimesService implements PrayerTimesService {
   _FakePrayerTimesService(this.response);
@@ -78,7 +70,6 @@ void main() {
             repository: settingsRepo,
           ),
         ),
-        videoServiceProvider.overrideWithValue(const _FakeVideoService()),
       ],
       child: MaterialApp(
         home: Hm01DashboardScreen(

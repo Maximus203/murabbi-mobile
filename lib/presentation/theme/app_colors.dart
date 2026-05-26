@@ -109,11 +109,9 @@ class AppColors {
   static const Color googleBlue = Color(0xFF4285F4);
 
   // -- Superposition vidéo (bandeaux vidéo — HM-01 niyyah, SA-01, SA-03) ----
-  /// Sommet du dégradé de lisibilité sur fond vidéo — noir 40 %.
-  static const Color videoOverlayTop = Color(0x66000000);
-
-  /// Base du dégradé de lisibilité sur fond vidéo — noir 80 %.
-  static const Color videoOverlayBottom = Color(0xCC000000);
+  /// Base du dégradé — noir 55 % (bottom-heavy scrim, DS validé sur 01.mp4).
+  /// Le sommet du dégradé utilise [transparent] directement dans le widget.
+  static const Color videoOverlayBottom = Color(0x8C000000);
 
   /// Texte affiché sur la superposition vidéo (label + citation).
   static const Color videoOverlayText = Colors.white;

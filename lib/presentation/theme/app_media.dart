@@ -22,7 +22,10 @@ abstract class AppMedia {
 
   // ── Clés Supabase Storage — bucket [mediaBucket] ──────────────────────────
 
-  /// HM-01 Niyyah card — bandeau 130 px.
+  /// HM-01 Niyyah card — asset bundlé (bandeau 120 px).
+  static const String niyyahLocalVideo = 'assets/media/01.mp4';
+
+  /// HM-01 Niyyah card — clé Supabase Storage (fallback réseau).
   static const String niyyahVideoKey = '01_murabbi.mp4';
 
   /// SA-03 SL-DETAIL — bandeau 200 px.
