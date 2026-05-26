@@ -11,7 +11,7 @@ import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 enum AppBottomNavTab { home, salat, habits, collections, leaderboard }
 
 /// Barre de navigation Murabbi — bordure top thin 0.5px, fond `bgPrimary`,
-/// label 11px sous l'icône Lucide 22px.
+/// hauteur 76 dp (DS v1.5), icônes 24 dp, labels 10 dp.
 ///
 /// Accessibilité (Copilot review #2 + #3) :
 /// - Wrappée dans `SafeArea(top: false, bottom: true)` — le home indicator
@@ -19,7 +19,8 @@ enum AppBottomNavTab { home, salat, habits, collections, leaderboard }
 /// - Chaque onglet est exposé via `Semantics(button, selected, label)` —
 ///   VoiceOver / TalkBack annoncent l'état actif et le rôle bouton.
 class AppBottomNav extends StatelessWidget {
-  static const double height = 72;
+  /// Hauteur contractuelle DS v1.5 : 76 dp.
+  static const double height = AppComponentSize.bottomNavHeight;
 
   final AppBottomNavTab active;
   final ValueChanged<AppBottomNavTab> onTabSelected;
@@ -56,12 +57,12 @@ class AppBottomNav extends StatelessWidget {
             _NavItem(
               tab: AppBottomNavTab.salat,
               label: 'Salat',
-              icon: LucideIcons.compass,
+              icon: LucideIcons.moonStar,
             ),
             _NavItem(
               tab: AppBottomNavTab.habits,
               label: 'Habitudes',
-              icon: LucideIcons.activity,
+              icon: LucideIcons.listChecks,
             ),
             _NavItem(
               tab: AppBottomNavTab.collections,
@@ -116,7 +117,7 @@ class _NavItem extends StatelessWidget {
             const SizedBox(height: AppSpacing.s1),
             Text(
               label,
-              style: AppTypography.caption.copyWith(
+              style: AppTypography.navLabel.copyWith(
                 color: color,
                 fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
               ),

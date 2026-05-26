@@ -143,6 +143,9 @@ class AppComponentSize {
   /// 132px — hauteur contractuelle d'une tuile stat du dashboard HM-01.
   /// Garantit une hauteur identique avec ou sans sous-label.
   static const double statTile = 132;
+
+  /// 76px — hauteur contractuelle de la bottom navigation bar (DS v1.5).
+  static const double bottomNavHeight = 76;
 }
 
 /// Largeurs de bordure — grammaire ternaire volontaire.

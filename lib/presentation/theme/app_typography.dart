@@ -140,4 +140,12 @@ class AppTypography {
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
   );
+
+  /// NavLabel 10 / Geist Medium — libellé onglet bottom navigation bar (DS v1.5).
+  static const TextStyle navLabel = TextStyle(
+    fontFamily: _geist,
+    fontSize: 10,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textTertiary,
+  );
 }
