@@ -23,6 +23,7 @@ import 'package:murabbi_mobile/presentation/features/habits/providers/today_habi
 import 'package:murabbi_mobile/presentation/features/salat/providers/today_salat_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_media.dart';
+import 'package:murabbi_mobile/presentation/theme/app_responsive.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
@@ -175,9 +176,9 @@ class _DashboardBody extends ConsumerWidget {
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 LucideIcons.bell,
-                size: AppIconSize.rg,
+                size: context.rs(AppIconSize.rg),
                 color: AppColors.textSecondary,
               ),
               const SizedBox(width: AppSpacing.s3),
@@ -694,9 +695,10 @@ class _UserAvatar extends StatelessWidget {
     final initial = (user?.pseudo.value ?? '').isEmpty
         ? '?'
         : user!.pseudo.value.characters.first.toUpperCase();
+    final size = context.rs(AppComponentSize.avatarSm);
     return Container(
-      width: AppComponentSize.avatarSm,
-      height: AppComponentSize.avatarSm,
+      width: size,
+      height: size,
       decoration: const BoxDecoration(
         color: AppColors.accent,
         shape: BoxShape.circle,

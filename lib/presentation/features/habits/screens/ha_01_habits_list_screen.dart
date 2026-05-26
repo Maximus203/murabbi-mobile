@@ -12,6 +12,7 @@ import 'package:murabbi_mobile/presentation/features/habits/providers/habits_not
 import 'package:murabbi_mobile/presentation/features/habits/providers/today_habit_statuses_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/widgets/habit_row.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_responsive.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
@@ -83,9 +84,9 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
                 tooltip: 'Catégories',
                 splashRadius: 18,
                 onPressed: widget.onOpenCategories,
-                icon: const Icon(
+                icon: Icon(
                   LucideIcons.tags,
-                  size: AppIconSize.rg,
+                  size: context.rs(AppIconSize.rg),
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -93,9 +94,9 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
               tooltip: 'Nouvelle habitude',
               splashRadius: 18,
               onPressed: widget.onCreate,
-              icon: const Icon(
+              icon: Icon(
                 LucideIcons.plus,
-                size: AppIconSize.nav,
+                size: context.rs(AppIconSize.nav),
                 color: AppColors.textPrimary,
               ),
             ),

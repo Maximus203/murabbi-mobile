@@ -9,6 +9,7 @@ import 'package:murabbi_mobile/presentation/features/categories/providers/catego
 import 'package:murabbi_mobile/presentation/features/categories/widgets/category_tile.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_responsive.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
@@ -45,9 +46,9 @@ class Hb03CategoriesListScreen extends ConsumerWidget {
           tooltip: 'Nouvelle catégorie',
           splashRadius: 18,
           onPressed: onCreate,
-          icon: const Icon(
+          icon: Icon(
             LucideIcons.plus,
-            size: AppIconSize.rg,
+            size: context.rs(AppIconSize.rg),
             color: AppColors.textPrimary,
           ),
         ),

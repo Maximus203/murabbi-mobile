@@ -13,6 +13,7 @@ import 'package:murabbi_mobile/presentation/features/categories/providers/catego
 import 'package:murabbi_mobile/presentation/features/collections/providers/collections_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_responsive.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
@@ -138,7 +139,7 @@ class _DetailScaffold extends ConsumerWidget {
                 splashRadius: 18,
                 icon: Icon(
                   lu(LucideIcons.ellipsis),
-                  size: AppIconSize.rg,
+                  size: context.rs(AppIconSize.rg),
                   color: AppColors.textPrimary,
                 ),
               )

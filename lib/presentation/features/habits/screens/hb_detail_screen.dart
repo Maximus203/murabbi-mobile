@@ -12,6 +12,7 @@ import 'package:murabbi_mobile/presentation/features/habits/widgets/habit_stat_c
 import 'package:murabbi_mobile/presentation/features/habits/widgets/habit_timer_sheet.dart';
 import 'package:murabbi_mobile/presentation/features/habits/widgets/heatmap_30.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_responsive.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
@@ -64,9 +65,9 @@ class HbDetailScreen extends ConsumerWidget {
                 tooltip: 'Options',
                 splashRadius: 18,
                 onPressed: () => _showActionsSheet(context, ref),
-                icon: const Icon(
+                icon: Icon(
                   LucideIcons.ellipsisVertical,
-                  size: AppIconSize.rg,
+                  size: context.rs(AppIconSize.rg),
                   color: AppColors.textPrimary,
                 ),
               ),

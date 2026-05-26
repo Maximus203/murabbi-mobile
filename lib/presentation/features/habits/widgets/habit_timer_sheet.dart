@@ -8,6 +8,7 @@ import 'package:murabbi_mobile/domain/entities/habit_target.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_unit.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habit_timer_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_responsive.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
@@ -76,7 +77,7 @@ class HabitTimerSheet extends ConsumerWidget {
                   ),
                   IconButton(
                     tooltip: 'Fermer',
-                    icon: const Icon(LucideIcons.x, size: AppIconSize.nav),
+                    icon: Icon(LucideIcons.x, size: context.rs(AppIconSize.nav)),
                     color: AppColors.textSecondary,
                     onPressed: () => Navigator.of(context).pop(),
                   ),

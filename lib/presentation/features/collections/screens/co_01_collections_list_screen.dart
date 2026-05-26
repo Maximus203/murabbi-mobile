@@ -14,6 +14,7 @@ import 'package:murabbi_mobile/presentation/features/collections/providers/colle
 import 'package:murabbi_mobile/presentation/features/collections/widgets/collection_card.dart';
 import 'package:murabbi_mobile/presentation/features/habits/providers/habits_notifier.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_responsive.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
@@ -51,7 +52,7 @@ class Co01CollectionsListScreen extends ConsumerWidget {
           splashRadius: 18,
           icon: Icon(
             lu(LucideIcons.plus),
-            size: AppIconSize.rg,
+            size: context.rs(AppIconSize.rg),
             color: AppColors.textPrimary,
           ),
         ),

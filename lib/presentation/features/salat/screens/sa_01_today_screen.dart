@@ -12,6 +12,7 @@ import 'package:murabbi_mobile/presentation/features/salat/providers/today_salat
 import 'package:murabbi_mobile/presentation/features/salat/providers/today_salat_state.dart';
 import 'package:murabbi_mobile/presentation/features/salat/widgets/prayer_status_visuals.dart';
 import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
+import 'package:murabbi_mobile/presentation/theme/app_responsive.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
@@ -54,7 +55,7 @@ class Sa01TodayScreen extends ConsumerWidget {
             onPressed: null, // stub — navigation Calendrier à venir
             icon: Icon(
               lu(LucideIcons.calendar),
-              size: AppIconSize.rg,
+              size: context.rs(AppIconSize.rg),
               color: AppColors.textSecondary,
             ),
           ),
