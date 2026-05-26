@@ -305,6 +305,33 @@ void main() {
   );
 
   group(
+    'SupabaseAuthDataSource — authStateChanges filtre tokenRefreshed (Bug S-2)',
+    () {
+      // Source-level contract : garantit que le stream filtre les evenements
+      // TOKEN_REFRESHED pour ne pas declencher de SELECT inutile sur
+      // public.users lors des refreshes JWT silencieux (~toutes les 60 min).
+      // Un SELECT qui echoue a ce moment deconnecte l'utilisateur a tort.
+      final sourceFile = File(
+        'lib/data/datasources/supabase/supabase_auth_data_source.dart',
+      );
+      final source = sourceFile.readAsStringSync();
+
+      test('authStateChanges contient un filtre sur tokenRefreshed', () {
+        expect(
+          source,
+          contains('tokenRefreshed'),
+          reason:
+              'authStateChanges doit filtrer AuthChangeEvent.tokenRefreshed. '
+              'Sans ce filtre, chaque refresh JWT silencieux (~60 min) '
+              'declenche un SELECT sur public.users. Si ce SELECT echoue '
+              '(reseau, timeout), le stream emet une erreur qui deconnecte '
+              "l'utilisateur malgre une session JWT valide (Bug S-2).",
+        );
+      });
+    },
+  );
+
+  group(
     'SupabaseAuthDataSource — soft-delete update payload contract (ADR-011)',
     () {
       test(

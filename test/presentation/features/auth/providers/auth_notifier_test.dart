@@ -486,4 +486,60 @@ void main() {
       await controller.close();
     });
   });
+
+  // ── Bug S-2/S-3 : stream error ne déconnecte pas une session valide ──
+  group('AuthNotifier — stream error preserve session active (Bug S-2/S-3)', () {
+    test(
+      'stream error ne remplace PAS state si une session est deja active',
+      () async {
+        final errorController = StreamController<User?>();
+        final container = makeContainer(
+          authStream: errorController.stream,
+          stubGetCurrentUser: false,
+        );
+        when(() => repo.getCurrentUser()).thenAnswer((_) async => testUser);
+
+        await container.read(authNotifierProvider.future);
+        expect(container.read(authNotifierProvider).value, testUser);
+
+        errorController.addError(
+          Exception('DB unreachable — TOKEN_REFRESHED'),
+          StackTrace.empty,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        final state = container.read(authNotifierProvider);
+        expect(
+          state.value,
+          testUser,
+          reason:
+              'Une erreur reseau transitoire du stream ne doit pas '
+              'deconnecter un utilisateur dont la session est valide.',
+        );
+        expect(state.hasError, isFalse);
+
+        await errorController.close();
+      },
+    );
+
+    test(
+      'stream error definit AsyncError si aucune session active (etat null)',
+      () async {
+        final errorController = StreamController<User?>();
+        final container = makeContainer(authStream: errorController.stream);
+        await container.read(authNotifierProvider.future);
+        expect(container.read(authNotifierProvider).value, isNull);
+
+        errorController.addError(
+          Exception('Config error'),
+          StackTrace.empty,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(container.read(authNotifierProvider).hasError, isTrue);
+
+        await errorController.close();
+      },
+    );
+  });
 }
