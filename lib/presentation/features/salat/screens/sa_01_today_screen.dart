@@ -241,9 +241,9 @@ class _HeroSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        AppVideoBackground(assetPath: 'assets/media/09.mp4', height: 200),
+        const AppVideoBackground(assetPath: 'assets/media/09.mp4', height: 200),
         // Overlay dégradé bas → haut
-        Positioned.fill(
+        const Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(

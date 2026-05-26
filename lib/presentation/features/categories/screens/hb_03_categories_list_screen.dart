@@ -44,7 +44,7 @@ class Hb03CategoriesListScreen extends ConsumerWidget {
         title: 'Catégories',
         trailing: IconButton(
           tooltip: 'Nouvelle catégorie',
-          splashRadius: 18,
+          splashRadius: AppIconSize.md,
           onPressed: onCreate,
           icon: Icon(
             LucideIcons.plus,
@@ -166,7 +166,11 @@ class _CategoriesBody extends ConsumerWidget {
         color: AppColors.danger.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.card),
       ),
-      child: Icon(lu(LucideIcons.trash2), color: AppColors.danger, size: AppIconSize.rg),
+      child: Icon(
+        lu(LucideIcons.trash2),
+        color: AppColors.danger,
+        size: AppIconSize.rg,
+      ),
     );
   }
 

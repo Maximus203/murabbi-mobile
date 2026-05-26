@@ -77,7 +77,10 @@ class HabitTimerSheet extends ConsumerWidget {
                   ),
                   IconButton(
                     tooltip: 'Fermer',
-                    icon: Icon(LucideIcons.x, size: context.rs(AppIconSize.nav)),
+                    icon: Icon(
+                      LucideIcons.x,
+                      size: context.rs(AppIconSize.nav),
+                    ),
                     color: AppColors.textSecondary,
                     onPressed: () => Navigator.of(context).pop(),
                   ),
@@ -233,13 +236,13 @@ class _TimerCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 220,
-      height: 220,
+      width: AppComponentSize.timerCircle,
+      height: AppComponentSize.timerCircle,
       child: Stack(
         alignment: Alignment.center,
         children: [
           CustomPaint(
-            size: const Size(220, 220),
+            size: const Size.square(AppComponentSize.timerCircle),
             painter: _CircleProgressPainter(progress: state.progress),
           ),
           Column(
@@ -281,15 +284,15 @@ class _CircleProgressPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 8;
+    final radius = size.width / 2 - AppSpacing.s2;
     final trackPaint = Paint()
       ..color = AppColors.bgInput
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 6;
+      ..strokeWidth = AppBorderWidth.timerStroke;
     final progressPaint = Paint()
       ..color = AppColors.accent
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
+      ..strokeWidth = AppBorderWidth.timerStroke
       ..strokeCap = StrokeCap.round;
 
     canvas.drawCircle(center, radius, trackPaint);
@@ -374,15 +377,15 @@ class _RoundButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 64,
-        height: 64,
+        width: AppComponentSize.timerButton,
+        height: AppComponentSize.timerButton,
         decoration: BoxDecoration(
           color: filled ? AppColors.accent : AppColors.bgInput,
           shape: BoxShape.circle,
         ),
         child: Icon(
           icon,
-          size: 30,
+          size: AppIconSize.lg,
           color: filled ? AppColors.bgSurface : AppColors.textPrimary,
         ),
       ),

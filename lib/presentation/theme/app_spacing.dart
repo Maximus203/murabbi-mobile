@@ -146,6 +146,18 @@ class AppComponentSize {
 
   /// 76px — hauteur contractuelle de la bottom navigation bar (DS v1.5).
   static const double bottomNavHeight = 76;
+
+  /// 220px — cercle du timer habitude (HabitTimerSheet — _TimerCircle).
+  static const double timerCircle = 220;
+
+  /// 64px — bouton play/pause/reset du timer (HabitTimerSheet — _TimerButton).
+  static const double timerButton = 64;
+
+  /// 48px — hauteur de la barre de filtres par catégorie (HA-01 — _CategoryChipsBar).
+  static const double filterChipBar = 48;
+
+  /// 6px — hauteur minimale de la barre de progression habitude (HB-DETAIL).
+  static const double progressBarHeight = 6;
 }
 
 /// Largeurs de bordure — grammaire ternaire volontaire.
@@ -173,4 +185,7 @@ class AppBorderWidth {
 
   /// 7.0px — anneau de progression animé (DashboardScoreCard, AppProgressRing).
   static const double progressRing = 7.0;
+
+  /// 6.0px — épaisseur du tracé annulaire du timer habitude (HabitTimerSheet).
+  static const double timerStroke = 6.0;
 }

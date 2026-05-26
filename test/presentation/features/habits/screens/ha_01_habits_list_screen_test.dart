@@ -52,13 +52,14 @@ void main() {
   }
 
   testWidgets(
-    'empty state : CTA "Aucune habitude" + bouton "Nouvelle habitude"',
+    'empty state : CTA "Aucune habitude" + bouton "Créer une habitude"',
     (tester) async {
       await tester.pumpWidget(pumpable());
       await tester.pumpAndSettle();
 
-      expect(find.text('Aucune habitude pour le moment'), findsOneWidget);
-      expect(find.text('Nouvelle habitude'), findsWidgets);
+      // Texte exact du redesign HA-01 (cf. ha_01_habits_list_screen.dart ligne 501).
+      expect(find.text("Aucune habitude pour l'instant"), findsOneWidget);
+      expect(find.text('Créer une habitude'), findsWidgets);
     },
   );
 
@@ -88,7 +89,8 @@ void main() {
   testWidgets('empty state affiche l\'icône Lucide (#77)', (tester) async {
     await tester.pumpWidget(pumpable());
     await tester.pumpAndSettle();
-    expect(find.byIcon(LucideIcons.clipboardList), findsOneWidget);
+    // Icône du redesign HA-01 : LucideIcons.activity (cf. ha_01 ligne 493).
+    expect(find.byIcon(LucideIcons.activity), findsOneWidget);
   });
 
   testWidgets('FAB tap déclenche onCreate', (tester) async {
@@ -106,7 +108,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Nouvelle habitude').first);
+    // Bouton du redesign HA-01 (cf. ha_01_habits_list_screen.dart ligne 512).
+    await tester.tap(find.text('Créer une habitude').first);
     await tester.pumpAndSettle();
     expect(created, isTrue);
   });
