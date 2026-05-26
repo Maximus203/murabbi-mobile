@@ -43,6 +43,11 @@ abstract interface class SupabaseCollectionDataSource {
     required Collection collection,
     required UserId userId,
   });
+
+  Future<void> deleteCollection({
+    required CollectionId collectionId,
+    required UserId userId,
+  });
 }
 
 /// Implémentation Supabase de [SupabaseCollectionDataSource].
@@ -155,6 +160,18 @@ class SupabaseCollectionDataSourceImpl implements SupabaseCollectionDataSource {
     // personnalisées utilisateur — lève une erreur attrapée par le repo.
     throw UnsupportedError(
       'User-created collections require a Supabase migration not yet deployed.',
+    );
+  }
+
+  @override
+  Future<void> deleteCollection({
+    required CollectionId collectionId,
+    required UserId userId,
+  }) async {
+    // Collections système non supprimables — requires admin migration.
+    // Les collections personnalisées ne sont pas encore déployées (cf. createCollection).
+    throw UnsupportedError(
+      'deleteCollection requires a Supabase migration not yet deployed.',
     );
   }
 
