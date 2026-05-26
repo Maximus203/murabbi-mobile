@@ -3,6 +3,9 @@
 > **Pour Claude Code agissant comme Architecte & Développeur Mobile Senior**
 > Stack : Flutter 3.x + Dart 3.x + Riverpod + go_router + Supabase
 > Méthode : TDD strict · Clean Architecture · Décisions métier validées par le PO
+>
+> **Pratiques engineering** : `../MOBILE_PRACTICES.md` — référence obligatoire pour
+> tout agent intervenant sur ce repo (patterns mobile + backend).
 
 ---
 
@@ -259,8 +262,13 @@ presentation → domain ← data
 - ❌ Logique métier dans un Widget
 - ❌ Appel HTTP dans un Widget
 - ❌ `print()` n'importe où — utiliser `logger`
-- ❌ Couleur hex hardcodée hors `AppColors`
+- ❌ Couleur hex hardcodée hors `AppColors` (règle P-2)
+- ❌ Taille numérique nue dans l'UI (`size: 20`, `width: 36`) — utiliser les tokens
+- ❌ `Icons.X` (Material Icons) — utiliser exclusivement `LucideIcons.X`
+- ❌ Style de texte inline (`TextStyle(fontSize:...)`) — utiliser `AppTypography`
 - ❌ String UI hardcodée — passer par `lib/core/l10n/` (si i18n implémenté)
+
+> Voir §17 pour les règles complètes du Design Token System.
 
 ---
 
@@ -302,10 +310,8 @@ dependencies:
   intl: ^0.19.0
 
 dev_dependencies:
-  build_runner: ^2.4.0
-  freezed: ^2.5.0
-  json_serializable: ^6.8.0
-  riverpod_generator: ^2.3.0
+  # build_runner / freezed / json_serializable / riverpod_generator retirés
+  # — cf. ADR-016. Providers legacy manuels, pas de codegen.
   mocktail: ^1.0.0
   golden_toolkit: ^0.15.0
   very_good_analysis: ^5.1.0
@@ -313,20 +319,26 @@ dev_dependencies:
     sdk: flutter
 ```
 
-### Patterns Riverpod (code generation)
+### Patterns Riverpod (providers legacy manuels — cf. ADR-016)
 
-**Toujours utiliser `@riverpod` avec génération de code.**
+**Utiliser les providers Riverpod legacy manuels** (`Provider`, `NotifierProvider`,
+`AsyncNotifierProvider`, `StreamProvider`, `FutureProvider`). Pas de codegen
+`@riverpod`, pas de `build_runner` pour les providers. Voir
+[`docs/adr/ADR-016-riverpod-legacy-providers.md`](docs/adr/ADR-016-riverpod-legacy-providers.md)
+pour la justification (Option B retenue : 100% du repo en legacy, boucle dev
+rapide, typage `Ref` déjà obtenu via `AsyncNotifier<T>`).
 
 ```dart
 // Provider de lecture simple
-@riverpod
-Future<List<Habit>> userHabits(UserHabitsRef ref) async {
+final userHabitsProvider = FutureProvider<List<Habit>>((ref) async {
   return ref.watch(habitRepositoryProvider).getHabitsForToday();
-}
+});
 
 // Provider mutable avec AsyncNotifier
-@riverpod
-class HabitNotifier extends _$HabitNotifier {
+final habitNotifierProvider =
+    AsyncNotifierProvider<HabitNotifier, List<Habit>>(HabitNotifier.new);
+
+class HabitNotifier extends AsyncNotifier<List<Habit>> {
   @override
   Future<List<Habit>> build() async {
     return ref.watch(habitRepositoryProvider).getHabitsForToday();
@@ -578,6 +590,7 @@ Tu refuses de merger. Tu signales et tu corriges avant de continuer.
 
 ## 13. Liens vers la documentation projet
 
+- `../MOBILE_PRACTICES.md` — **Pratiques engineering obligatoires** (patterns mobile + backend)
 - `docs/wireframes/Murabbi Wireframes.html` — Wireframes Hi-Fi (miroir local, bundle JSX manquant)
 - `docs/wireframes/WIREFRAMES_INCOMPLETS.md` — Inventaire des 32 écrans + statut bundle
 - `docs/audit/wireframes_audit.md` — (à créer en Phase 0)
@@ -589,9 +602,282 @@ Tu refuses de merger. Tu signales et tu corriges avant de continuer.
 - CDC complet, design briefs, wireframes admin, schéma Supabase complet, ADRs cross-cutting.
 - Demande au PO ou copie locale read-only — ces fichiers ne doivent **pas** être commités dans `murabbi-mobile/` (cf. règle racine S-11).
 
+## Schéma de base de données
+**Source de vérité unique** : `../docs/schema/database_schema.md`
+(chemin relatif depuis la racine de chaque repo)
+- Lecture seule pour les agents — ne jamais modifier sans validation PO
+- Avant tout mapping Dart ↔ SQL ou toute migration, consulter ce fichier
+- Si la version a changé depuis ta dernière session, relire intégralement
+  et mettre à jour les mappers/tests impactés
+- En cas de contradiction entre le code et ce fichier, **ce fichier a raison**
+
 ---
 
-## 14. Premier message attendu de toi
+## 15. Build & Run
+
+> Cible : un dev qui clone le repo doit pouvoir lancer l'app sur son device
+> en moins de 5 minutes en suivant cette section.
+>
+> Périmètre : Android uniquement pour l'instant. iOS sera documenté dans une PR
+> ultérieure (nécessite une machine macOS pour valider les commandes).
+
+### 15.1 — Prérequis environnement
+
+| Outil           | Version minimale         | Vérification                          |
+|-----------------|--------------------------|---------------------------------------|
+| Flutter SDK     | `3.41.x` (Dart `3.11.x`) | `flutter --version`                   |
+| JDK             | `17` (Gradle 8.x)        | `java -version`                       |
+| Android SDK     | platform-tools + API 35  | `flutter doctor --android-licenses`   |
+| `ANDROID_HOME`  | défini                   | `echo $env:ANDROID_HOME` (PowerShell) |
+
+La version Flutter cible est fixée par `pubspec.yaml` (`sdk: ^3.11.1`).
+
+**Credentials Supabase** — créer `.env.local` à la racine (jamais commité) :
+
+```
+SUPABASE_URL=https://<ref>.supabase.co
+SUPABASE_ANON_KEY=<anon-key>
+```
+
+Le script de build lit automatiquement `.env.local > .env.cloud > .env`
+(priorité décroissante). Sans credentials, l'app démarre en mode silencieux
+et toute requête Supabase échoue (cf. `main.dart`).
+
+### 15.2 — Script run_device.ps1 (méthode recommandée)
+
+[`scripts/run_device.ps1`](scripts/run_device.ps1) est le point d'entrée
+unique pour builder, installer et lancer l'app sur un device Android connecté.
+Il lit les credentials depuis les fichiers `.env*`, vérifie qu'un device est
+branché, et passe les `--dart-define` correctement.
+
+```powershell
+# Debug + hot-reload (usage quotidien)
+.\scripts\run_device.ps1
+
+# Release — smoke test perf avant PR
+.\scripts\run_device.ps1 -Release
+
+# Build APK + install sans garder le terminal ouvert
+.\scripts\run_device.ps1 -BuildOnly
+
+# Forcer flutter clean avant build (après changement natif ou pub get)
+.\scripts\run_device.ps1 -Clean
+
+# Multi-device : cibler un device explicite
+.\scripts\run_device.ps1 -Device <device_id>   # adb devices pour lister
+```
+
+Raccourcis disponibles en mode `flutter run` (debug) :
+- `r` — hot reload
+- `R` — hot restart
+- `q` — quitter
+
+**Comportement sur erreur** :
+- Credentials manquants → message d'aide clair + exit 1
+- Aucun device connecté → rappel des étapes (USB + débogage activé) + exit 1
+- Plusieurs devices → demande `-Device <id>` + exit 1
+
+### 15.3 — Commandes manuelles (référence / fallback)
+
+Si le script n'est pas disponible ou pour un usage ponctuel :
+
+```bash
+# Debug
+flutter run \
+  --dart-define=SUPABASE_URL=<url> \
+  --dart-define=SUPABASE_ANON_KEY=<key>
+
+# Release
+flutter run --release \
+  --dart-define=SUPABASE_URL=<url> \
+  --dart-define=SUPABASE_ANON_KEY=<key>
+
+# Build APK universel
+flutter build apk --release \
+  --dart-define=SUPABASE_URL=<url> \
+  --dart-define=SUPABASE_ANON_KEY=<key>
+# → build/app/outputs/flutter-apk/app-release.apk
+
+# Install via adb
+adb install -r build/app/outputs/flutter-apk/app-release.apk
+
+# Lancement manuel (package name correct)
+adb shell am start -n 'com.murabbi.murabbi/.MainActivity'
+```
+
+> **Package Android** : `com.murabbi.murabbi` — ne pas confondre avec
+> `com.murabbi.mobile` (ancien nom, provoque une erreur `Activity not found`).
+
+### 15.4 — Build App Bundle (Play Store)
+
+```bash
+# Build .aab pour upload Play Console
+flutter build appbundle --release \
+  --dart-define=SUPABASE_URL=<your_supabase_url> \
+  --dart-define=SUPABASE_ANON_KEY=<your_supabase_anon_key>
+# Output : build/app/outputs/bundle/release/app-release.aab
+```
+
+⚠ Tant que le signing release n'est pas configuré (cf. §15.5), le `.aab`
+est signé avec la debug keystore et **ne peut pas** être uploadé sur Play
+Console. Le build sert uniquement à valider que la chaîne compile.
+
+### 15.5 — Signing
+
+| Profil   | État                                                  | Action requise |
+|----------|-------------------------------------------------------|----------------|
+| Debug    | ✅ Auto (`~/.android/debug.keystore` géré par Android SDK) | Rien à faire |
+| Release  | ⚠ **Pas encore configuré**                            | TODO — issue de suivi à ouvrir |
+
+Le bloc `buildTypes.release` de [`android/app/build.gradle.kts`](android/app/build.gradle.kts)
+signe actuellement avec la debug keystore (`signingConfig = signingConfigs.getByName("debug")`)
+pour que `flutter run --release` fonctionne. Cette config **n'est pas valide**
+pour une distribution Play Store.
+
+**À faire avant Phase 6 (build release & soumission stores) :**
+- Générer une keystore release (`keytool -genkey -v ...`).
+- Créer `android/key.properties` (gitignored — cf. `.gitignore`).
+- Mettre à jour `build.gradle.kts` pour lire la keystore depuis
+  `key.properties` et basculer `signingConfig` en release.
+- Documenter la procédure dans `docs/runbooks/release-signing.md`.
+- Ouvrir une issue GitHub `chore(android): configure release signing` —
+  bloquant pour Phase 6.
+
+### 15.6 — Troubleshooting fréquent
+
+| Symptôme                                  | Cause probable                                | Remède |
+|-------------------------------------------|-----------------------------------------------|--------|
+| `FAIL 'adb' introuvable dans le PATH`     | Fallback automatique échoue aussi (SDK non installé) | Installer Android SDK Platform Tools ; le script détecte automatiquement `C:\Android\Sdk\platform-tools` si présent |
+| `FAIL Credentials Supabase introuvables`  | Aucun fichier `.env*` à la racine             | Créer `.env.local` avec `SUPABASE_URL` et `SUPABASE_ANON_KEY` (cf. §15.1) |
+| `Gradle build failed` (cache corrompu)    | Cache Gradle / Flutter désynchronisé          | `.\scripts\run_device.ps1 -Clean` ou `flutter clean && flutter pub get` |
+| `SDK location not found`                  | `ANDROID_HOME` non défini ou `local.properties` absent | Définir `ANDROID_HOME` ou créer `android/local.properties` avec `sdk.dir=C:\Android\Sdk` |
+| `supabase_flutter not initialized` à l'usage | `--dart-define` Supabase manquant au build/run | Utiliser `run_device.ps1` — il passe les defines automatiquement |
+| `MissingPluginException` (geolocator, notifications) | Plugin natif ajouté après dernier build | `.\scripts\run_device.ps1 -Clean` |
+| `CheckAarMetadata` / `minSdk` error       | minSdk Flutter par défaut < 21                | Vérifier `android/app/build.gradle.kts` : `minSdk = 21` (cf. ADR-008) |
+| `Execution failed for task ':app:desugar...'` | JDK < 17 ou desugar lib manquante         | Vérifier `java -version` (doit être 17) + `coreLibraryDesugaring` dans `build.gradle.kts` |
+
+---
+
+## 14. Design Token System — Règles d'usage obligatoires
+
+> Référence engineering : `../MOBILE_PRACTICES.md` §Côté mobile, point 5
+> (*Design system + tokens pour éviter le hardcode UI*).
+
+### 14.1 — Source de vérité unique
+
+Tous les tokens visuels sont définis dans `lib/presentation/theme/` et
+**nulle part ailleurs**. Chaque fichier couvre un domaine sémantique :
+
+| Fichier | Classe(s) | Domaine |
+|---|---|---|
+| `app_colors.dart` | `AppColors`, `AppColorsDark` | Couleurs — règle P-2 |
+| `app_typography.dart` | `AppTypography` | Styles de texte |
+| `app_spacing.dart` | `AppSpacing` | Espacements (grille 4 px) |
+| `app_spacing.dart` | `AppRadius` | Rayons de bordure |
+| `app_spacing.dart` | `AppIconSize` | Tailles d'icônes (hiérarchie sémantique) |
+| `app_spacing.dart` | `AppComponentSize` | Tailles de composants (touch targets, avatars…) |
+| `app_spacing.dart` | `AppBorderWidth` | Épaisseurs de bordure |
+| `app_responsive.dart` | `AppResponsive`, `AppResponsiveContext` | Mise à l'échelle responsive |
+
+### 14.2 — Interdictions absolues (tokens)
+
+```dart
+// ❌ INTERDIT — valeurs numériques nues dans l'UI
+Icon(LucideIcons.bell, size: 20)
+Container(width: 36, height: 36)
+EdgeInsets.all(16)
+BorderRadius.circular(8)
+SizedBox(height: 24)
+
+// ✅ OBLIGATOIRE — tokens sémantiques
+Icon(LucideIcons.bell, size: AppIconSize.rg)
+Container(width: AppComponentSize.avatarSm, height: AppComponentSize.avatarSm)
+EdgeInsets.all(AppSpacing.s4)
+BorderRadius.circular(AppRadius.card)
+SizedBox(height: AppSpacing.s6)
+```
+
+```dart
+// ❌ INTERDIT — couleurs hors AppColors (règle P-2)
+color: Color(0xFF8B6F47)
+color: Colors.orange
+color: Colors.white
+color: Colors.transparent
+
+// ✅ OBLIGATOIRE
+color: AppColors.accent
+color: AppColors.offlineBanner
+color: AppColors.videoOverlayText
+color: AppColors.transparent
+```
+
+```dart
+// ❌ INTERDIT — styles de texte inline
+TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+TextStyle(fontSize: 12, color: Colors.grey)
+
+// ✅ OBLIGATOIRE
+AppTypography.h2
+AppTypography.caption.copyWith(color: AppColors.textSecondary)
+```
+
+```dart
+// ❌ INTERDIT — Material Icons (incohérence avec la bibliothèque Lucide)
+Icon(Icons.close)
+Icon(Icons.chevron_right)
+Icon(Icons.add)
+
+// ✅ OBLIGATOIRE — LucideIcons exclusivement
+Icon(LucideIcons.x)
+Icon(LucideIcons.chevronRight)
+Icon(LucideIcons.plus)
+```
+
+### 14.3 — Icônes dans les headers : `context.rs()` obligatoire
+
+Tous les icônes placés en haut des interfaces (headers `AppHeader`, top bars
+custom) **doivent** utiliser `context.rs()` pour la mise à l'échelle responsive.
+
+```dart
+// Actions standard (tags, ellipsis, calendar, plus secondaire)
+Icon(LucideIcons.plus, size: context.rs(AppIconSize.rg))      // 20 dp @ 390 dp
+
+// Navigation principale (chevron retour, CTA primaire liste)
+Icon(LucideIcons.chevronLeft, size: context.rs(AppIconSize.rg))
+Icon(LucideIcons.plus, size: context.rs(AppIconSize.nav))     // 24 dp @ 390 dp
+
+// Fermeture sheet plein écran
+Icon(LucideIcons.x, size: context.rs(AppIconSize.nav))
+```
+
+**Paramètres `AppResponsive` (ne pas modifier sans ADR) :**
+- Référence : `390 dp` (iPhone 14 — viewport du design)
+- Facteur min : `0.8×` (petits Android ~360 dp)
+- Facteur max : `1.2×` (grands iPhone 430 dp+)
+- API : `context.rs(base)` ou `AppResponsive.scale(context, base)`
+
+### 14.4 — Ajouter un token
+
+Si un besoin visuel n'est couvert par aucun token existant :
+1. Ajouter le token dans le fichier thème approprié (`app_spacing.dart`, `app_colors.dart`…)
+2. Documenter avec `///` — rôle sémantique + valeur de référence
+3. Commit : `chore(tokens): add AppComponentSize.timerButton = 64`
+4. **Ne jamais** laisser une valeur orpheline dans le widget
+
+### 14.5 — Checklist avant chaque commit UI
+
+- [ ] `flutter analyze` → 0 issue
+- [ ] Aucun `Color(0xFF...)` ni `Colors.X` hors `AppColors`
+- [ ] Aucune taille numérique nue (`size: 20`, `width: 36`, `height: 4`)
+- [ ] Aucun `EdgeInsets` avec valeurs littérales
+- [ ] Aucun `BorderRadius.circular(N)` avec N littéral
+- [ ] Aucun `Icons.X` (Material) — uniquement `LucideIcons.X`
+- [ ] Icônes header : `context.rs(AppIconSize.X)`, pas de `const Icon`
+- [ ] Styles texte : `AppTypography.X` ou `.copyWith()`, jamais `TextStyle(...)`
+
+---
+
+## 16. Premier message attendu de toi
 
 Quand je lance Claude Code avec ce CLAUDE.md, ton premier message doit être :
 
