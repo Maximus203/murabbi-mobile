@@ -72,15 +72,36 @@ Write-Ok "Credentials charges -- projet : $url_host"
 
 Write-Step "Verification des outils..."
 
-foreach ($tool in @('flutter', 'adb')) {
-    if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
-        Write-Fail "'$tool' introuvable dans le PATH."
-        if ($tool -eq 'adb') {
-            Write-Host "  Installe Android SDK Platform Tools et ajoute sdk/platform-tools au PATH"
-        }
+# Cherche flutter dans le PATH
+if (-not (Get-Command 'flutter' -ErrorAction SilentlyContinue)) {
+    Write-Fail "'flutter' introuvable dans le PATH."
+    exit 1
+}
+
+# Cherche adb : PATH d'abord, puis emplacements SDK courants en fallback
+$adb_cmd = 'adb'
+if (-not (Get-Command 'adb' -ErrorAction SilentlyContinue)) {
+    $sdk_candidates = @(
+        'C:\Android\Sdk\platform-tools\adb.exe',
+        "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe",
+        "$env:ANDROID_HOME\platform-tools\adb.exe",
+        "$env:ANDROID_SDK_ROOT\platform-tools\adb.exe"
+    )
+    $found = $sdk_candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if ($found) {
+        $adb_cmd = $found
+        Write-Host "   INFO adb non trouve dans le PATH - utilise : $adb_cmd" -ForegroundColor Yellow
+    } else {
+        Write-Fail "'adb' introuvable dans le PATH ni dans les emplacements SDK standard."
+        Write-Host "  Installe Android SDK Platform Tools et ajoute sdk/platform-tools au PATH"
         exit 1
     }
 }
+
+# Cree un alias de session pour que les appels suivants fonctionnent
+Set-Alias -Name adb -Value $adb_cmd -Scope Script -Option AllScope -Force 2>$null
+$env:PATH = "$([System.IO.Path]::GetDirectoryName($adb_cmd));$env:PATH"
+
 Write-Ok "flutter et adb disponibles"
 
 # -- 3. Device Android connecte -----------------------------------------------
