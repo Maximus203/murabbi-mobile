@@ -182,7 +182,7 @@ if ($BuildOnly) {
     Write-Ok "Installation reussie"
 
     Write-Step "Lancement de l'app..."
-    & adb -s $target_device shell am start -n 'com.murabbi.mobile/.MainActivity'
+    & adb -s $target_device shell am start -n 'com.murabbi.murabbi/.MainActivity'
     Write-Ok "App lancee"
 
 } else {
