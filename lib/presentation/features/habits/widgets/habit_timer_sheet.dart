@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_target.dart';
 import 'package:murabbi_mobile/domain/value_objects/target_unit.dart';
@@ -75,7 +76,7 @@ class HabitTimerSheet extends ConsumerWidget {
                   ),
                   IconButton(
                     tooltip: 'Fermer',
-                    icon: const Icon(Icons.close, size: AppIconSize.nav),
+                    icon: const Icon(LucideIcons.x, size: AppIconSize.nav),
                     color: AppColors.textSecondary,
                     onPressed: () => Navigator.of(context).pop(),
                   ),

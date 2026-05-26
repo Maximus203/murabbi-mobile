@@ -175,14 +175,10 @@ class _DashboardBody extends ConsumerWidget {
                   ],
                 ),
               ),
-              Semantics(
-                label: 'Notifications',
-                button: true,
-                child: const Icon(
-                  LucideIcons.bell,
-                  size: AppIconSize.rg,
-                  color: AppColors.textSecondary,
-                ),
+              const Icon(
+                LucideIcons.bell,
+                size: AppIconSize.rg,
+                color: AppColors.textSecondary,
               ),
               const SizedBox(width: AppSpacing.s3),
               GestureDetector(
