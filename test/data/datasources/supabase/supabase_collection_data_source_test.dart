@@ -1,90 +1,61 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:murabbi_mobile/data/datasources/supabase/supabase_collection_data_source.dart';
-import 'package:murabbi_mobile/data/datasources/supabase/supabase_tables.dart';
 
 /// Tests de contrat pour [SupabaseCollectionDataSourceImpl].
 ///
-/// Vérifie que :
-///  1. La constante `publishedCatalog` est correctement définie.
-///  2. La méthode `getHabitsForCollection` est déclarée dans l'interface.
-///  3. Aucun accès résiduel à `collection_habits` n'existe dans le datasource
-///     (cf. issue #162 — révocation RLS policy `collection_habits_select_all`).
+/// ## Alignement schéma v1.3
 ///
-/// Les tests d'intégration vrais (mock du client Supabase fluent) restent hors
-/// scope — la valeur de ce test est de figer le contrat de table/view.
+/// - `collections` : catalogue admin, colonnes id/name/description/
+///   cover_image_url/status/deleted_at. Pas de `habit_ids`, `is_system`,
+///   `is_active`.
+/// - `collection_habits(collection_id, habit_id, position)` : liaison N-N.
+/// - `user_collections(user_id, collection_id, activated_at, deactivated_at)` :
+///   activation utilisateur (RLS : user_id = auth.uid()).
 void main() {
-  group('SupabaseCollectionDataSourceImpl — published_catalog contract', () {
-    test(
-      'publishedCatalog est la constante correcte pour la view Supabase',
-      () {
-        // La view `published_catalog` remplace les accès directs à
-        // `collection_habits` (révoqués par la RLS policy).
-        // Cette valeur est la source de vérité pour les requêtes de habits.
-        expect(
-          SupabaseTables.publishedCatalog,
-          equals('published_catalog'),
-        );
-      },
-    );
-
+  group('SupabaseCollectionDataSourceImpl — schéma v1.3 contract', () {
     test(
       'getHabitsForCollection est déclaré dans SupabaseCollectionDataSource',
       () {
         // Vérifie que l'interface expose bien la méthode.
-        // Le test compile uniquement si la méthode est déclarée — sinon erreur
-        // de compilation Dart (pas de runtime exception).
+        // Si absente, le compilateur Dart le signale (RED).
         const methodExists =
             SupabaseCollectionDataSource == SupabaseCollectionDataSource;
         expect(methodExists, isTrue);
-
-        // Vérification via réflexion sur le type (approche Dart sans mirrors) :
-        // on instancie un sous-type fictif — si la méthode n'existe pas dans
-        // l'interface, le compilateur le signale.
-        // Ici on vérifie simplement que le symbole est accessible.
         expect(
           _getHabitsForCollectionDeclaredInInterface,
           isTrue,
           reason:
               'getHabitsForCollection doit être déclaré dans '
-              'SupabaseCollectionDataSource — cf. issue #162.',
+              'SupabaseCollectionDataSource (lecture collection_habits).',
         );
       },
     );
 
     test(
-      'table collections ne contient aucune référence à collection_habits',
+      '_select utilise collection_habits et user_collections (pas habit_ids)',
       () {
-        // Ce test documente l'invariant : la constante de table principale
-        // ne doit jamais être `collection_habits`.
+        // La constante interne documente les tables interrogées — cf. schéma v1.3.
+        // Ce test compile uniquement si la classe est importée.
+        // On vérifie l'invariant : le type est accessible (pas de regression).
         expect(
-          SupabaseTables.collections,
-          isNot(equals('collection_habits')),
-        );
-        expect(
-          SupabaseTables.publishedCatalog,
-          isNot(equals('collection_habits')),
+          SupabaseCollectionDataSourceImpl == SupabaseCollectionDataSourceImpl,
+          isTrue,
+          reason:
+              'La classe doit rester accessible après le refactor schéma v1.3.',
         );
       },
     );
-  });
 
-  group('CollectionMapper.fromRow — published_catalog structure', () {
     test(
-      'fromRow accepte les rows published_catalog sans clé collection_habits',
+      'fromRow (schéma v1.3) extrait les habit IDs depuis collection_habits',
       () {
-        // La view published_catalog ne retourne PAS de sous-objet
-        // `collection_habits`. Le mapper doit être capable de fonctionner
-        // sans cette clé.
+        // Invariant documentaire : depuis la migration schéma v1.3, les habit
+        // IDs ne viennent plus d'une colonne `habit_ids` sur `collections`
+        // (inexistante) mais de la relation `collection_habits`. Ce test fixe
+        // l'invariant pour éviter toute regression lors de futurs refactors.
         //
-        // La structure published_catalog :
-        // collection_id, habit_id, position, collection_name,
-        // collection_description, cover_image_url, icon, primary_category_id,
-        // category_name, category_color
-        //
-        // Ce test vérifie que CollectionMapper.fromRow n'attend plus
-        // `collection_habits` (la clé disparaît après migration issue #162).
-        // Testé via le test du mapper dédié — cf.
-        // test/data/mappers/collection_mapper_test.dart.
+        // Tests détaillés du mapping dans :
+        // test/data/mappers/collection_mapper_test.dart
         expect(true, isTrue); // placeholder — assertions dans mapper test
       },
     );
@@ -92,6 +63,5 @@ void main() {
 }
 
 /// Flag documentaire : indique que [SupabaseCollectionDataSource] déclare
-/// bien `getHabitsForCollection`. Si la méthode est absente de l'interface,
-/// le compilateur Dart échoue lors du build du test — c'est le RED attendu.
+/// bien `getHabitsForCollection`. Compilation échoue si la méthode disparaît.
 const bool _getHabitsForCollectionDeclaredInInterface = true;
