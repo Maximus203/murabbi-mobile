@@ -31,7 +31,10 @@ class DashboardNotifier extends AsyncNotifier<DashboardState> {
     final clock = ref.read(dashboardClockProvider);
     final now = clock();
     final civilDay = DateTime.utc(now.year, now.month, now.day);
-    final user = ref.read(currentUserProvider);
+    // ref.watch (pas ref.read) — crée une dépendance réactive sur la session :
+    // si l'utilisateur change (signOut, signIn), build() est automatiquement
+    // réexécuté. Empêche la fuite inter-sessions (audit sécurité 2026-05-26).
+    final user = ref.watch(currentUserProvider);
 
     // Charge en parallèle : horaires, score, taux journalier, niyyah.
     final prayerFuture = _loadPrayer(civilDay, now);

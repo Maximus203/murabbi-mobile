@@ -4,16 +4,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:murabbi_mobile/data/repositories/auth_repository_provider.dart';
+import 'package:murabbi_mobile/data/repositories/habit_repository_provider.dart';
 import 'package:murabbi_mobile/domain/entities/level.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/auth_repository.dart';
+import 'package:murabbi_mobile/domain/value_objects/habit_id.dart';
 import 'package:murabbi_mobile/domain/value_objects/non_empty_string.dart';
 import 'package:murabbi_mobile/domain/value_objects/pseudonym.dart';
 import 'package:murabbi_mobile/domain/value_objects/user_id.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/remembered_accounts_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/today_habit_statuses_notifier.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../helpers/in_memory_repositories.dart';
 import '../../../../helpers/test_uuids.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
@@ -486,6 +490,62 @@ void main() {
       await controller.close();
     });
   });
+
+  // ── signOut — invalidation caches utilisateur (anti-fuite inter-sessions) ──
+  group(
+    'AuthNotifier — signOut invalide les caches utilisateur (anti-fuite inter-sessions)',
+    () {
+      test(
+        'signOut invalide todayHabitStatusesProvider → état réinitialisé à {}',
+        () async {
+          // Ce test est RED tant que signOut() n'appelle pas
+          // _invalidateUserDataProviders(). Les statuts de l'utilisateur A
+          // resteraient visibles pour l'utilisateur B (fuite inter-sessions).
+          final container = ProviderContainer(
+            overrides: [
+              authRepositoryProvider.overrideWithValue(repo),
+              habitRepositoryProvider.overrideWithValue(
+                InMemoryHabitRepository(),
+              ),
+            ],
+          );
+          addTearDown(container.dispose);
+
+          when(
+            () => repo.authStateChanges,
+          ).thenAnswer((_) => const Stream.empty());
+          when(() => repo.getCurrentUser()).thenAnswer((_) async => testUser);
+          await container.read(authNotifierProvider.future);
+
+          // Simule les statuts UI de l'utilisateur A (ex. habitude cochée).
+          final habitId = HabitId('h1');
+          await container.read(todayHabitStatusesProvider.notifier).toggle(
+            habitId,
+          );
+          expect(
+            container.read(todayHabitStatusesProvider),
+            isNotEmpty,
+            reason: 'Pré-condition : des statuts UI doivent être présents.',
+          );
+
+          // Déconnexion.
+          when(() => repo.signOut()).thenAnswer((_) async {});
+          await container.read(authNotifierProvider.notifier).signOut();
+
+          // todayHabitStatusesProvider doit être invalidé → état initial {}.
+          // Sans le fix : les statuts de A restent visibles pour B.
+          expect(
+            container.read(todayHabitStatusesProvider),
+            isEmpty,
+            reason:
+                'signOut() doit invalider todayHabitStatusesProvider pour '
+                'éviter que les statuts UI de l\'utilisateur A soient '
+                'visibles par l\'utilisateur B (fuite inter-sessions).',
+          );
+        },
+      );
+    },
+  );
 
   // ── Bug S-2/S-3 : stream error ne déconnecte pas une session valide ──
   group('AuthNotifier — stream error préserve session active (Bug S-2/S-3)', () {

@@ -18,6 +18,7 @@ import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboa
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_ticker_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/niyyah_provider.dart';
+import 'package:murabbi_mobile/presentation/features/dashboard/providers/streak_delta_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/user_score_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/widgets/dashboard_score_card.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/widgets/dashboard_stats_grid.dart';
@@ -324,6 +325,7 @@ class _StatsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final scoreAsync = ref.watch(userScoreProvider);
     final summaryAsync = ref.watch(dailySummaryProvider);
+    final streakDeltaAsync = ref.watch(streakDeltaProvider);
 
     final salatAsync = ref.watch(todaySalatNotifierProvider);
     final salatLabel =
@@ -352,10 +354,20 @@ class _StatsCard extends ConsumerWidget {
     final completedHabits = habitStatuses.values
         .where((s) => s != HabitLogStatus.missed)
         .length;
-    final habitsLabel = habits.isEmpty ? '—' : '$completedHabits/${habits.length}';
+    final habitsLabel = habits.isEmpty
+        ? '—'
+        : '$completedHabits/${habits.length}';
 
     final score = scoreAsync.valueOrNull;
     final summary = summaryAsync.valueOrNull;
+
+    // Sous-label streak : "+N j" ou "-N j" selon le delta hebdomadaire.
+    final streakDelta = streakDeltaAsync.valueOrNull;
+    String? streakSubLabel;
+    if (streakDelta != null && streakDelta != 0) {
+      final sign = streakDelta > 0 ? '+' : '';
+      streakSubLabel = '$sign$streakDelta j cette semaine';
+    }
 
     // Sous-label habitudes : "XX% · +N pts" quand summary disponible.
     final habitsSubLabel = summary != null
@@ -380,6 +392,7 @@ class _StatsCard extends ConsumerWidget {
       habitsLabel: habitsLabel,
       habitsSubLabel: habitsSubLabel,
       weeklyRank: score?.weeklyRank ?? 1,
+      streakSubLabel: streakSubLabel,
       rankSubLabel: rankSubLabel,
     );
   }
@@ -728,7 +741,8 @@ class _DashboardHabitsSection extends ConsumerWidget {
     if (habits.isEmpty) return const SizedBox.shrink();
 
     final statuses = ref.watch(todayHabitStatusesProvider);
-    final categories = ref.watch(categoriesNotifierProvider).valueOrNull ?? const [];
+    final categories =
+        ref.watch(categoriesNotifierProvider).valueOrNull ?? const [];
 
     // Index catégories par id pour lookup O(1).
     final categoryMap = <String, Category>{
@@ -814,10 +828,7 @@ class _HabitMiniRow extends StatelessWidget {
           Container(
             width: AppComponentSize.dotSize,
             height: AppComponentSize.dotSize,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: AppSpacing.s2),
           // Nom de l'habitude
@@ -826,8 +837,9 @@ class _HabitMiniRow extends StatelessWidget {
               habit.name.value,
               style: AppTypography.body.copyWith(
                 color: isDone ? AppColors.textSecondary : AppColors.textPrimary,
-                decoration:
-                    isDone ? TextDecoration.lineThrough : TextDecoration.none,
+                decoration: isDone
+                    ? TextDecoration.lineThrough
+                    : TextDecoration.none,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

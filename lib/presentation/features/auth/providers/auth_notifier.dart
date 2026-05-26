@@ -7,6 +7,18 @@ import 'package:murabbi_mobile/domain/entities/user.dart';
 import 'package:murabbi_mobile/domain/errors/auth_failure.dart';
 import 'package:murabbi_mobile/domain/repositories/auth_repository.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/remembered_accounts_notifier.dart';
+// Providers de données utilisateur à invalider au signOut (anti-fuite
+// inter-sessions — audit sécurité 2026-05-26). Ces providers ne réagissent
+// pas automatiquement au changement d'auth et doivent être purgés
+// explicitement pour que l'utilisateur B ne voie pas les données de A
+// sur un device partagé.
+//
+// NOTE : dashboardNotifierProvider est volontairement ABSENT de cette liste.
+// Il utilise maintenant ref.watch(currentUserProvider) → il se reconstruit
+// automatiquement au signOut. L'invalider ici créerait une CircularDependencyError
+// (auth → dashboard → currentUser → auth).
+import 'package:murabbi_mobile/presentation/features/habits/providers/occurrence_providers.dart';
+import 'package:murabbi_mobile/presentation/features/habits/providers/today_habit_statuses_notifier.dart';
 
 /// État global d'authentification de l'utilisateur courant.
 ///
@@ -140,6 +152,29 @@ class AuthNotifier extends AsyncNotifier<User?> {
       await _repo.signOut();
       return null;
     });
+    // Purge tous les caches de données utilisateur après déconnexion.
+    // Empêche la fuite inter-sessions sur device partagé (audit sécurité
+    // 2026-05-26) : l'utilisateur B ne voit pas les données de A.
+    _invalidateUserDataProviders();
+  }
+
+  /// Purge les providers qui stockent des données propres à une session
+  /// utilisateur et ne réagissent pas automatiquement au changement d'auth.
+  ///
+  /// - [todayHabitStatusesProvider] : Map UI optimiste des statuts du jour
+  ///   (Notifier sans `ref.watch(auth)` dans build() → ne se réinitialise
+  ///   pas seul au signOut).
+  /// - [todayOccurrencesProvider] : feed habitudes du jour (FutureProvider
+  ///   sans dépendance auth explicite — utilise la session Supabase active
+  ///   sans la surveiller via Riverpod).
+  ///
+  /// [dashboardNotifierProvider] est intentionnellement absent : il utilise
+  /// `ref.watch(currentUserProvider)` (Fix sécurité 2026-05-26) et se
+  /// reconstruit automatiquement. L'invalider ici causerait une
+  /// CircularDependencyError (auth → dashboard → currentUser → auth).
+  void _invalidateUserDataProviders() {
+    ref.invalidate(todayHabitStatusesProvider);
+    ref.invalidate(todayOccurrencesProvider);
   }
 
   /// Rafraîchit silencieusement la session Supabase au retour de background
