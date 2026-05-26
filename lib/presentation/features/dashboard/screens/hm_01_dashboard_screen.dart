@@ -3,11 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:murabbi_mobile/core/utils/logger.dart';
+import 'package:murabbi_mobile/domain/entities/category.dart';
+import 'package:murabbi_mobile/domain/entities/habit.dart';
 import 'package:murabbi_mobile/domain/entities/habit_log.dart';
 import 'package:murabbi_mobile/domain/entities/prayer_status.dart';
 import 'package:murabbi_mobile/domain/entities/user.dart';
+import 'package:murabbi_mobile/domain/value_objects/hex_color.dart';
 import 'package:murabbi_mobile/presentation/common/app_video_player.dart';
 import 'package:murabbi_mobile/presentation/features/auth/providers/auth_notifier.dart';
+import 'package:murabbi_mobile/presentation/features/categories/providers/categories_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/daily_summary_provider.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_notifier.dart';
 import 'package:murabbi_mobile/presentation/features/dashboard/providers/dashboard_state.dart';
@@ -28,7 +32,6 @@ import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_dialog.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_skeleton.dart';
 // ignore: prefer_final_fields
 
@@ -200,6 +203,10 @@ class _DashboardBody extends ConsumerWidget {
           _ScoreCard(),
           const SizedBox(height: AppSpacing.s4),
 
+          // ── Habitudes du jour ──────────────────────────────────────
+          const _DashboardHabitsSection(),
+          const SizedBox(height: AppSpacing.s4),
+
           // ── Intention du jour (niyyah) ─────────────────────────────
           const _NiyyahCard(),
           const SizedBox(height: AppSpacing.s4),
@@ -214,30 +221,6 @@ class _DashboardBody extends ConsumerWidget {
             onConfigurePrayers: onConfigurePrayers,
             onOpenSalat: onOpenSalat,
           ),
-
-          if (onSignOut != null) ...[
-            const SizedBox(height: AppSpacing.s6),
-            AppButton(
-              label: 'Se déconnecter',
-              variant: AppButtonVariant.ghost,
-              onPressed: () => showDialog<void>(
-                context: context,
-                builder: (ctx) => AppDialog(
-                  title: 'Se déconnecter ?',
-                  body:
-                      "Vous devrez vous reconnecter pour accéder à l'application.",
-                  confirmLabel: 'Se déconnecter',
-                  cancelLabel: 'Annuler',
-                  isDangerous: true,
-                  onConfirm: () {
-                    Navigator.pop(ctx);
-                    onSignOut!();
-                  },
-                  onCancel: () => Navigator.pop(ctx),
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -709,6 +692,152 @@ class _UserAvatar extends StatelessWidget {
         style: AppTypography.h3.copyWith(color: AppColors.bgSurface),
       ),
     );
+  }
+}
+
+/// Section mini-habitudes du dashboard HM-01.
+///
+/// Affiche jusqu'à 6 habitudes du jour avec leur statut (complété, objectif,
+/// vide). Un header HABITUDES avec compteur X/Y précède la liste.
+/// Si aucune habitude n'est définie, retourne [SizedBox.shrink].
+class _DashboardHabitsSection extends ConsumerWidget {
+  const _DashboardHabitsSection();
+
+  /// Nombre maximum d'habitudes visibles dans la section dashboard.
+  static const int _maxVisible = 6;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final habits = ref.watch(habitsNotifierProvider).valueOrNull ?? const [];
+    if (habits.isEmpty) return const SizedBox.shrink();
+
+    final statuses = ref.watch(todayHabitStatusesProvider);
+    final categories = ref.watch(categoriesNotifierProvider).valueOrNull ?? const [];
+
+    // Index catégories par id pour lookup O(1).
+    final categoryMap = <String, Category>{
+      for (final c in categories) c.id.value: c,
+    };
+
+    final completedCount = statuses.values
+        .where((s) => s != HabitLogStatus.missed)
+        .length;
+    final visible = habits.take(_maxVisible).toList();
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── Header ────────────────────────────────────────────────
+          Row(
+            children: [
+              Text(
+                'HABITUDES',
+                style: AppTypography.label.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '$completedCount/${habits.length}',
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s3),
+          // ── Liste des habitudes ────────────────────────────────────
+          ...visible.map(
+            (habit) => _HabitMiniRow(
+              habit: habit,
+              status: statuses[habit.id],
+              category: categoryMap[habit.categoryId.value],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Ligne compacte d'une habitude dans le dashboard HM-01.
+///
+/// Dot couleur catégorie · Nom · Statut (check vert, objectif X/Y, vide).
+class _HabitMiniRow extends StatelessWidget {
+  final Habit habit;
+  final HabitLogStatus? status;
+  final Category? category;
+
+  const _HabitMiniRow({
+    required this.habit,
+    required this.status,
+    required this.category,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dotColor = _resolveColor(category?.color);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s1),
+      child: Row(
+        children: [
+          // Dot couleur catégorie
+          Container(
+            width: AppComponentSize.dotSize,
+            height: AppComponentSize.dotSize,
+            decoration: BoxDecoration(
+              color: dotColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s2),
+          // Nom de l'habitude
+          Expanded(
+            child: Text(
+              habit.name.value,
+              style: AppTypography.body,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s2),
+          // Indicateur de statut
+          _StatusIndicator(status: status),
+        ],
+      ),
+    );
+  }
+
+  /// Résout la couleur du dot depuis le HexColor de la catégorie.
+  static Color _resolveColor(HexColor? hexColor) {
+    if (hexColor == null) return AppColors.textTertiary;
+    try {
+      final hex = hexColor.value.replaceFirst('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      return AppColors.textTertiary;
+    }
+  }
+}
+
+/// Indicateur de statut compact pour une habitude dans HM-01.
+class _StatusIndicator extends StatelessWidget {
+  final HabitLogStatus? status;
+
+  const _StatusIndicator({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    if (status == HabitLogStatus.onTime || status == HabitLogStatus.late) {
+      return const Icon(
+        LucideIcons.circleCheck,
+        size: AppIconSize.sm,
+        color: AppColors.success,
+      );
+    }
+    return const SizedBox.shrink();
   }
 }
 
