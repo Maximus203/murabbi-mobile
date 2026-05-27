@@ -30,7 +30,10 @@ android {
         // Android 5.0 (API 21) — required by flutter_local_notifications ^17.x.
         // Bump from `flutter.minSdkVersion` (resolves to 19) to satisfy
         // CheckAarMetadata. Cf. ADR-008 (Q-15a, timer notifications v1.5).
-        minSdk = 21
+        // Android 5.0 (API 21) — required by flutter_local_notifications ^17.x.
+        // Bump from `flutter.minSdkVersion` (resolves to 19) to satisfy
+        // CheckAarMetadata. Cf. ADR-008 (Q-15a, timer notifications v1.5).
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

@@ -23,11 +23,12 @@ import 'package:murabbi_mobile/data/datasources/supabase/supabase_auth_data_sour
 void main() {
   group('SupabaseAuthDataSource — SQL columns contract', () {
     test(
-      'profileColumns matches users SELECT contract (schema 2026-05-10)',
+      'profileColumns matches users SELECT contract (schema 2026-05-27)',
       () {
         // Source de vérité : murabbi-admin/supabase/migrations
         //   20260426000000_initial_mobile_schema.sql (users base)
         //   20260510000000_users_deletion_requested_at_rgpd.sql (RGPD col)
+        //   <date>_users_display_name_q26.sql (Q-26 Option A)
         //
         // `id` est volontairement absent du SELECT — il est filtré par
         // `.eq('id', user.id)` et n'a pas besoin d'être renvoyé (UserMapper
@@ -41,6 +42,9 @@ void main() {
         // `pseudo_full` est intentionnellement ABSENT — colonne GENERATED
         // STORED (admin#125) non encore migrée en prod. UserMapper la gère
         // null-safe. À réintégrer quand la migration admin sera appliquée.
+        //
+        // `display_name` : ajouté par migration Q-26 Option A (déployée
+        // 2026-05-27). Nullable TEXT — nom complet saisi dans ST-02.
         const expected = {
           'pseudo',
           'email',
@@ -48,6 +52,7 @@ void main() {
           'current_streak',
           'completion_rate',
           'deletion_requested_at',
+          'display_name',
         };
 
         final actual = SupabaseAuthDataSource.profileColumns

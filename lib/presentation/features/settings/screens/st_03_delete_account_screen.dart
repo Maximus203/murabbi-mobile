@@ -6,24 +6,29 @@ import 'package:murabbi_mobile/presentation/theme/app_colors.dart';
 import 'package:murabbi_mobile/presentation/theme/app_spacing.dart';
 import 'package:murabbi_mobile/presentation/theme/app_typography.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_button.dart';
-import 'package:murabbi_mobile/presentation/widgets/app_card.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_header.dart';
 import 'package:murabbi_mobile/presentation/widgets/app_input.dart';
 
 /// Mot de confirmation exact attendu (règle S-10) — **sensible à la casse**.
 const String kDeleteConfirmationWord = 'DELETE';
 
-/// ST-03 — Supprimer le compte (issue #7, Phase 6).
+/// ST-03 — Supprimer le compte.
 ///
 /// Règle S-10 : confirmation par saisie exacte de "DELETE" (sensible à la
-/// casse). Le bouton de suppression reste désactivé tant que la saisie ne
-/// correspond pas exactement. Règle C-1 : suppression réelle (cf.
-/// `DeleteAccountUseCase`), puis déconnexion + redirection login.
+/// casse). Bouton désactivé tant que la saisie ne correspond pas.
+///
+/// Le wireframe impose :
+/// - Icône ⚠ sur fond danger translucide (cercle).
+/// - Titre "Cette action est irréversible." (avec point final).
+/// - Carte DONNÉES SUPPRIMÉES fond danger translucide + bordure danger.
+/// - Items de données précis (libellés wireframe).
+/// - Label "Saisissez DELETE pour confirmer" au-dessus du champ.
+/// - Bouton "Supprimer définitivement" destructif.
 class St03DeleteAccountScreen extends ConsumerStatefulWidget {
   /// Retour vers ST-01.
   final VoidCallback onBack;
 
-  /// Compte supprimé avec succès — le caller redirige vers login.
+  /// Compte supprimé — caller redirige vers login.
   final VoidCallback onDeleted;
 
   const St03DeleteAccountScreen({
@@ -42,12 +47,12 @@ class _St03DeleteAccountScreenState
   final _confirmCtrl = TextEditingController();
   String? _error;
 
-  /// Données supprimées — listées à l'utilisateur (RGPD, transparence).
+  /// Données supprimées — libellés exacts du wireframe ST-03.
   static const List<String> _deletedData = [
-    'Ton profil et tes informations personnelles',
-    'Toutes tes habitudes et leur historique',
-    'Tes collections et invocations enregistrées',
-    'Ta progression, ton score et ton niveau',
+    'Profil, identifiants, photo',
+    'Historique des prières et habitudes',
+    'Collections personnelles',
+    'Score, streaks et classements',
   ];
 
   @override
@@ -56,7 +61,6 @@ class _St03DeleteAccountScreenState
     super.dispose();
   }
 
-  /// `true` uniquement si la saisie correspond EXACTEMENT (casse comprise).
   bool get _canDelete => _confirmCtrl.text == kDeleteConfirmationWord;
 
   Future<void> _delete() async {
@@ -85,6 +89,7 @@ class _St03DeleteAccountScreenState
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.s5),
         children: [
+          // ── Icône avertissement ───────────────────────────────────────
           Center(
             child: Container(
               width: AppComponentSize.podiumCol,
@@ -101,45 +106,82 @@ class _St03DeleteAccountScreenState
             ),
           ),
           const SizedBox(height: AppSpacing.s5),
+
+          // ── Titre ─────────────────────────────────────────────────────
           const Text(
-            'Cette action est irréversible',
+            'Cette action est irréversible.',
             style: AppTypography.h2,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.s3),
           Text(
-            'La suppression de ton compte effacera définitivement :',
+            "Votre compte et l'ensemble de vos données seront supprimés "
+            'sous 30 jours. Aucune restauration ne sera possible.',
             style: AppTypography.body.copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: AppSpacing.s4),
-          AppCard(
+          const SizedBox(height: AppSpacing.s5),
+
+          // ── Carte DONNÉES SUPPRIMÉES ───────────────────────────────────
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.s4),
+            decoration: BoxDecoration(
+              color: AppColors.danger.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: Border.all(
+                color: AppColors.danger.withValues(alpha: 0.3),
+                width: AppBorderWidth.thin,
+              ),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  'DONNÉES SUPPRIMÉES',
+                  style: AppTypography.label.copyWith(
+                    color: AppColors.danger,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s3),
                 for (final item in _deletedData) ...[
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
-                        LucideIcons.x,
-                        size: AppIconSize.sm,
-                        color: AppColors.danger,
+                      Container(
+                        margin: const EdgeInsets.only(
+                          top: AppSpacing.s1,
+                          right: AppSpacing.s2,
+                        ),
+                        width: AppComponentSize.dotSize,
+                        height: AppComponentSize.dotSize,
+                        decoration: const BoxDecoration(
+                          color: AppColors.danger,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                      const SizedBox(width: AppSpacing.s2),
-                      Expanded(child: Text(item, style: AppTypography.body)),
+                      Expanded(
+                        child: Text(
+                          item,
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   if (item != _deletedData.last)
-                    const SizedBox(height: AppSpacing.s3),
+                    const SizedBox(height: AppSpacing.s2),
                 ],
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.s6),
-          const Text(
-            'Pour confirmer, saisis $kDeleteConfirmationWord ci-dessous.',
-            style: AppTypography.body,
+
+          // ── Champ de confirmation ─────────────────────────────────────
+          Text(
+            'Saisissez $kDeleteConfirmationWord pour confirmer',
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.s3),
           AppInput(
@@ -149,6 +191,8 @@ class _St03DeleteAccountScreenState
             onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: AppSpacing.s6),
+
+          // ── Bouton destructif ─────────────────────────────────────────
           AppButton(
             label: deleting ? 'Suppression…' : 'Supprimer définitivement',
             variant: AppButtonVariant.destructive,

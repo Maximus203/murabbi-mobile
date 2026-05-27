@@ -16,7 +16,7 @@ typedef AuthMaps = ({
 ///
 /// Schéma `users` consommé (Q-18, cf. murabbi-admin) :
 ///   id, pseudo, email, level, current_streak, completion_rate,
-///   deletion_requested_at
+///   deletion_requested_at, display_name (Q-26 — migration 2026-05-27)
 ///
 /// Le score cumulé (« total_points ») n'est PAS sur `users` — la SoT est
 /// `user_scores.total_score` (table séparée), lue par un futur
@@ -34,9 +34,10 @@ class SupabaseAuthDataSource implements AuthDataSource {
   /// `pseudo_full` est volontairement absent — colonne GENERATED STORED non
   /// encore migrée en prod ; le UserMapper la gère null-safe.
   /// À réintégrer quand la migration admin correspondante sera appliquée.
+  /// `display_name` : ajouté par migration Q-26 Option A (déployée 2026-05-27).
   static const String profileColumns =
       'pseudo, email, level, current_streak, '
-      'completion_rate, deletion_requested_at';
+      'completion_rate, deletion_requested_at, display_name';
 
   final sb.SupabaseClient _client;
 
