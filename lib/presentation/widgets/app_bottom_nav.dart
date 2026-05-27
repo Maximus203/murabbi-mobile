@@ -101,7 +101,9 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final parent = _parent!;
     final isActive = parent.active == tab;
-    final color = isActive ? AppColors.accent : AppColors.textTertiary;
+    // textSecondary (#6B6155) = contraste ~5.6:1 sur bgPrimary (WCAG AA ✓).
+    // textTertiary (#A89880) ne passait que ~2.4:1 — insuffisant.
+    final color = isActive ? AppColors.accent : AppColors.textSecondary;
 
     return Semantics(
       button: true,

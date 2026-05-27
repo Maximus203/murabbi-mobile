@@ -188,13 +188,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       // ── Routes hors-shell (modal / sous-pages) ────────────────────────
-      // Ces routes naviguent en dehors du shell indexedStack — l'utilisateur
-      // les quitte via `context.go(AppRoutes.salat)` ou `context.go(AppRoutes.habits)`.
+      // Ces routes sont ouvertes via context.push() depuis le shell ou d'autres
+      // sous-pages — le bouton retour Android dépile la pile correctement.
       GoRoute(
         path: AppRoutes.salatSettings,
         builder: (context, _) => Sa02PrayerSettingsScreen(
-          onBack: () => context.go(AppRoutes.salat),
-          onSaved: () => context.go(AppRoutes.salat),
+          onBack: () => context.pop(),
+          onSaved: () => context.pop(),
         ),
       ),
       GoRoute(
@@ -203,15 +203,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final prayerName = state.pathParameters['prayerName'] ?? 'fajr';
           return Sa03PrayerDetailScreen(
             prayerName: prayerName,
-            onBack: () => context.go(AppRoutes.salat),
+            onBack: () => context.pop(),
           );
         },
       ),
       GoRoute(
         path: AppRoutes.habitsCreate,
         builder: (context, _) => Ha02CreateHabitScreen(
-          onCreated: () => context.go(AppRoutes.habits),
-          onCancel: () => context.go(AppRoutes.habits),
+          onCreated: () => context.pop(),
+          onCancel: () => context.pop(),
         ),
       ),
       // HA-02 mode édition (issue #152). L'habitude à éditer est lue depuis
@@ -229,17 +229,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               final matches = habits.where((h) => h.id.value == id).toList();
               final match = matches.isEmpty ? null : matches.first;
               if (match == null) {
+                // Fallback deep-link à froid : on affiche HA-01 avec push.
                 return Ha01HabitsListScreen(
-                  onCreate: () => context.go(AppRoutes.habitsCreate),
-                  onOpenCategories: () => context.go(AppRoutes.categories),
-                  onEditHabit: (id) => context.go(AppRoutes.habitEdit(id)),
-                  onOpenHabit: (id) => context.go(AppRoutes.habitDetail(id)),
+                  onCreate: () => context.push(AppRoutes.habitsCreate),
+                  onOpenCategories: () => context.push(AppRoutes.categories),
+                  onEditHabit: (id) => context.push(AppRoutes.habitEdit(id)),
+                  onOpenHabit: (id) => context.push(AppRoutes.habitDetail(id)),
                 );
               }
               return Ha02CreateHabitScreen(
                 initialHabit: match,
-                onCreated: () => context.go(AppRoutes.habits),
-                onCancel: () => context.go(AppRoutes.habits),
+                onCreated: () => context.pop(),
+                onCancel: () => context.pop(),
               );
             },
           );
@@ -255,8 +256,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id'] ?? '';
           return HbDetailScreen(
             habitId: id,
-            onBack: () => context.go(AppRoutes.habits),
-            onEdit: (habitId) => context.go(AppRoutes.habitEdit(habitId)),
+            onBack: () => context.pop(),
+            onEdit: (habitId) => context.push(AppRoutes.habitEdit(habitId)),
+            // Après suppression → go() pour forcer le retour à la liste racine.
             onDeleted: () => context.go(AppRoutes.habits),
           );
         },
@@ -266,15 +268,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.categories,
         builder: (context, _) => Hb03CategoriesListScreen(
-          onCreate: () => context.go(AppRoutes.categoriesCreate),
-          onEdit: (id) => context.go(AppRoutes.categoryEdit(id.value)),
+          onCreate: () => context.push(AppRoutes.categoriesCreate),
+          onEdit: (id) => context.push(AppRoutes.categoryEdit(id.value)),
         ),
       ),
       GoRoute(
         path: AppRoutes.categoriesCreate,
         builder: (context, _) => Hb04CategoryFormScreen(
-          onDone: () => context.go(AppRoutes.categories),
-          onCancel: () => context.go(AppRoutes.categories),
+          onDone: () => context.pop(),
+          onCancel: () => context.pop(),
         ),
       ),
       GoRoute(
@@ -294,14 +296,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               final match = matches.isEmpty ? null : matches.first;
               if (match == null) {
                 return Hb03CategoriesListScreen(
-                  onCreate: () => context.go(AppRoutes.categoriesCreate),
-                  onEdit: (id) => context.go(AppRoutes.categoryEdit(id.value)),
+                  onCreate: () => context.push(AppRoutes.categoriesCreate),
+                  onEdit: (id) =>
+                      context.push(AppRoutes.categoryEdit(id.value)),
                 );
               }
               return Hb04CategoryFormScreen(
                 initialCategory: match,
-                onDone: () => context.go(AppRoutes.categories),
-                onCancel: () => context.go(AppRoutes.categories),
+                onDone: () => context.pop(),
+                onCancel: () => context.pop(),
               );
             },
           );
@@ -314,15 +317,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.collectionsCreate,
         builder: (context, _) => Co02CreateCollectionScreen(
-          onCreated: () => context.go(AppRoutes.collections),
-          onCancel: () => context.go(AppRoutes.collections),
+          onCreated: () => context.pop(),
+          onCancel: () => context.pop(),
         ),
       ),
       GoRoute(
         path: AppRoutes.collectionDetailPattern,
         builder: (context, state) => CoDetailCollectionScreen(
           collectionId: state.pathParameters['id'] ?? '',
-          onBack: () => context.go(AppRoutes.collections),
+          onBack: () => context.pop(),
         ),
       ),
 
@@ -330,7 +333,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.calendar,
         builder: (context, _) =>
-            Cal01CalendarScreen(onBack: () => context.go(AppRoutes.home)),
+            Cal01CalendarScreen(onBack: () => context.pop()),
       ),
 
       // ── Paramètres — ST-01 / ST-02 / ST-03 (issue #7, Phase 6) ────────
@@ -339,17 +342,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.settingsProfile,
         builder: (context, _) => St02EditProfileScreen(
-          onBack: () => context.go(AppRoutes.settings),
-          onSaved: () => context.go(AppRoutes.settings),
+          onBack: () => context.pop(),
+          onSaved: () => context.pop(),
         ),
       ),
       GoRoute(
         path: AppRoutes.settingsDelete,
         builder: (context, _) => Consumer(
           builder: (context, ref, _) => St03DeleteAccountScreen(
-            onBack: () => context.go(AppRoutes.settings),
-            // Suppression réussie → le signOut interne au use case bascule
-            // l'auth state, le redirect global pousse vers /auth/login.
+            onBack: () => context.pop(),
+            // Suppression réussie → go(login) force la déconnexion complète.
             onDeleted: () => context.go(AppRoutes.login),
           ),
         ),
@@ -358,10 +360,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.settings,
         builder: (context, _) => Consumer(
           builder: (context, ref, _) => St01SettingsScreen(
-            onBack: () => context.go(AppRoutes.home),
-            onEditProfile: () => context.go(AppRoutes.settingsProfile),
-            onOpenPrayerSettings: () => context.go(AppRoutes.salatSettings),
-            onDeleteAccount: () => context.go(AppRoutes.settingsDelete),
+            // ST-01 est toujours pushé depuis le dashboard → pop() suffit.
+            onBack: () => context.pop(),
+            onEditProfile: () => context.push(AppRoutes.settingsProfile),
+            onOpenPrayerSettings: () => context.push(AppRoutes.salatSettings),
+            onDeleteAccount: () => context.push(AppRoutes.settingsDelete),
             onSignOut: () => ref.read(authNotifierProvider.notifier).signOut(),
           ),
         ),
@@ -382,10 +385,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: AppRoutes.home,
                 builder: (context, _) => Consumer(
                   builder: (context, ref, _) => Hm01DashboardScreen(
-                    // Idem issue #214 : configure prayers → Settings.
-                    onConfigurePrayers: () => context.go(AppRoutes.settings),
+                    // Settings est pushé depuis le dashboard — pop() remonte.
+                    onConfigurePrayers: () => context.push(AppRoutes.settings),
+                    // Switch d'onglet shell → go() pour activer la branche.
                     onOpenSalat: () => context.go(AppRoutes.salat),
-                    onOpenSettings: () => context.go(AppRoutes.settings),
+                    onOpenSettings: () => context.push(AppRoutes.settings),
                     // Audit TL PR #42 : Consumer + ref.read plutôt que
                     // ProviderScope.containerOf (plus idiomatique).
                     onSignOut: () =>
@@ -406,9 +410,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   // ST-01 (paramètres généraux) — comportement attendu par la
                   // maquette pour l'utilisateur non-configuré.
                   onConfigureSettings: () =>
-                      context.go(AppRoutes.salatSettings),
+                      context.push(AppRoutes.salatSettings),
                   onOpenDetail: (prayerName) =>
-                      context.go(AppRoutes.salatDetail(prayerName)),
+                      context.push(AppRoutes.salatDetail(prayerName)),
                 ),
               ),
             ],
@@ -420,10 +424,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.habits,
                 builder: (context, _) => Ha01HabitsListScreen(
-                  onCreate: () => context.go(AppRoutes.habitsCreate),
-                  onOpenCategories: () => context.go(AppRoutes.categories),
-                  onEditHabit: (id) => context.go(AppRoutes.habitEdit(id)),
-                  onOpenHabit: (id) => context.go(AppRoutes.habitDetail(id)),
+                  onCreate: () => context.push(AppRoutes.habitsCreate),
+                  onOpenCategories: () => context.push(AppRoutes.categories),
+                  onEditHabit: (id) => context.push(AppRoutes.habitEdit(id)),
+                  onOpenHabit: (id) => context.push(AppRoutes.habitDetail(id)),
+                  // Switch d'onglet shell → go() pour activer la branche.
                   onOpenCollections: () => context.go(AppRoutes.collections),
                 ),
               ),
@@ -436,9 +441,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.collections,
                 builder: (context, _) => Co01CollectionsListScreen(
-                  onCreate: () => context.go(AppRoutes.collectionsCreate),
+                  onCreate: () => context.push(AppRoutes.collectionsCreate),
                   onOpenCollection: (id) =>
-                      context.go(AppRoutes.collectionDetail(id)),
+                      context.push(AppRoutes.collectionDetail(id)),
                 ),
               ),
             ],

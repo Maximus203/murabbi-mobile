@@ -136,7 +136,7 @@ class _DetailScaffold extends ConsumerWidget {
             ? IconButton(
                 key: const Key('btn_delete_menu'),
                 onPressed: () => _showDeleteDialog(context, ref),
-                splashRadius: 18,
+                splashRadius: AppIconSize.md,
                 icon: Icon(
                   lu(LucideIcons.ellipsis),
                   size: context.rs(AppIconSize.rg),

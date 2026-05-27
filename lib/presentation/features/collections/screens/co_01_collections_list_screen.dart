@@ -49,7 +49,7 @@ class Co01CollectionsListScreen extends ConsumerWidget {
         title: 'Collections',
         trailing: IconButton(
           onPressed: onCreate,
-          splashRadius: 18,
+          splashRadius: AppIconSize.md,
           icon: Icon(
             lu(LucideIcons.plus),
             size: context.rs(AppIconSize.rg),
@@ -87,8 +87,7 @@ class Co01CollectionsListScreen extends ConsumerWidget {
             collections: list,
             onOpenCollection: onOpenCollection,
             habits: ref.watch(habitsNotifierProvider).valueOrNull,
-            categories:
-                ref.watch(categoriesNotifierProvider).valueOrNull ?? [],
+            categories: ref.watch(categoriesNotifierProvider).valueOrNull ?? [],
             onRefresh: () async {
               ref.invalidate(collectionsNotifierProvider);
               await ref.read(collectionsNotifierProvider.future);
@@ -136,9 +135,7 @@ class _CollectionsBody extends StatelessWidget {
     };
 
     // Section système : toutes les collections système, actives en premier.
-    final systemCollections = collections
-        .where((c) => c.isSystem)
-        .toList()
+    final systemCollections = collections.where((c) => c.isSystem).toList()
       ..sort((a, b) {
         if (a.isActive && !b.isActive) return -1;
         if (!a.isActive && b.isActive) return 1;
@@ -195,9 +192,7 @@ class _CollectionsBody extends StatelessWidget {
                   categoryName: cat?.name.value,
                   categoryColor: cat != null ? _colorFromHex(cat.color) : null,
                   ptsPerDay: habits != null ? c.ptsPerDay(habits!) : null,
-                  onActivate: c.isActive
-                      ? null
-                      : () => onActivate(c.id.value),
+                  onActivate: c.isActive ? null : () => onActivate(c.id.value),
                   isActivating: isActivating,
                 ),
               );

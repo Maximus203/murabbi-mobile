@@ -82,7 +82,7 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
             if (widget.onOpenCategories != null)
               IconButton(
                 tooltip: 'Catégories',
-                splashRadius: 18,
+                splashRadius: AppIconSize.md,
                 onPressed: widget.onOpenCategories,
                 icon: Icon(
                   LucideIcons.tags,
@@ -92,7 +92,7 @@ class _Ha01HabitsListScreenState extends ConsumerState<Ha01HabitsListScreen> {
               ),
             IconButton(
               tooltip: 'Nouvelle habitude',
-              splashRadius: 18,
+              splashRadius: AppIconSize.md,
               onPressed: widget.onCreate,
               icon: Icon(
                 LucideIcons.plus,
