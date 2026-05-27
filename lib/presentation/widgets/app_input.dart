@@ -216,7 +216,7 @@ class _AppInputState extends State<AppInput> {
               ),
               if (hasTrailing)
                 IconButton(
-                  splashRadius: 16,
+                  splashRadius: AppIconSize.sm,
                   tooltip: _obscured
                       ? 'Afficher le mot de passe'
                       : 'Masquer le mot de passe',

@@ -71,7 +71,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       leading: _isBackVariant
           ? IconButton(
               onPressed: onBack,
-              splashRadius: 18,
+              splashRadius: AppIconSize.md,
               icon: Icon(
                 lu(LucideIcons.chevronLeft),
                 size: context.rs(AppIconSize.rg),

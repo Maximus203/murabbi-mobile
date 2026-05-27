@@ -49,7 +49,10 @@ class AppTypography {
     color: AppColors.textPrimary,
   );
 
-  /// Display SM 32 / Geist SemiBold — compteur de section.
+  /// @Deprecated Utilisé nulle part — même taille/poids que [h1] avec un
+  /// letterSpacing minime différent (-0.5 vs -0.3). Utiliser [h1].
+  /// Conservé pour ne pas casser un éventuel code externe.
+  @Deprecated('Utiliser AppTypography.h1 à la place')
   static const TextStyle displaySm = TextStyle(
     fontFamily: _geist,
     fontSize: 32,

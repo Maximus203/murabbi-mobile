@@ -126,7 +126,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
           ),
           if (hasQuery)
             IconButton(
-              splashRadius: 16,
+              splashRadius: AppIconSize.sm,
               tooltip: 'Effacer la recherche',
               onPressed: _clear,
               icon: Icon(
