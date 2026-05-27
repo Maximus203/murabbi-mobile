@@ -20,7 +20,7 @@ import '../../../helpers/test_uuids.dart';
 void main() {
   /// Construit un [TodaySalatState] avec toutes les prières en attente
   /// et des horaires UTC de référence.
-  TodaySalatState _buildPendingState() {
+  TodaySalatState buildPendingState() {
     final day = DateTime.utc(2026, 5, 26);
     return TodaySalatState(
       date: day,
@@ -45,7 +45,7 @@ void main() {
   }
 
   /// Construit un [TodaySalatState] avec 2 prières à l'heure, 1 en retard.
-  TodaySalatState _buildMixedState() {
+  TodaySalatState buildMixedState() {
     final day = DateTime.utc(2026, 5, 26);
     return TodaySalatState(
       date: day,
@@ -69,7 +69,7 @@ void main() {
     );
   }
 
-  Widget _buildApp(TodaySalatState state) {
+  Widget buildApp(TodaySalatState state) {
     return ProviderScope(
       overrides: [
         todaySalatNotifierProvider.overrideWith(
@@ -89,7 +89,7 @@ void main() {
 
   group('SA-01 — layout prayer cards', () {
     testWidgets('affiche les 5 noms arabes des prières', (tester) async {
-      await tester.pumpWidget(_buildApp(_buildPendingState()));
+      await tester.pumpWidget(buildApp(buildPendingState()));
       await tester.pump();
 
       // Noms arabes conformes au wireframe : article défini "ال", sans diacritiques
@@ -101,7 +101,7 @@ void main() {
     });
 
     testWidgets('affiche les 5 noms latins des prières', (tester) async {
-      await tester.pumpWidget(_buildApp(_buildPendingState()));
+      await tester.pumpWidget(buildApp(buildPendingState()));
       await tester.pump();
 
       expect(find.text('Fajr'), findsOneWidget);
@@ -112,7 +112,7 @@ void main() {
     });
 
     testWidgets('le hero affiche "X/5 complétées" dans le subtitle', (tester) async {
-      await tester.pumpWidget(_buildApp(_buildPendingState()));
+      await tester.pumpWidget(buildApp(buildPendingState()));
       await tester.pump();
 
       // Avec toutes les prières pending, completed = 0
@@ -121,7 +121,7 @@ void main() {
     });
 
     testWidgets('le hero subtitle est une seule ligne (date + compteur fusionnés)', (tester) async {
-      await tester.pumpWidget(_buildApp(_buildPendingState()));
+      await tester.pumpWidget(buildApp(buildPendingState()));
       await tester.pump();
 
       // La date et le compteur ne doivent PAS être deux Text distincts
@@ -136,7 +136,7 @@ void main() {
     });
 
     testWidgets('la bannière résumé est masquée quand 0 prières complétées', (tester) async {
-      await tester.pumpWidget(_buildApp(_buildPendingState()));
+      await tester.pumpWidget(buildApp(buildPendingState()));
       await tester.pumpAndSettle();
 
       // Avec 0 onTime / 0 late / 0 missed → bannière cachée (aucun chip ni texte résumé)
@@ -146,7 +146,7 @@ void main() {
     });
 
     testWidgets('la bannière résumé est visible quand au moins 1 prière loggée', (tester) async {
-      await tester.pumpWidget(_buildApp(_buildMixedState()));
+      await tester.pumpWidget(buildApp(buildMixedState()));
       await tester.pumpAndSettle();
 
       // Scroll pour révéler la bannière (en bas du CustomScrollView)

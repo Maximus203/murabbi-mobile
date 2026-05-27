@@ -147,6 +147,9 @@ class AppComponentSize {
   /// 76px — hauteur contractuelle de la bottom navigation bar (DS v1.5).
   static const double bottomNavHeight = 76;
 
+  /// 28px — pastille jour de la semaine (SL-DETAIL — heatmap 7 jours).
+  static const double weekDot = 28;
+
   /// 200px — hauteur contractuelle du bandeau vidéo hero (SA-01, SA-03, HM-01).
   /// Validée sur iPhone 14 390 dp — représente ~30 % de la hauteur visible.
   static const double heroVideo = 200;

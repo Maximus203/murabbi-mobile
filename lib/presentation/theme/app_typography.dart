@@ -125,6 +125,15 @@ class AppTypography {
     color: AppColors.textPrimary,
   );
 
+  /// Arabic Hero 36 / Noto Sans Arabic Medium —
+  /// nom de prière dans le hero vidéo (SA-03).
+  static const TextStyle arabicHero = TextStyle(
+    fontFamily: _notoArabic,
+    fontSize: 36,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textPrimary,
+  );
+
   /// Geist Mono Regular — chiffres in-line (streaks, compteurs).
   static const TextStyle mono = TextStyle(
     fontFamily: _geistMono,
